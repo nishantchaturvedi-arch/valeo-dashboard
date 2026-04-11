@@ -1,9 +1,11 @@
+
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%2327ae60'/><text y='.9em' font-size='70' font-weight='800' fill='white' x='15'>V</text></svg>">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Valeo Caregiver Dashboard</title>
+<title>Valeo Health — Caregiver Operations</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 /* ── Theme variables ── */
@@ -50,10 +52,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .theme-btn:hover{border-color:var(--accent)}
 
 /* ── Main tabs ── */
-.main-tabs{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 20px;display:flex;gap:0}
+.main-tabs{background:var(--bg2);border-bottom:2px solid var(--border);padding:0 20px;display:flex;gap:0;border-top:none}
 .main-tab{padding:12px 18px;font-size:12px;font-weight:500;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;background:none;border-left:none;border-right:none;border-top:none;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:6px}
 .main-tab:hover{color:var(--text)}
-.main-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.main-tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
 
 /* ── Page ── */
 .page{display:none;flex:1}
@@ -235,6 +237,36 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 ::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+
+/* ── Operations Tab ── */
+.ops-page{padding:20px;display:flex;flex-direction:column;gap:20px}
+.ops-section{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.ops-section-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg3)}
+.ops-section-title{font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px}
+.ops-badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;font-family:'JetBrains Mono',monospace}
+.ops-badge.red{background:rgba(248,81,73,.15);color:var(--absent)}
+.ops-badge.yellow{background:rgba(210,153,34,.15);color:var(--sick)}
+.ops-badge.blue{background:rgba(47,129,247,.15);color:var(--accent)}
+.ops-table{width:100%;border-collapse:collapse}
+.ops-table th{padding:9px 14px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);border-bottom:1px solid var(--border)}
+.ops-table td{padding:10px 14px;font-size:12px;border-bottom:1px solid var(--border);vertical-align:middle}
+.ops-table tr:last-child td{border-bottom:none}
+.ops-table tr:hover td{background:var(--bg3)}
+.exp-badge{display:inline-flex;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;font-family:'JetBrains Mono',monospace}
+.exp-badge.w1{background:rgba(248,81,73,.15);color:var(--absent)}
+.exp-badge.w2{background:rgba(210,153,34,.15);color:var(--sick)}
+.exp-badge.w3{background:rgba(47,129,247,.15);color:var(--accent)}
+.exp-badge.w4{background:rgba(63,185,80,.12);color:var(--duty)}
+.ops-empty{padding:30px;text-align:center;color:var(--text2);font-size:12px}
+
+/* ── CG Search bar ── */
+.cg-search-bar{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;background:var(--bg2);flex-wrap:wrap}
+.cg-search-input{background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'Inter',sans-serif;font-size:12px;padding:7px 12px;border-radius:7px;outline:none;width:240px}
+.cg-search-input:focus{border-color:var(--accent)}
+.cg-search-input::placeholder{color:var(--text3)}
+.cg-filter-select{background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'Inter',sans-serif;font-size:12px;padding:7px 12px;border-radius:7px;outline:none;cursor:pointer;appearance:none;padding-right:28px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%238b949e' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center}
+.cg-result-count{font-size:11px;color:var(--text2);font-family:'JetBrains Mono',monospace;margin-left:auto}
 </style>
 </head>
 <body>
@@ -242,10 +274,12 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 <!-- ── Header ── -->
 <div class="header">
   <div class="header-brand">
-    <div class="brand-logo">🏥</div>
-    <div>
-      <div class="brand-name">Valeo Health</div>
-      <div class="brand-sub">Caregiver Operations</div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <div style="width:34px;height:34px;background:linear-gradient(135deg,#2f81f7,#6f42c1);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;flex-shrink:0;font-family:'Inter',sans-serif">V</div>
+      <div>
+        <div style="font-size:15px;font-weight:700;color:var(--text);letter-spacing:-.3px;line-height:1.2">Valeo Health</div>
+        <div style="font-size:10px;color:var(--text2);font-family:'JetBrains Mono',monospace;letter-spacing:.02em">Caregiver Operations</div>
+      </div>
     </div>
   </div>
   <div class="header-right">
@@ -261,6 +295,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 <div class="main-tabs">
   <button class="main-tab active" onclick="switchTab('calendar')">📅 Calendar</button>
   <button class="main-tab" onclick="switchTab('analytics')">📊 Analytics</button>
+  <button class="main-tab" onclick="switchTab('ops')">⚡ Operations</button>
 </div>
 
 <!-- ── Availability bar (calendar only) ── -->
@@ -300,7 +335,15 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 <div class="page active" id="page-calendar">
   <!-- HC list view -->
   <div id="hc-list-view">
-    <div class="cal-page" id="hc-grid-wrap">
+    <div class="cg-search-bar">
+    <span style="font-size:12px;color:var(--text2);font-weight:500">🔍</span>
+    <input class="cg-search-input" id="cg-search-input" type="text" placeholder="Search caregiver..." oninput="filterCGSearch()">
+    <select class="cg-filter-select" id="cg-hc-filter" onchange="filterCGSearch()">
+      <option value="all">All Homecare</option>
+    </select>
+    <div class="cg-result-count" id="cg-result-count"></div>
+  </div>
+  <div class="cal-page" id="hc-grid-wrap">
       <div class="loading-wrap"><div class="spinner"></div><span>Fetching live data from Metabase...</span></div>
     </div>
   </div>
@@ -344,11 +387,80 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
   </div>
 </div>
 
+
+
+
+
+
+
+
+<!-- ── OPERATIONS PAGE ── -->
+<div class="page" id="page-ops">
+  <div class="ops-page">
+
+    <!-- Expiring Packages -->
+    <div class="ops-section">
+      <div class="ops-section-header">
+        <div class="ops-section-title">
+          🔔 Expiring Packages
+          <span class="ops-badge yellow" id="exp-count">—</span>
+        </div>
+        <div style="font-size:11px;color:var(--text2)">Next 4 weeks · follow up required</div>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="ops-table">
+          <thead>
+            <tr>
+              <th>Client</th>
+              <th>Caregiver</th>
+              <th>Homecare</th>
+              <th>Package</th>
+              <th>End Date</th>
+              <th>Expires In</th>
+              <th>Week</th>
+              <th>Location</th>
+            </tr>
+          </thead>
+          <tbody id="exp-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Unassigned Orders -->
+    <div class="ops-section">
+      <div class="ops-section-header">
+        <div class="ops-section-title">
+          ⚠️ Unassigned Orders
+          <span class="ops-badge red" id="unassigned-count">—</span>
+        </div>
+        <div style="font-size:11px;color:var(--text2)">Orders with no caregiver assigned</div>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="ops-table">
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Client</th>
+              <th>Homecare</th>
+              <th>Package</th>
+              <th>Booked Slot</th>
+              <th>Location</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="unassigned-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
 <!-- ── CHATBOT ── -->
 <button class="chat-fab" onclick="toggleChat()">💬</button>
 <div class="chat-panel" id="chat-panel">
   <div class="chat-top">
-    <div class="chat-top-title"><div class="chat-top-dot"></div>AI Scheduling Assistant</div>
+    <div class="chat-top-title"><div class="chat-top-dot"></div>Valeo AI Assistant</div>
     <button class="chat-x" onclick="toggleChat()">✕</button>
   </div>
   <div class="chat-msgs" id="chat-msgs">
@@ -369,7 +481,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 <script>
 // ── CONFIG ──────────────────────────────────────────────────────
 const N8N_DATA_URL  = 'https://nishi25.app.n8n.cloud/webhook/d0f62c8a-6d05-4834-885e-6ca9bb589d9a';
-const CLAUDE_KEY    = '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';
+const CLAUDE_KEY    = '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';
 // ────────────────────────────────────────────────────────────────
 
 const HC_COLORS = {
@@ -391,6 +503,7 @@ function parseD(s){if(!s||s.length<10)return null;const p=s.slice(0,10).split('-
 function initials(n){const p=(n||'').trim().split(' ').filter(Boolean);return p.length>=2?(p[0][0]+p[1][0]).toUpperCase():(p[0]||'?')[0].toUpperCase();}
 function hcColor(hc){const k=Object.keys(HC_COLORS).find(k=>(hc||'').toLowerCase().includes(k));return k?HC_COLORS[k]:'#64748b';}
 function pkgType(p){const s=(p||'').toLowerCase();if(s.includes('month'))return'monthly';if(s.includes('week'))return'weekly';if(s.includes('hour'))return'hourly';return'other';}
+function getPkg(r){return r.package_type||r.package_raw||'';}
 function addDays(ds,n){const d=new Date(ds+'T12:00:00');d.setDate(d.getDate()+n);return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
 
 function extractHours(p){const m=(p||'').match(/(\d+)\s*hours?/i);return m?+m[1]:null;}
@@ -410,8 +523,12 @@ function calcEndDate(start,pkg){
 }
 function calcTimeEnd(timeStr,pkg){
   const h=extractHours(pkg);if(!h||!timeStr)return'';
-  const p=timeStr.split(':');if(p.length<2)return'';
-  const totalMins=+p[0]*60+ +p[1]+h*60;
+  // Handle formats like "10:00-11:00" or "10:00" or "10:30 AM"
+  // Strip any AM/PM and range info, just get start hour:min
+  let clean=timeStr.replace(/\s*(AM|PM).*/i,'').split('-')[0].trim();
+  const p=clean.split(':');if(p.length<2)return'';
+  let startH=+p[0];const startM=+p[1]||0;
+  const totalMins=startH*60+startM+h*60;
   const mod=totalMins%(24*60);let hrs=Math.floor(mod/60);const mins=mod%60;
   const ap=hrs>=12?'PM':'AM';hrs=hrs%12||12;
   return `${hrs}:${pad(mins)} ${ap}`;
@@ -424,7 +541,9 @@ function expandOrders(orders){
     const pt=pkgType(o.package_type);
     const isRec=pt==='monthly'||pt==='weekly';
     if(!isRec){res.push(o);return;}
-    const offDays=weekOffCfg[o.order_id]||[];
+    // Use child_order_id first, fallback to order_id
+    const cfgKey=o.child_order_id||o.order_id||o.caregiver;
+    const offDays=weekOffCfg[cfgKey]||[];
     let cur=new Date(o.date+'T12:00:00');
     const end=new Date((o.end_date||o.date)+'T12:00:00');
     while(cur<=end){
@@ -482,10 +601,12 @@ async function loadData(force=false){
       const hcRaw=String(r['Homecare']||'').trim();
       const excludedHC=['Carezone Home Healthcare LLC','Dummy HomeCare','Helpful Agency','Nifas HC','babysitting KSA','Pyramid Home Health care'];
       if(excludedHC.some(e=>hcRaw.toLowerCase()===e.toLowerCase()))return null;
-      const pkg=String(r['Package']||'');
+      const pkg=String(r['Parent_Package']||r['Package']||'');
       const endDate=calcEndDate(datePart,pkg);
-      const t1=timePart?fmtTime(timePart):'';
-      const t2=calcTimeEnd(timePart,pkg);
+      // Clean booked slot time — handle "10:00-11:00" or "8:00-20 AM" formats
+      const cleanTime = timePart ? timePart.split('-')[0].trim() : '';
+      const t1 = cleanTime ? fmtTime(cleanTime) : '';
+      const t2=calcTimeEnd(cleanTime,pkg);
       const os=String(r['Order_Status']||'').toUpperCase();
       let status='Duty';
       if(os==='CANCELLED')status='Cancelled';
@@ -496,17 +617,37 @@ async function loadData(force=false){
         status,time_start:t1,time_end:t2,
         client_name:String(r['User Name']||'').trim(),
         order_id:String(r['Cart_Order_ID']||'').trim(),
+        child_order_id:String(r['Child_Order_ID']||'').trim(),
         package_type:pkg.trim(),
+        package_raw:String(r['Package']||'').trim(),
         location:String(r['City']||'').trim(),
         type_of_user:String(r['Type_Of_User']||'').trim()
       };
     }).filter(Boolean);
 
-    allData=expandOrders(rawData);
+    // Deduplicate expanded data — keep one record per caregiver per date
+    // If same caregiver has 2 orders same day, keep the one with more info
+    const expandedRaw = expandOrders(rawData);
+    const dedupMap = {};
+    expandedRaw.forEach(r => {
+      const key = (r.caregiver||'') + '|' + (r.date||'');
+      if(!dedupMap[key]) {
+        dedupMap[key] = r;
+      } else {
+        // Keep the one with more package info or non-duty status
+        const existing = dedupMap[key];
+        const newHasMore = (r.package_type||'').length > (existing.package_type||'').length;
+        const newIsOff = (r.status||'').toLowerCase().includes('off') || (r.status||'').toLowerCase()==='sick';
+        if(newHasMore || newIsOff) dedupMap[key] = r;
+      }
+    });
+    allData = Object.values(dedupMap);
     setSyncState('ok','Synced '+new Date().toLocaleTimeString());
     buildChatData();
     renderHCGrid();
     if(document.getElementById('page-analytics').classList.contains('active'))renderAnalytics();
+    populateCGHCFilter();
+    document.getElementById('cg-result-count').textContent = [...new Set(rawData.map(r=>r.caregiver)).values()].filter(Boolean).length + ' caregivers';
   }catch(e){
     setSyncState('err','Error — click to retry');
     document.getElementById('hc-grid-wrap').innerHTML=`<div class="loading-wrap" style="color:var(--absent)">Failed: ${e.message}<br><br>Check Metabase credentials or CORS settings.</div>`;
@@ -548,7 +689,37 @@ function renderHCGrid(){
 
       html+=`<div class="cg-card" id="${cardId}" onclick="openCGCal('${cg.replace(/'/g,"\\'")}','${hc.replace(/'/g,"\\'")}',this)" style="--card-col:${col}">
         <div class="cg-card::before" style="background:${col}"></div>
-        <style>#${cardId}::before{background:${col}}</style>
+        <style>#${cardId}::before{background:${col}}
+
+/* ── Operations Tab ── */
+.ops-page{padding:20px;display:flex;flex-direction:column;gap:20px}
+.ops-section{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.ops-section-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg3)}
+.ops-section-title{font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px}
+.ops-badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;font-family:'JetBrains Mono',monospace}
+.ops-badge.red{background:rgba(248,81,73,.15);color:var(--absent)}
+.ops-badge.yellow{background:rgba(210,153,34,.15);color:var(--sick)}
+.ops-badge.blue{background:rgba(47,129,247,.15);color:var(--accent)}
+.ops-table{width:100%;border-collapse:collapse}
+.ops-table th{padding:9px 14px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);border-bottom:1px solid var(--border)}
+.ops-table td{padding:10px 14px;font-size:12px;border-bottom:1px solid var(--border);vertical-align:middle}
+.ops-table tr:last-child td{border-bottom:none}
+.ops-table tr:hover td{background:var(--bg3)}
+.exp-badge{display:inline-flex;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;font-family:'JetBrains Mono',monospace}
+.exp-badge.w1{background:rgba(248,81,73,.15);color:var(--absent)}
+.exp-badge.w2{background:rgba(210,153,34,.15);color:var(--sick)}
+.exp-badge.w3{background:rgba(47,129,247,.15);color:var(--accent)}
+.exp-badge.w4{background:rgba(63,185,80,.12);color:var(--duty)}
+.ops-empty{padding:30px;text-align:center;color:var(--text2);font-size:12px}
+
+/* ── CG Search bar ── */
+.cg-search-bar{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;background:var(--bg2);flex-wrap:wrap}
+.cg-search-input{background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'Inter',sans-serif;font-size:12px;padding:7px 12px;border-radius:7px;outline:none;width:240px}
+.cg-search-input:focus{border-color:var(--accent)}
+.cg-search-input::placeholder{color:var(--text3)}
+.cg-filter-select{background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'Inter',sans-serif;font-size:12px;padding:7px 12px;border-radius:7px;outline:none;cursor:pointer;appearance:none;padding-right:28px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%238b949e' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center}
+.cg-result-count{font-size:11px;color:var(--text2);font-family:'JetBrains Mono',monospace;margin-left:auto}
+</style>
         <div class="cg-avail-tag">✓ Available</div>
         <div class="cg-unavail-tag">✗ Unavailable</div>
         <div class="cg-top">
@@ -678,7 +849,10 @@ function closeEvModal(){document.getElementById('ev-modal').classList.remove('sh
 
 // ── Week off modal ───────────────────────────────────────────────
 function openWoModal(){
-  const existing=weekOffCfg[activeCG]||[];
+  // Find child_order_id for active CG's recurring order
+  const rec=rawData.find(r=>r.caregiver===activeCG&&['monthly','weekly'].includes(pkgType(r.package_type)));
+  const cfgKey=(rec&&(rec.child_order_id||rec.order_id))||activeCG;
+  const existing=weekOffCfg[cfgKey]||[];
   let html=`<div style="font-size:12px;color:var(--text2);margin-bottom:8px">Select off days for <strong style="color:var(--text)">${activeCG}</strong>. Applied for this session only.</div><div class="day-grid">`;
   DAYS.forEach(d=>html+=`<button class="day-chip ${existing.includes(d)?'on':''}" onclick="this.classList.toggle('on')">${d.slice(0,3)}</button>`);
   html+=`</div><button class="apply-btn" onclick="applyWo()">Apply to calendar</button>`;
@@ -687,7 +861,9 @@ function openWoModal(){
 }
 function applyWo(){
   const sel=[...document.querySelectorAll('#wo-modal-body .day-chip.on')].map(b=>DAYS.find(d=>d.startsWith(b.textContent)));
-  weekOffCfg[activeCG]=sel;
+  const rec=rawData.find(r=>r.caregiver===activeCG&&['monthly','weekly'].includes(pkgType(r.package_type)));
+  const cfgKey=(rec&&(rec.child_order_id||rec.order_id))||activeCG;
+  weekOffCfg[cfgKey]=sel;
   allData=expandOrders(rawData);
   closeWoModal();renderCalendar();
 }
@@ -778,6 +954,7 @@ function switchTab(tab){
   document.getElementById('page-'+tab).classList.add('active');
   document.getElementById('avail-bar').style.display=tab==='calendar'?'flex':'none';
   if(tab==='analytics')renderAnalytics();
+  if(tab==='ops')renderOps();
 }
 
 // ── Theme toggle ─────────────────────────────────────────────────
@@ -831,7 +1008,7 @@ async function sendChat(){
       body:JSON.stringify({
         model:'claude-sonnet-4-20250514',
         max_tokens:800,
-        system:`You are a scheduling assistant for Valeo Health homecare operations. Answer questions about caregiver availability and schedules. Be concise and specific.\n\nSCHEDULE DATA:\n${chatData}`,
+        system:`You are Valeo's AI scheduling assistant. Help the operations team with caregiver availability and schedules. Answer questions about caregiver availability and schedules. Be concise and specific.\n\nSCHEDULE DATA:\n${chatData}`,
         messages:chatHistory
       })
     });
@@ -856,6 +1033,140 @@ function addMsg(type,text){
   const msgs=document.getElementById('chat-msgs');
   msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;
   return id;
+}
+
+
+
+// ── Operations Tab ───────────────────────────────────────────────
+function renderOps(){
+  renderExpiring();
+  renderUnassigned();
+}
+
+function renderExpiring(){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const in28 = new Date(today); in28.setDate(in28.getDate()+28);
+
+  // Get unique orders from rawData
+  const orderMap = {};
+  rawData.forEach(r => {
+    if(!r.client_name || !r.end_date) return;
+    if((r.status||'').toLowerCase()==='cancelled') return;
+    const key = r.order_id || (r.client_name+'|'+r.caregiver);
+    if(!orderMap[key]) orderMap[key] = r;
+  });
+
+  const orders = Object.values(orderMap).filter(r => {
+    const end = new Date(r.end_date+'T00:00:00');
+    return end >= today && end <= in28;
+  }).sort((a,b) => a.end_date.localeCompare(b.end_date));
+
+  document.getElementById('exp-count').textContent = orders.length;
+
+  if(!orders.length){
+    document.getElementById('exp-tbody').innerHTML = '<tr><td colspan="8" class="ops-empty">✅ No packages expiring in the next 4 weeks</td></tr>';
+    return;
+  }
+
+  let html = '';
+  orders.forEach(r => {
+    const end = new Date(r.end_date+'T00:00:00');
+    const diffDays = Math.round((end-today)/(1000*60*60*24));
+    const weekNum = diffDays <= 7 ? 1 : diffDays <= 14 ? 2 : diffDays <= 21 ? 3 : 4;
+    const weekLabel = `Week ${weekNum}`;
+    const wCls = `w${weekNum}`;
+    const daysLabel = diffDays === 0 ? 'Today' : diffDays === 1 ? 'Tomorrow' : `${diffDays} days`;
+
+    html += `<tr>
+      <td style="font-weight:500">${r.client_name||'—'}</td>
+      <td>${r.caregiver||'—'}</td>
+      <td style="font-size:11px;color:var(--text2)">${r.homecare||'—'}</td>
+      <td style="font-size:11px;color:var(--text2)">${(r.package_type||'—').substring(0,40)}</td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:11px">${r.end_date||'—'}</td>
+      <td><span class="exp-badge ${wCls}">${daysLabel}</span></td>
+      <td><span class="exp-badge ${wCls}">${weekLabel}</span></td>
+      <td style="font-size:11px;color:var(--text2)">${r.location||'—'}</td>
+    </tr>`;
+  });
+  document.getElementById('exp-tbody').innerHTML = html;
+}
+
+function renderUnassigned(){
+  // Find orders from rawData where caregiver is empty/null
+  // These come from Metabase where Nurse_Assigned is null
+  // We detect them by checking if caregiver field is empty
+  const unassigned = rawData.filter(r => {
+    if(!r.client_name) return false;
+    if((r.status||'').toLowerCase()==='cancelled') return false;
+    return !r.caregiver || r.caregiver.trim()==='' || r.caregiver==='null';
+  });
+
+  // Deduplicate by order_id
+  const seen = new Set();
+  const unique = unassigned.filter(r => {
+    const k = r.order_id || (r.client_name+'|'+r.date);
+    if(seen.has(k)) return false;
+    seen.add(k); return true;
+  });
+
+  document.getElementById('unassigned-count').textContent = unique.length;
+
+  if(!unique.length){
+    document.getElementById('unassigned-tbody').innerHTML = '<tr><td colspan="7" class="ops-empty">✅ All orders have caregivers assigned</td></tr>';
+    return;
+  }
+
+  let html = '';
+  unique.forEach(r => {
+    const statusColor = (r.status||'').toLowerCase()==='pending' ? 'yellow' : 'red';
+    html += `<tr>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:11px">${r.order_id||'—'}</td>
+      <td style="font-weight:500">${r.client_name||'—'}</td>
+      <td style="font-size:11px;color:var(--text2)">${r.homecare||'—'}</td>
+      <td style="font-size:11px;color:var(--text2)">${(r.package_type||'—').substring(0,35)}</td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:11px">${r.date||'—'}</td>
+      <td style="font-size:11px;color:var(--text2)">${r.location||'—'}</td>
+      <td><span class="ops-badge ${statusColor}">${r.status||'—'}</span></td>
+    </tr>`;
+  });
+  document.getElementById('unassigned-tbody').innerHTML = html;
+}
+
+
+// ── CG Search ───────────────────────────────────────────────────
+function filterCGSearch(){
+  const q = (document.getElementById('cg-search-input').value||'').toLowerCase();
+  const hcFilter = document.getElementById('cg-hc-filter').value;
+  const cards = document.querySelectorAll('.cg-card');
+  const sections = document.querySelectorAll('.hc-section');
+  let visible = 0;
+
+  sections.forEach(sec => {
+    const hcName = sec.querySelector('.hc-section-name')?.textContent || '';
+    const hcMatch = hcFilter === 'all' || hcName === hcFilter;
+    let secVisible = 0;
+    sec.querySelectorAll('.cg-card').forEach(card => {
+      const name = card.querySelector('.cg-name')?.textContent.toLowerCase() || '';
+      const show = hcMatch && (!q || name.includes(q));
+      card.style.display = show ? '' : 'none';
+      if(show) { secVisible++; visible++; }
+    });
+    sec.style.display = secVisible > 0 ? '' : 'none';
+  });
+
+  document.getElementById('cg-result-count').textContent = visible + ' caregivers';
+}
+
+function populateCGHCFilter(){
+  const hcs = [...new Set(rawData.map(r=>r.homecare))].filter(Boolean).sort();
+  const sel = document.getElementById('cg-hc-filter');
+  if(!sel) return;
+  sel.innerHTML = '<option value="all">All Homecare</option>';
+  hcs.forEach(hc => {
+    const o = document.createElement('option');
+    o.value = hc; o.textContent = hc;
+    sel.appendChild(o);
+  });
 }
 
 // ── Init ─────────────────────────────────────────────────────────
