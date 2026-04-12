@@ -481,7 +481,6 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 <script>
 // ── CONFIG ──────────────────────────────────────────────────────
 const N8N_DATA_URL  = 'https://nishi25.app.n8n.cloud/webhook/d0f62c8a-6d05-4834-885e-6ca9bb589d9a';
-const CLAUDE_KEY    = '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';
 // ────────────────────────────────────────────────────────────────
 
 const HC_COLORS = {
@@ -997,24 +996,21 @@ async function sendChat(){
   chatHistory.push({role:'user',content:msg});
 
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
+    const res=await fetch('https://nishi25.app.n8n.cloud/webhook/claude',{
       method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'x-api-key':CLAUDE_KEY,
-        'anthropic-version':'2023-06-01',
-        'anthropic-dangerous-direct-browser-access':'true'
-      },
+      headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:800,
-        system:`You are Valeo's AI scheduling assistant. Help the operations team with caregiver availability and schedules. Answer questions about caregiver availability and schedules. Be concise and specific.\n\nSCHEDULE DATA:\n${chatData}`,
+        system:'You are Valeo\'s AI scheduling assistant. Help the operations team with caregiver availability and schedules. Be concise and specific.\n\nSCHEDULE DATA:\n'+chatData,
         messages:chatHistory
       })
     });
-    const data=await res.json();
-    if(data.error)throw new Error(data.error.message);
-    const reply=data.content[0].text;
+    const text=await res.text();
+    let reply;
+    try{
+      const data=JSON.parse(text);
+      reply=data.content?data.content[0].text:data.output||data.reply||text;
+    }catch(e2){reply=text;}
+    if(!reply)throw new Error('No response');
     chatHistory.push({role:'assistant',content:reply});
     document.getElementById(tid)?.remove();
     addMsg('bot',reply);
