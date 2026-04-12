@@ -267,6 +267,19 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .cg-search-input::placeholder{color:var(--text3)}
 .cg-filter-select{background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'Inter',sans-serif;font-size:12px;padding:7px 12px;border-radius:7px;outline:none;cursor:pointer;appearance:none;padding-right:28px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%238b949e' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center}
 .cg-result-count{font-size:11px;color:var(--text2);font-family:'JetBrains Mono',monospace;margin-left:auto}
+
+/* ── Analytics v2 ── */
+.analytics-page{padding:20px}
+.month-tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:16px}
+.mo-tab{padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:11px;font-weight:500;cursor:pointer;color:var(--text2);background:var(--bg2);transition:all .15s;font-family:'Inter',sans-serif}
+.mo-tab:hover{border-color:var(--accent);color:var(--accent)}
+.mo-tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.week-tabs{display:flex;gap:4px;margin-bottom:16px}
+.wk-tab{padding:5px 14px;border:1px solid var(--border);border-radius:20px;font-size:11px;cursor:pointer;color:var(--text2);background:var(--bg2);transition:all .15s;font-family:'JetBrains Mono',monospace}
+.wk-tab:hover{border-color:var(--accent);color:var(--accent)}
+.wk-tab.active{background:var(--bg3);color:var(--text);border-color:var(--accent);font-weight:600}
+.analytics-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px}
+.analytics-title{font-size:13px;font-weight:600;color:var(--text)}
 </style>
 </head>
 <body>
@@ -378,11 +391,14 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 <!-- ── ANALYTICS PAGE ── -->
 <div class="page" id="page-analytics">
   <div class="analytics-page">
-    <div class="kpi-grid" id="kpi-grid">
-      <div class="loading-wrap" style="grid-column:1/-1"><div class="spinner"></div></div>
-    </div>
-    <div class="analytics-grid" id="analytics-grid">
-    </div>
+    <!-- Month tabs -->
+    <div class="month-tabs" id="month-tabs"></div>
+    <!-- Week tabs -->
+    <div class="week-tabs" id="week-tabs"></div>
+    <!-- KPIs -->
+    <div class="kpi-grid" id="kpi-grid"></div>
+    <!-- Charts -->
+    <div class="analytics-grid" id="analytics-grid"></div>
   </div>
 </div>
 
@@ -466,10 +482,12 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
     <div class="chat-msg bot">Hi! I can help you find caregiver availability, check schedules, and answer questions about bookings. What would you like to know?</div>
   </div>
   <div class="chat-chips">
-    <div class="chat-chip" onclick="quickAsk(this)">Who's available today?</div>
-    <div class="chat-chip" onclick="quickAsk(this)">Show free caregivers this week</div>
-    <div class="chat-chip" onclick="quickAsk(this)">Which HC has most bookings?</div>
-    <div class="chat-chip" onclick="quickAsk(this)">Caregivers ending soon</div>
+    <div class="chat-chip" onclick="quickAsk(this)">Who is available today?</div>
+    <div class="chat-chip" onclick="quickAsk(this)">Who is busy today?</div>
+    <div class="chat-chip" onclick="quickAsk(this)">Packages expiring this week</div>
+    <div class="chat-chip" onclick="quickAsk(this)">How many caregivers per HC?</div>
+    <div class="chat-chip" onclick="quickAsk(this)">Any unassigned orders?</div>
+    <div class="chat-chip" onclick="quickAsk(this)">Who is available tomorrow?</div>
   </div>
   <div class="chat-bottom">
     <textarea class="chat-input" id="chat-input" rows="1" placeholder="Ask about schedules..." onkeydown="chatKey(event)"></textarea>
@@ -494,7 +512,52 @@ let rawData=[], allData=[], weekOffCfg={};
 let activeCG=null, calYear=new Date().getFullYear(), calMo=new Date().getMonth();
 let chatOpen=false, chatHistory=[], chatData='';
 
+const CG_DATA = {"christel gador": {"age": 29, "expertise": "All"}, "imelda paeste": {"age": 51, "expertise": "Newborn/Infant"}, "armida mitra maranan": {"age": 49, "expertise": "Newborn/Infant"}, "nolie valdez": {"age": 41, "expertise": "Newborn/Infant"}, "nolie a valdez": {"age": 41, "expertise": "Newborn/Infant"}, "lorna brazil": {"age": 47, "expertise": "Newborn/Infant"}, "lornie joy tarian": {"age": 34, "expertise": "Newborn/Infant"}, "marilyn serrano": {"age": 41, "expertise": "Newborn/Infant"}, "leilani deves fernandez": {"age": 54, "expertise": "Newborn/Infant"}, "jennifer avila abaygar": {"age": 45, "expertise": "Newborn/Infant"}, "ria baylon molina": {"age": 48, "expertise": "Newborn/Infant"}, "melita barrantes lequin": {"age": 48, "expertise": "Newborn/Infant"}, "melody kato": {"age": 37, "expertise": "Newborn/Infant"}, "nelia ortega cepe ma.": {"age": 54, "expertise": "Newborn/Infant"}, "theresa lascano antioquia": {"age": 39, "expertise": "Newborn/Infant"}, "maria rio egos bendanio": {"age": 35, "expertise": "Newborn/Infant"}, "waruni lakshika": {"age": 30, "expertise": "Newborn/Infant"}, "marivic": {"age": 35, "expertise": "All"}, "ritche": {"age": 42, "expertise": "All"}, "maria isabel": {"age": 41, "expertise": "All"}, "jonalyn b": {"age": 47, "expertise": "All"}, "jancy": {"age": 36, "expertise": "\u2014"}, "jancy kanappakan": {"age": 36, "expertise": "\u2014"}, "christine balanco": {"age": 35, "expertise": "All"}, "soe soe": {"age": 37, "expertise": "Newborn/Infant"}, "normita rabena": {"age": 42, "expertise": "Newborn/Infant"}, "alysa cuadras": {"age": 35, "expertise": "All"}, "cernina peleo": {"age": 48, "expertise": "Newborn/Infant"}, "myleine": {"age": 40, "expertise": "Newborn/Infant"}, "rosemary": {"age": 45, "expertise": "Newborn/Infant"}, "analyn santiago": {"age": 39, "expertise": "Newborn/Infant"}, "angela flores": {"age": 38, "expertise": "Newborn/Infant"}, "charmaine gerondio": {"age": 34, "expertise": "Newborn/Infant"}, "rizalyn caparas": {"age": 43, "expertise": "All"}, "rewelyn fernandez": {"age": 36, "expertise": "Toddler"}, "maria christina m. ele": {"age": 45, "expertise": "Newborn/Infant"}, "armie e. ramos": {"age": 36, "expertise": "Newborn/Infant"}, "dennel del alfredo": {"age": 40, "expertise": "Newborn/Infant"}, "aisa maisalat": {"age": 44, "expertise": "Newborn/Infant"}, "aisa guido maisalat": {"age": 44, "expertise": "Newborn/Infant"},
+  "imelda": {"age": 51, "expertise": "Newborn/Infant"},
+  "christine dimaano": {"age": 35, "expertise": "All"},
+  "nelia": {"age": 54, "expertise": "Newborn/Infant"},
+  "varuni": {"age": 30, "expertise": "Newborn/Infant"},
+  "melody": {"age": 37, "expertise": "Newborn/Infant"},
+  "theresa": {"age": 39, "expertise": "Newborn/Infant"},
+  "ma chite panizales": {"age": 35, "expertise": "Newborn/Infant"},
+  "mylene ladiero": {"age": 40, "expertise": "Newborn/Infant"},
+  "leilani fernandez": {"age": 54, "expertise": "Newborn/Infant"},
+  "dennel": {"age": 40, "expertise": "Newborn/Infant"},
+  "melissa punhalban": {"age": 35, "expertise": "Newborn/Infant"},
+  "lorelie": {"age": 49, "expertise": "Newborn/Infant"},
+  "cernina de luna peleo": {"age": 48, "expertise": "Newborn/Infant"},
+  "jennifer": {"age": 45, "expertise": "Newborn/Infant"},
+  "rose marie pisawen": {"age": 45, "expertise": "Newborn/Infant"},
+  "melita": {"age": 48, "expertise": "Newborn/Infant"},
+  "armie elias ramos": {"age": 36, "expertise": "Newborn/Infant"},
+  "isabel": {"age": 41, "expertise": "All"},
+  "jenelyn": {"age": 38, "expertise": "Newborn/Infant"},
+  "jusel bahinting": {"age": 35, "expertise": "Newborn/Infant"},
+  "vijaytha sahu": {"age": 35, "expertise": "All"},
+  "greeshma gopal": {"age": 30, "expertise": "Newborn/Infant"},
+  "cristylet vicencio": {"age": 35, "expertise": "Newborn/Infant"},
+  "ria molina": {"age": 48, "expertise": "Newborn/Infant"},
+  "cristy yabut": {"age": 35, "expertise": "Newborn/Infant"},
+  "cherrylen": {"age": 43, "expertise": "Newborn/Infant"},
+  "analiza": {"age": 35, "expertise": "Newborn/Infant"},
+  "april pancho guiyab": {"age": 40, "expertise": "Newborn/Infant"},
+  "juna arenajo octaviano": {"age": 35, "expertise": "Newborn/Infant"},
+  "genny ilao laborada": {"age": 35, "expertise": "Newborn/Infant"},
+  "shirley magsayo": {"age": 40, "expertise": "Newborn/Infant"},
+  "suzette concepcion": {"age": 35, "expertise": "Newborn/Infant"},
+  "mary rose tanedo": {"age": 35, "expertise": "Newborn/Infant"}, "rowena laurel": {"age": 42, "expertise": "Newborn/Infant"}, "isabel marilou arquillano merin": {"age": 57, "expertise": "Newborn/Infant"}, "lorelie maranan": {"age": 49, "expertise": "Newborn/Infant"}, "jenelyn dacay": {"age": 38, "expertise": "Newborn/Infant"}, "emeline calimag": {"age": 35, "expertise": "All"}, "emma rivera gabelo": {"age": 35, "expertise": "All"}, "jenny salvadico": {"age": 35, "expertise": "All"}, "maribel agtang maddela": {"age": 35, "expertise": "All"}};
 // ── Helpers ─────────────────────────────────────────────────────
+
+function cgInfo(name){
+  if(!name) return {age:'—',expertise:'—'};
+  const key = name.toLowerCase().trim();
+  // Exact match
+  if(CG_DATA[key]) return CG_DATA[key];
+  // Partial match — check if any key is contained in name or vice versa
+  const found = Object.keys(CG_DATA).find(k => key.includes(k) || k.includes(key.split(' ')[0]+' '+key.split(' ')[1]));
+  return found ? CG_DATA[found] : {age:'—',expertise:'—'};
+}
+
 function todayStr(){const n=new Date();return n.getFullYear()+'-'+pad(n.getMonth()+1)+'-'+pad(n.getDate());}
 function pad(n){return String(n).padStart(2,'0');}
 function parseD(s){if(!s||s.length<10)return null;const p=s.slice(0,10).split('-');return{y:+p[0],m:+p[1]-1,d:+p[2]};}
@@ -720,6 +783,19 @@ function renderHCGrid(){
 .cg-search-input::placeholder{color:var(--text3)}
 .cg-filter-select{background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'Inter',sans-serif;font-size:12px;padding:7px 12px;border-radius:7px;outline:none;cursor:pointer;appearance:none;padding-right:28px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%238b949e' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center}
 .cg-result-count{font-size:11px;color:var(--text2);font-family:'JetBrains Mono',monospace;margin-left:auto}
+
+/* ── Analytics v2 ── */
+.analytics-page{padding:20px}
+.month-tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:16px}
+.mo-tab{padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:11px;font-weight:500;cursor:pointer;color:var(--text2);background:var(--bg2);transition:all .15s;font-family:'Inter',sans-serif}
+.mo-tab:hover{border-color:var(--accent);color:var(--accent)}
+.mo-tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.week-tabs{display:flex;gap:4px;margin-bottom:16px}
+.wk-tab{padding:5px 14px;border:1px solid var(--border);border-radius:20px;font-size:11px;cursor:pointer;color:var(--text2);background:var(--bg2);transition:all .15s;font-family:'JetBrains Mono',monospace}
+.wk-tab:hover{border-color:var(--accent);color:var(--accent)}
+.wk-tab.active{background:var(--bg3);color:var(--text);border-color:var(--accent);font-weight:600}
+.analytics-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px}
+.analytics-title{font-size:13px;font-weight:600;color:var(--text)}
 </style>
         <div class="cg-avail-tag">✓ Available</div>
         <div class="cg-unavail-tag">✗ Unavailable</div>
@@ -731,8 +807,8 @@ function renderHCGrid(){
           </div>
         </div>
         <div class="cg-meta">
-          <div class="cg-meta-item"><div class="meta-label">Expertise</div><div class="meta-value empty">—</div></div>
-          <div class="cg-meta-item"><div class="meta-label">Age</div><div class="meta-value empty">—</div></div>
+          <div class="cg-meta-item"><div class="meta-label">Expertise</div><div class="meta-value ${cgInfo(cg).expertise!=='—'?'':'empty'}">${cgInfo(cg).expertise||'—'}</div></div>
+          <div class="cg-meta-item"><div class="meta-label">Age</div><div class="meta-value ${cgInfo(cg).age!=='—'?'':'empty'}">${cgInfo(cg).age||'—'}</div></div>
           <div class="cg-meta-item"><div class="meta-label">Marital</div><div class="meta-value empty">—</div></div>
           <div class="cg-meta-item"><div class="meta-label">Score</div><div class="meta-value empty">—</div></div>
         </div>
@@ -898,52 +974,146 @@ function clearAvail(){
   document.querySelectorAll('.cg-card').forEach(c=>c.classList.remove('available','unavailable'));
 }
 
-// ── Analytics ────────────────────────────────────────────────────
-function renderAnalytics(){
-  const n=new Date();const yr=n.getFullYear(),mo=n.getMonth();
-  const month=allData.filter(r=>{const d=parseD(r.date);return d&&d.y===yr&&d.m===mo;});
-  const total=month.length;
-  const duty=month.filter(r=>r.status.toLowerCase()==='duty').length;
-  const cgs=new Set(month.map(r=>r.caregiver)).size;
-  const util=total?Math.round((duty/total)*100):0;
+// ── Analytics v2 ────────────────────────────────────────────────
+var anaMo = new Date().getMonth();
+var anaWk = 'all'; // 'all', 'w1', 'w2', 'w3', 'w4'
+var anaYr = new Date().getFullYear();
 
-  document.getElementById('kpi-grid').innerHTML=`
-    <div class="kpi k1"><div class="kpi-val" style="color:var(--accent)">${total}</div><div class="kpi-label">Total Shifts</div></div>
-    <div class="kpi k2"><div class="kpi-val" style="color:var(--duty)">${duty}</div><div class="kpi-label">On Duty</div></div>
-    <div class="kpi k3"><div class="kpi-val" style="color:var(--text2)">${cgs}</div><div class="kpi-label">Caregivers</div></div>
+function renderAnalytics(){
+  renderMonthTabs();
+  renderWeekTabs();
+  renderAnalyticsData();
+}
+
+function renderMonthTabs(){
+  const avail = new Set(rawData.map(r => r.date ? r.date.substring(0,7) : '').filter(Boolean));
+  document.getElementById('month-tabs').innerHTML = MONTHS.map((m,i) => {
+    const key = anaYr+'-'+String(i+1).padStart(2,'0');
+    const has = avail.has(key);
+    return `<div class="mo-tab${i===anaMo?' active':''}" onclick="setAnaMo(${i})" style="${!has?'opacity:0.4':''}">${m.slice(0,3)}</div>`;
+  }).join('');
+}
+
+function renderWeekTabs(){
+  // Get weeks in selected month
+  const year = anaYr, mo = anaMo;
+  const firstDay = new Date(year, mo, 1);
+  const lastDay = new Date(year, mo+1, 0);
+  let weeks = [];
+  let cur = new Date(firstDay);
+  let wNum = 1;
+  while(cur <= lastDay && wNum <= 5){
+    const wStart = cur.toISOString().split('T')[0];
+    const wEnd = new Date(Math.min(new Date(cur.getTime()+6*86400000), lastDay)).toISOString().split('T')[0];
+    weeks.push({num: wNum, start: wStart, end: wEnd, label: `W${wNum} (${wStart.slice(5)}-${wEnd.slice(5)})`});
+    cur.setDate(cur.getDate()+7);
+    wNum++;
+  }
+  document.getElementById('week-tabs').innerHTML =
+    `<div class="wk-tab${anaWk==='all'?' active':''}" onclick="setAnaWk('all')">All Month</div>` +
+    weeks.map(w => `<div class="wk-tab${anaWk===w.start?' active':''}" onclick="setAnaWk('${w.start}','${w.end}')">${w.label}</div>`).join('');
+}
+
+var anaWkStart='', anaWkEnd='';
+function setAnaMo(mo){ anaMo=mo; anaWk='all'; anaWkStart=''; anaWkEnd=''; renderAnalytics(); }
+function setAnaWk(wk, end){
+  if(wk==='all'){ anaWk='all'; anaWkStart=''; anaWkEnd=''; }
+  else { anaWk=wk; anaWkStart=wk; anaWkEnd=end||wk; }
+  renderWeekTabs();
+  renderAnalyticsData();
+}
+
+function getAnalyticsData(){
+  return allData.filter(r => {
+    const d = parseD(r.date);
+    if(!d || d.y !== anaYr || d.m !== anaMo) return false;
+    if(anaWk !== 'all' && anaWkStart && anaWkEnd){
+      return r.date >= anaWkStart && r.date <= anaWkEnd;
+    }
+    return true;
+  });
+}
+
+function renderAnalyticsData(){
+  const data = getAnalyticsData();
+  const periodLabel = anaWk==='all' ? MONTHS[anaMo]+' '+anaYr : `${MONTHS[anaMo]} W — ${anaWkStart} to ${anaWkEnd}`;
+
+  const total = data.length;
+  const duty = data.filter(r=>r.status.toLowerCase()==='duty').length;
+  const cgs = new Set(data.map(r=>r.caregiver)).size;
+  const util = total ? Math.round((duty/total)*100) : 0;
+
+  // Unique clients
+  const clients = new Set(data.filter(r=>r.client_name).map(r=>r.client_name)).size;
+
+  document.getElementById('kpi-grid').innerHTML = `
+    <div class="kpi k1"><div class="kpi-val" style="color:var(--accent)">${duty}</div><div class="kpi-label">Duty Shifts</div></div>
+    <div class="kpi k2"><div class="kpi-val" style="color:var(--duty)">${cgs}</div><div class="kpi-label">Active CGs</div></div>
+    <div class="kpi k3"><div class="kpi-val" style="color:var(--text2)">${clients}</div><div class="kpi-label">Clients</div></div>
     <div class="kpi k4"><div class="kpi-val" style="color:var(--sick)">${util}%</div><div class="kpi-label">Utilization</div></div>`;
 
   // HC performance
-  const hcMap={};month.forEach(r=>{if(r.homecare)hcMap[r.homecare]=(hcMap[r.homecare]||0)+1;});
-  const hcS=Object.entries(hcMap).sort((a,b)=>b[1]-a[1]);const maxHC=hcS[0]?hcS[0][1]:1;
+  const hcMap={};
+  data.filter(r=>r.status.toLowerCase()==='duty').forEach(r=>{if(r.homecare)hcMap[r.homecare]=(hcMap[r.homecare]||0)+1;});
+  const hcS=Object.entries(hcMap).sort((a,b)=>b[1]-a[1]);
+  const maxHC=hcS[0]?hcS[0][1]:1;
 
-  // CG workload
-  const cgMap={};month.filter(r=>r.status.toLowerCase()==='duty').forEach(r=>{if(r.caregiver)cgMap[r.caregiver]=(cgMap[r.caregiver]||0)+1;});
-  const cgS=Object.entries(cgMap).sort((a,b)=>b[1]-a[1]).slice(0,8);const maxCG=cgS[0]?cgS[0][1]:1;
+  // Top caregivers
+  const cgMap={};
+  data.filter(r=>r.status.toLowerCase()==='duty').forEach(r=>{if(r.caregiver)cgMap[r.caregiver]=(cgMap[r.caregiver]||0)+1;});
+  const cgS=Object.entries(cgMap).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const maxCG=cgS[0]?cgS[0][1]:1;
 
-  // Day of week
-  const dowMap={};DAYS.forEach(d=>dowMap[d]={duty:0,total:0});
-  month.forEach(r=>{const dow=DAYS[new Date(r.date+'T12:00:00').getDay()];dowMap[dow].total++;if(r.status.toLowerCase()==='duty')dowMap[dow].duty++;});
-  const maxDow=Math.max(...Object.values(dowMap).map(v=>v.total),1);
+  // New vs Repeat — unique clients by type
+  const clientTypeMap = {};
+  data.forEach(r => {
+    if(!r.client_name) return;
+    if(!clientTypeMap[r.client_name]) clientTypeMap[r.client_name] = r.type_of_user;
+  });
+  const newC = Object.values(clientTypeMap).filter(t=>(t||'').toLowerCase()==='new').length;
+  const repC = Object.values(clientTypeMap).filter(t=>(t||'').toLowerCase()==='repeat').length;
+  const totalC = newC + repC;
+  const newPct = totalC ? Math.round(newC/totalC*100) : 0;
+  const repPct = totalC ? Math.round(repC/totalC*100) : 0;
 
-  // Retention
-  const newC=month.filter(r=>(r.type_of_user||'').toLowerCase()==='new').length;
-  const repC=month.filter(r=>(r.type_of_user||'').toLowerCase()==='repeat').length;
-
-  document.getElementById('analytics-grid').innerHTML=`
-    <div class="a-card"><div class="a-title"><div class="a-title-bar"></div>HC Performance — ${MONTHS[mo]} ${yr}</div>
-      ${hcS.map(([k,v])=>`<div class="bar-row"><div class="bar-label">${k.split(' ')[0]}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/maxHC*100)}%;background:${hcColor(k)}"></div></div><div class="bar-val">${v}</div></div>`).join('')}
+  document.getElementById('analytics-grid').innerHTML = `
+    <div class="a-card">
+      <div class="a-title"><div class="a-title-bar"></div>HC Performance — ${periodLabel}</div>
+      ${hcS.length ? hcS.map(([k,v])=>`
+        <div class="bar-row">
+          <div class="bar-label" title="${k}">${k.split(' ')[0]}</div>
+          <div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/maxHC*100)}%;background:${hcColor(k)}"></div></div>
+          <div class="bar-val">${v}</div>
+        </div>`).join('') : '<div style="color:var(--text2);font-size:12px;padding:10px">No data for this period</div>'}
     </div>
-    <div class="a-card"><div class="a-title"><div class="a-title-bar" style="background:var(--duty)"></div>Top Caregivers by Duty</div>
-      ${cgS.map(([k,v])=>`<div class="bar-row"><div class="bar-label">${k.split(' ')[0]}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/maxCG*100)}%;background:var(--accent)"></div></div><div class="bar-val">${v}</div></div>`).join('')}
+    <div class="a-card">
+      <div class="a-title"><div class="a-title-bar" style="background:var(--duty)"></div>Top Caregivers by Duty</div>
+      ${cgS.length ? cgS.map(([k,v])=>`
+        <div class="bar-row">
+          <div class="bar-label" title="${k}">${k.split(' ')[0]}</div>
+          <div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/maxCG*100)}%;background:var(--accent)"></div></div>
+          <div class="bar-val">${v}d</div>
+        </div>`).join('') : '<div style="color:var(--text2);font-size:12px;padding:10px">No data</div>'}
     </div>
-    <div class="a-card"><div class="a-title"><div class="a-title-bar" style="background:var(--sick)"></div>Shifts by Day of Week</div>
-      ${DAYS.map(d=>{const v=dowMap[d];const pct=v.total?Math.round(v.duty/v.total*100):0;return`<div class="bar-row"><div class="bar-label">${d.slice(0,3)}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(v.total/maxDow*100)}%;background:var(--carezone)"></div></div><div class="bar-val">${pct}%</div></div>`;}).join('')}
-    </div>
-    <div class="a-card"><div class="a-title"><div class="a-title-bar" style="background:#e879f9"></div>Client Retention</div>
+    <div class="a-card">
+      <div class="a-title"><div class="a-title-bar" style="background:#e879f9"></div>New vs Repeat Clients</div>
       <div class="retention-boxes">
-        <div class="ret-box"><div class="ret-val" style="color:var(--duty)">${newC}</div><div class="ret-label">New Clients</div></div>
-        <div class="ret-box"><div class="ret-val" style="color:var(--accent)">${repC}</div><div class="ret-label">Repeat Clients</div></div>
+        <div class="ret-box">
+          <div class="ret-val" style="color:var(--accent)">${newC}</div>
+          <div class="ret-label">New (${newPct}%)</div>
+        </div>
+        <div class="ret-box">
+          <div class="ret-val" style="color:var(--duty)">${repC}</div>
+          <div class="ret-label">Repeat (${repPct}%)</div>
+        </div>
+      </div>
+      <div style="margin-top:12px;height:8px;border-radius:4px;overflow:hidden;background:var(--bg3);display:flex">
+        <div style="width:${newPct}%;background:var(--accent);transition:width .3s"></div>
+        <div style="width:${repPct}%;background:var(--duty);transition:width .3s"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:10px;color:var(--text2)">
+        <span style="color:var(--accent)">■ New</span>
+        <span style="color:var(--duty)">■ Repeat</span>
       </div>
     </div>`;
 }
@@ -1002,7 +1172,7 @@ async function sendChat(){
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        system:'You are Valeo\'s AI scheduling assistant. Help the operations team with caregiver availability and schedules. Be concise and specific.\n\nSCHEDULE DATA:\n'+chatData,
+        system:'You are an operations assistant for Valeo Health homecare scheduling. Answer questions about caregiver availability, schedules, and assignments.\n\nFORMAT RULES:\n- When asked who is available: list ONLY available caregivers grouped by HC, do NOT show busy ones\n- When asked who is busy: list ONLY busy caregivers with client name\n- Use clean bullet points\n- Group by Homecare provider\n- End with a one-line summary count\n- Keep responses concise under 20 lines\n- Never show raw data\n\nSCHEDULE DATA:\n'+chatData,
         messages:chatHistory
       })
     });
