@@ -280,6 +280,50 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .wk-tab.active{background:var(--bg3);color:var(--text);border-color:var(--accent);font-weight:600}
 .analytics-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px}
 .analytics-title{font-size:13px;font-weight:600;color:var(--text)}
+
+/* ── Override system ── */
+.override-btn{padding:5px 10px;border:1px solid var(--border);border-radius:6px;font-size:10px;font-weight:500;cursor:pointer;background:var(--bg3);color:var(--text2);font-family:'Inter',sans-serif;transition:all .15s}
+.override-btn:hover{border-color:var(--accent);color:var(--accent)}
+.override-modal{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;display:none;align-items:center;justify-content:center}
+.override-modal.show{display:flex}
+.override-box{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:22px;width:360px;max-width:95vw}
+.override-title{font-size:14px;font-weight:600;margin-bottom:14px;color:var(--text)}
+.override-date-info{font-size:12px;color:var(--text2);margin-bottom:14px;padding:8px 12px;background:var(--bg3);border-radius:6px;font-family:'JetBrains Mono',monospace}
+.override-type-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.ov-type-btn{padding:8px 10px;border:1px solid var(--border);border-radius:7px;font-size:11px;font-weight:500;cursor:pointer;background:var(--bg3);color:var(--text2);text-align:center;transition:all .15s;font-family:'Inter',sans-serif}
+.ov-type-btn:hover{border-color:var(--accent);color:var(--accent)}
+.ov-type-btn.selected{font-weight:600}
+.ov-type-btn.sick.selected{background:rgba(248,81,73,.15);color:var(--absent);border-color:var(--absent)}
+.ov-type-btn.off.selected{background:rgba(110,118,129,.15);color:var(--text2);border-color:var(--border2)}
+.ov-type-btn.holiday.selected{background:rgba(47,129,247,.15);color:var(--accent);border-color:var(--accent)}
+.ov-type-btn.unpaid.selected{background:rgba(210,153,34,.15);color:var(--sick);border-color:var(--sick)}
+.ov-type-btn.cancelled.selected{background:rgba(248,81,73,.1);color:var(--absent);border-color:var(--absent)}
+.ov-type-btn.removed.selected{background:rgba(110,118,129,.1);color:var(--text3);border-color:var(--border)}
+.ov-type-btn.manual.selected{background:rgba(63,185,80,.12);color:var(--duty);border-color:var(--duty)}
+.ov-note{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'Inter',sans-serif;font-size:12px;padding:8px 10px;border-radius:6px;outline:none;resize:none;margin-bottom:12px}
+.ov-note:focus{border-color:var(--accent)}
+.ov-actions{display:flex;gap:8px}
+.ov-save-btn{flex:1;padding:9px;background:var(--accent);border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif}
+.ov-remove-btn{padding:9px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--absent);font-size:12px;cursor:pointer;font-family:'Inter',sans-serif}
+.ov-cancel-btn{padding:9px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text2);font-size:12px;cursor:pointer;font-family:'Inter',sans-serif}
+.cal-ev.sick{background:rgba(248,81,73,.2);color:var(--absent);border-left:2px solid var(--absent)}
+.cal-ev.off-day{background:rgba(110,118,129,.2);color:var(--text2);border-left:2px solid var(--text2)}
+.cal-ev.holiday{background:rgba(47,129,247,.2);color:var(--accent);border-left:2px solid var(--accent)}
+.cal-ev.unpaid{background:rgba(210,153,34,.2);color:var(--sick);border-left:2px solid var(--sick)}
+.cal-ev.override-removed{background:rgba(110,118,129,.1);color:var(--text3);text-decoration:line-through;border-left:2px solid var(--border)}
+.working-days-bar{display:flex;align-items:center;gap:6px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
+.wd-label{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.04em}
+.wd-count{font-size:12px;font-weight:700;color:var(--duty);font-family:'JetBrains Mono',monospace}
+.wd-total{font-size:10px;color:var(--text2)}
+.wd-bar-track{flex:1;height:4px;background:var(--bg3);border-radius:2px;overflow:hidden}
+.wd-bar-fill{height:4px;background:var(--duty);border-radius:2px;transition:width .3s}
+/* Split CG */
+.split-cg-row{display:flex;align-items:center;gap:6px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
+.split-cg-label{font-size:10px;color:var(--text2);white-space:nowrap}
+.split-cg-select{flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:11px;padding:4px 8px;border-radius:5px;outline:none;font-family:'Inter',sans-serif;cursor:pointer}
+.split-cg-select:focus{border-color:var(--accent)}
+.cal-ev.reliever{background:rgba(232,121,249,.15);color:#e879f9;border-left:2px solid #e879f9}
+
 </style>
 </head>
 <body>
@@ -471,6 +515,38 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
   </div>
 </div>
 
+
+<!-- ── OVERRIDE MODAL ── -->
+<div class="override-modal" id="override-modal">
+  <div class="override-box">
+    <div class="override-title">📝 Add Override</div>
+    <div class="override-date-info" id="ov-date-info">—</div>
+    <div class="override-type-grid">
+      <div class="ov-type-btn sick" onclick="selectOvType('sick',this)">🤒 Sick Leave</div>
+      <div class="ov-type-btn off" onclick="selectOvType('off',this)">🌙 Day Off</div>
+      <div class="ov-type-btn holiday" onclick="selectOvType('holiday',this)">🎉 Public Holiday</div>
+      <div class="ov-type-btn unpaid" onclick="selectOvType('unpaid',this)">💸 Unpaid Leave</div>
+      <div class="ov-type-btn cancelled" onclick="selectOvType('cancelled',this)">❌ Cancelled</div>
+      <div class="ov-type-btn removed" onclick="selectOvType('removed',this)">🗑 Remove Booking</div>
+      <div class="ov-type-btn manual" onclick="selectOvType('manual',this)" style="grid-column:1/-1">➕ Add Manual Booking</div>
+    </div>
+    <!-- Manual booking fields - shown only when manual selected -->
+    <div id="ov-manual-fields" style="display:none;margin-bottom:10px">
+      <input class="ov-note" id="ov-client" type="text" placeholder="Client name..." style="margin-bottom:6px">
+      <div style="display:flex;gap:6px">
+        <input class="ov-note" id="ov-time-start" type="text" placeholder="Start time e.g. 9:00 AM" style="flex:1;margin-bottom:6px">
+        <input class="ov-note" id="ov-time-end" type="text" placeholder="End time e.g. 3:00 PM" style="flex:1;margin-bottom:6px">
+      </div>
+    </div>
+    <textarea class="ov-note" id="ov-note" rows="2" placeholder="Optional note..."></textarea>
+    <div class="ov-actions">
+      <button class="ov-cancel-btn" onclick="closeOvModal()">Cancel</button>
+      <button class="ov-remove-btn" onclick="clearOverride()">Clear</button>
+      <button class="ov-save-btn" onclick="saveOverride()">Save Override</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── CHATBOT ── -->
 <button class="chat-fab" onclick="toggleChat()">💬</button>
 <div class="chat-panel" id="chat-panel">
@@ -497,7 +573,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 
 <script>
 // ── CONFIG ──────────────────────────────────────────────────────
-const N8N_DATA_URL  = 'https://nishi25.app.n8n.cloud/webhook/d0f62c8a-6d05-4834-885e-6ca9bb589d9a';
+const N8N_DATA_URL      = 'https://nishi25.app.n8n.cloud/webhook/d0f62c8a-6d05-4834-885e-6ca9bb589d9a';
+const N8N_OVERRIDE_READ  = 'https://nishi25.app.n8n.cloud/webhook/overrides-read';
+const N8N_OVERRIDE_WRITE = 'https://nishi25.app.n8n.cloud/webhook/overrides-write';
 // ────────────────────────────────────────────────────────────────
 
 const HC_COLORS = {
@@ -509,6 +587,8 @@ const DAYS  = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Satu
 const MONTHS= ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
 let rawData=[], allData=[], weekOffCfg={};
+let overrides = {}; // key: "caregiver|date" or "order_id|date" -> override object
+let splitAssignments = {}; // key: order_id -> {cg2: name}
 let activeCG=null, calYear=new Date().getFullYear(), calMo=new Date().getMonth();
 let chatOpen=false, chatHistory=[], chatData='';
 
@@ -576,11 +656,26 @@ function fmtTime(t){
   let h=+p[0];const mi=p[1]||'00',ap=h>=12?'PM':'AM';h=h%12||12;
   return `${h}:${mi} ${ap}`;
 }
-function calcEndDate(start,pkg){
+function calcEndDate(start,pkg,cgKey){
   const pt=pkgType(pkg);
-  if(pt==='monthly'){const w=extractWeeks(pkg);return addDays(start,w!==null?(w*7)-1:27);}
-  if(pt==='weekly'){const d=extractDays2(pkg);return addDays(start,d!==null?d-1:6);}
-  return start;
+  let baseEnd;
+  if(pt==='monthly'){
+    const w=extractWeeks(pkg)||4;
+    baseEnd = addDays(start,(w*7)-1); // always block ALL days e.g. 28 days
+  } else if(pt==='weekly'){
+    const w=extractWeeks(pkg)||1;
+    baseEnd = addDays(start,(w*7)-1); // weekly also blocks full weeks
+  } else {
+    return start;
+  }
+  // Extend end date for ALL override types
+  if(cgKey){
+    const ovCount = Object.values(overrides).filter(function(o){
+      return o.caregiver===cgKey && ['sick','off','holiday','unpaid','cancelled','removed','absent'].includes(o.type);
+    }).length;
+    if(ovCount>0) baseEnd = addDays(baseEnd, ovCount);
+  }
+  return baseEnd;
 }
 function calcTimeEnd(timeStr,pkg){
   const h=extractHours(pkg);if(!h||!timeStr)return'';
@@ -614,6 +709,17 @@ function expandOrders(orders){
       const dayName=DAYS[cur.getDay()];
       const rec={...o,date:ds};
       if(offDays.includes(dayName)){rec.status='Week Off';rec.time_start='';rec.time_end='';}
+      // Override from localStorage takes priority
+      const ovKey = (o.caregiver||'') + '|' + ds;
+      if(overrides[ovKey]){
+        const ov = overrides[ovKey];
+        if(ov.type==='sick')      {rec.status='Sick';rec.time_start='';rec.time_end='';}
+        else if(ov.type==='off')  {rec.status='Week Off';rec.time_start='';rec.time_end='';}
+        else if(ov.type==='holiday'){rec.status='Holiday';rec.time_start='';rec.time_end='';}
+        else if(ov.type==='unpaid'){rec.status='Unpaid';rec.time_start='';rec.time_end='';}
+        else if(ov.type==='cancelled'){rec.status='Cancelled';rec.time_start='';rec.time_end='';}
+        else if(ov.type==='removed'){rec.status='Removed';rec.time_start='';rec.time_end='';}
+      }
       res.push(rec);
       cur.setDate(cur.getDate()+1);
     }
@@ -665,7 +771,8 @@ async function loadData(force=false){
       const excludedHC=['Carezone Home Healthcare LLC','Dummy HomeCare','Helpful Agency','Nifas HC','babysitting KSA','Pyramid Home Health care'];
       if(excludedHC.some(e=>hcRaw.toLowerCase()===e.toLowerCase()))return null;
       const pkg=String(r['Parent_Package']||r['Package']||'');
-      const endDate=calcEndDate(datePart,pkg);
+      const nurseKey=String(r['Nurse_Assigned']||'').trim();
+      const endDate=calcEndDate(datePart,pkg,nurseKey);
       // Clean booked slot time — handle "10:00-11:00" or "8:00-20 AM" formats
       const cleanTime = timePart ? timePart.split('-')[0].trim() : '';
       const t1 = cleanTime ? fmtTime(cleanTime) : '';
@@ -706,6 +813,9 @@ async function loadData(force=false){
       }
     });
     allData = Object.values(dedupMap);
+    // Load overrides from n8n
+    await loadOverrides();
+    applyOverrides();
     setSyncState('ok','Synced '+new Date().toLocaleTimeString());
     buildChatData();
     renderHCGrid();
@@ -753,50 +863,7 @@ function renderHCGrid(){
 
       html+=`<div class="cg-card" id="${cardId}" onclick="openCGCal('${cg.replace(/'/g,"\\'")}','${hc.replace(/'/g,"\\'")}',this)" style="--card-col:${col}">
         <div class="cg-card::before" style="background:${col}"></div>
-        <style>#${cardId}::before{background:${col}}
-
-/* ── Operations Tab ── */
-.ops-page{padding:20px;display:flex;flex-direction:column;gap:20px}
-.ops-section{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden}
-.ops-section-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg3)}
-.ops-section-title{font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px}
-.ops-badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;font-family:'JetBrains Mono',monospace}
-.ops-badge.red{background:rgba(248,81,73,.15);color:var(--absent)}
-.ops-badge.yellow{background:rgba(210,153,34,.15);color:var(--sick)}
-.ops-badge.blue{background:rgba(47,129,247,.15);color:var(--accent)}
-.ops-table{width:100%;border-collapse:collapse}
-.ops-table th{padding:9px 14px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);border-bottom:1px solid var(--border)}
-.ops-table td{padding:10px 14px;font-size:12px;border-bottom:1px solid var(--border);vertical-align:middle}
-.ops-table tr:last-child td{border-bottom:none}
-.ops-table tr:hover td{background:var(--bg3)}
-.exp-badge{display:inline-flex;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;font-family:'JetBrains Mono',monospace}
-.exp-badge.w1{background:rgba(248,81,73,.15);color:var(--absent)}
-.exp-badge.w2{background:rgba(210,153,34,.15);color:var(--sick)}
-.exp-badge.w3{background:rgba(47,129,247,.15);color:var(--accent)}
-.exp-badge.w4{background:rgba(63,185,80,.12);color:var(--duty)}
-.ops-empty{padding:30px;text-align:center;color:var(--text2);font-size:12px}
-
-/* ── CG Search bar ── */
-.cg-search-bar{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;background:var(--bg2);flex-wrap:wrap}
-.cg-search-input{background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'Inter',sans-serif;font-size:12px;padding:7px 12px;border-radius:7px;outline:none;width:240px}
-.cg-search-input:focus{border-color:var(--accent)}
-.cg-search-input::placeholder{color:var(--text3)}
-.cg-filter-select{background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'Inter',sans-serif;font-size:12px;padding:7px 12px;border-radius:7px;outline:none;cursor:pointer;appearance:none;padding-right:28px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%238b949e' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center}
-.cg-result-count{font-size:11px;color:var(--text2);font-family:'JetBrains Mono',monospace;margin-left:auto}
-
-/* ── Analytics v2 ── */
-.analytics-page{padding:20px}
-.month-tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:16px}
-.mo-tab{padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:11px;font-weight:500;cursor:pointer;color:var(--text2);background:var(--bg2);transition:all .15s;font-family:'Inter',sans-serif}
-.mo-tab:hover{border-color:var(--accent);color:var(--accent)}
-.mo-tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
-.week-tabs{display:flex;gap:4px;margin-bottom:16px}
-.wk-tab{padding:5px 14px;border:1px solid var(--border);border-radius:20px;font-size:11px;cursor:pointer;color:var(--text2);background:var(--bg2);transition:all .15s;font-family:'JetBrains Mono',monospace}
-.wk-tab:hover{border-color:var(--accent);color:var(--accent)}
-.wk-tab.active{background:var(--bg3);color:var(--text);border-color:var(--accent);font-weight:600}
-.analytics-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px}
-.analytics-title{font-size:13px;font-weight:600;color:var(--text)}
-</style>
+        <style>#${cardId}::before{background:${col}}</style>
         <div class="cg-avail-tag">✓ Available</div>
         <div class="cg-unavail-tag">✗ Unavailable</div>
         <div class="cg-top">
@@ -817,6 +884,7 @@ function renderHCGrid(){
           <div class="cg-stat"><div class="stat-n off">${off}</div><div class="stat-l">Off</div></div>
           <div class="cg-stat"><div class="stat-n sick">${sick}</div><div class="stat-l">Sick</div></div>
         </div>
+        ${renderCGCardExtra(cg, hc)}
         <div class="cg-view-btn">View Calendar →</div>
       </div>`;
     });
@@ -875,14 +943,47 @@ function renderCalendar(){
       const cs=calYear+'-'+pad(calMo+1)+'-'+pad(day);
       if(cs===today)cls+=' today';
     }
+    const dateStr = !other ? calYear+'-'+pad(calMo+1)+'-'+pad(day) : '';
     const evs=(!other&&dayMap[day])||[];
     let evHtml='';
+    // Show override even on empty days (no Metabase booking)
+    if(!other && evs.length===0 && dateStr){
+      const emptyOv = overrides[activeCG+'|'+dateStr];
+      if(emptyOv){
+        const ovLabels = {sick:'🤒 Sick',off:'🌙 Off',holiday:'🎉 Holiday',unpaid:'💸 Unpaid',cancelled:'❌ Cancelled',removed:'🗑 Removed',manual:'📋 Manual'};
+        const ovCls = emptyOv.type==='manual'?'duty':emptyOv.type==='sick'?'sick':emptyOv.type==='off'?'off-day':emptyOv.type==='holiday'?'holiday':emptyOv.type==='unpaid'?'unpaid':'cancelled';
+        const ovLbl = emptyOv.type==='manual' ? (emptyOv.client_name||'Manual')+(emptyOv.time_start?' · '+emptyOv.time_start:'') : (ovLabels[emptyOv.type]||emptyOv.type);
+        const safe = encodeURIComponent(JSON.stringify({caregiver:activeCG, date:dateStr, status:emptyOv.type, override:emptyOv}));
+        evHtml += `<div class="cal-ev ${ovCls}" onclick="openEvModal('${safe}')">${ovLbl}</div>`;
+      }
+    }
     evs.forEach(ev=>{
-      const st=(ev.status||'').toLowerCase().replace(/\s+/g,'');
-      const cls2=st==='duty'?'duty':st==='weekoff'?'weekoff':st==='sick'?'sick':st==='cancelled'?'cancelled':'absent';
-      const safe=encodeURIComponent(JSON.stringify(ev));
+      const ds = !other ? calYear+'-'+pad(calMo+1)+'-'+pad(day) : '';
+      // Check for override
+      const ov = ds ? overrides[activeCG+'|'+ds] : null;
+      let st=(ev.status||'').toLowerCase().replace(/\s+/g,'');
+      let displayStatus = st;
+      let ovLbl = '';
+      if(ov){
+        displayStatus = ov.type;
+        if(ov.type==='manual'){
+          const t = ov.time_start&&ov.time_end ? ov.time_start+'-'+ov.time_end : ov.time_start||'';
+          ovLbl = (ov.client_name||'Manual')+(t?' · '+t:'');
+        } else {
+          ovLbl = ov.type==='sick'?'🤒 Sick Leave':
+                  ov.type==='off'?'🌙 Day Off':
+                  ov.type==='holiday'?'🎉 Holiday':
+                  ov.type==='unpaid'?'💸 Unpaid Leave':
+                  ov.type==='cancelled'?'❌ Cancelled':
+                  ov.type==='removed'?'🗑 Removed':'Override';
+        }
+      }
+      const cls2 = ov ? (ov.type==='removed'?'override-removed':ov.type==='manual'?'duty':ov.type==='sick'?'sick':ov.type==='off'?'off-day':ov.type==='holiday'?'holiday':ov.type==='unpaid'?'unpaid':'cancelled') :
+                   st==='duty'?'duty':st==='weekoff'?'weekoff':st==='sick'?'sick':st==='cancelled'?'cancelled':'absent';
+      const safe=encodeURIComponent(JSON.stringify({...ev, override: ov}));
       let lbl='';
-      if(st==='weekoff')lbl='Week Off';
+      if(ov){ lbl=ovLbl; }
+      else if(st==='weekoff')lbl='Week Off';
       else if(st==='sick')lbl='Sick';
       else if(st==='absent')lbl='Absent';
       else if(st==='cancelled')lbl='Cancelled';
@@ -894,7 +995,9 @@ function renderCalendar(){
       }
       evHtml+=`<div class="cal-ev ${cls2}" onclick="openEvModal('${safe}')">${lbl}</div>`;
     });
-    html+=`<div class="${cls}"><div class="day-num">${day}</div>${evHtml}</div>`;
+    // Show + button on ALL non-other-month days (not just days with events)
+    const addBtn = !other ? `<div class="day-add-btn" onclick="event.stopPropagation();openOvModal('${activeCG}','${dateStr}')" title="Add entry">+</div>` : '';
+    html+=`<div class="${cls}">${addBtn}<div class="day-num">${day}</div>${evHtml}</div>`;
   }
   document.getElementById('cal-body').innerHTML=html;
 }
@@ -1058,11 +1161,49 @@ function renderAnalyticsData(){
   const hcS=Object.entries(hcMap).sort((a,b)=>b[1]-a[1]);
   const maxHC=hcS[0]?hcS[0][1]:1;
 
-  // Top caregivers
+  // All caregivers performance by hours
+  // Formula: hours_per_day × actual duty days in selected period
   const cgMap={};
-  data.filter(r=>r.status.toLowerCase()==='duty').forEach(r=>{if(r.caregiver)cgMap[r.caregiver]=(cgMap[r.caregiver]||0)+1;});
-  const cgS=Object.entries(cgMap).sort((a,b)=>b[1]-a[1]).slice(0,8);
-  const maxCG=cgS[0]?cgS[0][1]:1;
+  // Include all caregivers in period (even 0 hours)
+  data.forEach(r=>{ if(r.caregiver && !cgMap[r.caregiver]) cgMap[r.caregiver]=0; });
+  // For each duty day, add hours_per_day
+  data.filter(r=>(r.status||'').toLowerCase()==='duty').forEach(r=>{
+    if(!r.caregiver) return;
+    const pkg = r.package_type||r.package_raw||'';
+    const hrsPerDay = extractHours(pkg)||0;
+    cgMap[r.caregiver] = (cgMap[r.caregiver]||0) + hrsPerDay;
+  });
+  // Add manual booking hours from overrides
+  Object.values(overrides).forEach(function(ov){
+    if(ov.type !== 'manual' || !ov.caregiver) return;
+    const d = parseD(ov.date);
+    if(!d || d.y !== anaYr || d.m !== anaMo) return;
+    if(anaWk !== 'all' && anaWkStart && anaWkEnd){
+      if(ov.date < anaWkStart || ov.date > anaWkEnd) return;
+    }
+    let manualHrs = 1;
+    if(ov.time_start && ov.time_end){
+      try{
+        const toH = function(t){
+          const isPM = /PM/i.test(t);
+          t = t.replace(/\s*(AM|PM)/i,'').trim();
+          const p = t.split(':');
+          let h = parseInt(p[0])||0;
+          const m = parseInt(p[1])||0;
+          if(isPM && h < 12) h += 12;
+          if(!isPM && h === 12) h = 0;
+          return h + m/60;
+        };
+        const diff = toH(ov.time_end) - toH(ov.time_start);
+        if(diff > 0) manualHrs = Math.round(diff);
+      }catch(e){}
+    }
+    if(!cgMap[ov.caregiver]) cgMap[ov.caregiver] = 0;
+    cgMap[ov.caregiver] += manualHrs;
+  });
+  const MAX_MONTH_HRS = 288; // 6 days × 4 weeks × 12h = 100% utilization
+  const cgS = Object.entries(cgMap).map(function(e){ return [e[0], Math.min(e[1], MAX_MONTH_HRS)]; }).sort((a,b)=>b[1]-a[1]);
+  const maxCG = MAX_MONTH_HRS;
 
   // New vs Repeat — unique clients by type
   const clientTypeMap = {};
@@ -1086,14 +1227,16 @@ function renderAnalyticsData(){
           <div class="bar-val">${v}</div>
         </div>`).join('') : '<div style="color:var(--text2);font-size:12px;padding:10px">No data for this period</div>'}
     </div>
-    <div class="a-card">
-      <div class="a-title"><div class="a-title-bar" style="background:var(--duty)"></div>Top Caregivers by Duty</div>
+    <div class="a-card" style="grid-column:1/-1">
+      <div class="a-title"><div class="a-title-bar" style="background:var(--duty)"></div>All Caregivers Performance — Hours</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:2px 16px">
       ${cgS.length ? cgS.map(([k,v])=>`
         <div class="bar-row">
-          <div class="bar-label" title="${k}">${k.split(' ')[0]}</div>
-          <div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/maxCG*100)}%;background:var(--accent)"></div></div>
-          <div class="bar-val">${v}d</div>
+          <div class="bar-label" title="${k}" style="width:80px;min-width:80px;overflow:hidden;text-overflow:ellipsis">${k.split(' ')[0]}</div>
+          <div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/maxCG*100)}%;background:${v>=maxCG?'var(--duty)':v>=maxCG*0.7?'var(--accent)':'var(--sick)'}"></div></div>
+          <div class="bar-val">${v}h <span style="color:var(--text3);font-size:9px">${Math.round(v/maxCG*100)}%</span></div>
         </div>`).join('') : '<div style="color:var(--text2);font-size:12px;padding:10px">No data</div>'}
+      </div>
     </div>
     <div class="a-card">
       <div class="a-title"><div class="a-title-bar" style="background:#e879f9"></div>New vs Repeat Clients</div>
@@ -1335,6 +1478,187 @@ function populateCGHCFilter(){
     o.value = hc; o.textContent = hc;
     sel.appendChild(o);
   });
+}
+
+
+// ── Override System ──────────────────────────────────────────────
+var ovCG='', ovDate='', ovType='';
+
+async function loadOverrides(){
+  try{
+    const saved = localStorage.getItem('valeo_overrides');
+    const splits = localStorage.getItem('valeo_splits');
+    overrides = saved ? JSON.parse(saved) : {};
+    splitAssignments = splits ? JSON.parse(splits) : {};
+  } catch(e){
+    overrides = {};
+    splitAssignments = {};
+  }
+}
+
+function applyOverrides(){
+  // When sick overrides exist, recalculate end dates and re-expand
+  // First apply status overrides
+  allData.forEach(function(r){
+    const key = r.caregiver+'|'+r.date;
+    const ov = overrides[key];
+    if(ov){
+      if(ov.type==='sick')       r.status='Sick';
+      else if(ov.type==='off')   r.status='Week Off';
+      else if(ov.type==='holiday') r.status='Holiday';
+      else if(ov.type==='unpaid')  r.status='Unpaid';
+      else if(ov.type==='cancelled') r.status='Cancelled';
+      else if(ov.type==='removed')   r.status='Removed';
+    }
+  });
+  // Recalculate end dates for caregivers with sick overrides
+  // so new days get added at the end
+  const affectedCGs = new Set(Object.values(overrides).filter(function(o){
+    return ['sick','off','holiday','unpaid','cancelled','removed','absent'].includes(o.type);
+  }).map(function(o){ return o.caregiver; }));
+
+  if(affectedCGs.size > 0){
+    // Recompute rawData end dates for affected caregivers
+    rawData.forEach(function(r){
+      if(!affectedCGs.has(r.caregiver)) return;
+      const pkg = r.package_type||'';
+      const pt = pkgType(pkg);
+      if(pt!=='monthly'&&pt!=='weekly') return;
+      const w = extractWeeks(pkg)||4;
+      const baseEnd = addDays(r.date,(w*7)-1);
+      const ovCount = Object.values(overrides).filter(function(o){
+        return o.caregiver===r.caregiver && ['sick','off','holiday','unpaid','cancelled','removed','absent'].includes(o.type);
+      }).length;
+      r.end_date = ovCount>0 ? addDays(baseEnd,ovCount) : baseEnd;
+    });
+    // Re-expand with new end dates
+    const expandedRaw = expandOrders(rawData);
+    const dedupMap = {};
+    expandedRaw.forEach(function(r){
+      const key=(r.caregiver||'')+'|'+(r.date||'');
+      if(!dedupMap[key]){
+        dedupMap[key]=r;
+      } else {
+        const existing=dedupMap[key];
+        const newHasMore=(r.package_type||'').length>(existing.package_type||'').length;
+        const newIsOff=(r.status||'').toLowerCase().includes('off')||(r.status||'').toLowerCase()==='sick';
+        if(newHasMore||newIsOff) dedupMap[key]=r;
+      }
+    });
+    allData = Object.values(dedupMap);
+    // Re-apply status overrides after re-expansion
+    allData.forEach(function(r){
+      const key = r.caregiver+'|'+r.date;
+      const ov = overrides[key];
+      if(ov){
+        if(ov.type==='sick')       r.status='Sick';
+        else if(ov.type==='off')   r.status='Week Off';
+        else if(ov.type==='holiday') r.status='Holiday';
+        else if(ov.type==='unpaid')  r.status='Unpaid';
+        else if(ov.type==='cancelled') r.status='Cancelled';
+        else if(ov.type==='removed')   r.status='Removed';
+      }
+    });
+  }
+}
+
+function openOvModal(cg, date){
+  ovCG = cg; ovDate = date;
+  // Check if this is an existing booking or empty slot
+  const hasBooking = allData.some(function(r){ return r.caregiver===cg && r.date===date; });
+  document.getElementById('ov-date-info').textContent = cg + '  ·  ' + date + (hasBooking ? '' : '  (empty slot)');
+  document.getElementById('ov-note').value = '';
+  document.getElementById('ov-manual-fields').style.display = 'none';
+  document.getElementById('ov-client').value = '';
+  document.getElementById('ov-time-start').value = '';
+  document.getElementById('ov-time-end').value = '';
+  // Pre-select existing override
+  const existing = overrides[cg+'|'+date];
+  document.querySelectorAll('.ov-type-btn').forEach(b=>b.classList.remove('selected'));
+  if(existing){
+    ovType = existing.type;
+    document.getElementById('ov-note').value = existing.note||'';
+    if(existing.type==='manual'){
+      document.getElementById('ov-manual-fields').style.display='block';
+      document.getElementById('ov-client').value = existing.client_name||'';
+      document.getElementById('ov-time-start').value = existing.time_start||'';
+      document.getElementById('ov-time-end').value = existing.time_end||'';
+    }
+    document.querySelector('.ov-type-btn.'+existing.type)?.classList.add('selected');
+  } else { ovType = ''; }
+  document.getElementById('override-modal').classList.add('show');
+}
+
+function closeOvModal(){
+  document.getElementById('override-modal').classList.remove('show');
+  ovCG=''; ovDate=''; ovType='';
+}
+
+function selectOvType(type, el){
+  ovType = type;
+  document.querySelectorAll('.ov-type-btn').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('ov-manual-fields').style.display = type==='manual' ? 'block' : 'none';
+}
+
+async function saveOverride(){
+  if(!ovType){ alert('Please select an override type'); return; }
+  const note = document.getElementById('ov-note').value.trim();
+  let payload = { caregiver: ovCG, date: ovDate, type: ovType, note, saved_at: new Date().toISOString() };
+  if(ovType === 'manual'){
+    const client = document.getElementById('ov-client').value.trim();
+    const tStart = document.getElementById('ov-time-start').value.trim();
+    const tEnd = document.getElementById('ov-time-end').value.trim();
+    if(!client){ alert('Please enter a client name'); return; }
+    payload.client_name = client;
+    payload.time_start = tStart;
+    payload.time_end = tEnd;
+  }
+  overrides[ovCG+'|'+ovDate] = payload;
+  localStorage.setItem('valeo_overrides', JSON.stringify(overrides));
+  applyOverrides();
+  closeOvModal();
+  renderCalendar();
+  renderHCGrid();
+}
+
+async function clearOverride(){
+  delete overrides[ovCG+'|'+ovDate];
+  localStorage.setItem('valeo_overrides', JSON.stringify(overrides));
+  applyOverrides();
+  closeOvModal();
+  renderCalendar();
+  renderHCGrid();
+}
+
+async function saveSplitCG(orderId, cg2){
+  splitAssignments[orderId] = cg2;
+  localStorage.setItem('valeo_splits', JSON.stringify(splitAssignments));
+}
+
+
+// ── CG Card Extra (working days + split) ────────────────────────
+function renderCGCardExtra(cg, hc){
+  const cgRec = rawData.find(r=>r.caregiver===cg&&['monthly','weekly'].includes(pkgType(r.package_type)));
+  if(!cgRec) return '';
+  const pkg = cgRec.package_type||'';
+  const pt = pkgType(pkg);
+  const weeks = extractWeeks(pkg)||4;
+  const days = extractDays2(pkg)||(pt==='monthly'?5:7);
+  const totalWD = weeks * days;
+  const cgOverrides = Object.entries(overrides).filter(function(e){return e[0].startsWith(cg+'|');}).map(function(e){return e[1];});
+  // All override types extend end date — none reduce working days target
+  const deducted = 0;
+  const remaining = totalWD; // working days target stays fixed
+  const pct = totalWD ? Math.round(remaining/totalWD*100) : 100;
+
+
+  const splitHTML = '';
+  return '<div class="working-days-bar">'
+    +'<span class="wd-label">Working days</span>'
+    +'<span class="wd-count">'+remaining+'</span><span class="wd-total">/'+totalWD+'</span>'
+    +'<div class="wd-bar-track"><div class="wd-bar-fill" style="width:'+pct+'%"></div></div>'
+    +'</div>'+splitHTML;
 }
 
 // ── Init ─────────────────────────────────────────────────────────
