@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
@@ -324,6 +325,54 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .split-cg-select:focus{border-color:var(--accent)}
 .cal-ev.reliever{background:rgba(232,121,249,.15);color:#e879f9;border-left:2px solid #e879f9}
 
+
+/* ── Package Planner ── */
+.planner-page{padding:20px}
+.planner-controls{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px 20px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+.planner-field{display:flex;flex-direction:column;gap:4px}
+.planner-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text2)}
+.planner-select,.planner-input{background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'Inter',sans-serif;font-size:12px;padding:7px 12px;border-radius:7px;outline:none;min-width:180px}
+.planner-select:focus,.planner-input:focus{border-color:var(--accent)}
+.planner-btn{padding:8px 18px;background:var(--accent);border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;align-self:flex-end}
+.planner-btn:hover{opacity:.85}
+.planner-summary{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.planner-kpi{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;min-width:110px}
+.planner-kpi-val{font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--accent)}
+.planner-kpi-lbl{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+.planner-table-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.planner-table{width:100%;border-collapse:collapse}
+.planner-table th{padding:9px 14px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);background:var(--bg3);border-bottom:1px solid var(--border);white-space:nowrap}
+.planner-table td{padding:9px 14px;font-size:12px;border-bottom:1px solid var(--border);vertical-align:middle}
+.planner-table tr:last-child td{border-bottom:none}
+.planner-table tr:hover td{background:var(--bg3)}
+.planner-status-sel{background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:11px;padding:3px 8px;border-radius:5px;cursor:pointer;font-family:'Inter',sans-serif;outline:none}
+.status-duty{color:var(--duty);font-weight:600}
+.status-off{color:var(--text2)}
+.status-sick{color:var(--absent)}
+.status-holiday{color:var(--accent)}
+.status-unpaid{color:var(--sick)}
+.planner-off-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;background:rgba(110,118,129,.15);color:var(--text2)}
+.planner-duty-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;background:rgba(63,185,80,.12);color:var(--duty)}
+.planner-sick-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;background:rgba(248,81,73,.12);color:var(--absent)}
+.day-selector{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.day-chip-pl{padding:4px 10px;border:1px solid var(--border);border-radius:20px;font-size:11px;cursor:pointer;color:var(--text2);background:var(--bg3);transition:all .15s;font-family:'Inter',sans-serif}
+.day-chip-pl.on{background:var(--absent);color:#fff;border-color:var(--absent)}
+.planner-offday-row{background:rgba(110,118,129,.05)!important}
+.planner-offday-row td{color:var(--text2)!important}
+
+
+/* ── Planner editable ── */
+.pl-cell-edit{background:var(--bg3);border:1px solid var(--accent);color:var(--text);font-size:11px;padding:3px 6px;border-radius:4px;outline:none;width:100%;font-family:'Inter',sans-serif;min-width:80px}
+.pl-add-col-btn{padding:5px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:11px;cursor:pointer;font-family:'Inter',sans-serif}
+.pl-add-col-btn:hover{border-color:var(--accent);color:var(--accent)}
+.pl-del-col-btn{background:none;border:none;color:var(--absent);cursor:pointer;font-size:12px;padding:0 4px;opacity:0.6}
+.pl-del-col-btn:hover{opacity:1}
+.pl-share-bar{display:flex;align-items:center;gap:10px;margin-bottom:12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 14px}
+.pl-share-url{flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-size:11px;padding:6px 10px;border-radius:6px;outline:none;font-family:'JetBrains Mono',monospace}
+.pl-copy-btn{padding:6px 14px;background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap}
+.pl-toolbar{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center}
+.pl-toolbar-label{font-size:11px;color:var(--text2)}
+
 </style>
 </head>
 <body>
@@ -352,6 +401,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
   <button class="main-tab active" onclick="switchTab('calendar')">📅 Calendar</button>
   <button class="main-tab" onclick="switchTab('analytics')">📊 Analytics</button>
   <button class="main-tab" onclick="switchTab('ops')">⚡ Operations</button>
+  <button class="main-tab" onclick="switchTab('planner')">📋 Package Planner</button>
 </div>
 
 <!-- ── Availability bar (calendar only) ── -->
@@ -544,6 +594,76 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
       <button class="ov-remove-btn" onclick="clearOverride()">Clear</button>
       <button class="ov-save-btn" onclick="saveOverride()">Save Override</button>
     </div>
+  </div>
+</div>
+
+
+<!-- ── PACKAGE PLANNER PAGE ── -->
+<div class="page" id="page-planner">
+  <div class="planner-page">
+
+    <!-- Controls -->
+    <div class="planner-controls">
+      <div class="planner-field">
+        <span class="planner-label">Caregiver</span>
+        <select class="planner-select" id="pl-cg-select">
+          <option value="">— Select Caregiver —</option>
+        </select>
+      </div>
+      <div class="planner-field">
+        <span class="planner-label">Order / Package</span>
+        <select class="planner-select" id="pl-order-select">
+          <option value="">— Select Order —</option>
+        </select>
+      </div>
+      <div class="planner-field">
+        <span class="planner-label">Week Off Days</span>
+        <div class="day-selector" id="pl-day-selector">
+          <div class="day-chip-pl" data-day="Sunday" onclick="togglePlannerDay(this)">Sun</div>
+          <div class="day-chip-pl" data-day="Monday" onclick="togglePlannerDay(this)">Mon</div>
+          <div class="day-chip-pl" data-day="Tuesday" onclick="togglePlannerDay(this)">Tue</div>
+          <div class="day-chip-pl" data-day="Wednesday" onclick="togglePlannerDay(this)">Wed</div>
+          <div class="day-chip-pl" data-day="Thursday" onclick="togglePlannerDay(this)">Thu</div>
+          <div class="day-chip-pl" data-day="Friday" onclick="togglePlannerDay(this)">Fri</div>
+          <div class="day-chip-pl" data-day="Saturday" onclick="togglePlannerDay(this)">Sat</div>
+        </div>
+      </div>
+      <button class="planner-btn" onclick="generatePlannerTable()">Generate Schedule</button>
+    </div>
+
+    <!-- Summary KPIs -->
+    <div class="planner-summary" id="pl-summary" style="display:none">
+      <div class="planner-kpi"><div class="planner-kpi-val" id="pl-total-days">0</div><div class="planner-kpi-lbl">Total Days</div></div>
+      <div class="planner-kpi"><div class="planner-kpi-val" id="pl-working-days">0</div><div class="planner-kpi-lbl">Working Days</div></div>
+      <div class="planner-kpi"><div class="planner-kpi-val" id="pl-off-days">0</div><div class="planner-kpi-lbl">Off Days</div></div>
+      <div class="planner-kpi"><div class="planner-kpi-val" id="pl-total-hrs">0</div><div class="planner-kpi-lbl">Total Hours</div></div>
+      <div class="planner-kpi"><div class="planner-kpi-val" id="pl-sick-days" style="color:var(--absent)">0</div><div class="planner-kpi-lbl">Sick / Override</div></div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="pl-toolbar" id="pl-toolbar" style="display:none">
+      <span class="pl-toolbar-label">Columns:</span>
+      <button class="pl-add-col-btn" onclick="addPlannerRow()">+ Add Row</button>
+      <button class="pl-add-col-btn" onclick="exportPlannerCSV()">⬇ Export CSV</button>
+    </div>
+
+    <!-- Share bar -->
+    <div class="pl-share-bar" id="pl-share-bar" style="display:none">
+      <span style="font-size:11px;font-weight:600;color:var(--text);white-space:nowrap">🔗 Client Link:</span>
+      <input class="pl-share-url" id="pl-share-url" readonly>
+      <button class="pl-copy-btn" onclick="copyPlannerLink()">Copy Link</button>
+    </div>
+
+    <!-- Table -->
+    <div class="planner-table-wrap" id="pl-table-wrap" style="display:none">
+      <div style="overflow-x:auto" id="pl-table-scroll">
+        <table class="planner-table" id="pl-table">
+          <thead id="pl-thead"></thead>
+          <tbody id="pl-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -863,7 +983,55 @@ function renderHCGrid(){
 
       html+=`<div class="cg-card" id="${cardId}" onclick="openCGCal('${cg.replace(/'/g,"\\'")}','${hc.replace(/'/g,"\\'")}',this)" style="--card-col:${col}">
         <div class="cg-card::before" style="background:${col}"></div>
-        <style>#${cardId}::before{background:${col}}</style>
+        <style>#${cardId}::before{background:${col}}
+/* ── Package Planner ── */
+.planner-page{padding:20px}
+.planner-controls{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px 20px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+.planner-field{display:flex;flex-direction:column;gap:4px}
+.planner-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text2)}
+.planner-select,.planner-input{background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'Inter',sans-serif;font-size:12px;padding:7px 12px;border-radius:7px;outline:none;min-width:180px}
+.planner-select:focus,.planner-input:focus{border-color:var(--accent)}
+.planner-btn{padding:8px 18px;background:var(--accent);border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;align-self:flex-end}
+.planner-btn:hover{opacity:.85}
+.planner-summary{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.planner-kpi{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;min-width:110px}
+.planner-kpi-val{font-size:22px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--accent)}
+.planner-kpi-lbl{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+.planner-table-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.planner-table{width:100%;border-collapse:collapse}
+.planner-table th{padding:9px 14px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);background:var(--bg3);border-bottom:1px solid var(--border);white-space:nowrap}
+.planner-table td{padding:9px 14px;font-size:12px;border-bottom:1px solid var(--border);vertical-align:middle}
+.planner-table tr:last-child td{border-bottom:none}
+.planner-table tr:hover td{background:var(--bg3)}
+.planner-status-sel{background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:11px;padding:3px 8px;border-radius:5px;cursor:pointer;font-family:'Inter',sans-serif;outline:none}
+.status-duty{color:var(--duty);font-weight:600}
+.status-off{color:var(--text2)}
+.status-sick{color:var(--absent)}
+.status-holiday{color:var(--accent)}
+.status-unpaid{color:var(--sick)}
+.planner-off-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;background:rgba(110,118,129,.15);color:var(--text2)}
+.planner-duty-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;background:rgba(63,185,80,.12);color:var(--duty)}
+.planner-sick-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;background:rgba(248,81,73,.12);color:var(--absent)}
+.day-selector{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.day-chip-pl{padding:4px 10px;border:1px solid var(--border);border-radius:20px;font-size:11px;cursor:pointer;color:var(--text2);background:var(--bg3);transition:all .15s;font-family:'Inter',sans-serif}
+.day-chip-pl.on{background:var(--absent);color:#fff;border-color:var(--absent)}
+.planner-offday-row{background:rgba(110,118,129,.05)!important}
+.planner-offday-row td{color:var(--text2)!important}
+
+
+/* ── Planner editable ── */
+.pl-cell-edit{background:var(--bg3);border:1px solid var(--accent);color:var(--text);font-size:11px;padding:3px 6px;border-radius:4px;outline:none;width:100%;font-family:'Inter',sans-serif;min-width:80px}
+.pl-add-col-btn{padding:5px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:11px;cursor:pointer;font-family:'Inter',sans-serif}
+.pl-add-col-btn:hover{border-color:var(--accent);color:var(--accent)}
+.pl-del-col-btn{background:none;border:none;color:var(--absent);cursor:pointer;font-size:12px;padding:0 4px;opacity:0.6}
+.pl-del-col-btn:hover{opacity:1}
+.pl-share-bar{display:flex;align-items:center;gap:10px;margin-bottom:12px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 14px}
+.pl-share-url{flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-size:11px;padding:6px 10px;border-radius:6px;outline:none;font-family:'JetBrains Mono',monospace}
+.pl-copy-btn{padding:6px 14px;background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap}
+.pl-toolbar{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center}
+.pl-toolbar-label{font-size:11px;color:var(--text2)}
+
+</style>
         <div class="cg-avail-tag">✓ Available</div>
         <div class="cg-unavail-tag">✗ Unavailable</div>
         <div class="cg-top">
@@ -1269,6 +1437,7 @@ function switchTab(tab){
   document.getElementById('avail-bar').style.display=tab==='calendar'?'flex':'none';
   if(tab==='analytics')renderAnalytics();
   if(tab==='ops')renderOps();
+  if(tab==='planner')renderPlanner();
 }
 
 // ── Theme toggle ─────────────────────────────────────────────────
@@ -1660,6 +1829,323 @@ function renderCGCardExtra(cg, hc){
     +'<div class="wd-bar-track"><div class="wd-bar-fill" style="width:'+pct+'%"></div></div>'
     +'</div>'+splitHTML;
 }
+
+
+// ── Package Planner ─────────────────────────────────────────────
+var plannerOffDays = [];
+var plannerRows = [];
+var plannerCols = ['#','Date','Day','Time Slot','Babysitter','Homecare','Status'];
+var plannerCustomCols = []; // extra custom columns
+var plannerData = []; // editable data store
+
+function renderPlanner(){
+  // Check if shared view mode
+  const urlParams = new URLSearchParams(window.location.search);
+  if(urlParams.get('planner')){
+    loadSharedPlanner(urlParams.get('planner'));
+    return;
+  }
+  const cgs = [...new Set(rawData.map(r=>r.caregiver).filter(Boolean))].sort();
+  const sel = document.getElementById('pl-cg-select');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— Select Caregiver —</option>';
+  cgs.forEach(function(cg){
+    sel.innerHTML += '<option value="'+cg+'"'+(cg===cur?' selected':'')+'>'+cg+'</option>';
+  });
+  if(cur) loadPlannerOrders(cur);
+}
+
+function loadPlannerOrders(cg){
+  const orders = document.getElementById('pl-order-select');
+  orders.innerHTML = '<option value="">— Select Order —</option>';
+  const seen = new Set();
+  rawData.filter(function(r){ return r.caregiver===cg && r.order_id; }).forEach(function(r){
+    if(seen.has(r.order_id)) return;
+    seen.add(r.order_id);
+    const lbl = r.order_id + ' — ' + (r.client_name||'?') + ' | ' + (r.package_type||'').substring(0,35);
+    orders.innerHTML += '<option value="'+r.order_id+'">'+lbl+'</option>';
+  });
+}
+
+document.getElementById('pl-cg-select').addEventListener('change', function(){
+  loadPlannerOrders(this.value);
+  document.getElementById('pl-summary').style.display='none';
+  document.getElementById('pl-table-wrap').style.display='none';
+  document.getElementById('pl-toolbar').style.display='none';
+  document.getElementById('pl-share-bar').style.display='none';
+});
+
+function togglePlannerDay(el){
+  el.classList.toggle('on');
+  plannerOffDays = [...document.querySelectorAll('.day-chip-pl.on')].map(function(b){ return b.dataset.day; });
+}
+
+function generatePlannerTable(){
+  const cg = document.getElementById('pl-cg-select').value;
+  const orderId = document.getElementById('pl-order-select').value;
+  if(!cg || !orderId){ alert('Please select a caregiver and order'); return; }
+
+  const rec = rawData.find(function(r){ return r.caregiver===cg && r.order_id===orderId; });
+  if(!rec){ alert('Order not found'); return; }
+
+  const pkg = rec.package_type||rec.package_raw||'';
+  const weeks = extractWeeks(pkg)||4;
+  const daysPerWeek = extractDays2(pkg)||5;
+  const hrsPerDay = extractHours(pkg)||0;
+  const totalDays = 28; // always 28 days for monthly
+  const targetWorkDays = weeks * daysPerWeek;
+
+  plannerOffDays = [...document.querySelectorAll('.day-chip-pl.on')].map(function(b){ return b.dataset.day; });
+
+  // Count overrides for extension
+  const ovCount = Object.values(overrides).filter(function(o){
+    return o.caregiver===cg && ['sick','off','holiday','unpaid','cancelled','removed'].includes(o.type);
+  }).length;
+
+  plannerData = [];
+  for(var i=0; i<(totalDays + ovCount); i++){
+    const d = new Date(rec.date+'T12:00:00');
+    d.setDate(d.getDate()+i);
+    const ds = d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+    const dayName = DAYS[d.getDay()];
+    const isWeekOff = plannerOffDays.includes(dayName);
+    const ovKey = cg+'|'+ds;
+    const ov = overrides[ovKey];
+    let status = isWeekOff ? 'Off' : 'Duty';
+    if(ov){ status = ov.type==='sick'?'Sick':ov.type==='off'?'Off':ov.type==='holiday'?'Holiday':ov.type==='unpaid'?'Unpaid':ov.type==='cancelled'?'Cancelled':ov.type==='removed'?'Removed':ov.type==='manual'?(ov.client_name||'Manual'):status; }
+    const row = {
+      num: i+1, date: ds, day: dayName,
+      timeSlot: rec.time_start&&rec.time_end ? rec.time_start+' – '+rec.time_end : rec.time_start||'—',
+      babysitter: cg, homecare: rec.homecare||'—', status: status
+    };
+    plannerCustomCols.forEach(function(col){ row[col] = ''; });
+    plannerData.push(row);
+  }
+
+  // Stats
+  const workDays = plannerData.filter(function(r){ return r.status==='Duty'||r.status==='Manual'; }).length;
+  const offDays = plannerData.filter(function(r){ return ['Off','Week Off'].includes(r.status); }).length;
+  const sickDays = plannerData.filter(function(r){ return ['Sick','Holiday','Unpaid','Cancelled','Removed'].includes(r.status); }).length;
+
+  document.getElementById('pl-total-days').textContent = plannerData.length;
+  document.getElementById('pl-working-days').textContent = workDays;
+  document.getElementById('pl-off-days').textContent = offDays;
+  document.getElementById('pl-total-hrs').textContent = (workDays*hrsPerDay)+'h';
+  document.getElementById('pl-sick-days').textContent = sickDays;
+  document.getElementById('pl-summary').style.display='flex';
+  document.getElementById('pl-table-wrap').style.display='block';
+  document.getElementById('pl-toolbar').style.display='flex';
+  document.getElementById('pl-share-bar').style.display='flex';
+
+  renderPlannerTable();
+  updateShareLink();
+}
+
+function renderPlannerTable(){
+  const allCols = ['#','Date','Day','Time Slot','Babysitter','Homecare','Status'].concat(plannerCustomCols);
+  const colKeys = ['num','date','day','timeSlot','babysitter','homecare','status'].concat(plannerCustomCols);
+
+  // Header
+  let thead = '<tr>';
+  allCols.forEach(function(col, ci){
+    const isCustom = ci >= 7;
+    thead += '<th>'
+      + (isCustom ? '<input style="background:transparent;border:none;color:var(--text2);font-size:10px;font-weight:600;text-transform:uppercase;width:80px;outline:none" value="'+col+'" onchange="renamePlannerCol('+ci+',this.value)">' : col)
+      + (isCustom ? ' <button class="pl-del-col-btn" onclick="deletePlannerCol('+ci+')">✕</button>' : '')
+      + '</th>';
+  });
+  thead += '<th style="width:36px"></th></tr>';
+  document.getElementById('pl-thead').innerHTML = thead;
+
+  // Body
+  const statusOpts = ['Duty','Off','Sick','Holiday','Unpaid','Cancelled','Removed'];
+  let html = '';
+  plannerData.forEach(function(r, ri){
+    const rowColors = {
+      Duty: '',
+      Off: 'background:rgba(110,118,129,.08)',
+      Sick: 'background:rgba(248,81,73,.08)',
+      Holiday: 'background:rgba(47,129,247,.08)',
+      Unpaid: 'background:rgba(210,153,34,.08)',
+      Cancelled: 'background:rgba(248,81,73,.05)',
+      Removed: 'background:rgba(110,118,129,.05)',
+      Manual: 'background:rgba(63,185,80,.08)'
+    };
+    const rowStyle = rowColors[r.status]||'';
+    html += '<tr style="'+rowStyle+'">';
+    colKeys.forEach(function(key, ci){
+      if(key==='num'){
+        html += '<td style="color:var(--text2);font-size:11px">'+r.num+'</td>';
+      } else if(key==='status'){
+        html += '<td><select class="planner-status-sel" onchange="updatePlannerCell('+ri+',&quot;status&quot;,this.value);renderPlannerTable()" >';
+        statusOpts.forEach(function(s){ html += '<option value="'+s+'"'+(r.status===s?' selected':'')+'>'+s+'</option>'; });
+        html += '</select></td>';
+      } else if(key==='date'||key==='day'){
+        html += '<td style="font-size:11px;color:var(--text2)">'+r[key]+'</td>';
+      } else {
+        html += '<td><input class="pl-cell-edit" value="'+(r[key]||'')+'" onchange="updatePlannerCell('+ri+',this.dataset.key,this.value)" data-key="'+key+'" style="min-width:'+(key==='babysitter'||key==='homecare'?'120':'80')+'px"></td>';
+      }
+    });
+    html += '<td style="text-align:center"><button onclick="deletePlannerRow('+ri+')" style="background:none;border:none;color:var(--absent);cursor:pointer;font-size:14px;line-height:1;padding:2px 4px" title="Delete row">🗑</button></td>';
+    html += '</tr>';
+  });
+  document.getElementById('pl-tbody').innerHTML = html;
+}
+
+function updatePlannerCell(ri, key, val){
+  plannerData[ri][key] = val;
+  updateShareLink();
+}
+
+function addPlannerRow(){
+  const last = plannerData[plannerData.length-1];
+  const d = new Date(last.date+'T12:00:00'); d.setDate(d.getDate()+1);
+  const ds = d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+  const row = {num:plannerData.length+1,date:ds,day:DAYS[d.getDay()],timeSlot:last.timeSlot,babysitter:last.babysitter,homecare:last.homecare,status:'Duty'};
+  plannerCustomCols.forEach(function(col){ row[col]=''; });
+  plannerData.push(row);
+  renderPlannerTable();
+  updateShareLink();
+}
+
+function deletePlannerRow(ri){
+  plannerData.splice(ri, 1);
+  // Renumber
+  plannerData.forEach(function(r, i){ r.num = i+1; });
+  renderPlannerTable();
+  updateShareLink();
+  // Update KPIs
+  const workDays = plannerData.filter(function(r){ return r.status==='Duty'||r.status==='Manual'; }).length;
+  const offDays = plannerData.filter(function(r){ return ['Off','Week Off'].includes(r.status); }).length;
+  const sickDays = plannerData.filter(function(r){ return ['Sick','Holiday','Unpaid','Cancelled','Removed'].includes(r.status); }).length;
+  document.getElementById('pl-total-days').textContent = plannerData.length;
+  document.getElementById('pl-working-days').textContent = workDays;
+  document.getElementById('pl-off-days').textContent = offDays;
+  document.getElementById('pl-sick-days').textContent = sickDays;
+}
+
+function addPlannerCol(){
+  const name = prompt('Column name:');
+  if(!name) return;
+  plannerCustomCols.push(name);
+  plannerData.forEach(function(r){ r[name]=''; });
+  renderPlannerTable();
+  updateShareLink();
+}
+
+function deletePlannerCol(ci){
+  const colName = plannerCustomCols[ci-7];
+  if(!colName) return;
+  plannerCustomCols.splice(ci-7,1);
+  plannerData.forEach(function(r){ delete r[colName]; });
+  renderPlannerTable();
+  updateShareLink();
+}
+
+function renamePlannerCol(ci, newName){
+  const oldName = plannerCustomCols[ci-7];
+  plannerCustomCols[ci-7] = newName;
+  plannerData.forEach(function(r){ r[newName]=r[oldName]||''; delete r[oldName]; });
+  updateShareLink();
+}
+
+function exportPlannerCSV(){
+  const allCols = ['#','Date','Day','Time Slot','Babysitter','Homecare','Status'].concat(plannerCustomCols);
+  const colKeys = ['num','date','day','timeSlot','babysitter','homecare','status'].concat(plannerCustomCols);
+  let csv = allCols.join(',')+'\n';
+  plannerData.forEach(function(r){
+    csv += colKeys.map(function(k){ return '"'+(r[k]||'')+'"'; }).join(',')+'\n';
+  });
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='valeo-schedule.csv'; a.click();
+}
+
+function updateShareLink(){
+  const payload = {rows:plannerData, cols:plannerCustomCols};
+  const encoded = btoa(encodeURIComponent(JSON.stringify(payload)));
+  const url = window.location.href.split('?')[0] + '?planner=' + encoded + '#planner';
+  document.getElementById('pl-share-url').value = url;
+}
+
+function copyPlannerLink(){
+  const url = document.getElementById('pl-share-url').value;
+  navigator.clipboard.writeText(url).then(function(){
+    const btn = document.querySelector('.pl-copy-btn');
+    btn.textContent = 'Copied!';
+    setTimeout(function(){ btn.textContent = 'Copy Link'; }, 2000);
+  });
+}
+
+function loadSharedPlanner(encoded){
+  try{
+    const payload = JSON.parse(decodeURIComponent(atob(encoded)));
+    plannerData = payload.rows||[];
+    plannerCustomCols = payload.cols||[];
+    // Hide controls, show read-only table
+    document.getElementById('pl-cg-select').closest('.planner-controls').style.display='none';
+    document.getElementById('pl-toolbar').style.display='none';
+    document.getElementById('pl-share-bar').style.display='none';
+    document.getElementById('pl-summary').style.display='flex';
+    document.getElementById('pl-table-wrap').style.display='block';
+
+    // Update KPIs
+    const workDays = plannerData.filter(function(r){ return r.status==='Duty'; }).length;
+    const offDays = plannerData.filter(function(r){ return ['Off','Week Off'].includes(r.status); }).length;
+    const sickDays = plannerData.filter(function(r){ return ['Sick','Holiday','Unpaid','Cancelled','Removed'].includes(r.status); }).length;
+    document.getElementById('pl-total-days').textContent = plannerData.length;
+    document.getElementById('pl-working-days').textContent = workDays;
+    document.getElementById('pl-off-days').textContent = offDays;
+    document.getElementById('pl-sick-days').textContent = sickDays;
+
+    // Render read-only table
+    const allCols = ['#','Date','Day','Time Slot','Babysitter','Homecare','Status'].concat(plannerCustomCols);
+    const colKeys = ['num','date','day','timeSlot','babysitter','homecare','status'].concat(plannerCustomCols);
+    document.getElementById('pl-thead').innerHTML = '<tr>'+allCols.map(function(c){ return '<th>'+c+'</th>'; }).join('')+'</tr>';
+    const statusColors = {
+    Duty:'planner-duty-badge',
+    Off:'planner-off-badge',
+    Sick:'planner-sick-badge',
+    Holiday:'planner-duty-badge',
+    Unpaid:'planner-off-badge',
+    Cancelled:'planner-sick-badge',
+    Removed:'planner-off-badge',
+    Manual:'planner-duty-badge'
+  };
+    let html = '';
+    plannerData.forEach(function(r){
+      const isOff = ['Off','Sick','Holiday','Unpaid','Cancelled','Removed'].includes(r.status);
+      html += '<tr class="'+(isOff?'planner-offday-row':'')+'">';
+      colKeys.forEach(function(key){
+        if(key==='status'){
+          const badge = statusColors[r.status]||'planner-off-badge';
+          html += '<td><span class="'+badge+'">'+r.status+'</span></td>';
+        } else {
+          html += '<td style="font-size:'+(key==='num'||key==='date'||key==='day'?'11':'12')+'px">'+(r[key]||'—')+'</td>';
+        }
+      });
+      // Delete row button
+      html += '<td><button style="background:none;border:none;color:var(--absent);cursor:pointer;font-size:13px;padding:0 4px;opacity:0.5" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5" onclick="deletePlannerRow('+ri+')">🗑</button></td>';
+      html += '</tr>';
+    });
+    document.getElementById('pl-tbody').innerHTML = html;
+  }catch(e){ console.error('Failed to load shared planner:', e); }
+}
+
+// On page load check for shared planner in URL
+window.addEventListener('load', function(){
+  const urlParams = new URLSearchParams(window.location.search);
+  if(urlParams.get('planner')){
+    // Switch to planner tab
+    document.querySelectorAll('.main-tab').forEach(function(b){ b.classList.remove('active'); });
+    document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
+    const plannerTab = document.querySelector('[onclick*="planner"]');
+    if(plannerTab) plannerTab.classList.add('active');
+    const plannerPage = document.getElementById('page-planner');
+    if(plannerPage) plannerPage.classList.add('active');
+    loadSharedPlanner(urlParams.get('planner'));
+  }
+});
 
 // ── Init ─────────────────────────────────────────────────────────
 loadData();
