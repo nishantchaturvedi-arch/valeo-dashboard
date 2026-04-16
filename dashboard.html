@@ -1120,7 +1120,8 @@ function renderCalendar(){
       if(emptyOv){
         const ovLabels = {sick:'🤒 Sick',off:'🌙 Off',holiday:'🎉 Holiday',unpaid:'💸 Unpaid',cancelled:'❌ Cancelled',removed:'🗑 Removed',manual:'📋 Manual'};
         const ovCls = emptyOv.type==='manual'?'duty':emptyOv.type==='sick'?'sick':emptyOv.type==='off'?'off-day':emptyOv.type==='holiday'?'holiday':emptyOv.type==='unpaid'?'unpaid':'cancelled';
-        const ovLbl = emptyOv.type==='manual' ? (emptyOv.client_name||'Manual')+(emptyOv.time_start?' · '+emptyOv.time_start:'') : (ovLabels[emptyOv.type]||emptyOv.type);
+        const emptyT = emptyOv.time_start&&emptyOv.time_end ? emptyOv.time_start+' – '+emptyOv.time_end : (emptyOv.time_start||'');
+        const ovLbl = emptyOv.type==='manual' ? (emptyOv.client_name||'Manual')+(emptyT?' · '+emptyT:'') : (ovLabels[emptyOv.type]||emptyOv.type);
         const safe = encodeURIComponent(JSON.stringify({caregiver:activeCG, date:dateStr, status:emptyOv.type, override:emptyOv}));
         evHtml += `<div class="cal-ev ${ovCls}" onclick="openEvModal('${safe}')">${ovLbl}</div>`;
       }
@@ -1135,7 +1136,7 @@ function renderCalendar(){
       if(ov){
         displayStatus = ov.type;
         if(ov.type==='manual'){
-          const t = ov.time_start&&ov.time_end ? ov.time_start+'-'+ov.time_end : ov.time_start||'';
+          const t = ov.time_start&&ov.time_end ? ov.time_start+' – '+ov.time_end : (ov.time_start||'');
           ovLbl = (ov.client_name||'Manual')+(t?' · '+t:'');
         } else {
           ovLbl = ov.type==='sick'?'🤒 Sick Leave':
@@ -1912,7 +1913,7 @@ function generatePlannerTable(){
     const ovKey = cg+'|'+ds;
     const ov = overrides[ovKey];
     let status = isWeekOff ? 'Off' : 'Duty';
-    if(ov){ status = ov.type==='sick'?'Sick':ov.type==='off'?'Off':ov.type==='holiday'?'Holiday':ov.type==='unpaid'?'Unpaid':ov.type==='cancelled'?'Cancelled':ov.type==='removed'?'Removed':ov.type==='manual'?(ov.client_name||'Manual'):status; }
+    if(ov){ status = ov.type==='sick'?'Sick':ov.type==='off'?'Off':ov.type==='holiday'?'Holiday':ov.type==='unpaid'?'Unpaid':ov.type==='cancelled'?'Cancelled':ov.type==='removed'?'Removed':ov.type==='manual'?((ov.client_name||'Manual')+(ov.time_start&&ov.time_end?' · '+ov.time_start+' – '+ov.time_end:'')):status; }
     const row = {
       num: i+1, date: ds, day: dayName,
       timeSlot: rec.time_start&&rec.time_end ? rec.time_start+' – '+rec.time_end : rec.time_start||'—',
