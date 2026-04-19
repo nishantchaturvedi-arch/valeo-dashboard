@@ -373,6 +373,15 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .pl-toolbar{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center}
 .pl-toolbar-label{font-size:11px;color:var(--text2)}
 
+/* ── Client Schedule Modal ── */
+.sched-overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:600;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:24px}
+.sched-modal{background:#f0f2f5;border-radius:14px;width:100%;max-width:860px;overflow:hidden;position:relative;margin:auto}
+.sched-modal-top{background:#1a1a2e;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.sched-modal-title{color:rgba(255,255,255,.8);font-size:12px;font-weight:600;font-family:'Inter',sans-serif}
+.sched-modal-actions{display:flex;gap:8px;flex-shrink:0}
+.sched-action-btn{padding:6px 14px;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif}
+.sched-close-btn{background:rgba(255,255,255,.12);color:#fff;width:28px;height:28px;border-radius:6px;border:none;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center}
+
 </style>
 </head>
 <body>
@@ -645,6 +654,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
       <span class="pl-toolbar-label">Columns:</span>
       <button class="pl-add-col-btn" onclick="addPlannerRow()">+ Add Row</button>
       <button class="pl-add-col-btn" onclick="exportPlannerCSV()">⬇ Export CSV</button>
+      <button class="pl-add-col-btn" style="background:linear-gradient(135deg,#1a1a2e,#0f3460);color:#fff;border-color:#0f3460" onclick="showClientSchedule()">📋 Client Schedule</button>
     </div>
 
     <!-- Share bar -->
@@ -664,6 +674,21 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
       </div>
     </div>
 
+  </div>
+</div>
+
+<!-- ── CLIENT SCHEDULE MODAL ── -->
+<div class="sched-overlay" id="sched-overlay" style="display:none" onclick="if(event.target===this)closeSchedModal()">
+  <div class="sched-modal" id="sched-modal">
+    <div class="sched-modal-top">
+      <span class="sched-modal-title">📋 Client Schedule Preview</span>
+      <div class="sched-modal-actions">
+        <button class="sched-action-btn" style="background:rgba(255,255,255,.15);color:#fff" onclick="printSchedModal()">🖨 Print</button>
+        <button class="sched-action-btn" style="background:#2f81f7;color:#fff" onclick="downloadSchedHTML()">⬇ Download HTML</button>
+      </div>
+      <button class="sched-close-btn" onclick="closeSchedModal()">✕</button>
+    </div>
+    <div id="sched-modal-body"></div>
   </div>
 </div>
 
@@ -1893,8 +1918,8 @@ function generatePlannerTable(){
   const weeks = extractWeeks(pkg)||4;
   const daysPerWeek = extractDays2(pkg)||5;
   const hrsPerDay = extractHours(pkg)||0;
-  const totalDays = 28; // always 28 days for monthly
-  const targetWorkDays = weeks * daysPerWeek;
+  const totalDays = weeks * 7; // 4 weeks = 28 calendar days always
+  const targetWorkDays = weeks * daysPerWeek; // 5d→20, 6d→24, 7d→28
 
   plannerOffDays = [...document.querySelectorAll('.day-chip-pl.on')].map(function(b){ return b.dataset.day; });
 
@@ -2060,6 +2085,233 @@ function exportPlannerCSV(){
   const blob = new Blob([csv], {type:'text/csv'});
   const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
   a.download='valeo-schedule.csv'; a.click();
+}
+
+// ── Client Schedule (Farid/Noor-style) ──────────────────────────
+var _schedHTMLCache = '';
+
+function showClientSchedule(){
+  if(!plannerData.length){ alert('Generate a schedule first'); return; }
+  _schedHTMLCache = buildClientScheduleHTML();
+
+  // Render inside modal body as an iframe for CSS isolation
+  const iframe = document.createElement('iframe');
+  iframe.style.cssText = 'width:100%;height:80vh;border:none;display:block';
+  const body = document.getElementById('sched-modal-body');
+  body.innerHTML = '';
+  body.appendChild(iframe);
+  iframe.contentDocument.open();
+  iframe.contentDocument.write(_schedHTMLCache);
+  iframe.contentDocument.close();
+
+  document.getElementById('sched-overlay').style.display='flex';
+}
+
+function closeSchedModal(){
+  document.getElementById('sched-overlay').style.display='none';
+}
+
+function printSchedModal(){
+  const w = window.open('','_blank');
+  w.document.write(_schedHTMLCache);
+  w.document.close();
+  w.focus();
+  setTimeout(function(){ w.print(); }, 600);
+}
+
+function downloadSchedHTML(){
+  const blob = new Blob([_schedHTMLCache], {type:'text/html'});
+  const a = document.createElement('a');
+  const cg = (plannerData[0]||{}).babysitter || 'schedule';
+  a.download = 'schedule-' + cg.replace(/\s+/g,'-').toLowerCase() + '.html';
+  a.href = URL.createObjectURL(blob);
+  a.click();
+}
+
+function buildClientScheduleHTML(){
+  // Gather meta from planner context
+  const rec = plannerData[0] || {};
+  const cgName = toTitleCase(rec.babysitter || '—');
+  const homecare = rec.homecare || '—';
+  const orderId = (function(){
+    var r = rawData.find(function(x){ return x.caregiver===(rec.babysitter||'') && x.order_id; });
+    return r ? r.order_id : '—';
+  })();
+  const clientName = (function(){
+    var r = rawData.find(function(x){ return x.caregiver===(rec.babysitter||'') && x.client_name; });
+    return r ? toTitleCase(r.client_name) : '—';
+  })();
+  const pkg = (function(){
+    var r = rawData.find(function(x){ return x.caregiver===(rec.babysitter||'') && x.package_type; });
+    return r ? r.package_type : '—';
+  })();
+  const shift = rec.timeSlot || '—';
+
+  // Date range
+  const dates = plannerData.map(function(r){ return r.date; }).filter(Boolean).sort();
+  const startDate = dates[0] || '';
+  const endDate = dates[dates.length-1] || '';
+  const periodStr = startDate && endDate ? (fmtDisplayDate(startDate) + ' – ' + fmtDisplayDate(endDate)) : '—';
+
+  // Count working vs off
+  const workDays = plannerData.filter(function(r){ return !['Off','Sick','Holiday','Unpaid','Cancelled','Removed'].includes(r.status); }).length;
+  const offDays = plannerData.filter(function(r){ return ['Off','Sick','Holiday','Unpaid','Cancelled','Removed'].includes(r.status); }).length;
+  const hrsPerDay = extractHours(pkg) || 0;
+  const totalHrs = workDays * hrsPerDay;
+
+  // Detect relief caregiver from split assignments
+  const splitCg2 = splitAssignments[orderId] ? toTitleCase(splitAssignments[orderId]) : '';
+
+  // Build week groups
+  var weekSize = 7;
+  var weeks = [];
+  for(var i=0; i<plannerData.length; i+=weekSize){
+    weeks.push(plannerData.slice(i, i+weekSize));
+  }
+
+  // Colour palette for up to 4 caregivers
+  var cgColors = {};
+  var palette = [
+    {bg:'#e8f5ef',text:'#2d7a57',bar:'#3d9970'},
+    {bg:'#fef0e3',text:'#c0651a',bar:'#e67e22'},
+    {bg:'#e8f0fe',text:'#1f5fcc',bar:'#2980b9'},
+    {bg:'#fde8f5',text:'#8b1f6a',bar:'#c0399a'}
+  ];
+  var cgList = [];
+  plannerData.forEach(function(r){
+    var cg = toTitleCase(r.babysitter||'');
+    if(cg && !cgColors[cg]){ cgColors[cg] = palette[cgList.length % palette.length]; cgList.push(cg); }
+    if(r.status && !['Duty','Off'].includes(r.status)){
+      // relief on special days: use status as override label
+    }
+  });
+  // Always include main CG
+  if(cgName && !cgColors[cgName]){ cgColors[cgName] = palette[0]; cgList.unshift(cgName); }
+  if(splitCg2 && !cgColors[splitCg2]){ cgColors[splitCg2] = palette[cgList.length % palette.length]; cgList.push(splitCg2); }
+
+  // Summary cards
+  var cgShiftCounts = {};
+  plannerData.forEach(function(r){
+    var cg = r.status === 'Off' ? null : toTitleCase(r.babysitter||'');
+    if(!cg) return;
+    cgShiftCounts[cg] = (cgShiftCounts[cg]||0) + 1;
+  });
+  var summaryCardsHTML = '';
+  cgList.forEach(function(cg, i){
+    var col = cgColors[cg] || palette[0];
+    var cnt = cgShiftCounts[cg] || 0;
+    summaryCardsHTML += '<div class="sum-card" style="border-top:3px solid '+col.bar+'">'
+      + '<div class="sum-card-name" style="color:'+col.text+'">'+cg+'</div>'
+      + '<div class="sum-card-shifts">'+cnt+'</div>'
+      + '<div class="sum-card-sub">working shifts</div>'
+      + '</div>';
+  });
+  summaryCardsHTML += '<div class="sum-card" style="border-top:3px solid #2980b9">'
+    + '<div class="sum-card-name" style="color:#1f6599">Coverage</div>'
+    + '<div class="sum-card-shifts">'+plannerData.length+'</div>'
+    + '<div class="sum-card-sub">days'+(totalHrs?' · '+totalHrs+'h total':'')+'</div>'
+    + '</div>';
+
+  // Table rows
+  var rowsHTML = '';
+  weeks.forEach(function(wk, wi){
+    rowsHTML += '<tr class="week-sep"><td colspan="5">WEEK '+(wi+1)+'</td></tr>';
+    wk.forEach(function(r){
+      var isOff = ['Off','Sick','Holiday','Unpaid','Cancelled','Removed'].includes(r.status);
+      var cg = toTitleCase(r.babysitter||'');
+      var col = cgColors[cg] || palette[0];
+      var statusLabel = isOff ? r.status : cg;
+      var chipStyle = isOff
+        ? 'background:#f0f0f0;color:#999'
+        : 'background:'+col.bg+';color:'+col.text;
+      var dateObj = r.date ? new Date(r.date+'T12:00:00') : null;
+      var dow = dateObj ? ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dateObj.getDay()] : r.day||'';
+      var dateDisp = dateObj ? fmtDisplayDate(r.date) : r.date||'';
+
+      rowsHTML += '<tr'+(isOff?' style="opacity:.5"':'')+'>'
+        + '<td class="td-day">Day '+r.num+'</td>'
+        + '<td class="td-date">'+dateDisp+'</td>'
+        + '<td class="td-dow">'+dow+'</td>'
+        + '<td>'+r.timeSlot+'</td>'
+        + '<td><span class="cg-chip" style="'+chipStyle+'">'+statusLabel+'</span></td>'
+        + '</tr>';
+    });
+  });
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Schedule — ${cgName}</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#1a1a2e;font-size:13px;padding:24px;min-height:100vh}
+.hero{background:linear-gradient(135deg,#1a1a2e 0%,#16213e 60%,#0f3460 100%);border-radius:16px;padding:28px 32px;color:#fff;margin-bottom:16px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:-40px;right:-40px;width:220px;height:220px;border-radius:50%;background:rgba(255,255,255,.04)}
+.hero-label{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:6px}
+.hero-name{font-size:28px;font-weight:700;letter-spacing:-.5px;margin-bottom:12px}
+.hero-meta{display:flex;gap:28px;flex-wrap:wrap}
+.hero-field label{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.45);display:block;margin-bottom:3px}
+.hero-field span{font-size:12px;font-weight:500;color:rgba(255,255,255,.92);font-family:'DM Mono',monospace}
+.summary-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px}
+.sum-card{background:#fff;border-radius:12px;padding:16px 18px;border:1px solid #e8ecf0;border-top-left-radius:0;border-top-right-radius:0}
+.sum-card-name{font-size:11px;font-weight:600;margin-bottom:4px}
+.sum-card-shifts{font-size:26px;font-weight:700;font-family:'DM Mono',monospace;line-height:1;color:#1a1a2e;margin-bottom:2px}
+.sum-card-sub{font-size:10px;color:#888}
+.table-wrap{background:#fff;border-radius:12px;border:1px solid #e8ecf0;overflow:hidden}
+table{width:100%;border-collapse:collapse}
+thead tr{background:#f7f8fa}
+th{padding:10px 14px;text-align:left;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#888;border-bottom:1px solid #e8ecf0;white-space:nowrap}
+td{padding:10px 14px;border-bottom:1px solid #f0f2f5;vertical-align:middle;font-size:12px}
+tr:last-child td{border-bottom:none}
+tr.week-sep td{background:#f7f8fa;padding:5px 14px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#aaa;border-top:1px solid #e8ecf0;border-bottom:1px solid #e8ecf0}
+tr:hover td{background:#fafbfc}
+tr.week-sep:hover td{background:#f7f8fa}
+.td-day{font-family:'DM Mono',monospace;font-weight:500;min-width:46px}
+.td-date{font-family:'DM Mono',monospace;color:#444;min-width:60px}
+.td-dow{color:#888;min-width:40px}
+.cg-chip{display:inline-flex;align-items:center;padding:4px 11px;border-radius:6px;font-size:11px;font-weight:600;white-space:nowrap}
+.footer{margin-top:14px;font-size:10px;color:#aaa;text-align:center}
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="hero-label">Caregiver Schedule · ${homecare}</div>
+  <div class="hero-name">${clientName}</div>
+  <div class="hero-meta">
+    <div class="hero-field"><label>Order ID</label><span>${orderId}</span></div>
+    <div class="hero-field"><label>Caregiver</label><span>${cgName}</span></div>
+    <div class="hero-field"><label>Package</label><span>${pkg}</span></div>
+    <div class="hero-field"><label>Period</label><span>${periodStr}</span></div>
+    <div class="hero-field"><label>Shift</label><span>${shift}</span></div>
+  </div>
+</div>
+<div class="summary-row">${summaryCardsHTML}</div>
+<div class="table-wrap">
+<table>
+  <thead><tr>
+    <th>Day</th><th>Date</th><th>DOW</th><th>Shift</th><th>Caregiver</th>
+  </tr></thead>
+  <tbody>${rowsHTML}</tbody>
+</table>
+</div>
+<div class="footer">Generated by Valeo Health &nbsp;·&nbsp; ${clientName}</div>
+</body>
+</html>`;
+}
+
+function toTitleCase(str){
+  return (str||'').replace(/\w\S*/g,function(t){ return t.charAt(0).toUpperCase()+t.substr(1).toLowerCase(); });
+}
+
+function fmtDisplayDate(ds){
+  // ds = "YYYY-MM-DD"
+  if(!ds) return '';
+  var d = new Date(ds+'T12:00:00');
+  var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return d.getDate()+' '+months[d.getMonth()];
 }
 
 function updateShareLink(){
