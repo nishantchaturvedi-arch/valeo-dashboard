@@ -1,6 +1,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
@@ -383,127 +384,153 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .sched-action-btn{padding:6px 14px;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif}
 .sched-close-btn{background:rgba(255,255,255,.12);color:#fff;width:28px;height:28px;border-radius:6px;border:none;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center}
 
+
+/* ── Add/Remove Caregiver ── */
+.cg-card{position:relative}
+.cg-remove-btn{position:absolute;top:7px;right:7px;width:20px;height:20px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:var(--text3);cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;z-index:2;transition:all .15s;line-height:1;padding:0;opacity:0}
+.cg-card:hover .cg-remove-btn{opacity:1}
+.cg-remove-btn:hover{background:rgba(248,81,73,.15);border-color:var(--absent);color:var(--absent)}
+.add-cg-btn{padding:6px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text2);font-size:11px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;white-space:nowrap}
+.add-cg-btn:hover{border-color:var(--duty);color:var(--duty)}
+.show-hidden-btn{padding:6px 12px;background:rgba(248,81,73,.08);border:1px solid rgba(248,81,73,.25);border-radius:7px;color:var(--absent);font-size:11px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;white-space:nowrap;display:none}
+.show-hidden-btn.visible{display:block}
+.show-hidden-btn:hover{background:rgba(248,81,73,.15)}
+.acg-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:600;display:none;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
+.acg-modal-overlay.show{display:flex}
+.acg-box{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:22px;width:380px;max-width:95vw;box-shadow:0 16px 48px var(--shadow)}
+.acg-title{font-size:14px;font-weight:600;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between}
+.acg-field{margin-bottom:12px}
+.acg-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);margin-bottom:4px;display:block}
+.acg-input,.acg-select{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'Inter',sans-serif;font-size:12px;padding:8px 10px;border-radius:6px;outline:none}
+.acg-input:focus,.acg-select:focus{border-color:var(--accent)}
+.acg-actions{display:flex;gap:8px;margin-top:4px}
+.acg-save{flex:1;padding:9px;background:var(--duty);border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif}
+.acg-cancel{padding:9px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text2);font-size:12px;cursor:pointer;font-family:'Inter',sans-serif}
+.manual-badge{display:inline-block;font-size:9px;padding:1px 6px;border-radius:8px;background:rgba(63,185,80,.12);color:var(--duty);border:1px solid rgba(63,185,80,.25);margin-left:4px;vertical-align:middle}
+.cg-restore-btn{position:absolute;bottom:8px;right:8px;padding:3px 10px;background:rgba(63,185,80,.2);border:1px solid var(--duty);border-radius:5px;color:var(--duty);font-size:10px;cursor:pointer;font-family:'Inter',sans-serif;z-index:3}
 </style>
 </head>
 <body>
 
 <!-- ── Header ── -->
 <div class="header">
-  <div class="header-brand">
-    <div style="display:flex;align-items:center;gap:10px">
-      <img src="data:image/jpeg;base64,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" style="height:36px;width:auto;object-fit:contain" alt="Valeo">
-      <div>
-        <div style="font-size:10px;color:var(--text2);font-family:'JetBrains Mono',monospace;letter-spacing:.02em">Caregiver Operations</div>
-      </div>
-    </div>
-  </div>
-  <div class="header-right">
-    <div class="sync-pill" onclick="loadData(true)" id="sync-pill">
-      <div class="sync-dot loading" id="sync-dot"></div>
-      <span id="sync-text">Loading...</span>
-    </div>
-    <button class="theme-btn" onclick="toggleTheme()" id="theme-btn">🌙</button>
-  </div>
+ <div class="header-brand">
+ <div style="display:flex;align-items:center;gap:10px">
+ <img src="data:image/jpeg;base64,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" style="height:36px;width:auto;object-fit:contain" alt="Valeo">
+ <div>
+ <div style="font-size:10px;color:var(--text2);font-family:'JetBrains Mono',monospace;letter-spacing:.02em">Caregiver Operations</div>
+ </div>
+ </div>
+ </div>
+ <div class="header-right">
+ <div class="sync-pill" onclick="loadData(true)" id="sync-pill">
+ <div class="sync-dot loading" id="sync-dot"></div>
+ <span id="sync-text">Loading...</span>
+ </div>
+ <button class="theme-btn" onclick="toggleTheme()" id="theme-btn">🌙</button>
+ </div>
 </div>
 
 <!-- ── Tabs ── -->
 <div class="main-tabs">
-  <button class="main-tab active" onclick="switchTab('calendar')">📅 Calendar</button>
-  <button class="main-tab" onclick="switchTab('analytics')">📊 Analytics</button>
-  <button class="main-tab" onclick="switchTab('ops')">⚡ Operations</button>
-  <button class="main-tab" onclick="switchTab('planner')">📋 Package Planner</button>
+ <button class="main-tab active" onclick="switchTab('calendar')">📅 Calendar</button>
+ <button class="main-tab" onclick="switchTab('analytics')">📊 Analytics</button>
+ <button class="main-tab" onclick="switchTab('ops')">⚡ Operations</button>
+ <button class="main-tab" onclick="switchTab('planner')">📋 Package Planner</button>
 </div>
 
 <!-- ── Availability bar (calendar only) ── -->
 <div class="avail-bar" id="avail-bar">
-  <div class="avail-label">🗓 Check Availability:</div>
-  <input class="avail-input" type="date" id="avail-from">
-  <span style="font-size:11px;color:var(--text2)">→</span>
-  <input class="avail-input" type="date" id="avail-to">
-  <button class="avail-btn" onclick="checkAvail()">Check</button>
-  <button class="avail-clear" onclick="clearAvail()">Clear</button>
-  <span class="avail-result" id="avail-result"></span>
+ <div class="avail-label">🗓 Check Availability:</div>
+ <input class="avail-input" type="date" id="avail-from">
+ <span style="font-size:11px;color:var(--text2)">→</span>
+ <input class="avail-input" type="date" id="avail-to">
+ <button class="avail-btn" onclick="checkAvail()">Check</button>
+ <button class="avail-clear" onclick="clearAvail()">Clear</button>
+ <span class="avail-result" id="avail-result"></span>
 </div>
 
 <!-- ── EVENT DETAIL MODAL ── -->
 <div class="modal-overlay" id="ev-modal" onclick="if(event.target===this)closeEvModal()">
-  <div class="modal">
-    <div class="modal-head">
-      <div class="modal-title">Shift Details</div>
-      <button class="modal-x" onclick="closeEvModal()">✕</button>
-    </div>
-    <div id="ev-modal-body"></div>
-  </div>
+ <div class="modal">
+ <div class="modal-head">
+ <div class="modal-title">Shift Details</div>
+ <button class="modal-x" onclick="closeEvModal()">✕</button>
+ </div>
+ <div id="ev-modal-body"></div>
+ </div>
 </div>
 
 <!-- ── WEEK OFF MODAL ── -->
 <div class="modal-overlay" id="wo-modal" onclick="if(event.target===this)closeWoModal()">
-  <div class="modal" style="width:320px">
-    <div class="modal-head">
-      <div class="modal-title">Set Week Off Days</div>
-      <button class="modal-x" onclick="closeWoModal()">✕</button>
-    </div>
-    <div id="wo-modal-body"></div>
-  </div>
+ <div class="modal" style="width:320px">
+ <div class="modal-head">
+ <div class="modal-title">Set Week Off Days</div>
+ <button class="modal-x" onclick="closeWoModal()">✕</button>
+ </div>
+ <div id="wo-modal-body"></div>
+ </div>
 </div>
 
 <!-- ── CALENDAR PAGE ── -->
 <div class="page active" id="page-calendar">
-  <!-- HC list view -->
-  <div id="hc-list-view">
-    <div class="cg-search-bar">
-    <span style="font-size:12px;color:var(--text2);font-weight:500">🔍</span>
-    <input class="cg-search-input" id="cg-search-input" type="text" placeholder="Search caregiver..." oninput="filterCGSearch()">
-    <select class="cg-filter-select" id="cg-hc-filter" onchange="filterCGSearch()">
-      <option value="all">All Homecare</option>
-    </select>
-    <div class="cg-result-count" id="cg-result-count"></div>
-  </div>
-  <div class="cal-page" id="hc-grid-wrap">
-      <div class="loading-wrap"><div class="spinner"></div><span>Fetching live data from Metabase...</span></div>
-    </div>
-  </div>
-  <!-- Individual CG calendar view -->
-  <div class="cg-cal-view" id="cg-cal-view">
-    <div class="cg-cal-topbar">
-      <button class="back-btn" onclick="backToList()">←</button>
-      <div class="cg-cal-info">
-        <div class="cg-cal-title" id="cg-cal-title">—</div>
-        <div class="cg-cal-sub" id="cg-cal-sub">—</div>
-      </div>
-      <button class="weekoff-btn" onclick="openWoModal()" id="wo-btn" style="display:none">📅 Week off</button>
-      <div class="cal-nav">
-        <button class="cal-nav-btn" onclick="changeCalMo(-1)">‹</button>
-        <div class="cal-month-label" id="cal-mo-label">—</div>
-        <button class="cal-nav-btn cal-today-btn" onclick="goCalToday()">Today</button>
-        <button class="cal-nav-btn" onclick="changeCalMo(1)">›</button>
-      </div>
-    </div>
-    <div class="cal-wrap">
-      <div class="cal-table">
-        <div class="cal-head">
-          <div class="cal-dow">Sun</div><div class="cal-dow">Mon</div><div class="cal-dow">Tue</div>
-          <div class="cal-dow">Wed</div><div class="cal-dow">Thu</div><div class="cal-dow">Fri</div>
-          <div class="cal-dow">Sat</div>
-        </div>
-        <div class="cal-body" id="cal-body"></div>
-      </div>
-    </div>
-  </div>
+ <!-- HC list view -->
+ <div id="hc-list-view">
+ <div class="cg-search-bar">
+ <span style="font-size:12px;color:var(--text2);font-weight:500">🔍</span>
+ <input class="cg-search-input" id="cg-search-input" type="text" placeholder="Search caregiver..." oninput="filterCGSearch()">
+ <select class="cg-filter-select" id="cg-hc-filter" onchange="filterCGSearch()">
+ <option value="all">All Homecare</option>
+ </select>
+ <div class="cg-result-count" id="cg-result-count"></div>
+    <button class="show-hidden-btn" id="show-hidden-btn" onclick="toggleShowHidden()"></button>
+    <button class="add-cg-btn" onclick="openAddCGModal()">✦ Add Caregiver</button>
+ </div>
+ <div class="cal-page" id="hc-grid-wrap">
+ <div class="loading-wrap"><div class="spinner"></div><span>Fetching live data from Metabase...</span></div>
+ </div>
+ </div>
+ <!-- Individual CG calendar view -->
+ <div class="cg-cal-view" id="cg-cal-view">
+ <div class="cg-cal-topbar">
+ <button class="back-btn" onclick="backToList()">←</button>
+ <div class="cg-cal-info">
+ <div class="cg-cal-title" id="cg-cal-title">—</div>
+ <div class="cg-cal-sub" id="cg-cal-sub">—</div>
+ </div>
+ <button class="weekoff-btn" onclick="openWoModal()" id="wo-btn" style="display:none">📅 Week off</button>
+ <div class="cal-nav">
+ <button class="cal-nav-btn" onclick="changeCalMo(-1)">‹</button>
+ <div class="cal-month-label" id="cal-mo-label">—</div>
+ <button class="cal-nav-btn cal-today-btn" onclick="goCalToday()">Today</button>
+ <button class="cal-nav-btn" onclick="changeCalMo(1)">›</button>
+ </div>
+ </div>
+ <div class="cal-wrap">
+ <div class="cal-table">
+ <div class="cal-head">
+ <div class="cal-dow">Sun</div><div class="cal-dow">Mon</div><div class="cal-dow">Tue</div>
+ <div class="cal-dow">Wed</div><div class="cal-dow">Thu</div><div class="cal-dow">Fri</div>
+ <div class="cal-dow">Sat</div>
+ </div>
+ <div class="cal-body" id="cal-body"></div>
+ </div>
+ </div>
+ </div>
 </div>
 
 <!-- ── ANALYTICS PAGE ── -->
 <div class="page" id="page-analytics">
-  <div class="analytics-page">
-    <!-- Month tabs -->
-    <div class="month-tabs" id="month-tabs"></div>
-    <!-- Week tabs -->
-    <div class="week-tabs" id="week-tabs"></div>
-    <!-- KPIs -->
-    <div class="kpi-grid" id="kpi-grid"></div>
-    <!-- Charts -->
-    <div class="analytics-grid" id="analytics-grid"></div>
-  </div>
+ <div class="analytics-page">
+ <!-- Month tabs -->
+ <div class="month-tabs" id="month-tabs"></div>
+ <!-- Week tabs -->
+ <div class="week-tabs" id="week-tabs"></div>
+ <!-- KPIs -->
+ <div class="kpi-grid" id="kpi-grid"></div>
+ <!-- Charts -->
+ <div class="analytics-grid" id="analytics-grid"></div>
+ </div>
 </div>
 
 
@@ -515,206 +542,246 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 
 <!-- ── OPERATIONS PAGE ── -->
 <div class="page" id="page-ops">
-  <div class="ops-page">
+ <div class="ops-page">
 
-    <!-- Expiring Packages -->
-    <div class="ops-section">
-      <div class="ops-section-header">
-        <div class="ops-section-title">
+ <!-- Expiring Packages -->
+ <div class="ops-section">
+ <div class="ops-section-header">
+ <div class="ops-section-title">
           🔔 Expiring Packages
-          <span class="ops-badge yellow" id="exp-count">—</span>
-        </div>
-        <div style="font-size:11px;color:var(--text2)">Next 4 weeks · follow up required</div>
-      </div>
-      <div style="overflow-x:auto">
-        <table class="ops-table">
-          <thead>
-            <tr>
-              <th>Client</th>
-              <th>Caregiver</th>
-              <th>Homecare</th>
-              <th>Package</th>
-              <th>End Date</th>
-              <th>Expires In</th>
-              <th>Week</th>
-              <th>Location</th>
-            </tr>
-          </thead>
-          <tbody id="exp-tbody"></tbody>
-        </table>
-      </div>
-    </div>
+ <span class="ops-badge yellow" id="exp-count">—</span>
+ </div>
+ <div style="font-size:11px;color:var(--text2)">Next 4 weeks · follow up required</div>
+ </div>
+ <div style="overflow-x:auto">
+ <table class="ops-table">
+ <thead>
+ <tr>
+ <th>Client</th>
+ <th>Caregiver</th>
+ <th>Homecare</th>
+ <th>Package</th>
+ <th>End Date</th>
+ <th>Expires In</th>
+ <th>Week</th>
+ <th>Location</th>
+ </tr>
+ </thead>
+ <tbody id="exp-tbody"></tbody>
+ </table>
+ </div>
+ </div>
 
-    <!-- Unassigned Orders -->
-    <div class="ops-section">
-      <div class="ops-section-header">
-        <div class="ops-section-title">
+ <!-- Unassigned Orders -->
+ <div class="ops-section">
+ <div class="ops-section-header">
+ <div class="ops-section-title">
           ⚠️ Unassigned Orders
-          <span class="ops-badge red" id="unassigned-count">—</span>
-        </div>
-        <div style="font-size:11px;color:var(--text2)">Orders with no caregiver assigned</div>
-      </div>
-      <div style="overflow-x:auto">
-        <table class="ops-table">
-          <thead>
-            <tr>
-              <th>Order ID</th>
-              <th>Client</th>
-              <th>Homecare</th>
-              <th>Package</th>
-              <th>Booked Slot</th>
-              <th>Location</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody id="unassigned-tbody"></tbody>
-        </table>
-      </div>
-    </div>
+ <span class="ops-badge red" id="unassigned-count">—</span>
+ </div>
+ <div style="font-size:11px;color:var(--text2)">Orders with no caregiver assigned</div>
+ </div>
+ <div style="overflow-x:auto">
+ <table class="ops-table">
+ <thead>
+ <tr>
+ <th>Order ID</th>
+ <th>Client</th>
+ <th>Homecare</th>
+ <th>Package</th>
+ <th>Booked Slot</th>
+ <th>Location</th>
+ <th>Status</th>
+ </tr>
+ </thead>
+ <tbody id="unassigned-tbody"></tbody>
+ </table>
+ </div>
+ </div>
 
-  </div>
+ </div>
 </div>
 
 
 <!-- ── OVERRIDE MODAL ── -->
 <div class="override-modal" id="override-modal">
-  <div class="override-box">
-    <div class="override-title">📝 Add Override</div>
-    <div class="override-date-info" id="ov-date-info">—</div>
-    <div class="override-type-grid">
-      <div class="ov-type-btn sick" onclick="selectOvType('sick',this)">🤒 Sick Leave</div>
-      <div class="ov-type-btn off" onclick="selectOvType('off',this)">🌙 Day Off</div>
-      <div class="ov-type-btn holiday" onclick="selectOvType('holiday',this)">🎉 Public Holiday</div>
-      <div class="ov-type-btn unpaid" onclick="selectOvType('unpaid',this)">💸 Unpaid Leave</div>
-      <div class="ov-type-btn cancelled" onclick="selectOvType('cancelled',this)">❌ Cancelled</div>
-      <div class="ov-type-btn removed" onclick="selectOvType('removed',this)">🗑 Remove Booking</div>
-      <div class="ov-type-btn manual" onclick="selectOvType('manual',this)" style="grid-column:1/-1">➕ Add Manual Booking</div>
-    </div>
-    <!-- Manual booking fields - shown only when manual selected -->
-    <div id="ov-manual-fields" style="display:none;margin-bottom:10px">
-      <input class="ov-note" id="ov-client" type="text" placeholder="Client name..." style="margin-bottom:6px">
-      <div style="display:flex;gap:6px">
-        <input class="ov-note" id="ov-time-start" type="text" placeholder="Start time e.g. 9:00 AM" style="flex:1;margin-bottom:6px">
-        <input class="ov-note" id="ov-time-end" type="text" placeholder="End time e.g. 3:00 PM" style="flex:1;margin-bottom:6px">
-      </div>
-    </div>
-    <textarea class="ov-note" id="ov-note" rows="2" placeholder="Optional note..."></textarea>
-    <div class="ov-actions">
-      <button class="ov-cancel-btn" onclick="closeOvModal()">Cancel</button>
-      <button class="ov-remove-btn" onclick="clearOverride()">Clear</button>
-      <button class="ov-save-btn" onclick="saveOverride()">Save Override</button>
-    </div>
-  </div>
+ <div class="override-box">
+ <div class="override-title">📝 Add Override</div>
+ <div class="override-date-info" id="ov-date-info">—</div>
+ <div class="override-type-grid">
+ <div class="ov-type-btn sick" onclick="selectOvType('sick',this)">🤒 Sick Leave</div>
+ <div class="ov-type-btn off" onclick="selectOvType('off',this)">🌙 Day Off</div>
+ <div class="ov-type-btn holiday" onclick="selectOvType('holiday',this)">🎉 Public Holiday</div>
+ <div class="ov-type-btn unpaid" onclick="selectOvType('unpaid',this)">💸 Unpaid Leave</div>
+ <div class="ov-type-btn cancelled" onclick="selectOvType('cancelled',this)">❌ Cancelled</div>
+ <div class="ov-type-btn removed" onclick="selectOvType('removed',this)">🗑 Remove Booking</div>
+ <div class="ov-type-btn manual" onclick="selectOvType('manual',this)" style="grid-column:1/-1">➕ Add Manual Booking</div>
+ </div>
+ <!-- Manual booking fields - shown only when manual selected -->
+ <div id="ov-manual-fields" style="display:none;margin-bottom:10px">
+ <input class="ov-note" id="ov-client" type="text" placeholder="Client name..." style="margin-bottom:6px">
+ <div style="display:flex;gap:6px">
+ <input class="ov-note" id="ov-time-start" type="text" placeholder="Start time e.g. 9:00 AM" style="flex:1;margin-bottom:6px">
+ <input class="ov-note" id="ov-time-end" type="text" placeholder="End time e.g. 3:00 PM" style="flex:1;margin-bottom:6px">
+ </div>
+ </div>
+ <textarea class="ov-note" id="ov-note" rows="2" placeholder="Optional note..."></textarea>
+ <div class="ov-actions">
+ <button class="ov-cancel-btn" onclick="closeOvModal()">Cancel</button>
+ <button class="ov-remove-btn" onclick="clearOverride()">Clear</button>
+ <button class="ov-save-btn" onclick="saveOverride()">Save Override</button>
+ </div>
+ </div>
 </div>
 
 
 <!-- ── PACKAGE PLANNER PAGE ── -->
 <div class="page" id="page-planner">
-  <div class="planner-page">
+ <div class="planner-page">
 
-    <!-- Controls -->
-    <div class="planner-controls">
-      <div class="planner-field">
-        <span class="planner-label">Caregiver</span>
-        <select class="planner-select" id="pl-cg-select">
-          <option value="">— Select Caregiver —</option>
-        </select>
-      </div>
-      <div class="planner-field">
-        <span class="planner-label">Order / Package</span>
-        <select class="planner-select" id="pl-order-select">
-          <option value="">— Select Order —</option>
-        </select>
-      </div>
-      <div class="planner-field">
-        <span class="planner-label">Week Off Days</span>
-        <div class="day-selector" id="pl-day-selector">
-          <div class="day-chip-pl" data-day="Sunday" onclick="togglePlannerDay(this)">Sun</div>
-          <div class="day-chip-pl" data-day="Monday" onclick="togglePlannerDay(this)">Mon</div>
-          <div class="day-chip-pl" data-day="Tuesday" onclick="togglePlannerDay(this)">Tue</div>
-          <div class="day-chip-pl" data-day="Wednesday" onclick="togglePlannerDay(this)">Wed</div>
-          <div class="day-chip-pl" data-day="Thursday" onclick="togglePlannerDay(this)">Thu</div>
-          <div class="day-chip-pl" data-day="Friday" onclick="togglePlannerDay(this)">Fri</div>
-          <div class="day-chip-pl" data-day="Saturday" onclick="togglePlannerDay(this)">Sat</div>
-        </div>
-      </div>
-      <button class="planner-btn" onclick="generatePlannerTable()">Generate Schedule</button>
-    </div>
+ <!-- Controls -->
+ <div class="planner-controls">
+ <div class="planner-field">
+ <span class="planner-label">Caregiver</span>
+ <select class="planner-select" id="pl-cg-select">
+ <option value="">— Select Caregiver —</option>
+ </select>
+ </div>
+ <div class="planner-field">
+ <span class="planner-label">Order / Package</span>
+ <select class="planner-select" id="pl-order-select">
+ <option value="">— Select Order —</option>
+ </select>
+ </div>
+ <div class="planner-field">
+ <span class="planner-label">Week Off Days</span>
+ <div class="day-selector" id="pl-day-selector">
+ <div class="day-chip-pl" data-day="Sunday" onclick="togglePlannerDay(this)">Sun</div>
+ <div class="day-chip-pl" data-day="Monday" onclick="togglePlannerDay(this)">Mon</div>
+ <div class="day-chip-pl" data-day="Tuesday" onclick="togglePlannerDay(this)">Tue</div>
+ <div class="day-chip-pl" data-day="Wednesday" onclick="togglePlannerDay(this)">Wed</div>
+ <div class="day-chip-pl" data-day="Thursday" onclick="togglePlannerDay(this)">Thu</div>
+ <div class="day-chip-pl" data-day="Friday" onclick="togglePlannerDay(this)">Fri</div>
+ <div class="day-chip-pl" data-day="Saturday" onclick="togglePlannerDay(this)">Sat</div>
+ </div>
+ </div>
+ <button class="planner-btn" onclick="generatePlannerTable()">Generate Schedule</button>
+ </div>
 
-    <!-- Summary KPIs -->
-    <div class="planner-summary" id="pl-summary" style="display:none">
-      <div class="planner-kpi"><div class="planner-kpi-val" id="pl-total-days">0</div><div class="planner-kpi-lbl">Total Days</div></div>
-      <div class="planner-kpi"><div class="planner-kpi-val" id="pl-working-days">0</div><div class="planner-kpi-lbl">Working Days</div></div>
-      <div class="planner-kpi"><div class="planner-kpi-val" id="pl-off-days">0</div><div class="planner-kpi-lbl">Off Days</div></div>
-      <div class="planner-kpi"><div class="planner-kpi-val" id="pl-total-hrs">0</div><div class="planner-kpi-lbl">Total Hours</div></div>
-      <div class="planner-kpi"><div class="planner-kpi-val" id="pl-sick-days" style="color:var(--absent)">0</div><div class="planner-kpi-lbl">Sick / Override</div></div>
-    </div>
+ <!-- Summary KPIs -->
+ <div class="planner-summary" id="pl-summary" style="display:none">
+ <div class="planner-kpi"><div class="planner-kpi-val" id="pl-total-days">0</div><div class="planner-kpi-lbl">Total Days</div></div>
+ <div class="planner-kpi"><div class="planner-kpi-val" id="pl-working-days">0</div><div class="planner-kpi-lbl">Working Days</div></div>
+ <div class="planner-kpi"><div class="planner-kpi-val" id="pl-off-days">0</div><div class="planner-kpi-lbl">Off Days</div></div>
+ <div class="planner-kpi"><div class="planner-kpi-val" id="pl-total-hrs">0</div><div class="planner-kpi-lbl">Total Hours</div></div>
+ <div class="planner-kpi"><div class="planner-kpi-val" id="pl-sick-days" style="color:var(--absent)">0</div><div class="planner-kpi-lbl">Sick / Override</div></div>
+ </div>
 
-    <!-- Toolbar -->
-    <div class="pl-toolbar" id="pl-toolbar" style="display:none">
-      <span class="pl-toolbar-label">Columns:</span>
-      <button class="pl-add-col-btn" onclick="addPlannerRow()">+ Add Row</button>
-      <button class="pl-add-col-btn" onclick="exportPlannerCSV()">⬇ Export CSV</button>
-      <button class="pl-add-col-btn" style="background:linear-gradient(135deg,#1a1a2e,#0f3460);color:#fff;border-color:#0f3460" onclick="showClientSchedule()">📋 Client Schedule</button>
-    </div>
+ <!-- Toolbar -->
+ <div class="pl-toolbar" id="pl-toolbar" style="display:none">
+ <span class="pl-toolbar-label">Columns:</span>
+ <button class="pl-add-col-btn" onclick="addPlannerRow()">+ Add Row</button>
+ <button class="pl-add-col-btn" onclick="exportPlannerCSV()">⬇ Export CSV</button>
+ <button class="pl-add-col-btn" style="background:linear-gradient(135deg,#1a1a2e,#0f3460);color:#fff;border-color:#0f3460" onclick="showClientSchedule()">📋 Client Schedule</button>
+ </div>
 
-    <!-- Share bar -->
-    <div class="pl-share-bar" id="pl-share-bar" style="display:none">
-      <span style="font-size:11px;font-weight:600;color:var(--text);white-space:nowrap">🔗 Client Link:</span>
-      <input class="pl-share-url" id="pl-share-url" readonly>
-      <button class="pl-copy-btn" onclick="copyPlannerLink()">Copy Link</button>
-    </div>
+ <!-- Share bar -->
+ <div class="pl-share-bar" id="pl-share-bar" style="display:none">
+ <span style="font-size:11px;font-weight:600;color:var(--text);white-space:nowrap">🔗 Client Link:</span>
+ <input class="pl-share-url" id="pl-share-url" readonly>
+ <button class="pl-copy-btn" onclick="copyPlannerLink()">Copy Link</button>
+ </div>
 
-    <!-- Table -->
-    <div class="planner-table-wrap" id="pl-table-wrap" style="display:none">
-      <div style="overflow-x:auto" id="pl-table-scroll">
-        <table class="planner-table" id="pl-table">
-          <thead id="pl-thead"></thead>
-          <tbody id="pl-tbody"></tbody>
-        </table>
-      </div>
-    </div>
+ <!-- Table -->
+ <div class="planner-table-wrap" id="pl-table-wrap" style="display:none">
+ <div style="overflow-x:auto" id="pl-table-scroll">
+ <table class="planner-table" id="pl-table">
+ <thead id="pl-thead"></thead>
+ <tbody id="pl-tbody"></tbody>
+ </table>
+ </div>
+ </div>
 
-  </div>
+ </div>
 </div>
 
 <!-- ── CLIENT SCHEDULE MODAL ── -->
 <div class="sched-overlay" id="sched-overlay" style="display:none" onclick="if(event.target===this)closeSchedModal()">
-  <div class="sched-modal" id="sched-modal">
-    <div class="sched-modal-top">
-      <span class="sched-modal-title">📋 Client Schedule Preview</span>
-      <div class="sched-modal-actions">
-        <button class="sched-action-btn" style="background:rgba(255,255,255,.15);color:#fff" onclick="printSchedModal()">🖨 Print</button>
-        <button class="sched-action-btn" style="background:#2f81f7;color:#fff" onclick="downloadSchedHTML()">⬇ Download HTML</button>
-      </div>
-      <button class="sched-close-btn" onclick="closeSchedModal()">✕</button>
+ <div class="sched-modal" id="sched-modal">
+ <div class="sched-modal-top">
+ <span class="sched-modal-title">📋 Client Schedule Preview</span>
+ <div class="sched-modal-actions">
+ <button class="sched-action-btn" style="background:rgba(255,255,255,.15);color:#fff" onclick="printSchedModal()">🖨 Print</button>
+ <button class="sched-action-btn" style="background:#2f81f7;color:#fff" onclick="downloadSchedHTML()">⬇ Download HTML</button>
+ </div>
+ <button class="sched-close-btn" onclick="closeSchedModal()">✕</button>
+ </div>
+ <div id="sched-modal-body"></div>
+ </div>
+</div>
+
+
+<!-- ── ADD CAREGIVER MODAL ── -->
+<div class="acg-modal-overlay" id="acg-modal-overlay">
+  <div class="acg-box">
+    <div class="acg-title">
+      <span>➕ Add Caregiver</span>
+      <button class="modal-x" onclick="closeAddCGModal()">✕</button>
     </div>
-    <div id="sched-modal-body"></div>
+    <div class="acg-field">
+      <label class="acg-label">Full Name *</label>
+      <input class="acg-input" id="acg-name" type="text" placeholder="e.g. Maria Santos">
+    </div>
+    <div class="acg-field">
+      <label class="acg-label">Homecare Provider *</label>
+      <select class="acg-select" id="acg-hc">
+        <option value="">— Select Homecare —</option>
+      </select>
+    </div>
+    <div class="acg-field">
+      <label class="acg-label">Expertise</label>
+      <select class="acg-select" id="acg-expertise">
+        <option value="—">—</option>
+        <option value="Newborn/Infant">Newborn/Infant</option>
+        <option value="Toddler">Toddler</option>
+        <option value="Elderly Care">Elderly Care</option>
+        <option value="Post-Surgery">Post-Surgery</option>
+        <option value="All">All</option>
+      </select>
+    </div>
+    <div class="acg-field">
+      <label class="acg-label">Age</label>
+      <input class="acg-input" id="acg-age" type="number" min="18" max="70" placeholder="e.g. 35">
+    </div>
+    <div class="acg-actions">
+      <button class="acg-cancel" onclick="closeAddCGModal()">Cancel</button>
+      <button class="acg-save" onclick="saveManualCG()">Add to Calendar</button>
+    </div>
   </div>
 </div>
 
 <!-- ── CHATBOT ── -->
 <button class="chat-fab" onclick="toggleChat()">💬</button>
 <div class="chat-panel" id="chat-panel">
-  <div class="chat-top">
-    <div class="chat-top-title"><div class="chat-top-dot"></div>Valeo AI Assistant</div>
-    <button class="chat-x" onclick="toggleChat()">✕</button>
-  </div>
-  <div class="chat-msgs" id="chat-msgs">
-    <div class="chat-msg bot">Hi! I can help you find caregiver availability, check schedules, and answer questions about bookings. What would you like to know?</div>
-  </div>
-  <div class="chat-chips">
-    <div class="chat-chip" onclick="quickAsk(this)">Who is available today?</div>
-    <div class="chat-chip" onclick="quickAsk(this)">Who is busy today?</div>
-    <div class="chat-chip" onclick="quickAsk(this)">Packages expiring this week</div>
-    <div class="chat-chip" onclick="quickAsk(this)">How many caregivers per HC?</div>
-    <div class="chat-chip" onclick="quickAsk(this)">Any unassigned orders?</div>
-    <div class="chat-chip" onclick="quickAsk(this)">Who is available tomorrow?</div>
-  </div>
-  <div class="chat-bottom">
-    <textarea class="chat-input" id="chat-input" rows="1" placeholder="Ask about schedules..." onkeydown="chatKey(event)"></textarea>
-    <button class="chat-send" id="chat-send" onclick="sendChat()">▶</button>
-  </div>
+ <div class="chat-top">
+ <div class="chat-top-title"><div class="chat-top-dot"></div>Valeo AI Assistant</div>
+ <button class="chat-x" onclick="toggleChat()">✕</button>
+ </div>
+ <div class="chat-msgs" id="chat-msgs">
+ <div class="chat-msg bot">Hi! I can help you find caregiver availability, check schedules, and answer questions about bookings. What would you like to know?</div>
+ </div>
+ <div class="chat-chips">
+ <div class="chat-chip" onclick="quickAsk(this)">Who is available today?</div>
+ <div class="chat-chip" onclick="quickAsk(this)">Who is busy today?</div>
+ <div class="chat-chip" onclick="quickAsk(this)">Packages expiring this week</div>
+ <div class="chat-chip" onclick="quickAsk(this)">How many caregivers per HC?</div>
+ <div class="chat-chip" onclick="quickAsk(this)">Any unassigned orders?</div>
+ <div class="chat-chip" onclick="quickAsk(this)">Who is available tomorrow?</div>
+ </div>
+ <div class="chat-bottom">
+ <textarea class="chat-input" id="chat-input" rows="1" placeholder="Ask about schedules..." onkeydown="chatKey(event)"></textarea>
+ <button class="chat-send" id="chat-send" onclick="sendChat()">▶</button>
+ </div>
 </div>
 
 <script>
@@ -737,6 +804,9 @@ let overrides = {}; // key: "caregiver|date" or "order_id|date" -> override obje
 let splitAssignments = {}; // key: order_id -> {cg2: name}
 let activeCG=null, calYear=new Date().getFullYear(), calMo=new Date().getMonth();
 let chatOpen=false, chatHistory=[], chatData='';
+let manualCGs = {}; // key: "name|homecare" -> {name,homecare,expertise,age}
+let hiddenCGs = new Set(); // "name|homecare" keys
+let showHiddenMode = false;
 
 const CG_DATA = {"christel gador": {"age": 29, "expertise": "All"}, "imelda paeste": {"age": 51, "expertise": "Newborn/Infant"}, "armida mitra maranan": {"age": 49, "expertise": "Newborn/Infant"}, "nolie valdez": {"age": 41, "expertise": "Newborn/Infant"}, "nolie a valdez": {"age": 41, "expertise": "Newborn/Infant"}, "lorna brazil": {"age": 47, "expertise": "Newborn/Infant"}, "lornie joy tarian": {"age": 34, "expertise": "Newborn/Infant"}, "marilyn serrano": {"age": 41, "expertise": "Newborn/Infant"}, "leilani deves fernandez": {"age": 54, "expertise": "Newborn/Infant"}, "jennifer avila abaygar": {"age": 45, "expertise": "Newborn/Infant"}, "ria baylon molina": {"age": 48, "expertise": "Newborn/Infant"}, "melita barrantes lequin": {"age": 48, "expertise": "Newborn/Infant"}, "melody kato": {"age": 37, "expertise": "Newborn/Infant"}, "nelia ortega cepe ma.": {"age": 54, "expertise": "Newborn/Infant"}, "theresa lascano antioquia": {"age": 39, "expertise": "Newborn/Infant"}, "maria rio egos bendanio": {"age": 35, "expertise": "Newborn/Infant"}, "waruni lakshika": {"age": 30, "expertise": "Newborn/Infant"}, "marivic": {"age": 35, "expertise": "All"}, "ritche": {"age": 42, "expertise": "All"}, "maria isabel": {"age": 41, "expertise": "All"}, "jonalyn b": {"age": 47, "expertise": "All"}, "jancy": {"age": 36, "expertise": "\u2014"}, "jancy kanappakan": {"age": 36, "expertise": "\u2014"}, "christine balanco": {"age": 35, "expertise": "All"}, "soe soe": {"age": 37, "expertise": "Newborn/Infant"}, "normita rabena": {"age": 42, "expertise": "Newborn/Infant"}, "alysa cuadras": {"age": 35, "expertise": "All"}, "cernina peleo": {"age": 48, "expertise": "Newborn/Infant"}, "myleine": {"age": 40, "expertise": "Newborn/Infant"}, "rosemary": {"age": 45, "expertise": "Newborn/Infant"}, "analyn santiago": {"age": 39, "expertise": "Newborn/Infant"}, "angela flores": {"age": 38, "expertise": "Newborn/Infant"}, "charmaine gerondio": {"age": 34, "expertise": "Newborn/Infant"}, "rizalyn caparas": {"age": 43, "expertise": "All"}, "rewelyn fernandez": {"age": 36, "expertise": "Toddler"}, "maria christina m. ele": {"age": 45, "expertise": "Newborn/Infant"}, "armie e. ramos": {"age": 36, "expertise": "Newborn/Infant"}, "dennel del alfredo": {"age": 40, "expertise": "Newborn/Infant"}, "aisa maisalat": {"age": 44, "expertise": "Newborn/Infant"}, "aisa guido maisalat": {"age": 44, "expertise": "Newborn/Infant"},
   "imelda": {"age": 51, "expertise": "Newborn/Infant"},
@@ -991,6 +1061,8 @@ function renderHCGrid(){
   hcs.forEach(hc=>{
     const col=hcColor(hc);
     const cgs=[...new Set(rawData.filter(r=>r.homecare===hc).map(r=>r.caregiver))].filter(Boolean).sort();
+    // Also include manually added caregivers for this HC
+    Object.values(manualCGs).filter(function(c){return c.homecare===hc;}).forEach(function(c){if(!cgs.includes(c.name))cgs.push(c.name);});
     html+=`<div class="hc-section">
       <div class="hc-section-header">
         <div class="hc-color-bar" style="background:${col}"></div>
@@ -1007,7 +1079,7 @@ function renderHCGrid(){
       const sick=moRecs.filter(r=>r.status.toLowerCase()==='sick').length;
       const cardId='cgc-'+cg.replace(/[^a-zA-Z0-9]/g,'_');
 
-      html+=`<div class="cg-card" id="${cardId}" onclick="openCGCal('${cg.replace(/'/g,"\\'")}','${hc.replace(/'/g,"\\'")}',this)" style="--card-col:${col}">
+      html+=`<div class="cg-card" data-cg="${cg}" data-hc="${hc}" id="${cardId}" onclick="openCGCal('${cg.replace(/'/g,"\\'")}','${hc.replace(/'/g,"\\'")}',this)" style="--card-col:${col}">
         <div class="cg-card::before" style="background:${col}"></div>
         <style>#${cardId}::before{background:${col}}
 /* ── Package Planner ── */
@@ -1079,13 +1151,54 @@ function renderHCGrid(){
           <div class="cg-stat"><div class="stat-n sick">${sick}</div><div class="stat-l">Sick</div></div>
         </div>
         ${renderCGCardExtra(cg, hc)}
+        <button class="cg-remove-btn" onclick="event.stopPropagation();removeCGByKey(this)">✕</button>
         <div class="cg-view-btn">View Calendar →</div>
       </div>`;
     });
     html+='</div></div>';
   });
 
+  // ── Manual caregivers not covered by Metabase HCs ──
+  const manualHCsOnly = [...new Set(Object.values(manualCGs).map(function(c){return c.homecare;}))].filter(function(h){return !hcs.includes(h);}).sort();
+  manualHCsOnly.forEach(function(hc){
+    const col=hcColor(hc);
+    const mCGs=Object.values(manualCGs).filter(function(c){return c.homecare===hc;});
+    if(!mCGs.length) return;
+    html+='<div class="hc-section"><div class="hc-section-header">'
+      +'<div class="hc-color-bar" style="background:'+col+'"></div>'
+      +'<div class="hc-section-name">'+hc+'</div>'
+      +'<div class="hc-section-count">'+mCGs.length+' caregivers</div>'
+      +'</div><div class="cg-grid">';
+    mCGs.forEach(function(m){
+      const cg=m.name,cardId2='cgc-'+cg.replace(/[^a-zA-Z0-9]/g,'_');
+      html+='<div class="cg-card" data-cg="'+cg.replace(/"/g,'&quot;')+'" data-hc="'+hc.replace(/"/g,'&quot;')+'" id="'+cardId2+'" onclick="openCGCalFromDataset(this)" style="--card-col:'+col+'">'
+        +'<style>#'+cardId2+'::before{background:'+col+'}</style>'
+        +'<button class="cg-remove-btn" onclick="event.stopPropagation();removeCGByKey(this)">✕</button>'
+        +'<div class="cg-avail-tag">&#x2713; Available</div>'
+        +'<div class="cg-unavail-tag">&#x2717; Unavailable</div>'
+        +'<div class="cg-top"><div class="cg-avatar" style="background:'+col+'">'+initials(cg)+'</div>'
+        +'<div><div class="cg-name">'+cg+'<span class="manual-badge">manual</span></div>'
+        +'<div class="cg-hc-label">'+hc+'</div></div></div>'
+        +'<div class="cg-meta">'
+        +'<div class="cg-meta-item"><div class="meta-label">Expertise</div><div class="meta-value">'+m.expertise+'</div></div>'
+        +'<div class="cg-meta-item"><div class="meta-label">Age</div><div class="meta-value">'+m.age+'</div></div>'
+        +'<div class="cg-meta-item"><div class="meta-label">Marital</div><div class="meta-value empty">—</div></div>'
+        +'<div class="cg-meta-item"><div class="meta-label">Score</div><div class="meta-value empty">—</div></div>'
+        +'</div>'
+        +'<div class="cg-stats">'
+        +'<div class="cg-stat"><div class="stat-n duty">0</div><div class="stat-l">Duty</div></div>'
+        +'<div class="cg-stat"><div class="stat-n off">0</div><div class="stat-l">Off</div></div>'
+        +'<div class="cg-stat"><div class="stat-n sick">0</div><div class="stat-l">Sick</div></div>'
+        +'</div>'
+        +'<div class="cg-view-btn">View Calendar &#x2192;</div>'
+        +'</div>';
+    });
+    html+='</div></div>';
+  });
+
   document.getElementById('hc-grid-wrap').innerHTML=html||'<div class="loading-wrap">No data found</div>';
+  applyHiddenFilter();
+  updateHiddenBadge();
 }
 
 // ── CG Calendar ──────────────────────────────────────────────────
@@ -1690,6 +1803,12 @@ async function loadOverrides(){
     overrides = {};
     splitAssignments = {};
   }
+  try{
+    const m=localStorage.getItem('valeo_manual_cgs');
+    const h=localStorage.getItem('valeo_hidden_cgs');
+    manualCGs = m ? JSON.parse(m) : {};
+    hiddenCGs = new Set(h ? JSON.parse(h) : []);
+  } catch(e){ manualCGs={}; hiddenCGs=new Set(); }
 }
 
 function applyOverrides(){
@@ -2275,6 +2394,30 @@ tr.week-sep:hover td{background:#f7f8fa}
 .td-dow{color:#888;min-width:40px}
 .cg-chip{display:inline-flex;align-items:center;padding:4px 11px;border-radius:6px;font-size:11px;font-weight:600;white-space:nowrap}
 .footer{margin-top:14px;font-size:10px;color:#aaa;text-align:center}
+
+/* ── Add/Remove Caregiver ── */
+.cg-card{position:relative}
+.cg-remove-btn{position:absolute;top:7px;right:7px;width:20px;height:20px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;color:var(--text3);cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;z-index:2;transition:all .15s;line-height:1;padding:0;opacity:0}
+.cg-card:hover .cg-remove-btn{opacity:1}
+.cg-remove-btn:hover{background:rgba(248,81,73,.15);border-color:var(--absent);color:var(--absent)}
+.add-cg-btn{padding:6px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text2);font-size:11px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;white-space:nowrap}
+.add-cg-btn:hover{border-color:var(--duty);color:var(--duty)}
+.show-hidden-btn{padding:6px 12px;background:rgba(248,81,73,.08);border:1px solid rgba(248,81,73,.25);border-radius:7px;color:var(--absent);font-size:11px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;white-space:nowrap;display:none}
+.show-hidden-btn.visible{display:block}
+.show-hidden-btn:hover{background:rgba(248,81,73,.15)}
+.acg-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:600;display:none;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
+.acg-modal-overlay.show{display:flex}
+.acg-box{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:22px;width:380px;max-width:95vw;box-shadow:0 16px 48px var(--shadow)}
+.acg-title{font-size:14px;font-weight:600;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between}
+.acg-field{margin-bottom:12px}
+.acg-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);margin-bottom:4px;display:block}
+.acg-input,.acg-select{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'Inter',sans-serif;font-size:12px;padding:8px 10px;border-radius:6px;outline:none}
+.acg-input:focus,.acg-select:focus{border-color:var(--accent)}
+.acg-actions{display:flex;gap:8px;margin-top:4px}
+.acg-save{flex:1;padding:9px;background:var(--duty);border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif}
+.acg-cancel{padding:9px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text2);font-size:12px;cursor:pointer;font-family:'Inter',sans-serif}
+.manual-badge{display:inline-block;font-size:9px;padding:1px 6px;border-radius:8px;background:rgba(63,185,80,.12);color:var(--duty);border:1px solid rgba(63,185,80,.25);margin-left:4px;vertical-align:middle}
+.cg-restore-btn{position:absolute;bottom:8px;right:8px;padding:3px 10px;background:rgba(63,185,80,.2);border:1px solid var(--duty);border-radius:5px;color:var(--duty);font-size:10px;cursor:pointer;font-family:'Inter',sans-serif;z-index:3}
 </style>
 </head>
 <body>
@@ -2400,6 +2543,116 @@ window.addEventListener('load', function(){
     loadSharedPlanner(urlParams.get('planner'));
   }
 });
+
+
+// ── Add / Remove Caregiver ───────────────────────────────────────
+function openCGCalFromDataset(el){
+  openCGCal(el.dataset.cg, el.dataset.hc, el);
+}
+function removeCGByKey(btn){
+  var card = btn.closest('.cg-card');
+  if(!card) return;
+  var cg = card.dataset.cg, hc = card.dataset.hc;
+  if(!cg||!hc) return;
+  hiddenCGs.add(cg+'|'+hc);
+  localStorage.setItem('valeo_hidden_cgs', JSON.stringify([...hiddenCGs]));
+  applyHiddenFilter();
+  updateHiddenBadge();
+}
+function openAddCGModal(){
+  const hcs=[...new Set([...rawData.map(function(r){return r.homecare;}), ...Object.values(manualCGs).map(function(c){return c.homecare;})])].filter(Boolean).sort();
+  const sel=document.getElementById('acg-hc');
+  sel.innerHTML='<option value="">— Select Homecare —</option>';
+  hcs.forEach(function(h){ sel.innerHTML+='<option value="'+h+'">'+h+'</option>'; });
+  document.getElementById('acg-name').value='';
+  document.getElementById('acg-expertise').value='—';
+  document.getElementById('acg-age').value='';
+  document.getElementById('acg-modal-overlay').classList.add('show');
+  document.getElementById('acg-name').focus();
+}
+function closeAddCGModal(){
+  document.getElementById('acg-modal-overlay').classList.remove('show');
+}
+function saveManualCG(){
+  const name=document.getElementById('acg-name').value.trim();
+  const hc=document.getElementById('acg-hc').value;
+  const exp=document.getElementById('acg-expertise').value;
+  const age=document.getElementById('acg-age').value||'—';
+  if(!name){alert('Please enter a caregiver name');return;}
+  if(!hc){alert('Please select a homecare provider');return;}
+  const key=name+'|'+hc;
+  if(manualCGs[key]){alert('This caregiver already exists');return;}
+  if(rawData.some(function(r){return (r.caregiver||'').toLowerCase()===name.toLowerCase()&&r.homecare===hc;})){
+    alert('A caregiver with this name already exists under this homecare');return;
+  }
+  manualCGs[key]={name:name,homecare:hc,expertise:exp,age:age};
+  localStorage.setItem('valeo_manual_cgs',JSON.stringify(manualCGs));
+  hiddenCGs.delete(key);
+  localStorage.setItem('valeo_hidden_cgs',JSON.stringify([...hiddenCGs]));
+  closeAddCGModal();
+  renderHCGrid();
+}
+function restoreCGByKey(btn){
+  var card=btn.closest('.cg-card');
+  if(!card) return;
+  hiddenCGs.delete(card.dataset.cg+'|'+card.dataset.hc);
+  localStorage.setItem('valeo_hidden_cgs',JSON.stringify([...hiddenCGs]));
+  applyHiddenFilter();
+  updateHiddenBadge();
+}
+function applyHiddenFilter(){
+  document.querySelectorAll('.cg-card').forEach(function(card){
+    var cg=card.dataset.cg, hc=card.dataset.hc;
+    if(!cg||!hc) return;
+    var key=cg+'|'+hc;
+    var isHidden=hiddenCGs.has(key);
+    if(showHiddenMode){
+      card.style.display='';
+      if(isHidden){
+        card.style.opacity='0.35';
+        card.style.filter='grayscale(1)';
+        if(!card.querySelector('.cg-restore-btn')){
+          var rb=document.createElement('button');
+          rb.className='cg-restore-btn';
+          rb.textContent='↩ Restore';
+          rb.onclick=function(e){e.stopPropagation();restoreCGByKey(rb);};
+          card.appendChild(rb);
+        }
+      } else {
+        card.style.opacity='';
+        card.style.filter='';
+        var rb2=card.querySelector('.cg-restore-btn');
+        if(rb2) rb2.remove();
+      }
+    } else {
+      card.style.display=isHidden?'none':'';
+      card.style.opacity='';
+      card.style.filter='';
+      var rb3=card.querySelector('.cg-restore-btn');
+      if(rb3) rb3.remove();
+    }
+  });
+  document.querySelectorAll('.hc-section').forEach(function(sec){
+    var vis=[...sec.querySelectorAll('.cg-card')].filter(function(c){return c.style.display!=='none';}).length;
+    sec.style.display=vis>0?'':'none';
+  });
+}
+function toggleShowHidden(){
+  showHiddenMode=!showHiddenMode;
+  applyHiddenFilter();
+  updateHiddenBadge();
+}
+function updateHiddenBadge(){
+  var btn=document.getElementById('show-hidden-btn');
+  if(!btn) return;
+  if(hiddenCGs.size>0){
+    btn.classList.add('visible');
+    btn.textContent=showHiddenMode?('👁 Showing '+hiddenCGs.size+' removed'):('🗑 '+hiddenCGs.size+' removed');
+  } else {
+    btn.classList.remove('visible');
+    showHiddenMode=false;
+  }
+}
 
 // ── Init ─────────────────────────────────────────────────────────
 loadData();
