@@ -2,6 +2,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
@@ -1698,7 +1699,15 @@ function renderExpiring(){
 
   const orders = Object.values(orderMap).filter(r => {
     const end = new Date(r.end_date+'T00:00:00');
-    return end >= today && end <= in28;
+    if(!(end >= today && end <= in28)) return false;
+    // Exclude if already renewed: another non-cancelled order for same client starts on/after this end date
+    const isRenewed = rawData.some(function(r2) {
+      return r2.client_name === r.client_name &&
+        r2.order_id !== r.order_id &&
+        (r2.status||'').toLowerCase() !== 'cancelled' &&
+        r2.date >= r.end_date;
+    });
+    return !isRenewed;
   }).sort((a,b) => a.end_date.localeCompare(b.end_date));
 
   document.getElementById('exp-count').textContent = orders.length;
