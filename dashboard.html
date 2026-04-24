@@ -1705,7 +1705,7 @@ function renderExpiring(){
       return r2.client_name === r.client_name &&
         r2.order_id !== r.order_id &&
         (r2.status||'').toLowerCase() !== 'cancelled' &&
-        r2.date >= r.end_date;
+         r2.date >= addDays(r.end_date, -7);;
     });
     return !isRenewed;
   }).sort((a,b) => a.end_date.localeCompare(b.end_date));
