@@ -1370,10 +1370,10 @@ function applyWo(){
   var sel=[...document.querySelectorAll('#wo-modal-body .day-chip.on')].map(function(b){return DAYS.find(function(d){return d.startsWith(b.textContent);});});
   var rec=rawData.find(function(r){return r.caregiver===activeCG&&['monthly','weekly'].includes(pkgType(r.package_type));});
   var cfgKey=(rec&&(rec.child_order_id||rec.order_id))||activeCG;
-  weekOffCfg[cfgKey]=sel; // optimistic
+  weekOffCfg[cfgKey]=sel;
   allData=expandOrders(rawData);
   closeWoModal();renderCalendar();
-  persistWrite('weekoff',cfgKey,sel); // fire-and-forget
+  persistWrite('weekoff',cfgKey,sel);
 }
 function closeWoModal(){document.getElementById('wo-modal').classList.remove('show');}
 
@@ -1406,9 +1406,7 @@ function checkAvail(){
     var card=document.getElementById(id);
     if(!card)return;
     var busy=false;
-    // 1. Raw booking overlap
     if(!busy)busy=rawData.some(function(r){return r.caregiver===cg&&r.status!=='Cancelled'&&(r.date||'')<=to&&(r.end_date||r.date||'')>=from;});
-    // 2. Sick/off/holiday/unpaid override in range
     if(!busy)busy=Object.entries(overrides).some(function(e){
       var key=e[0],ov=e[1];
       if(!key.startsWith(cg+'|'))return false;
@@ -1416,7 +1414,6 @@ function checkAvail(){
       if(!ovDate||ovDate<from||ovDate>to)return false;
       return['sick','off','holiday','unpaid'].includes(ov.type);
     });
-    // 3. Manual override booking in range
     if(!busy)busy=Object.entries(overrides).some(function(e){
       var key=e[0],ov=e[1];
       if(!key.startsWith(cg+'|')||ov.type!=='manual')return false;
@@ -1429,7 +1426,6 @@ function checkAvail(){
       }
       return true;
     });
-    // 4. 12h rest gap check
     if(!busy&&reqStart!==null)busy=allData.some(function(r){
       if(r.caregiver!==cg)return false;
       var rDate=r.date||'';
@@ -1871,14 +1867,14 @@ function populateCGHCFilter(){
 
 // ── Override System ──────────────────────────────────────────────
 var ovCG='', ovDate='', ovType='';
-var _syncTimer=null;
 
-// ── Persistence helpers (n8n + Google Sheets backend) ────────────
+// ── Persistence: n8n + Google Sheets ─────────────────────────────
 async function persistWrite(type,key,value){
   try{
     await fetch(N8N_OVERRIDE_WRITE,{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      mode:'no-cors',
+      headers:{'Content-Type':'text/plain'},
       body:JSON.stringify({action:'upsert',type:type,key:key,value:JSON.stringify(value)})
     });
   }catch(e){console.warn('[persist] write failed:',e);}
@@ -1887,7 +1883,8 @@ async function persistDelete(type,key){
   try{
     await fetch(N8N_OVERRIDE_WRITE,{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      mode:'no-cors',
+      headers:{'Content-Type':'text/plain'},
       body:JSON.stringify({action:'delete',type:type,key:key})
     });
   }catch(e){console.warn('[persist] delete failed:',e);}
@@ -1899,12 +1896,9 @@ async function loadOverrides(){
     const text=await res.text();
     let rows=[];
     try{rows=JSON.parse(text);}catch(e){}
-    // n8n may wrap items: [{json:{...}}] or direct [{...}]
     if(Array.isArray(rows)&&rows[0]&&rows[0].json) rows=rows.map(function(r){return r.json;});
     if(!Array.isArray(rows)) rows=[];
-
     overrides={};manualCGs={};hiddenCGs=new Set();weekOffCfg={};splitAssignments={};
-
     rows.forEach(function(row){
       if(!row||!row.key) return;
       var val;
@@ -1918,7 +1912,6 @@ async function loadOverrides(){
       }
     });
   }catch(e){
-    // Fallback: localStorage (works offline / when n8n is down)
     console.warn('[persist] n8n read failed, using localStorage:',e);
     try{
       var saved=localStorage.getItem('valeo_overrides');
@@ -2039,7 +2032,7 @@ function selectOvType(type, el){
 }
 
 async function saveOverride(){
-  if(!ovType){ alert('Please select an override type'); return; }
+  if(!ovType){alert('Please select an override type');return;}
   var note=document.getElementById('ov-note').value.trim();
   var payload={caregiver:ovCG,date:ovDate,type:ovType,note:note,saved_at:new Date().toISOString()};
   if(ovType==='manual'){
@@ -2050,26 +2043,20 @@ async function saveOverride(){
     payload.client_name=client;payload.time_start=tStart;payload.time_end=tEnd;
   }
   var key=ovCG+'|'+ovDate;
-  overrides[key]=payload; // optimistic update
-  applyOverrides();
-  closeOvModal();
-  renderCalendar();
-  renderHCGrid();
-  await persistWrite('override',key,payload); // persist to Sheets
+  overrides[key]=payload;
+  applyOverrides();closeOvModal();renderCalendar();renderHCGrid();
+  await persistWrite('override',key,payload);
 }
 
 async function clearOverride(){
   var key=ovCG+'|'+ovDate;
-  delete overrides[key]; // optimistic
-  applyOverrides();
-  closeOvModal();
-  renderCalendar();
-  renderHCGrid();
+  delete overrides[key];
+  applyOverrides();closeOvModal();renderCalendar();renderHCGrid();
   await persistDelete('override',key);
 }
 
 async function saveSplitCG(orderId,cg2){
-  splitAssignments[orderId]=cg2; // optimistic
+  splitAssignments[orderId]=cg2;
   await persistWrite('split',orderId,cg2);
 }
 
@@ -2680,7 +2667,7 @@ function removeCGByKey(btn){
   hiddenCGs.add(_hkey);
   applyHiddenFilter();
   updateHiddenBadge();
-  persistWrite('hidden_cg',_hkey,true); // fire-and-forget
+  persistWrite('hidden_cg',_hkey,true);
 }
 function openAddCGModal(){
   const hcs=[...new Set([...rawData.map(function(r){return r.homecare;}), ...Object.values(manualCGs).map(function(c){return c.homecare;})])].filter(Boolean).sort();
@@ -2712,7 +2699,7 @@ function saveManualCG(){
   hiddenCGs.delete(key);
   closeAddCGModal();
   renderHCGrid();
-  persistWrite('manual_cg',key,manualCGs[key]); // fire-and-forget
+  persistWrite('manual_cg',key,manualCGs[key]);
   persistDelete('hidden_cg',key);
 }
 function restoreCGByKey(btn){
@@ -2722,7 +2709,7 @@ function restoreCGByKey(btn){
   hiddenCGs.delete(_rkey);
   applyHiddenFilter();
   updateHiddenBadge();
-  persistDelete('hidden_cg',_rkey); // fire-and-forget
+  persistDelete('hidden_cg',_rkey);
 }
 function applyHiddenFilter(){
   document.querySelectorAll('.cg-card').forEach(function(card){
@@ -2779,22 +2766,16 @@ function updateHiddenBadge(){
 }
 
 // ── Init ─────────────────────────────────────────────────────────
-
-// Multi-user sync: re-read overrides whenever another tab/person may have changed them
 window.addEventListener('focus',async function(){
   await loadOverrides();
-  applyOverrides();
-  renderHCGrid();
-  if(activeCG) renderCalendar();
+  applyOverrides();renderHCGrid();
+  if(activeCG)renderCalendar();
 });
-// Background poll every 2 minutes
 setInterval(async function(){
   await loadOverrides();
-  applyOverrides();
-  renderHCGrid();
-  if(activeCG) renderCalendar();
-}, 2*60*1000);
-
+  applyOverrides();renderHCGrid();
+  if(activeCG)renderCalendar();
+},2*60*1000);
 loadData();
 </script>
 </body>
