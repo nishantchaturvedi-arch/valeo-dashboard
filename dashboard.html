@@ -1,8 +1,4 @@
 
-
-
-
-
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
@@ -446,6 +442,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
  <input class="avail-input" type="date" id="avail-from">
  <span style="font-size:11px;color:var(--text2)">→</span>
  <input class="avail-input" type="date" id="avail-to">
+ <input class="avail-input" type="time" id="avail-time" title="Shift start time — enforces 12h rest gap" style="width:110px">
+ <span style="font-size:10px;color:var(--text3);white-space:nowrap" title="Min 12h rest between bookings">⏱ 12h rest</span>
  <button class="avail-btn" onclick="checkAvail()">Check</button>
  <button class="avail-clear" onclick="clearAvail()">Clear</button>
  <span class="avail-result" id="avail-result"></span>
@@ -1379,31 +1377,128 @@ function applyWo(){
 function closeWoModal(){document.getElementById('wo-modal').classList.remove('show');}
 
 // ── Availability check ───────────────────────────────────────────
+// Minimum rest gap enforced between any two consecutive bookings: 12 hours
+var MIN_REST_MINS = 720;
+
+// Parse "HH:MM" (browser time input, 24h) → minutes since midnight
+function timeToMins24(t){
+  var p=(t||'').split(':');
+  return parseInt(p[0]||0)*60+parseInt(p[1]||0);
+}
+
+// Parse "9:00 AM" / "21:00" / "9:30" → minutes since midnight
+function timeToMins12(t){
+  if(!t) return 0;
+  var isPM=/PM/i.test(t), isAM=/AM/i.test(t);
+  var clean=t.replace(/\s*(AM|PM)/i,'').trim().split('-')[0].trim();
+  var p=clean.split(':');
+  var h=parseInt(p[0])||0, m=parseInt(p[1])||0;
+  if(isPM&&h<12) h+=12;
+  if(isAM&&h===12) h=0;
+  return h*60+m;
+}
+
+// Format 24h "HH:MM" → "H:MM AM/PM" for display
+function fmt12hrFromInput(t){
+  var p=(t||'').split(':');
+  var h=parseInt(p[0]||0), mi=p[1]||'00';
+  var ap=h>=12?'PM':'AM'; h=h%12||12;
+  return h+':'+mi+' '+ap;
+}
+
+// True if reqStart (mins) falls inside the blocked window [bS-rest, bE+rest]
+function bookedConflicts(bS, bE, reqStart){
+  return reqStart >= (bS - MIN_REST_MINS) && reqStart <= (bE + MIN_REST_MINS);
+}
+
 function checkAvail(){
-  const from=document.getElementById('avail-from').value;
-  const to=document.getElementById('avail-to').value||from;
+  var from=document.getElementById('avail-from').value;
+  var to=document.getElementById('avail-to').value||from;
+  var reqTimeStr=document.getElementById('avail-time').value; // "HH:MM" or ""
   if(!from){document.getElementById('avail-result').textContent='Pick a start date';return;}
 
-  const cgs=[...new Set(rawData.map(r=>r.caregiver))].filter(Boolean);
-  let avail=0;
-  cgs.forEach(cg=>{
-    const id='cgc-'+cg.replace(/[^a-zA-Z0-9]/g,'_');
-    const card=document.getElementById(id);
-    if(!card)return;
-    const busy=rawData.some(r=>r.caregiver===cg&&r.status!=='Cancelled'&&(r.date||'')<=to&&(r.end_date||r.date||'')>=from);
+  var reqStart = reqTimeStr ? timeToMins24(reqTimeStr) : null;
+  var dayBefore = addDays(from,-1); // for night-shift cross-midnight check
+
+  var cgs=[...new Set(rawData.map(r=>r.caregiver))].filter(Boolean);
+  var avail=0;
+
+  cgs.forEach(function(cg){
+    var id='cgc-'+cg.replace(/[^a-zA-Z0-9]/g,'_');
+    var card=document.getElementById(id);
+    if(!card) return;
+    var busy=false;
+
+    // 1. Raw Metabase booking overlaps the requested date range
+    if(!busy){
+      busy=rawData.some(function(r){
+        return r.caregiver===cg && r.status!=='Cancelled' &&
+               (r.date||'')<=to && (r.end_date||r.date||'')>=from;
+      });
+    }
+
+    // 2. Override types sick / off / holiday / unpaid on any date in range = unavailable
+    if(!busy){
+      busy=Object.entries(overrides).some(function(e){
+        var key=e[0], ov=e[1];
+        if(!key.startsWith(cg+'|')) return false;
+        var ovDate=ov.date||key.split('|')[1];
+        if(!ovDate||ovDate<from||ovDate>to) return false;
+        return ['sick','off','holiday','unpaid'].includes(ov.type);
+      });
+    }
+
+    // 3. Manual override booking in range = CG is busy
+    //    If a shift time is specified, apply 12h-rest check; otherwise any manual = busy
+    if(!busy){
+      busy=Object.entries(overrides).some(function(e){
+        var key=e[0], ov=e[1];
+        if(!key.startsWith(cg+'|')) return false;
+        if(ov.type!=='manual') return false;
+        var ovDate=ov.date||key.split('|')[1];
+        if(!ovDate||ovDate<from||ovDate>to) return false;
+        if(reqStart!==null && ov.time_start && ov.time_end){
+          var s=timeToMins12(ov.time_start), e2=timeToMins12(ov.time_end);
+          if(ovDate===from)   return bookedConflicts(s,e2,reqStart);
+          if(ovDate===dayBefore) return ((24*60-e2)+reqStart) < MIN_REST_MINS;
+        }
+        return true;
+      });
+    }
+
+    // 4. Time-based 12h rest check against allData bookings
+    //    Also checks the day before 'from' to catch night-shift overflow
+    if(!busy && reqStart!==null){
+      busy=allData.some(function(r){
+        if(r.caregiver!==cg) return false;
+        var rDate=r.date||'';
+        if(rDate!==from && rDate!==dayBefore) return false;
+        if(!r.time_start) return false;
+        var st=(r.status||'').toLowerCase().replace(/\s+/g,'');
+        if(['cancelled','removed','weekoff'].includes(st)) return false;
+        var bS=timeToMins12(r.time_start);
+        var bE=r.time_end ? timeToMins12(r.time_end) : bS+720; // assume 12h if no end time
+        if(rDate===from)      return bookedConflicts(bS,bE,reqStart);
+        else /* dayBefore */  return ((24*60-bE)+reqStart) < MIN_REST_MINS;
+      });
+    }
+
     card.classList.remove('available','unavailable');
-    if(busy)card.classList.add('unavailable');
+    if(busy) card.classList.add('unavailable');
     else{card.classList.add('available');avail++;}
   });
 
-  const lbl=from===to?from:from+' → '+to;
-  document.getElementById('avail-result').textContent=`${avail} of ${cgs.length} available · ${lbl}`;
+  var lbl=from===to?from:from+' → '+to;
+  var timeLbl=reqTimeStr?' · '+fmt12hrFromInput(reqTimeStr)+' (12h rest enforced)':'';
+  document.getElementById('avail-result').textContent=avail+' of '+cgs.length+' available · '+lbl+timeLbl;
 }
+
 function clearAvail(){
   document.getElementById('avail-from').value='';
   document.getElementById('avail-to').value='';
+  document.getElementById('avail-time').value='';
   document.getElementById('avail-result').textContent='';
-  document.querySelectorAll('.cg-card').forEach(c=>c.classList.remove('available','unavailable'));
+  document.querySelectorAll('.cg-card').forEach(function(c){c.classList.remove('available','unavailable');});
 }
 
 // ── Analytics v2 ────────────────────────────────────────────────
