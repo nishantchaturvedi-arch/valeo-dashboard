@@ -1868,7 +1868,7 @@ function populateCGHCFilter(){
 // ── Override System ──────────────────────────────────────────────
 var ovCG='', ovDate='', ovType='';
 
-// ── Persistence: n8n + Google Sheets ─────────────────────────────
+// ── Persistence helpers (n8n + Google Sheets) ────────────────────
 async function persistWrite(type,key,value){
   try{
     await fetch(N8N_OVERRIDE_WRITE,{
@@ -1900,15 +1900,15 @@ async function loadOverrides(){
     if(!Array.isArray(rows)) rows=[];
     overrides={};manualCGs={};hiddenCGs=new Set();weekOffCfg={};splitAssignments={};
     rows.forEach(function(row){
-      if(!row||!row.key) return;
+      if(!row||!row.key||row.value==='DELETED') return;
       var val;
       try{val=JSON.parse(row.value);}catch(e){val=row.value;}
       switch(row.type){
-        case 'override':      overrides[row.key]=val; break;
-        case 'manual_cg':     manualCGs[row.key]=val; break;
-        case 'hidden_cg':     hiddenCGs.add(row.key); break;
-        case 'weekoff':       weekOffCfg[row.key]=val; break;
-        case 'split':         splitAssignments[row.key]=val; break;
+        case 'override':  overrides[row.key]=val; break;
+        case 'manual_cg': manualCGs[row.key]=val; break;
+        case 'hidden_cg': hiddenCGs.add(row.key); break;
+        case 'weekoff':   weekOffCfg[row.key]=val; break;
+        case 'split':     splitAssignments[row.key]=val; break;
       }
     });
   }catch(e){
@@ -2045,19 +2045,19 @@ async function saveOverride(){
   var key=ovCG+'|'+ovDate;
   overrides[key]=payload;
   applyOverrides();closeOvModal();renderCalendar();renderHCGrid();
-  await persistWrite('override',key,payload);
+  persistWrite('override',key,payload);
 }
 
 async function clearOverride(){
   var key=ovCG+'|'+ovDate;
   delete overrides[key];
   applyOverrides();closeOvModal();renderCalendar();renderHCGrid();
-  await persistDelete('override',key);
+  persistDelete('override',key);
 }
 
 async function saveSplitCG(orderId,cg2){
   splitAssignments[orderId]=cg2;
-  await persistWrite('split',orderId,cg2);
+  persistWrite('split',orderId,cg2);
 }
 
 
