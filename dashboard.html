@@ -1367,132 +1367,87 @@ function openWoModal(){
   document.getElementById('wo-modal').classList.add('show');
 }
 function applyWo(){
-  const sel=[...document.querySelectorAll('#wo-modal-body .day-chip.on')].map(b=>DAYS.find(d=>d.startsWith(b.textContent)));
-  const rec=rawData.find(r=>r.caregiver===activeCG&&['monthly','weekly'].includes(pkgType(r.package_type)));
-  const cfgKey=(rec&&(rec.child_order_id||rec.order_id))||activeCG;
-  weekOffCfg[cfgKey]=sel;
+  var sel=[...document.querySelectorAll('#wo-modal-body .day-chip.on')].map(function(b){return DAYS.find(function(d){return d.startsWith(b.textContent);});});
+  var rec=rawData.find(function(r){return r.caregiver===activeCG&&['monthly','weekly'].includes(pkgType(r.package_type));});
+  var cfgKey=(rec&&(rec.child_order_id||rec.order_id))||activeCG;
+  weekOffCfg[cfgKey]=sel; // optimistic
   allData=expandOrders(rawData);
   closeWoModal();renderCalendar();
+  persistWrite('weekoff',cfgKey,sel); // fire-and-forget
 }
 function closeWoModal(){document.getElementById('wo-modal').classList.remove('show');}
 
 // ── Availability check ───────────────────────────────────────────
-// Minimum rest gap enforced between any two consecutive bookings: 12 hours
-var MIN_REST_MINS = 720;
-
-// Parse "HH:MM" (browser time input, 24h) → minutes since midnight
-function timeToMins24(t){
-  var p=(t||'').split(':');
-  return parseInt(p[0]||0)*60+parseInt(p[1]||0);
-}
-
-// Parse "9:00 AM" / "21:00" / "9:30" → minutes since midnight
+var MIN_REST_MINS=720;
+function timeToMins24(t){var p=(t||'').split(':');return parseInt(p[0]||0)*60+parseInt(p[1]||0);}
 function timeToMins12(t){
-  if(!t) return 0;
-  var isPM=/PM/i.test(t), isAM=/AM/i.test(t);
+  if(!t)return 0;
+  var isPM=/PM/i.test(t),isAM=/AM/i.test(t);
   var clean=t.replace(/\s*(AM|PM)/i,'').trim().split('-')[0].trim();
-  var p=clean.split(':');
-  var h=parseInt(p[0])||0, m=parseInt(p[1])||0;
-  if(isPM&&h<12) h+=12;
-  if(isAM&&h===12) h=0;
-  return h*60+m;
+  var p=clean.split(':'),h=parseInt(p[0])||0,m=parseInt(p[1])||0;
+  if(isPM&&h<12)h+=12;if(isAM&&h===12)h=0;return h*60+m;
 }
-
-// Format 24h "HH:MM" → "H:MM AM/PM" for display
 function fmt12hrFromInput(t){
-  var p=(t||'').split(':');
-  var h=parseInt(p[0]||0), mi=p[1]||'00';
-  var ap=h>=12?'PM':'AM'; h=h%12||12;
-  return h+':'+mi+' '+ap;
+  var p=(t||'').split(':'),h=parseInt(p[0]||0),mi=p[1]||'00';
+  var ap=h>=12?'PM':'AM';h=h%12||12;return h+':'+mi+' '+ap;
 }
-
-// True if reqStart (mins) falls inside the blocked window [bS-rest, bE+rest]
-function bookedConflicts(bS, bE, reqStart){
-  return reqStart >= (bS - MIN_REST_MINS) && reqStart <= (bE + MIN_REST_MINS);
-}
-
+function bookedConflicts(bS,bE,req){return req>=(bS-MIN_REST_MINS)&&req<=(bE+MIN_REST_MINS);}
 function checkAvail(){
   var from=document.getElementById('avail-from').value;
   var to=document.getElementById('avail-to').value||from;
-  var reqTimeStr=document.getElementById('avail-time').value; // "HH:MM" or ""
+  var reqTimeStr=document.getElementById('avail-time').value;
   if(!from){document.getElementById('avail-result').textContent='Pick a start date';return;}
-
-  var reqStart = reqTimeStr ? timeToMins24(reqTimeStr) : null;
-  var dayBefore = addDays(from,-1); // for night-shift cross-midnight check
-
-  var cgs=[...new Set(rawData.map(r=>r.caregiver))].filter(Boolean);
+  var reqStart=reqTimeStr?timeToMins24(reqTimeStr):null;
+  var dayBefore=addDays(from,-1);
+  var cgs=[...new Set(rawData.map(function(r){return r.caregiver;}))].filter(Boolean);
   var avail=0;
-
   cgs.forEach(function(cg){
     var id='cgc-'+cg.replace(/[^a-zA-Z0-9]/g,'_');
     var card=document.getElementById(id);
-    if(!card) return;
+    if(!card)return;
     var busy=false;
-
-    // 1. Raw Metabase booking overlaps the requested date range
-    if(!busy){
-      busy=rawData.some(function(r){
-        return r.caregiver===cg && r.status!=='Cancelled' &&
-               (r.date||'')<=to && (r.end_date||r.date||'')>=from;
-      });
-    }
-
-    // 2. Override types sick / off / holiday / unpaid on any date in range = unavailable
-    if(!busy){
-      busy=Object.entries(overrides).some(function(e){
-        var key=e[0], ov=e[1];
-        if(!key.startsWith(cg+'|')) return false;
-        var ovDate=ov.date||key.split('|')[1];
-        if(!ovDate||ovDate<from||ovDate>to) return false;
-        return ['sick','off','holiday','unpaid'].includes(ov.type);
-      });
-    }
-
-    // 3. Manual override booking in range = CG is busy
-    //    If a shift time is specified, apply 12h-rest check; otherwise any manual = busy
-    if(!busy){
-      busy=Object.entries(overrides).some(function(e){
-        var key=e[0], ov=e[1];
-        if(!key.startsWith(cg+'|')) return false;
-        if(ov.type!=='manual') return false;
-        var ovDate=ov.date||key.split('|')[1];
-        if(!ovDate||ovDate<from||ovDate>to) return false;
-        if(reqStart!==null && ov.time_start && ov.time_end){
-          var s=timeToMins12(ov.time_start), e2=timeToMins12(ov.time_end);
-          if(ovDate===from)   return bookedConflicts(s,e2,reqStart);
-          if(ovDate===dayBefore) return ((24*60-e2)+reqStart) < MIN_REST_MINS;
-        }
-        return true;
-      });
-    }
-
-    // 4. Time-based 12h rest check against allData bookings
-    //    Also checks the day before 'from' to catch night-shift overflow
-    if(!busy && reqStart!==null){
-      busy=allData.some(function(r){
-        if(r.caregiver!==cg) return false;
-        var rDate=r.date||'';
-        if(rDate!==from && rDate!==dayBefore) return false;
-        if(!r.time_start) return false;
-        var st=(r.status||'').toLowerCase().replace(/\s+/g,'');
-        if(['cancelled','removed','weekoff'].includes(st)) return false;
-        var bS=timeToMins12(r.time_start);
-        var bE=r.time_end ? timeToMins12(r.time_end) : bS+720; // assume 12h if no end time
-        if(rDate===from)      return bookedConflicts(bS,bE,reqStart);
-        else /* dayBefore */  return ((24*60-bE)+reqStart) < MIN_REST_MINS;
-      });
-    }
-
+    // 1. Raw booking overlap
+    if(!busy)busy=rawData.some(function(r){return r.caregiver===cg&&r.status!=='Cancelled'&&(r.date||'')<=to&&(r.end_date||r.date||'')>=from;});
+    // 2. Sick/off/holiday/unpaid override in range
+    if(!busy)busy=Object.entries(overrides).some(function(e){
+      var key=e[0],ov=e[1];
+      if(!key.startsWith(cg+'|'))return false;
+      var ovDate=ov.date||key.split('|')[1];
+      if(!ovDate||ovDate<from||ovDate>to)return false;
+      return['sick','off','holiday','unpaid'].includes(ov.type);
+    });
+    // 3. Manual override booking in range
+    if(!busy)busy=Object.entries(overrides).some(function(e){
+      var key=e[0],ov=e[1];
+      if(!key.startsWith(cg+'|')||ov.type!=='manual')return false;
+      var ovDate=ov.date||key.split('|')[1];
+      if(!ovDate||ovDate<from||ovDate>to)return false;
+      if(reqStart!==null&&ov.time_start&&ov.time_end){
+        var s=timeToMins12(ov.time_start),e2=timeToMins12(ov.time_end);
+        if(ovDate===from)return bookedConflicts(s,e2,reqStart);
+        if(ovDate===dayBefore)return((24*60-e2)+reqStart)<MIN_REST_MINS;
+      }
+      return true;
+    });
+    // 4. 12h rest gap check
+    if(!busy&&reqStart!==null)busy=allData.some(function(r){
+      if(r.caregiver!==cg)return false;
+      var rDate=r.date||'';
+      if(rDate!==from&&rDate!==dayBefore)return false;
+      if(!r.time_start)return false;
+      var st=(r.status||'').toLowerCase().replace(/\s+/g,'');
+      if(['cancelled','removed','weekoff'].includes(st))return false;
+      var bS=timeToMins12(r.time_start),bE=r.time_end?timeToMins12(r.time_end):bS+720;
+      return rDate===from?bookedConflicts(bS,bE,reqStart):((24*60-bE)+reqStart)<MIN_REST_MINS;
+    });
     card.classList.remove('available','unavailable');
-    if(busy) card.classList.add('unavailable');
+    if(busy)card.classList.add('unavailable');
     else{card.classList.add('available');avail++;}
   });
-
   var lbl=from===to?from:from+' → '+to;
   var timeLbl=reqTimeStr?' · '+fmt12hrFromInput(reqTimeStr)+' (12h rest enforced)':'';
   document.getElementById('avail-result').textContent=avail+' of '+cgs.length+' available · '+lbl+timeLbl;
 }
-
 function clearAvail(){
   document.getElementById('avail-from').value='';
   document.getElementById('avail-to').value='';
@@ -1916,23 +1871,66 @@ function populateCGHCFilter(){
 
 // ── Override System ──────────────────────────────────────────────
 var ovCG='', ovDate='', ovType='';
+var _syncTimer=null;
+
+// ── Persistence helpers (n8n + Google Sheets backend) ────────────
+async function persistWrite(type,key,value){
+  try{
+    await fetch(N8N_OVERRIDE_WRITE,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'upsert',type:type,key:key,value:JSON.stringify(value)})
+    });
+  }catch(e){console.warn('[persist] write failed:',e);}
+}
+async function persistDelete(type,key){
+  try{
+    await fetch(N8N_OVERRIDE_WRITE,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'delete',type:type,key:key})
+    });
+  }catch(e){console.warn('[persist] delete failed:',e);}
+}
 
 async function loadOverrides(){
   try{
-    const saved = localStorage.getItem('valeo_overrides');
-    const splits = localStorage.getItem('valeo_splits');
-    overrides = saved ? JSON.parse(saved) : {};
-    splitAssignments = splits ? JSON.parse(splits) : {};
-  } catch(e){
-    overrides = {};
-    splitAssignments = {};
+    const res=await fetch(N8N_OVERRIDE_READ);
+    const text=await res.text();
+    let rows=[];
+    try{rows=JSON.parse(text);}catch(e){}
+    // n8n may wrap items: [{json:{...}}] or direct [{...}]
+    if(Array.isArray(rows)&&rows[0]&&rows[0].json) rows=rows.map(function(r){return r.json;});
+    if(!Array.isArray(rows)) rows=[];
+
+    overrides={};manualCGs={};hiddenCGs=new Set();weekOffCfg={};splitAssignments={};
+
+    rows.forEach(function(row){
+      if(!row||!row.key) return;
+      var val;
+      try{val=JSON.parse(row.value);}catch(e){val=row.value;}
+      switch(row.type){
+        case 'override':      overrides[row.key]=val; break;
+        case 'manual_cg':     manualCGs[row.key]=val; break;
+        case 'hidden_cg':     hiddenCGs.add(row.key); break;
+        case 'weekoff':       weekOffCfg[row.key]=val; break;
+        case 'split':         splitAssignments[row.key]=val; break;
+      }
+    });
+  }catch(e){
+    // Fallback: localStorage (works offline / when n8n is down)
+    console.warn('[persist] n8n read failed, using localStorage:',e);
+    try{
+      var saved=localStorage.getItem('valeo_overrides');
+      var splits=localStorage.getItem('valeo_splits');
+      var m=localStorage.getItem('valeo_manual_cgs');
+      var h=localStorage.getItem('valeo_hidden_cgs');
+      overrides=saved?JSON.parse(saved):{};
+      splitAssignments=splits?JSON.parse(splits):{};
+      manualCGs=m?JSON.parse(m):{};
+      hiddenCGs=new Set(h?JSON.parse(h):[]);
+    }catch(e2){overrides={};splitAssignments={};manualCGs={};hiddenCGs=new Set();}
   }
-  try{
-    const m=localStorage.getItem('valeo_manual_cgs');
-    const h=localStorage.getItem('valeo_hidden_cgs');
-    manualCGs = m ? JSON.parse(m) : {};
-    hiddenCGs = new Set(h ? JSON.parse(h) : []);
-  } catch(e){ manualCGs={}; hiddenCGs=new Set(); }
 }
 
 function applyOverrides(){
@@ -2042,37 +2040,37 @@ function selectOvType(type, el){
 
 async function saveOverride(){
   if(!ovType){ alert('Please select an override type'); return; }
-  const note = document.getElementById('ov-note').value.trim();
-  let payload = { caregiver: ovCG, date: ovDate, type: ovType, note, saved_at: new Date().toISOString() };
-  if(ovType === 'manual'){
-    const client = document.getElementById('ov-client').value.trim();
-    const tStart = document.getElementById('ov-time-start').value.trim();
-    const tEnd = document.getElementById('ov-time-end').value.trim();
-    if(!client){ alert('Please enter a client name'); return; }
-    payload.client_name = client;
-    payload.time_start = tStart;
-    payload.time_end = tEnd;
+  var note=document.getElementById('ov-note').value.trim();
+  var payload={caregiver:ovCG,date:ovDate,type:ovType,note:note,saved_at:new Date().toISOString()};
+  if(ovType==='manual'){
+    var client=document.getElementById('ov-client').value.trim();
+    var tStart=document.getElementById('ov-time-start').value.trim();
+    var tEnd=document.getElementById('ov-time-end').value.trim();
+    if(!client){alert('Please enter a client name');return;}
+    payload.client_name=client;payload.time_start=tStart;payload.time_end=tEnd;
   }
-  overrides[ovCG+'|'+ovDate] = payload;
-  localStorage.setItem('valeo_overrides', JSON.stringify(overrides));
+  var key=ovCG+'|'+ovDate;
+  overrides[key]=payload; // optimistic update
   applyOverrides();
   closeOvModal();
   renderCalendar();
   renderHCGrid();
+  await persistWrite('override',key,payload); // persist to Sheets
 }
 
 async function clearOverride(){
-  delete overrides[ovCG+'|'+ovDate];
-  localStorage.setItem('valeo_overrides', JSON.stringify(overrides));
+  var key=ovCG+'|'+ovDate;
+  delete overrides[key]; // optimistic
   applyOverrides();
   closeOvModal();
   renderCalendar();
   renderHCGrid();
+  await persistDelete('override',key);
 }
 
-async function saveSplitCG(orderId, cg2){
-  splitAssignments[orderId] = cg2;
-  localStorage.setItem('valeo_splits', JSON.stringify(splitAssignments));
+async function saveSplitCG(orderId,cg2){
+  splitAssignments[orderId]=cg2; // optimistic
+  await persistWrite('split',orderId,cg2);
 }
 
 
@@ -2678,10 +2676,11 @@ function removeCGByKey(btn){
   if(!card) return;
   var cg = card.dataset.cg, hc = card.dataset.hc;
   if(!cg||!hc) return;
-  hiddenCGs.add(cg+'|'+hc);
-  localStorage.setItem('valeo_hidden_cgs', JSON.stringify([...hiddenCGs]));
+  var _hkey=cg+'|'+hc;
+  hiddenCGs.add(_hkey);
   applyHiddenFilter();
   updateHiddenBadge();
+  persistWrite('hidden_cg',_hkey,true); // fire-and-forget
 }
 function openAddCGModal(){
   const hcs=[...new Set([...rawData.map(function(r){return r.homecare;}), ...Object.values(manualCGs).map(function(c){return c.homecare;})])].filter(Boolean).sort();
@@ -2710,19 +2709,20 @@ function saveManualCG(){
     alert('A caregiver with this name already exists under this homecare');return;
   }
   manualCGs[key]={name:name,homecare:hc,expertise:exp,age:age};
-  localStorage.setItem('valeo_manual_cgs',JSON.stringify(manualCGs));
   hiddenCGs.delete(key);
-  localStorage.setItem('valeo_hidden_cgs',JSON.stringify([...hiddenCGs]));
   closeAddCGModal();
   renderHCGrid();
+  persistWrite('manual_cg',key,manualCGs[key]); // fire-and-forget
+  persistDelete('hidden_cg',key);
 }
 function restoreCGByKey(btn){
   var card=btn.closest('.cg-card');
   if(!card) return;
-  hiddenCGs.delete(card.dataset.cg+'|'+card.dataset.hc);
-  localStorage.setItem('valeo_hidden_cgs',JSON.stringify([...hiddenCGs]));
+  var _rkey=card.dataset.cg+'|'+card.dataset.hc;
+  hiddenCGs.delete(_rkey);
   applyHiddenFilter();
   updateHiddenBadge();
+  persistDelete('hidden_cg',_rkey); // fire-and-forget
 }
 function applyHiddenFilter(){
   document.querySelectorAll('.cg-card').forEach(function(card){
@@ -2779,6 +2779,22 @@ function updateHiddenBadge(){
 }
 
 // ── Init ─────────────────────────────────────────────────────────
+
+// Multi-user sync: re-read overrides whenever another tab/person may have changed them
+window.addEventListener('focus',async function(){
+  await loadOverrides();
+  applyOverrides();
+  renderHCGrid();
+  if(activeCG) renderCalendar();
+});
+// Background poll every 2 minutes
+setInterval(async function(){
+  await loadOverrides();
+  applyOverrides();
+  renderHCGrid();
+  if(activeCG) renderCalendar();
+}, 2*60*1000);
+
 loadData();
 </script>
 </body>
