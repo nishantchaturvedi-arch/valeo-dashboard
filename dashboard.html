@@ -406,6 +406,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .manual-badge{display:inline-block;font-size:9px;padding:1px 6px;border-radius:8px;background:rgba(63,185,80,.12);color:var(--duty);border:1px solid rgba(63,185,80,.25);margin-left:4px;vertical-align:middle}
 .cg-restore-btn{position:absolute;bottom:8px;right:8px;padding:3px 10px;background:rgba(63,185,80,.2);border:1px solid var(--duty);border-radius:5px;color:var(--duty);font-size:10px;cursor:pointer;font-family:'Inter',sans-serif;z-index:3}
 </style>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
@@ -1369,12 +1371,12 @@ function openWoModal(){
 async function applyWo(){
   var sel=[...document.querySelectorAll('#wo-modal-body .day-chip.on')].map(function(b){return DAYS.find(function(d){return d.startsWith(b.textContent);});});
   var rec=rawData.find(function(r){return r.caregiver===activeCG&&['monthly','weekly'].includes(pkgType(r.package_type));});
-  var cfgKey=(rec&&(rec.child_order_id||rec.order_id))||activeCG;
-  weekOffCfg[cfgKey]=sel;
+  var woKey=(rec&&(rec.child_order_id||rec.order_id))||activeCG;
+  weekOffCfg[woKey]=sel;
   saveLocalCache();
   allData=expandOrders(rawData);
   closeWoModal();renderCalendar();
-  await persistWrite('weekoff',cfgKey,sel);
+  await persistWrite('weekoff',woKey,sel);
 }
 function closeWoModal(){document.getElementById('wo-modal').classList.remove('show');}
 
@@ -1409,16 +1411,16 @@ function checkAvail(){
     var busy=false;
     if(!busy)busy=rawData.some(function(r){return r.caregiver===cg&&r.status!=='Cancelled'&&(r.date||'')<=to&&(r.end_date||r.date||'')>=from;});
     if(!busy)busy=Object.entries(overrides).some(function(e){
-      var key=e[0],ov=e[1];
-      if(!key.startsWith(cg+'|'))return false;
-      var ovDate=ov.date||key.split('|')[1];
+      var k=e[0],ov=e[1];
+      if(!k.startsWith(cg+'|'))return false;
+      var ovDate=ov.date||k.split('|')[1];
       if(!ovDate||ovDate<from||ovDate>to)return false;
       return['sick','off','holiday','unpaid'].includes(ov.type);
     });
     if(!busy)busy=Object.entries(overrides).some(function(e){
-      var key=e[0],ov=e[1];
-      if(!key.startsWith(cg+'|')||ov.type!=='manual')return false;
-      var ovDate=ov.date||key.split('|')[1];
+      var k=e[0],ov=e[1];
+      if(!k.startsWith(cg+'|')||ov.type!=='manual')return false;
+      var ovDate=ov.date||k.split('|')[1];
       if(!ovDate||ovDate<from||ovDate>to)return false;
       if(reqStart!==null&&ov.time_start&&ov.time_end){
         var s=timeToMins12(ov.time_start),e2=timeToMins12(ov.time_end);
@@ -1869,28 +1871,50 @@ function populateCGHCFilter(){
 // ── Override System ──────────────────────────────────────────────
 var ovCG='', ovDate='', ovType='';
 
-// ── Apps Script persistence (no n8n needed) ───────────────────────
-var APPS_SCRIPT_URL = 'https://script.google.com/a/macros/feelvaleo.com/s/AKfycbw-j1hhdJy-82KjlgBM_mDmEDfMupGY9IOONIvtsHDVgitWMeW0-ZhcPpGwBiSQCUlB/exec';
-var APPS_SCRIPT_KEY = 'VALEO2024';
+// ── Firebase Firestore persistence ───────────────────────────────
+var _db = null;
+var _fbSet, _fbDelete, _fbGetAll;
 
-async function persistWrite(type,key,value){
+async function initFirebase(){
   try{
-    await fetch(APPS_SCRIPT_URL,{
-      method:'POST',
-      headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({key:APPS_SCRIPT_KEY,action:'upsert',type:type,key:key,value:JSON.stringify(value)})
+    var fbApp = firebase.initializeApp({
+      apiKey: "AIzaSyDL_cSwxL8x90rDVLHaj9fPE1cTcdEEmII",
+      authDomain: "valeo-dashboard.firebaseapp.com",
+      projectId: "valeo-dashboard",
+      storageBucket: "valeo-dashboard.firebasestorage.app",
+      messagingSenderId: "892578266142",
+      appId: "1:892578266142:web:115b3b677c4d53c8c5020f"
     });
-    console.log('[persist] wrote:',type,key);
+    _db = firebase.firestore(fbApp);
+    console.log('[firebase] connected');
+  }catch(e){
+    // already initialized
+    try{
+      _db = firebase.firestore(firebase.app());
+      console.log('[firebase] reused existing app');
+    }catch(e2){console.warn('[firebase] init failed:',e2);}
+  }
+}
+
+async function persistWrite(docType, docKey, docValue){
+  if(!_db){console.warn('[persist] db not ready');return;}
+  try{
+    var id = docType+'__'+docKey.replace(/[^a-zA-Z0-9_\-]/g,'_');
+    await _db.collection('valeo_state').doc(id).set({
+      type: docType, key: docKey,
+      value: JSON.stringify(docValue),
+      updated_at: new Date().toISOString()
+    });
+    console.log('[persist] wrote:',docType,docKey);
   }catch(e){console.warn('[persist] write failed:',e);}
 }
-async function persistDelete(type,key){
+
+async function persistDelete(docType, docKey){
+  if(!_db){console.warn('[persist] db not ready');return;}
   try{
-    await fetch(APPS_SCRIPT_URL,{
-      method:'POST',
-      headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({key:APPS_SCRIPT_KEY,action:'delete',type:type,key:key})
-    });
-    console.log('[persist] deleted:',type,key);
+    var id = docType+'__'+docKey.replace(/[^a-zA-Z0-9_\-]/g,'_');
+    await _db.collection('valeo_state').doc(id).delete();
+    console.log('[persist] deleted:',docType,docKey);
   }catch(e){console.warn('[persist] delete failed:',e);}
 }
 
@@ -1905,64 +1929,54 @@ function saveLocalCache(){
 }
 
 function reRenderAll(){
-  applyOverrides();
-  renderHCGrid();
-  applyHiddenFilter();
-  updateHiddenBadge();
+  applyOverrides();renderHCGrid();applyHiddenFilter();updateHiddenBadge();
   if(activeCG) renderCalendar();
 }
 
 function loadLocalCache(){
   try{
-    var saved=localStorage.getItem('valeo_overrides');
-    var splits=localStorage.getItem('valeo_splits');
-    var m=localStorage.getItem('valeo_manual_cgs');
-    var h=localStorage.getItem('valeo_hidden_cgs');
+    var s=localStorage.getItem('valeo_overrides');
+    var sp=localStorage.getItem('valeo_splits');
+    var mc=localStorage.getItem('valeo_manual_cgs');
+    var hc=localStorage.getItem('valeo_hidden_cgs');
     var wo=localStorage.getItem('valeo_weekoff');
-    overrides=saved?JSON.parse(saved):{};
-    splitAssignments=splits?JSON.parse(splits):{};
-    manualCGs=m?JSON.parse(m):{};
-    hiddenCGs=new Set(h?JSON.parse(h):[]);
+    overrides=s?JSON.parse(s):{};
+    splitAssignments=sp?JSON.parse(sp):{};
+    manualCGs=mc?JSON.parse(mc):{};
+    hiddenCGs=new Set(hc?JSON.parse(hc):[]);
     weekOffCfg=wo?JSON.parse(wo):{};
   }catch(e){overrides={};splitAssignments={};manualCGs={};hiddenCGs=new Set();weekOffCfg={};}
 }
 
 async function syncFromSheet(){
+  if(!_db) return;
   try{
-    var res=await fetch(APPS_SCRIPT_URL+'?key='+APPS_SCRIPT_KEY);
-    if(!res.ok){console.warn('[sync] bad response:',res.status);return;}
-    var rows=await res.json();
-    if(!Array.isArray(rows)||!rows.length){console.log('[sync] empty sheet');return;}
-    var newOverrides={},newManualCGs={},newHiddenCGs=new Set(),newWeekOff={},newSplits={};
-    rows.forEach(function(row){
-      var rKey=row.Key||row.key;
-      var rType=(row.Type||row.type||'').toLowerCase().trim();
-      var rValue=row.Value||row.value;
-      if(!rKey||rValue==='DELETED') return;
-      var val;
-      try{val=JSON.parse(rValue);}catch(e){val=rValue;}
-      switch(rType){
-        case 'override':  newOverrides[rKey]=val; break;
-        case 'manual_cg': newManualCGs[rKey]=val; break;
-        case 'hidden_cg': newHiddenCGs.add(rKey); break;
-        case 'weekoff':   newWeekOff[rKey]=val; break;
-        case 'split':     newSplits[rKey]=val; break;
-      }
+    var snap=await _db.collection('valeo_state').get();
+    if(snap.empty){console.log('[sync] no docs yet');return;}
+    var no={},nm={},nh=new Set(),nw={},ns={};
+    snap.forEach(function(doc){
+      var d=doc.data();
+      var docType=(d.type||'').toLowerCase().trim();
+      var docKey=d.key;
+      var docVal;
+      try{docVal=JSON.parse(d.value);}catch(e){docVal=d.value;}
+      if(!docKey) return;
+      if(docType==='override')       no[docKey]=docVal;
+      else if(docType==='manual_cg') nm[docKey]=docVal;
+      else if(docType==='hidden_cg') nh.add(docKey);
+      else if(docType==='weekoff')   nw[docKey]=docVal;
+      else if(docType==='split')     ns[docKey]=docVal;
     });
-    overrides=newOverrides;
-    manualCGs=newManualCGs;
-    hiddenCGs=newHiddenCGs;
-    weekOffCfg=newWeekOff;
-    splitAssignments=newSplits;
-    saveLocalCache();
-    reRenderAll();
-    console.log('[sync] synced',rows.length,'rows');
+    overrides=no;manualCGs=nm;hiddenCGs=nh;weekOffCfg=nw;splitAssignments=ns;
+    saveLocalCache();reRenderAll();
+    console.log('[sync] synced',snap.size,'docs from Firebase');
   }catch(e){console.warn('[sync] failed:',e);}
 }
 
 async function loadOverrides(){
-  loadLocalCache();
-  syncFromSheet();
+  loadLocalCache();  // instant from cache
+  await initFirebase();
+  syncFromSheet();   // background sync
 }
 
 function applyOverrides(){
@@ -2081,19 +2095,19 @@ async function saveOverride(){
     if(!client){alert('Please enter a client name');return;}
     payload.client_name=client;payload.time_start=tStart;payload.time_end=tEnd;
   }
-  var key=ovCG+'|'+ovDate;
-  overrides[key]=payload;
+  var ovKey=ovCG+'|'+ovDate;
+  overrides[ovKey]=payload;
   saveLocalCache();
   applyOverrides();closeOvModal();renderCalendar();renderHCGrid();
-  await persistWrite('override',key,payload);
+  await persistWrite('override',ovKey,payload);
 }
 
 async function clearOverride(){
-  var key=ovCG+'|'+ovDate;
-  delete overrides[key];
+  var ovKey=ovCG+'|'+ovDate;
+  delete overrides[ovKey];
   saveLocalCache();
   applyOverrides();closeOvModal();renderCalendar();renderHCGrid();
-  await persistDelete('override',key);
+  await persistDelete('override',ovKey);
 }
 
 async function saveSplitCG(orderId,cg2){
@@ -2700,17 +2714,17 @@ window.addEventListener('load', function(){
 function openCGCalFromDataset(el){
   openCGCal(el.dataset.cg, el.dataset.hc, el);
 }
-function removeCGByKey(btn){
+async function removeCGByKey(btn){
   var card = btn.closest('.cg-card');
   if(!card) return;
   var cg = card.dataset.cg, hc = card.dataset.hc;
   if(!cg||!hc) return;
-  var _hkey=cg+'|'+hc;
-  hiddenCGs.add(_hkey);
+  var hKey=cg+'|'+hc;
+  hiddenCGs.add(hKey);
   saveLocalCache();
   applyHiddenFilter();
   updateHiddenBadge();
-  await persistWrite('hidden_cg',_hkey,true);
+  await persistWrite('hidden_cg',hKey,true);
 }
 function openAddCGModal(){
   const hcs=[...new Set([...rawData.map(function(r){return r.homecare;}), ...Object.values(manualCGs).map(function(c){return c.homecare;})])].filter(Boolean).sort();
@@ -2726,7 +2740,7 @@ function openAddCGModal(){
 function closeAddCGModal(){
   document.getElementById('acg-modal-overlay').classList.remove('show');
 }
-function saveManualCG(){
+async function saveManualCG(){
   const name=document.getElementById('acg-name').value.trim();
   const hc=document.getElementById('acg-hc').value;
   const exp=document.getElementById('acg-expertise').value;
@@ -2746,15 +2760,15 @@ function saveManualCG(){
   await persistWrite('manual_cg',key,manualCGs[key]);
   await persistDelete('hidden_cg',key);
 }
-function restoreCGByKey(btn){
+async function restoreCGByKey(btn){
   var card=btn.closest('.cg-card');
   if(!card) return;
-  var _rkey=card.dataset.cg+'|'+card.dataset.hc;
-  hiddenCGs.delete(_rkey);
+  var rKey=card.dataset.cg+'|'+card.dataset.hc;
+  hiddenCGs.delete(rKey);
   saveLocalCache();
   applyHiddenFilter();
   updateHiddenBadge();
-  await persistDelete('hidden_cg',_rkey);
+  await persistDelete('hidden_cg',rKey);
 }
 function applyHiddenFilter(){
   document.querySelectorAll('.cg-card').forEach(function(card){
