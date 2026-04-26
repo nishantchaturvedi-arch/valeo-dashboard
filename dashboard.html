@@ -1937,7 +1937,10 @@ async function syncFromSheet(){
     if(!Array.isArray(rows)||rows.length===0) return; // sheet empty — keep local cache
     overrides={};manualCGs={};hiddenCGs=new Set();weekOffCfg={};splitAssignments={};
     rows.forEach(function(row){
-      if(!row||!row.key||row.value==='DELETED') return;
+      var rKey=row.key||row.Key;
+      var rType=row.type||row.Type;
+      var rValue=row.value||row.Value;
+      if(!rKey||rValue==='DELETED') return;
       var val;
       try{val=JSON.parse(row.value);}catch(e){val=row.value;}
       switch(row.type){
