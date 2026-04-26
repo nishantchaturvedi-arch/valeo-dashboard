@@ -1889,7 +1889,6 @@ async function persistDelete(type,key){
   }catch(e){console.warn('[persist] delete failed:',e);}
 }
 
-// Save full state to localStorage (local cache)
 function saveLocalCache(){
   try{
     localStorage.setItem('valeo_overrides',JSON.stringify(overrides));
@@ -1900,7 +1899,6 @@ function saveLocalCache(){
   }catch(e){}
 }
 
-// Re-render everything after state reload
 function reRenderAll(){
   applyOverrides();
   renderHCGrid();
@@ -1909,7 +1907,6 @@ function reRenderAll(){
   if(activeCG) renderCalendar();
 }
 
-// STEP 1: load from localStorage instantly (fast, no network)
 function loadLocalCache(){
   try{
     var saved=localStorage.getItem('valeo_overrides');
@@ -1925,41 +1922,48 @@ function loadLocalCache(){
   }catch(e){overrides={};splitAssignments={};manualCGs={};hiddenCGs=new Set();weekOffCfg={};}
 }
 
-// STEP 2: sync from n8n in background, update cache + re-render silently
 async function syncFromSheet(){
   try{
     var res=await fetch(N8N_OVERRIDE_READ);
-    if(!res.ok) return; // don't wipe state if n8n errors
+    if(!res.ok) return;
     var text=await res.text();
     var rows=[];
     try{rows=JSON.parse(text);}catch(e){return;}
-    if(Array.isArray(rows)&&rows[0]&&rows[0].json) rows=rows.map(function(r){return r.json;});
-    if(!Array.isArray(rows)||rows.length===0) return; // sheet empty — keep local cache
-    overrides={};manualCGs={};hiddenCGs=new Set();weekOffCfg={};splitAssignments={};
+    // handle both array and single object responses
+    if(!Array.isArray(rows)) rows=[rows];
+    // unwrap n8n envelope if present
+    if(rows[0]&&rows[0].json) rows=rows.map(function(r){return r.json;});
+    if(!rows.length) return;
+    var newOverrides={},newManualCGs={},newHiddenCGs=new Set(),newWeekOff={},newSplits={};
     rows.forEach(function(row){
+      // support both capitalised (Key/Type/Value) and lowercase (key/type/value) column names
       var rKey=row.key||row.Key;
       var rType=row.type||row.Type;
       var rValue=row.value||row.Value;
       if(!rKey||rValue==='DELETED') return;
       var val;
-      try{val=JSON.parse(row.value);}catch(e){val=row.value;}
-      switch(row.type){
-        case 'override':  overrides[row.key]=val; break;
-        case 'manual_cg': manualCGs[row.key]=val; break;
-        case 'hidden_cg': hiddenCGs.add(row.key); break;
-        case 'weekoff':   weekOffCfg[row.key]=val; break;
-        case 'split':     splitAssignments[row.key]=val; break;
+      try{val=JSON.parse(rValue);}catch(e){val=rValue;}
+      switch(rType){
+        case 'override':  newOverrides[rKey]=val; break;
+        case 'manual_cg': newManualCGs[rKey]=val; break;
+        case 'hidden_cg': newHiddenCGs.add(rKey); break;
+        case 'weekoff':   newWeekOff[rKey]=val; break;
+        case 'split':     newSplits[rKey]=val; break;
       }
     });
-    saveLocalCache(); // update local cache with fresh sheet data
-    reRenderAll();    // re-render silently in background
+    overrides=newOverrides;
+    manualCGs=newManualCGs;
+    hiddenCGs=newHiddenCGs;
+    weekOffCfg=newWeekOff;
+    splitAssignments=newSplits;
+    saveLocalCache();
+    reRenderAll();
   }catch(e){console.warn('[sync] sheet sync failed:',e);}
 }
 
-// loadOverrides: instant from cache, then background sync
 async function loadOverrides(){
   loadLocalCache();  // instant — no waiting
-  syncFromSheet();   // background — doesn't block anything
+  syncFromSheet();   // background — doesn't block
 }
 
 function applyOverrides(){
@@ -2808,8 +2812,8 @@ function updateHiddenBadge(){
 }
 
 // ── Init ─────────────────────────────────────────────────────────
-// Sync from sheet in background every 5 minutes (not on every focus)
-setInterval(syncFromSheet, 5*60*1000);
+setInterval(syncFromSheet,30*1000);        // sync every 30 seconds
+window.addEventListener('focus',syncFromSheet); // sync instantly on tab focus
 loadData();
 </script>
 </body>
