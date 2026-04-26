@@ -1056,6 +1056,10 @@ async function loadData(force=false){
     setSyncState('ok','Synced '+new Date().toLocaleTimeString());
     buildChatData();
     renderHCGrid();
+    // Start Firebase sync AFTER data is loaded so reRenderAll has rawData available
+    syncFromSheet();
+    setInterval(syncFromSheet,30*1000);
+    window.addEventListener('focus',syncFromSheet);
     if(document.getElementById('page-analytics').classList.contains('active'))renderAnalytics();
     populateCGHCFilter();
     document.getElementById('cg-result-count').textContent = [...new Set(rawData.map(r=>r.caregiver)).values()].filter(Boolean).length + ' caregivers';
@@ -1873,7 +1877,6 @@ var ovCG='', ovDate='', ovType='';
 
 // ── Firebase Firestore persistence ───────────────────────────────
 var _db = null;
-var _fbSet, _fbDelete, _fbGetAll;
 
 async function initFirebase(){
   try{
@@ -1888,31 +1891,28 @@ async function initFirebase(){
     _db = firebase.firestore(fbApp);
     console.log('[firebase] connected');
   }catch(e){
-    // already initialized
-    try{
-      _db = firebase.firestore(firebase.app());
-      console.log('[firebase] reused existing app');
-    }catch(e2){console.warn('[firebase] init failed:',e2);}
+    try{_db=firebase.firestore(firebase.app());console.log('[firebase] reused app');}
+    catch(e2){console.warn('[firebase] init failed:',e2);}
   }
 }
 
-async function persistWrite(docType, docKey, docValue){
+async function persistWrite(docType,docKey,docValue){
   if(!_db){console.warn('[persist] db not ready');return;}
   try{
-    var id = docType+'__'+docKey.replace(/[^a-zA-Z0-9_\-]/g,'_');
+    var id=docType+'__'+docKey.replace(/[^a-zA-Z0-9_-]/g,'_');
     await _db.collection('valeo_state').doc(id).set({
-      type: docType, key: docKey,
-      value: JSON.stringify(docValue),
-      updated_at: new Date().toISOString()
+      type:docType,key:docKey,
+      value:JSON.stringify(docValue),
+      updated_at:new Date().toISOString()
     });
     console.log('[persist] wrote:',docType,docKey);
   }catch(e){console.warn('[persist] write failed:',e);}
 }
 
-async function persistDelete(docType, docKey){
+async function persistDelete(docType,docKey){
   if(!_db){console.warn('[persist] db not ready');return;}
   try{
-    var id = docType+'__'+docKey.replace(/[^a-zA-Z0-9_\-]/g,'_');
+    var id=docType+'__'+docKey.replace(/[^a-zA-Z0-9_-]/g,'_');
     await _db.collection('valeo_state').doc(id).delete();
     console.log('[persist] deleted:',docType,docKey);
   }catch(e){console.warn('[persist] delete failed:',e);}
@@ -1949,34 +1949,34 @@ function loadLocalCache(){
 }
 
 async function syncFromSheet(){
-  if(!_db) return;
+  if(!_db){await initFirebase();if(!_db)return;}
   try{
     var snap=await _db.collection('valeo_state').get();
     if(snap.empty){console.log('[sync] no docs yet');return;}
     var no={},nm={},nh=new Set(),nw={},ns={};
     snap.forEach(function(doc){
       var d=doc.data();
-      var docType=(d.type||'').toLowerCase().trim();
-      var docKey=d.key;
-      var docVal;
-      try{docVal=JSON.parse(d.value);}catch(e){docVal=d.value;}
-      if(!docKey) return;
-      if(docType==='override')       no[docKey]=docVal;
-      else if(docType==='manual_cg') nm[docKey]=docVal;
-      else if(docType==='hidden_cg') nh.add(docKey);
-      else if(docType==='weekoff')   nw[docKey]=docVal;
-      else if(docType==='split')     ns[docKey]=docVal;
+      var dt=(d.type||'').toLowerCase().trim();
+      var dk=d.key;
+      var dv;
+      try{dv=JSON.parse(d.value);}catch(e){dv=d.value;}
+      if(!dk) return;
+      if(dt==='override')       no[dk]=dv;
+      else if(dt==='manual_cg') nm[dk]=dv;
+      else if(dt==='hidden_cg') nh.add(dk);
+      else if(dt==='weekoff')   nw[dk]=dv;
+      else if(dt==='split')     ns[dk]=dv;
     });
     overrides=no;manualCGs=nm;hiddenCGs=nh;weekOffCfg=nw;splitAssignments=ns;
     saveLocalCache();reRenderAll();
-    console.log('[sync] synced',snap.size,'docs from Firebase');
+    console.log('[sync] synced',snap.size,'docs');
   }catch(e){console.warn('[sync] failed:',e);}
 }
 
 async function loadOverrides(){
-  loadLocalCache();  // instant from cache
+  loadLocalCache();
   await initFirebase();
-  syncFromSheet();   // background sync
+  // don't sync here — will sync after data loads
 }
 
 function applyOverrides(){
@@ -2825,8 +2825,6 @@ function updateHiddenBadge(){
 }
 
 // ── Init ─────────────────────────────────────────────────────────
-setInterval(syncFromSheet,30*1000);
-window.addEventListener('focus',syncFromSheet);
 loadData();
 </script>
 </body>
