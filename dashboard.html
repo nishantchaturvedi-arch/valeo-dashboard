@@ -1371,6 +1371,7 @@ function applyWo(){
   var rec=rawData.find(function(r){return r.caregiver===activeCG&&['monthly','weekly'].includes(pkgType(r.package_type));});
   var cfgKey=(rec&&(rec.child_order_id||rec.order_id))||activeCG;
   weekOffCfg[cfgKey]=sel;
+  saveLocalCache();
   allData=expandOrders(rawData);
   closeWoModal();renderCalendar();
   persistWrite('weekoff',cfgKey,sel);
@@ -1868,12 +1869,11 @@ function populateCGHCFilter(){
 // ── Override System ──────────────────────────────────────────────
 var ovCG='', ovDate='', ovType='';
 
-// ── Persistence helpers (n8n + Google Sheets) ────────────────────
+// ── Persistence helpers ───────────────────────────────────────────
 async function persistWrite(type,key,value){
   try{
     await fetch(N8N_OVERRIDE_WRITE,{
-      method:'POST',
-      mode:'no-cors',
+      method:'POST',mode:'no-cors',
       headers:{'Content-Type':'text/plain'},
       body:JSON.stringify({action:'upsert',type:type,key:key,value:JSON.stringify(value)})
     });
@@ -1882,22 +1882,59 @@ async function persistWrite(type,key,value){
 async function persistDelete(type,key){
   try{
     await fetch(N8N_OVERRIDE_WRITE,{
-      method:'POST',
-      mode:'no-cors',
+      method:'POST',mode:'no-cors',
       headers:{'Content-Type':'text/plain'},
       body:JSON.stringify({action:'delete',type:type,key:key})
     });
   }catch(e){console.warn('[persist] delete failed:',e);}
 }
 
-async function loadOverrides(){
+// Save full state to localStorage (local cache)
+function saveLocalCache(){
   try{
-    const res=await fetch(N8N_OVERRIDE_READ);
-    const text=await res.text();
-    let rows=[];
-    try{rows=JSON.parse(text);}catch(e){}
+    localStorage.setItem('valeo_overrides',JSON.stringify(overrides));
+    localStorage.setItem('valeo_splits',JSON.stringify(splitAssignments));
+    localStorage.setItem('valeo_manual_cgs',JSON.stringify(manualCGs));
+    localStorage.setItem('valeo_hidden_cgs',JSON.stringify([...hiddenCGs]));
+    localStorage.setItem('valeo_weekoff',JSON.stringify(weekOffCfg));
+  }catch(e){}
+}
+
+// Re-render everything after state reload
+function reRenderAll(){
+  applyOverrides();
+  renderHCGrid();
+  applyHiddenFilter();
+  updateHiddenBadge();
+  if(activeCG) renderCalendar();
+}
+
+// STEP 1: load from localStorage instantly (fast, no network)
+function loadLocalCache(){
+  try{
+    var saved=localStorage.getItem('valeo_overrides');
+    var splits=localStorage.getItem('valeo_splits');
+    var m=localStorage.getItem('valeo_manual_cgs');
+    var h=localStorage.getItem('valeo_hidden_cgs');
+    var wo=localStorage.getItem('valeo_weekoff');
+    overrides=saved?JSON.parse(saved):{};
+    splitAssignments=splits?JSON.parse(splits):{};
+    manualCGs=m?JSON.parse(m):{};
+    hiddenCGs=new Set(h?JSON.parse(h):[]);
+    weekOffCfg=wo?JSON.parse(wo):{};
+  }catch(e){overrides={};splitAssignments={};manualCGs={};hiddenCGs=new Set();weekOffCfg={};}
+}
+
+// STEP 2: sync from n8n in background, update cache + re-render silently
+async function syncFromSheet(){
+  try{
+    var res=await fetch(N8N_OVERRIDE_READ);
+    if(!res.ok) return; // don't wipe state if n8n errors
+    var text=await res.text();
+    var rows=[];
+    try{rows=JSON.parse(text);}catch(e){return;}
     if(Array.isArray(rows)&&rows[0]&&rows[0].json) rows=rows.map(function(r){return r.json;});
-    if(!Array.isArray(rows)) rows=[];
+    if(!Array.isArray(rows)||rows.length===0) return; // sheet empty — keep local cache
     overrides={};manualCGs={};hiddenCGs=new Set();weekOffCfg={};splitAssignments={};
     rows.forEach(function(row){
       if(!row||!row.key||row.value==='DELETED') return;
@@ -1911,19 +1948,15 @@ async function loadOverrides(){
         case 'split':     splitAssignments[row.key]=val; break;
       }
     });
-  }catch(e){
-    console.warn('[persist] n8n read failed, using localStorage:',e);
-    try{
-      var saved=localStorage.getItem('valeo_overrides');
-      var splits=localStorage.getItem('valeo_splits');
-      var m=localStorage.getItem('valeo_manual_cgs');
-      var h=localStorage.getItem('valeo_hidden_cgs');
-      overrides=saved?JSON.parse(saved):{};
-      splitAssignments=splits?JSON.parse(splits):{};
-      manualCGs=m?JSON.parse(m):{};
-      hiddenCGs=new Set(h?JSON.parse(h):[]);
-    }catch(e2){overrides={};splitAssignments={};manualCGs={};hiddenCGs=new Set();}
-  }
+    saveLocalCache(); // update local cache with fresh sheet data
+    reRenderAll();    // re-render silently in background
+  }catch(e){console.warn('[sync] sheet sync failed:',e);}
+}
+
+// loadOverrides: instant from cache, then background sync
+async function loadOverrides(){
+  loadLocalCache();  // instant — no waiting
+  syncFromSheet();   // background — doesn't block anything
 }
 
 function applyOverrides(){
@@ -2044,6 +2077,7 @@ async function saveOverride(){
   }
   var key=ovCG+'|'+ovDate;
   overrides[key]=payload;
+  saveLocalCache();
   applyOverrides();closeOvModal();renderCalendar();renderHCGrid();
   persistWrite('override',key,payload);
 }
@@ -2051,12 +2085,14 @@ async function saveOverride(){
 async function clearOverride(){
   var key=ovCG+'|'+ovDate;
   delete overrides[key];
+  saveLocalCache();
   applyOverrides();closeOvModal();renderCalendar();renderHCGrid();
   persistDelete('override',key);
 }
 
 async function saveSplitCG(orderId,cg2){
   splitAssignments[orderId]=cg2;
+  saveLocalCache();
   persistWrite('split',orderId,cg2);
 }
 
@@ -2665,6 +2701,7 @@ function removeCGByKey(btn){
   if(!cg||!hc) return;
   var _hkey=cg+'|'+hc;
   hiddenCGs.add(_hkey);
+  saveLocalCache();
   applyHiddenFilter();
   updateHiddenBadge();
   persistWrite('hidden_cg',_hkey,true);
@@ -2697,6 +2734,7 @@ function saveManualCG(){
   }
   manualCGs[key]={name:name,homecare:hc,expertise:exp,age:age};
   hiddenCGs.delete(key);
+  saveLocalCache();
   closeAddCGModal();
   renderHCGrid();
   persistWrite('manual_cg',key,manualCGs[key]);
@@ -2707,6 +2745,7 @@ function restoreCGByKey(btn){
   if(!card) return;
   var _rkey=card.dataset.cg+'|'+card.dataset.hc;
   hiddenCGs.delete(_rkey);
+  saveLocalCache();
   applyHiddenFilter();
   updateHiddenBadge();
   persistDelete('hidden_cg',_rkey);
@@ -2766,16 +2805,8 @@ function updateHiddenBadge(){
 }
 
 // ── Init ─────────────────────────────────────────────────────────
-window.addEventListener('focus',async function(){
-  await loadOverrides();
-  applyOverrides();renderHCGrid();
-  if(activeCG)renderCalendar();
-});
-setInterval(async function(){
-  await loadOverrides();
-  applyOverrides();renderHCGrid();
-  if(activeCG)renderCalendar();
-},2*60*1000);
+// Sync from sheet in background every 5 minutes (not on every focus)
+setInterval(syncFromSheet, 5*60*1000);
 loadData();
 </script>
 </body>
