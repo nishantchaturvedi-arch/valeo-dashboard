@@ -1763,7 +1763,7 @@ function renderExpiring(){
   rawData.forEach(r => {
     if(!r.client_name || !r.end_date) return;
     if((r.status||'').toLowerCase()==='cancelled') return;
-    const key = r.order_id || (r.client_name+'|'+r.caregiver);
+    const key = r.child_order_id || r.order_id || (r.client_name+'|'+r.caregiver);
     if(!orderMap[key]) orderMap[key] = r;
   });
 
@@ -1773,7 +1773,7 @@ function renderExpiring(){
     // Exclude if already renewed: another non-cancelled order for same client starts on/after this end date
     const isRenewed = rawData.some(function(r2) {
       return r2.client_name === r.client_name &&
-        r2.order_id !== r.order_id &&
+        (r2.child_order_id||r2.order_id) !== (r.child_order_id||r.order_id) &&
         (r2.status||'').toLowerCase() !== 'cancelled' &&
          r2.date >= addDays(r.end_date, -7);;
     });
@@ -1823,7 +1823,7 @@ function renderUnassigned(){
   // Deduplicate by order_id
   const seen = new Set();
   const unique = unassigned.filter(r => {
-    const k = r.order_id || (r.client_name+'|'+r.date);
+    const k = r.child_order_id || r.order_id || (r.client_name+'|'+r.date);
     if(seen.has(k)) return false;
     seen.add(k); return true;
   });
@@ -1839,7 +1839,7 @@ function renderUnassigned(){
   unique.forEach(r => {
     const statusColor = (r.status||'').toLowerCase()==='pending' ? 'yellow' : 'red';
     html += `<tr>
-      <td style="font-family:'JetBrains Mono',monospace;font-size:11px">${r.order_id||'—'}</td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:11px">${r.child_order_id||r.order_id||'—'}</td>
       <td style="font-weight:500">${r.client_name||'—'}</td>
       <td style="font-size:11px;color:var(--text2)">${r.homecare||'—'}</td>
       <td style="font-size:11px;color:var(--text2)">${(r.package_type||'—').substring(0,35)}</td>
@@ -2166,11 +2166,12 @@ function loadPlannerOrders(cg){
   const orders = document.getElementById('pl-order-select');
   orders.innerHTML = '<option value="">— Select Order —</option>';
   const seen = new Set();
-  rawData.filter(function(r){ return r.caregiver===cg && r.order_id; }).forEach(function(r){
-    if(seen.has(r.order_id)) return;
-    seen.add(r.order_id);
-    const lbl = r.order_id + ' — ' + (r.client_name||'?') + ' | ' + (r.package_type||'').substring(0,35);
-    orders.innerHTML += '<option value="'+r.order_id+'">'+lbl+'</option>';
+  rawData.filter(function(r){ return r.caregiver===cg && (r.child_order_id||r.order_id); }).forEach(function(r){
+    var oid=r.child_order_id||r.order_id;
+    if(seen.has(oid)) return;
+    seen.add(oid);
+    const lbl = oid + ' — ' + (r.client_name||'?') + ' | ' + (r.package_type||'').substring(0,35);
+    orders.innerHTML += '<option value="'+oid+'">'+lbl+'</option>';
   });
 }
 
@@ -2192,7 +2193,7 @@ function generatePlannerTable(){
   const orderId = document.getElementById('pl-order-select').value;
   if(!cg || !orderId){ alert('Please select a caregiver and order'); return; }
 
-  const rec = rawData.find(function(r){ return r.caregiver===cg && r.order_id===orderId; });
+  const rec = rawData.find(function(r){ return r.caregiver===cg && (r.child_order_id===orderId||r.order_id===orderId); });
   if(!rec){ alert('Order not found'); return; }
 
   const pkg = rec.package_type||rec.package_raw||'';
@@ -2415,8 +2416,8 @@ function buildClientScheduleHTML(){
   const cgName = toTitleCase(rec.babysitter || '—');
   const homecare = rec.homecare || '—';
   const orderId = (function(){
-    var r = rawData.find(function(x){ return x.caregiver===(rec.babysitter||'') && x.order_id; });
-    return r ? r.order_id : '—';
+    var r = rawData.find(function(x){ return x.caregiver===(rec.babysitter||'') && (x.child_order_id||x.order_id); });
+    return r ? (r.child_order_id||r.order_id) : '—';
   })();
   const clientName = (function(){
     var r = rawData.find(function(x){ return x.caregiver===(rec.babysitter||'') && x.client_name; });
@@ -2993,7 +2994,7 @@ function renderRoster(){
             cls+=' rd-duty';
             var cl2=(ev.client_name||'').split(' ')[0];
             var t3=ev.time_start&&ev.time_end?ev.time_start+'-'+ev.time_end:(ev.time_start||'');
-            var oid=ev.order_id||ev.child_order_id||'';
+            var oid=ev.child_order_id||ev.order_id||'';
             inner='<div class="rd-in">'+(cl2?'<div class="rd-cl">'+cl2+'</div>':'')+(t3?'<div class="rd-tm">'+t3+'</div>':'')+(oid?'<div class="rd-od">#'+oid+'</div>':'')+'</div>';
           }
         } else {
