@@ -1406,7 +1406,9 @@ function renderCalendar(){
         else if(ev.time_start)lbl+=(lbl?' · ':'')+ev.time_start;
         if(!lbl)lbl='Duty';
       }
-      evHtml+=`<div class="cal-ev ${cls2}" ${ov?`draggable="true" ondragstart="onOvDragStart(event,'${activeCG}','${ds}')" ondragend="onOvDragEnd(event)"`:\'\' } onclick="openEvModal('${safe}')">${lbl}${ov?\' <span class="drag-handle">&#8942;</span>\':\'\'}</div>`;
+      var dragAttrs=ov?'draggable="true" ondragstart="onOvDragStart(event,\''+activeCG+'\',\''+ds+'\')" ondragend="onOvDragEnd(event)"':'';
+      var dragHandle=ov?' <span class="drag-handle">&#8942;</span>':'';
+      evHtml+='<div class="cal-ev '+cls2+'" '+dragAttrs+' onclick="openEvModal(\''+safe+'\')">'+lbl+dragHandle+'</div>';
     });
     // Show + button on ALL non-other-month days (not just days with events)
     const addBtn = !other ? `<div class="day-add-btn" onclick="event.stopPropagation();openOvModal('${activeCG}','${dateStr}')" title="Add entry">+</div>` : '';
@@ -2258,8 +2260,13 @@ function generatePlannerTable(){
     if(ov){ status = ov.type==='sick'?'Sick':ov.type==='off'?'Off':ov.type==='holiday'?'Holiday':ov.type==='unpaid'?'Unpaid':ov.type==='cancelled'?'Cancelled':ov.type==='removed'?'Removed':ov.type==='manual'?((ov.client_name||'Manual')+(ov.time_start&&ov.time_end?' · '+ov.time_start+' – '+ov.time_end:'')):status; }
     const row = {
       num: i+1, date: ds, day: dayName,
-      timeSlot: rec.time_start&&rec.time_end ? rec.time_start+' – '+rec.time_end : rec.time_start||'—',
-      babysitter: cg, homecare: rec.homecare||'—', status: status
+      timeSlot: rec.time_start&&rec.time_end ? formatTime(rec.time_start)+' – '+formatTime(rec.time_end) : formatTime(rec.time_start)||'—',
+      babysitter: cg, homecare: rec.homecare||'—', status: status,
+      // Store selected order details on every row so buildClientScheduleHTML uses correct data
+      _orderId: rec.child_order_id||rec.order_id||'—',
+      _clientName: rec.client_name||'—',
+      _package: rec.package_type||rec.package_raw||'—',
+      _shift: rec.time_start&&rec.time_end ? formatTime(rec.time_start)+' – '+formatTime(rec.time_end) : formatTime(rec.time_start)||'—'
     };
     plannerCustomCols.forEach(function(col){ row[col] = ''; });
     plannerData.push(row);
@@ -2451,11 +2458,17 @@ async function downloadSchedJPG(){
       });
     }
     var iDoc=iframe.contentDocument||iframe.contentWindow.document;
-    var target=iDoc.body;
+    // Target the schedule wrapper div, not full body (avoids blank space)
+    var target=iDoc.querySelector('.sched-wrap')||iDoc.querySelector('.schedule-page')||iDoc.body;
+    // Scroll to top first
+    iDoc.documentElement.scrollTop=0;iDoc.body.scrollTop=0;
     var canvas=await html2canvas(target,{
       scale:2,useCORS:true,backgroundColor:'#f0f2f5',logging:false,
-      width:target.scrollWidth,height:target.scrollHeight,
-      windowWidth:target.scrollWidth,windowHeight:target.scrollHeight
+      scrollX:0,scrollY:0,
+      width:target.offsetWidth||target.scrollWidth,
+      height:target.offsetHeight||target.scrollHeight,
+      windowWidth:target.offsetWidth||target.scrollWidth,
+      windowHeight:target.offsetHeight||target.scrollHeight
     });
     var rec=plannerData[0]||{};
     var cgName=(rec.babysitter||'schedule').replace(/\s+/g,'_');
@@ -2477,23 +2490,16 @@ function downloadSchedHTML(){
 }
 
 function buildClientScheduleHTML(){
-  // Gather meta from planner context
+  // Gather meta from planner context — use stored order details from selected order
   const rec = plannerData[0] || {};
   const cgName = toTitleCase(rec.babysitter || '—');
   const homecare = rec.homecare || '—';
-  const orderId = (function(){
-    var r = rawData.find(function(x){ return x.caregiver===(rec.babysitter||'') && (x.child_order_id||x.order_id); });
-    return r ? (r.child_order_id||r.order_id) : '—';
-  })();
-  const clientName = (function(){
-    var r = rawData.find(function(x){ return x.caregiver===(rec.babysitter||'') && x.client_name; });
-    return r ? toTitleCase(r.client_name) : '—';
-  })();
-  const pkg = (function(){
-    var r = rawData.find(function(x){ return x.caregiver===(rec.babysitter||'') && x.package_type; });
-    return r ? r.package_type : '—';
-  })();
-  const shift = rec.timeSlot || '—';
+  // Use _orderId/_clientName/_package stored during generatePlannerTable
+  // These reflect the SELECTED order, not just any order for this CG
+  const orderId = rec._orderId || '—';
+  const clientName = toTitleCase(rec._clientName || '—');
+  const pkg = rec._package || '—';
+  const shift = rec._shift || rec.timeSlot || '—';
 
   // Date range
   const dates = plannerData.map(function(r){ return r.date; }).filter(Boolean).sort();
@@ -2595,7 +2601,7 @@ function buildClientScheduleHTML(){
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#1a1a2e;font-size:13px;padding:24px;min-height:100vh}
+body{font-family:'DM Sans',sans-serif;background:#f0f2f5;color:#1a1a2e;font-size:13px;padding:0;margin:0;min-height:100vh}
 .hero{background:linear-gradient(135deg,#1a1a2e 0%,#16213e 60%,#0f3460 100%);border-radius:16px;padding:28px 32px;color:#fff;margin-bottom:16px;position:relative;overflow:hidden}
 .hero::before{content:'';position:absolute;top:-40px;right:-40px;width:220px;height:220px;border-radius:50%;background:rgba(255,255,255,.04)}
 .hero-label{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:6px}
@@ -2649,6 +2655,7 @@ tr.week-sep:hover td{background:#f7f8fa}
 </style>
 </head>
 <body>
+<div class="sched-wrap" style="padding:24px;background:#f0f2f5;min-height:100vh">
 <div class="hero">
   <div class="hero-label">Caregiver Schedule · ${homecare}</div>
   <div class="hero-name">${clientName}</div>
@@ -2670,12 +2677,38 @@ tr.week-sep:hover td{background:#f7f8fa}
 </table>
 </div>
 <div class="footer">Generated by Valeo Health &nbsp;·&nbsp; ${clientName}</div>
+</div>
 </body>
 </html>`;
 }
 
 function toTitleCase(str){
   return (str||'').replace(/\w\S*/g,function(t){ return t.charAt(0).toUpperCase()+t.substr(1).toLowerCase(); });
+}
+
+function formatTime(t){
+  // Convert "1100", "11:00", "1100 AM", "11:00 AM" → "11:00 AM"
+  if(!t) return '';
+  t = String(t).trim();
+  // Already formatted with AM/PM
+  if(/AM|PM/i.test(t)) {
+    // Fix missing colon: "1100 AM" → "11:00 AM"
+    return t.replace(/^(\d{1,2})(\d{2})\s*(AM|PM)/i, function(m,h,mi,ap){return h+':'+mi+' '+ap.toUpperCase();});
+  }
+  // Has colon: "11:00" → "11:00 AM/PM"
+  if(t.includes(':')) {
+    var p=t.split(':'),h=parseInt(p[0]),mi=p[1]||'00';
+    var ap=h>=12?'PM':'AM'; h=h%12||12;
+    return h+':'+mi+' '+ap;
+  }
+  // Pure digits: "1100" → "11:00 AM/PM"
+  if(/^\d{3,4}$/.test(t)){
+    var h2=t.length===3?parseInt(t[0]):parseInt(t.slice(0,2));
+    var mi2=t.length===3?t.slice(1):t.slice(2);
+    var ap2=h2>=12?'PM':'AM'; h2=h2%12||12;
+    return h2+':'+mi2+' '+ap2;
+  }
+  return t;
 }
 
 function fmtDisplayDate(ds){
