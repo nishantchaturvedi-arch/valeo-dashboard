@@ -34,6 +34,7 @@
 }
 
 *{box-sizing:border-box;margin:0;padding:0}
+@media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}body{background:#f0f2f5!important;}}
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-size:13px;min-height:100vh;transition:background .2s,color .2s}
 
 /* ── Header ── */
@@ -405,6 +406,40 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .acg-cancel{padding:9px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text2);font-size:12px;cursor:pointer;font-family:'Inter',sans-serif}
 .manual-badge{display:inline-block;font-size:9px;padding:1px 6px;border-radius:8px;background:rgba(63,185,80,.12);color:var(--duty);border:1px solid rgba(63,185,80,.25);margin-left:4px;vertical-align:middle}
 .cg-restore-btn{position:absolute;bottom:8px;right:8px;padding:3px 10px;background:rgba(63,185,80,.2);border:1px solid var(--duty);border-radius:5px;color:var(--duty);font-size:10px;cursor:pointer;font-family:'Inter',sans-serif;z-index:3}
+
+/* ── Roster View ─────────────────────────────────────────────── */
+.roster-toolbar{display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--card);border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.roster-nav-btn{background:var(--accent);color:#fff;border:none;border-radius:6px;width:30px;height:30px;font-size:20px;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center;}
+.roster-month-label{font-size:15px;font-weight:700;color:var(--text1);min-width:140px;text-align:center;}
+.roster-hc-filter{background:var(--card);color:var(--text1);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:13px;}
+.roster-legend{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text2);margin-left:auto;flex-wrap:wrap;}
+.rl-dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:2px;}
+.roster-wrap{overflow:auto;max-height:calc(100vh - 160px);}
+.roster-table{border-collapse:collapse;table-layout:fixed;}
+.roster-table th,.roster-table td{border:1px solid var(--border);}
+.col-photo{position:sticky;left:0;z-index:3;background:var(--card);width:68px;min-width:68px;text-align:center;padding:4px;}
+.col-info{position:sticky;left:68px;z-index:3;background:var(--card);width:155px;min-width:155px;padding:4px 8px;}
+.roster-table thead th{position:sticky;top:0;z-index:2;background:var(--card);padding:5px 2px;font-size:10px;color:var(--text2);text-align:center;width:36px;min-width:36px;}
+.roster-table thead .col-photo,.roster-table thead .col-info{z-index:5;}
+.roster-hc-hdr td{background:var(--accent);color:#fff;font-weight:700;font-size:11px;padding:4px 10px;letter-spacing:.4px;}
+.r-photo{width:50px;height:50px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;margin:auto;}
+.r-name{font-weight:700;font-size:11px;color:var(--text1);margin-bottom:2px;}
+.r-hc{font-size:10px;color:var(--text2);}
+.rd{width:36px;min-width:36px;height:56px;vertical-align:top;padding:2px;font-size:9px;cursor:pointer;transition:opacity .15s;}
+.rd:hover{opacity:.8;}
+.rd-duty{background:#f59e0b;color:#000;}
+.rd-manual{background:#a855f7;color:#fff;}
+.rd-wo{background:#1a1a1a;color:#555;}
+.rd-sick{background:#ef4444;color:#fff;}
+.rd-off{background:#eab308;color:#000;}
+.rd-empty{background:transparent;}
+.rd-today{outline:2px solid var(--accent)!important;outline-offset:-2px;}
+.col-weekend{opacity:.7;}
+.rd-in{display:flex;flex-direction:column;gap:1px;height:100%;overflow:hidden;}
+.rd-cl{font-weight:700;font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rd-tm{font-size:8px;opacity:.85;}
+.rd-od{font-size:8px;opacity:.65;}
+
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -444,8 +479,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
  <input class="avail-input" type="date" id="avail-from">
  <span style="font-size:11px;color:var(--text2)">→</span>
  <input class="avail-input" type="date" id="avail-to">
- <input class="avail-input" type="time" id="avail-time" title="Shift start time — enforces 12h rest gap" style="width:110px">
- <span style="font-size:10px;color:var(--text3);white-space:nowrap" title="Min 12h rest between bookings">⏱ 12h rest</span>
+ <input class="avail-input" type="time" id="avail-time" title="Shift start time" style="width:110px">
+ <span style="font-size:10px;color:var(--text3)" title="Min 12h rest">&#x23F1; 12h rest</span>
  <button class="avail-btn" onclick="checkAvail()">Check</button>
  <button class="avail-clear" onclick="clearAvail()">Clear</button>
  <span class="avail-result" id="avail-result"></span>
@@ -636,7 +671,35 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 </div>
 
 
+<!-- ── Saved Planners Modal ── -->
+<div id="saved-planners-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:700;align-items:center;justify-content:center">
+ <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;width:520px;max-width:95vw;max-height:80vh;overflow-y:auto">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+   <span style="font-size:14px;font-weight:700;color:var(--text1)">Saved Schedules</span>
+   <button onclick="document.getElementById('saved-planners-overlay').style.display='none'" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer">&#x2715;</button>
+  </div>
+  <div id="saved-planners-list">Loading...</div>
+ </div>
+</div>
 <!-- ── PACKAGE PLANNER PAGE ── -->
+<div class="page" id="page-roster">
+ <div class="roster-toolbar">
+  <button class="roster-nav-btn" onclick="rosterPrevMonth()">&#8249;</button>
+  <span class="roster-month-label" id="roster-month-label"></span>
+  <button class="roster-nav-btn" onclick="rosterNextMonth()">&#8250;</button>
+  <select class="roster-hc-filter" id="roster-hc-filter" onchange="renderRoster()">
+   <option value="">All Homecare</option>
+  </select>
+  <span class="roster-legend">
+   <span class="rl-dot" style="background:#f59e0b"></span>Duty
+   <span class="rl-dot" style="background:#a855f7"></span>Manual
+   <span class="rl-dot" style="background:#1a1a1a"></span>Week Off
+   <span class="rl-dot" style="background:#ef4444"></span>Sick
+   <span class="rl-dot" style="background:#eab308"></span>Off/Holiday
+  </span>
+ </div>
+ <div class="roster-wrap" id="roster-wrap"></div>
+</div>
 <div class="page" id="page-planner">
  <div class="planner-page">
 
@@ -691,6 +754,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
  <span style="font-size:11px;font-weight:600;color:var(--text);white-space:nowrap">🔗 Client Link:</span>
  <input class="pl-share-url" id="pl-share-url" readonly>
  <button class="pl-copy-btn" onclick="copyPlannerLink()">Copy Link</button>
+ <button class="pl-copy-btn" style="background:var(--duty)" onclick="savePlannerToPortal()">&#x1F4BE; Save to Portal</button>
+ <button class="pl-copy-btn" style="background:var(--bg3);color:var(--text2)" onclick="openSavedPlanners()">&#x1F4C2; Load Saved</button>
  </div>
 
  <!-- Table -->
@@ -1056,7 +1121,6 @@ async function loadData(force=false){
     setSyncState('ok','Synced '+new Date().toLocaleTimeString());
     buildChatData();
     renderHCGrid();
-    // Start Firebase sync AFTER data is loaded so reRenderAll has rawData available
     syncFromSheet();
     setInterval(syncFromSheet,30*1000);
     window.addEventListener('focus',syncFromSheet);
@@ -1376,87 +1440,38 @@ async function applyWo(){
   var sel=[...document.querySelectorAll('#wo-modal-body .day-chip.on')].map(function(b){return DAYS.find(function(d){return d.startsWith(b.textContent);});});
   var rec=rawData.find(function(r){return r.caregiver===activeCG&&['monthly','weekly'].includes(pkgType(r.package_type));});
   var woKey=(rec&&(rec.child_order_id||rec.order_id))||activeCG;
-  weekOffCfg[woKey]=sel;
-  saveLocalCache();
-  allData=expandOrders(rawData);
-  closeWoModal();renderCalendar();
+  weekOffCfg[woKey]=sel;saveLocalCache();
+  allData=expandOrders(rawData);closeWoModal();renderCalendar();
   await persistWrite('weekoff',woKey,sel);
 }
 function closeWoModal(){document.getElementById('wo-modal').classList.remove('show');}
 
 // ── Availability check ───────────────────────────────────────────
-var MIN_REST_MINS=720;
-function timeToMins24(t){var p=(t||'').split(':');return parseInt(p[0]||0)*60+parseInt(p[1]||0);}
-function timeToMins12(t){
-  if(!t)return 0;
-  var isPM=/PM/i.test(t),isAM=/AM/i.test(t);
-  var clean=t.replace(/\s*(AM|PM)/i,'').trim().split('-')[0].trim();
-  var p=clean.split(':'),h=parseInt(p[0])||0,m=parseInt(p[1])||0;
-  if(isPM&&h<12)h+=12;if(isAM&&h===12)h=0;return h*60+m;
-}
-function fmt12hrFromInput(t){
-  var p=(t||'').split(':'),h=parseInt(p[0]||0),mi=p[1]||'00';
-  var ap=h>=12?'PM':'AM';h=h%12||12;return h+':'+mi+' '+ap;
-}
-function bookedConflicts(bS,bE,req){return req>=(bS-MIN_REST_MINS)&&req<=(bE+MIN_REST_MINS);}
 function checkAvail(){
-  var from=document.getElementById('avail-from').value;
-  var to=document.getElementById('avail-to').value||from;
-  var reqTimeStr=document.getElementById('avail-time').value;
+  const from=document.getElementById('avail-from').value;
+  const to=document.getElementById('avail-to').value||from;
   if(!from){document.getElementById('avail-result').textContent='Pick a start date';return;}
-  var reqStart=reqTimeStr?timeToMins24(reqTimeStr):null;
-  var dayBefore=addDays(from,-1);
-  var cgs=[...new Set(rawData.map(function(r){return r.caregiver;}))].filter(Boolean);
-  var avail=0;
-  cgs.forEach(function(cg){
-    var id='cgc-'+cg.replace(/[^a-zA-Z0-9]/g,'_');
-    var card=document.getElementById(id);
+
+  const cgs=[...new Set(rawData.map(r=>r.caregiver))].filter(Boolean);
+  let avail=0;
+  cgs.forEach(cg=>{
+    const id='cgc-'+cg.replace(/[^a-zA-Z0-9]/g,'_');
+    const card=document.getElementById(id);
     if(!card)return;
-    var busy=false;
-    if(!busy)busy=rawData.some(function(r){return r.caregiver===cg&&r.status!=='Cancelled'&&(r.date||'')<=to&&(r.end_date||r.date||'')>=from;});
-    if(!busy)busy=Object.entries(overrides).some(function(e){
-      var k=e[0],ov=e[1];
-      if(!k.startsWith(cg+'|'))return false;
-      var ovDate=ov.date||k.split('|')[1];
-      if(!ovDate||ovDate<from||ovDate>to)return false;
-      return['sick','off','holiday','unpaid'].includes(ov.type);
-    });
-    if(!busy)busy=Object.entries(overrides).some(function(e){
-      var k=e[0],ov=e[1];
-      if(!k.startsWith(cg+'|')||ov.type!=='manual')return false;
-      var ovDate=ov.date||k.split('|')[1];
-      if(!ovDate||ovDate<from||ovDate>to)return false;
-      if(reqStart!==null&&ov.time_start&&ov.time_end){
-        var s=timeToMins12(ov.time_start),e2=timeToMins12(ov.time_end);
-        if(ovDate===from)return bookedConflicts(s,e2,reqStart);
-        if(ovDate===dayBefore)return((24*60-e2)+reqStart)<MIN_REST_MINS;
-      }
-      return true;
-    });
-    if(!busy&&reqStart!==null)busy=allData.some(function(r){
-      if(r.caregiver!==cg)return false;
-      var rDate=r.date||'';
-      if(rDate!==from&&rDate!==dayBefore)return false;
-      if(!r.time_start)return false;
-      var st=(r.status||'').toLowerCase().replace(/\s+/g,'');
-      if(['cancelled','removed','weekoff'].includes(st))return false;
-      var bS=timeToMins12(r.time_start),bE=r.time_end?timeToMins12(r.time_end):bS+720;
-      return rDate===from?bookedConflicts(bS,bE,reqStart):((24*60-bE)+reqStart)<MIN_REST_MINS;
-    });
+    const busy=rawData.some(r=>r.caregiver===cg&&r.status!=='Cancelled'&&(r.date||'')<=to&&(r.end_date||r.date||'')>=from);
     card.classList.remove('available','unavailable');
     if(busy)card.classList.add('unavailable');
     else{card.classList.add('available');avail++;}
   });
-  var lbl=from===to?from:from+' → '+to;
-  var timeLbl=reqTimeStr?' · '+fmt12hrFromInput(reqTimeStr)+' (12h rest enforced)':'';
-  document.getElementById('avail-result').textContent=avail+' of '+cgs.length+' available · '+lbl+timeLbl;
+
+  const lbl=from===to?from:from+' → '+to;
+  document.getElementById('avail-result').textContent=`${avail} of ${cgs.length} available · ${lbl}`;
 }
 function clearAvail(){
   document.getElementById('avail-from').value='';
   document.getElementById('avail-to').value='';
-  document.getElementById('avail-time').value='';
   document.getElementById('avail-result').textContent='';
-  document.querySelectorAll('.cg-card').forEach(function(c){c.classList.remove('available','unavailable');});
+  document.querySelectorAll('.cg-card').forEach(c=>c.classList.remove('available','unavailable'));
 }
 
 // ── Analytics v2 ────────────────────────────────────────────────
@@ -1645,6 +1660,7 @@ function renderAnalyticsData(){
 
 // ── Tab switching ────────────────────────────────────────────────
 function switchTab(tab){
+  if(tab==='roster'){setTimeout(switchToRoster,80);}
   document.querySelectorAll('.main-tab').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase().includes(tab)));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+tab).classList.add('active');
@@ -1876,45 +1892,30 @@ function populateCGHCFilter(){
 var ovCG='', ovDate='', ovType='';
 
 // ── Firebase Firestore persistence ───────────────────────────────
-var _db = null;
+var _db=null;
 
 async function initFirebase(){
   try{
-    var fbApp = firebase.initializeApp({
-      apiKey: "AIzaSyDL_cSwxL8x90rDVLHaj9fPE1cTcdEEmII",
-      authDomain: "valeo-dashboard.firebaseapp.com",
-      projectId: "valeo-dashboard",
-      storageBucket: "valeo-dashboard.firebasestorage.app",
-      messagingSenderId: "892578266142",
-      appId: "1:892578266142:web:115b3b677c4d53c8c5020f"
-    });
-    _db = firebase.firestore(fbApp);
-    console.log('[firebase] connected');
-  }catch(e){
-    try{_db=firebase.firestore(firebase.app());console.log('[firebase] reused app');}
-    catch(e2){console.warn('[firebase] init failed:',e2);}
-  }
+    var fa=firebase.initializeApp({apiKey:"AIzaSyDL_cSwxL8x90rDVLHaj9fPE1cTcdEEmII",authDomain:"valeo-dashboard.firebaseapp.com",projectId:"valeo-dashboard",storageBucket:"valeo-dashboard.firebasestorage.app",messagingSenderId:"892578266142",appId:"1:892578266142:web:115b3b677c4d53c8c5020f"});
+    _db=firebase.firestore(fa);console.log('[fb] connected');
+  }catch(e){try{_db=firebase.firestore(firebase.app());}catch(e2){console.warn('[fb] failed:',e2);}}
 }
 
-async function persistWrite(docType,docKey,docValue){
-  if(!_db){console.warn('[persist] db not ready');return;}
+async function persistWrite(dt,dk,dv){
+  if(!_db) return;
   try{
-    var id=docType+'__'+docKey.replace(/[^a-zA-Z0-9_-]/g,'_');
-    await _db.collection('valeo_state').doc(id).set({
-      type:docType,key:docKey,
-      value:JSON.stringify(docValue),
-      updated_at:new Date().toISOString()
-    });
-    console.log('[persist] wrote:',docType,docKey);
+    var id=dt+'__'+dk.replace(/[^a-zA-Z0-9_-]/g,'_');
+    await _db.collection('valeo_state').doc(id).set({type:dt,key:dk,value:JSON.stringify(dv),updated_at:new Date().toISOString()});
+    console.log('[persist] wrote:',dt,dk);
   }catch(e){console.warn('[persist] write failed:',e);}
 }
 
-async function persistDelete(docType,docKey){
-  if(!_db){console.warn('[persist] db not ready');return;}
+async function persistDelete(dt,dk){
+  if(!_db) return;
   try{
-    var id=docType+'__'+docKey.replace(/[^a-zA-Z0-9_-]/g,'_');
+    var id=dt+'__'+dk.replace(/[^a-zA-Z0-9_-]/g,'_');
     await _db.collection('valeo_state').doc(id).delete();
-    console.log('[persist] deleted:',docType,docKey);
+    console.log('[persist] deleted:',dt,dk);
   }catch(e){console.warn('[persist] delete failed:',e);}
 }
 
@@ -1931,20 +1932,17 @@ function saveLocalCache(){
 function reRenderAll(){
   applyOverrides();renderHCGrid();applyHiddenFilter();updateHiddenBadge();
   if(activeCG) renderCalendar();
+  var rp=document.getElementById('page-roster');
+  if(rp&&rp.classList.contains('active')) renderRoster();
 }
 
 function loadLocalCache(){
   try{
-    var s=localStorage.getItem('valeo_overrides');
-    var sp=localStorage.getItem('valeo_splits');
-    var mc=localStorage.getItem('valeo_manual_cgs');
-    var hc=localStorage.getItem('valeo_hidden_cgs');
-    var wo=localStorage.getItem('valeo_weekoff');
-    overrides=s?JSON.parse(s):{};
-    splitAssignments=sp?JSON.parse(sp):{};
-    manualCGs=mc?JSON.parse(mc):{};
-    hiddenCGs=new Set(hc?JSON.parse(hc):[]);
-    weekOffCfg=wo?JSON.parse(wo):{};
+    overrides=JSON.parse(localStorage.getItem('valeo_overrides')||'{}');
+    splitAssignments=JSON.parse(localStorage.getItem('valeo_splits')||'{}');
+    manualCGs=JSON.parse(localStorage.getItem('valeo_manual_cgs')||'{}');
+    hiddenCGs=new Set(JSON.parse(localStorage.getItem('valeo_hidden_cgs')||'[]'));
+    weekOffCfg=JSON.parse(localStorage.getItem('valeo_weekoff')||'{}');
   }catch(e){overrides={};splitAssignments={};manualCGs={};hiddenCGs=new Set();weekOffCfg={};}
 }
 
@@ -1952,20 +1950,17 @@ async function syncFromSheet(){
   if(!_db){await initFirebase();if(!_db)return;}
   try{
     var snap=await _db.collection('valeo_state').get();
-    if(snap.empty){console.log('[sync] no docs yet');return;}
+    if(snap.empty) return;
     var no={},nm={},nh=new Set(),nw={},ns={};
     snap.forEach(function(doc){
-      var d=doc.data();
-      var dt=(d.type||'').toLowerCase().trim();
-      var dk=d.key;
-      var dv;
+      var d=doc.data(),dt=(d.type||'').toLowerCase().trim(),dk=d.key,dv;
       try{dv=JSON.parse(d.value);}catch(e){dv=d.value;}
       if(!dk) return;
-      if(dt==='override')       no[dk]=dv;
+      if(dt==='override') no[dk]=dv;
       else if(dt==='manual_cg') nm[dk]=dv;
       else if(dt==='hidden_cg') nh.add(dk);
-      else if(dt==='weekoff')   nw[dk]=dv;
-      else if(dt==='split')     ns[dk]=dv;
+      else if(dt==='weekoff') nw[dk]=dv;
+      else if(dt==='split') ns[dk]=dv;
     });
     overrides=no;manualCGs=nm;hiddenCGs=nh;weekOffCfg=nw;splitAssignments=ns;
     saveLocalCache();reRenderAll();
@@ -1976,7 +1971,6 @@ async function syncFromSheet(){
 async function loadOverrides(){
   loadLocalCache();
   await initFirebase();
-  // don't sync here — will sync after data loads
 }
 
 function applyOverrides(){
@@ -2096,23 +2090,24 @@ async function saveOverride(){
     payload.client_name=client;payload.time_start=tStart;payload.time_end=tEnd;
   }
   var ovKey=ovCG+'|'+ovDate;
-  overrides[ovKey]=payload;
-  saveLocalCache();
+  overrides[ovKey]=payload;saveLocalCache();
   applyOverrides();closeOvModal();renderCalendar();renderHCGrid();
+  var rp=document.getElementById('page-roster');
+  if(rp&&rp.classList.contains('active')) renderRoster();
   await persistWrite('override',ovKey,payload);
 }
 
 async function clearOverride(){
   var ovKey=ovCG+'|'+ovDate;
-  delete overrides[ovKey];
-  saveLocalCache();
+  delete overrides[ovKey];saveLocalCache();
   applyOverrides();closeOvModal();renderCalendar();renderHCGrid();
+  var rp=document.getElementById('page-roster');
+  if(rp&&rp.classList.contains('active')) renderRoster();
   await persistDelete('override',ovKey);
 }
 
 async function saveSplitCG(orderId,cg2){
-  splitAssignments[orderId]=cg2;
-  saveLocalCache();
+  splitAssignments[orderId]=cg2;saveLocalCache();
   await persistWrite('split',orderId,cg2);
 }
 
@@ -2630,6 +2625,78 @@ function updateShareLink(){
   document.getElementById('pl-share-url').value = url;
 }
 
+async function savePlannerToPortal(){
+  if(!plannerData.length){alert('Generate a schedule first');return;}
+  if(!_db){await initFirebase();if(!_db){alert('Firebase not connected');return;}}
+  var cg=(plannerData[0]||{}).babysitter||'unknown';
+  var dates=plannerData.map(function(r){return r.date;}).filter(Boolean).sort();
+  var start=dates[0]||'',end=dates[dates.length-1]||'';
+  var docId='planner__'+cg.replace(/[^a-zA-Z0-9]/g,'_')+'__'+start;
+  var payload={caregiver:cg,homecare:(plannerData[0]||{}).homecare||'',start:start,end:end,rows:plannerData,cols:plannerCustomCols,saved_at:new Date().toISOString()};
+  try{
+    await _db.collection('valeo_planners').doc(docId).set(payload);
+    alert('Saved! '+cg+' '+start+' to '+end);
+  }catch(e){alert('Save failed: '+e.message);}
+}
+
+async function openSavedPlanners(){
+  document.getElementById('saved-planners-overlay').style.display='flex';
+  var list=document.getElementById('saved-planners-list');
+  list.innerHTML='<div style="color:var(--text2);font-size:13px">Loading...</div>';
+  if(!_db) await initFirebase();
+  try{
+    var snap=await _db.collection('valeo_planners').get();
+    if(snap.empty){list.innerHTML='<div style="color:var(--text2);font-size:13px">No saved schedules yet.</div>';return;}
+    var items=[];
+    snap.forEach(function(doc){items.push({id:doc.id,data:doc.data()});});
+    items.sort(function(a,b){return(b.data.saved_at||'').localeCompare(a.data.saved_at||'');});
+    var html='';
+    items.forEach(function(item){
+      var d=item.data;
+      var dt=d.saved_at?new Date(d.saved_at).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'';
+      html+='<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">';
+      html+='<div><div style="font-size:13px;font-weight:600;color:var(--text1)">'+(d.caregiver||'Unknown')+'</div>';
+      html+='<div style="font-size:11px;color:var(--text2)">'+(d.homecare||'')+(d.start?' &middot; '+d.start+' &rarr; '+d.end:'')+'</div>';
+      html+='<div style="font-size:10px;color:var(--text3)">Saved '+dt+'</div></div>';
+      html+='<div style="display:flex;gap:8px">';
+      html+='<button onclick="loadSavedPlannerDoc(''+item.id+'')" style="padding:5px 12px;background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:11px;cursor:pointer">Load</button>';
+      html+='<button onclick="deleteSavedPlanner(''+item.id+'')" style="padding:5px 10px;background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);border-radius:6px;color:var(--absent);font-size:11px;cursor:pointer">Del</button>';
+      html+='</div></div>';
+    });
+    list.innerHTML=html;
+  }catch(e){list.innerHTML='<div style="color:var(--absent);font-size:13px">Error: '+e.message+'</div>';}
+}
+
+async function loadSavedPlannerDoc(docId){
+  if(!_db) await initFirebase();
+  try{
+    var snap=await _db.collection('valeo_planners').doc(docId).get();
+    if(!snap.exists){alert('Not found');return;}
+    var d=snap.data();
+    plannerData=d.rows||[];plannerCustomCols=d.cols||[];
+    document.getElementById('saved-planners-overlay').style.display='none';
+    switchTab('planner');
+    document.getElementById('pl-summary').style.display='flex';
+    document.getElementById('pl-table-wrap').style.display='block';
+    var w=plannerData.filter(function(r){return r.status==='Duty'||r.status==='Manual';}).length;
+    var off=plannerData.filter(function(r){return['Off','Week Off'].includes(r.status);}).length;
+    var sick=plannerData.filter(function(r){return['Sick','Holiday','Unpaid','Cancelled','Removed'].includes(r.status);}).length;
+    document.getElementById('pl-total-days').textContent=plannerData.length;
+    document.getElementById('pl-working-days').textContent=w;
+    document.getElementById('pl-off-days').textContent=off;
+    document.getElementById('pl-sick-days').textContent=sick;
+    renderPlannerTable();
+    alert('Loaded: '+(d.caregiver||''));
+  }catch(e){alert('Load failed: '+e.message);}
+}
+
+async function deleteSavedPlanner(docId){
+  if(!confirm('Delete this saved schedule?')) return;
+  if(!_db) await initFirebase();
+  try{await _db.collection('valeo_planners').doc(docId).delete();openSavedPlanners();}
+  catch(e){alert('Delete failed: '+e.message);}
+}
+
 function copyPlannerLink(){
   const url = document.getElementById('pl-share-url').value;
   navigator.clipboard.writeText(url).then(function(){
@@ -2720,10 +2787,7 @@ async function removeCGByKey(btn){
   var cg = card.dataset.cg, hc = card.dataset.hc;
   if(!cg||!hc) return;
   var hKey=cg+'|'+hc;
-  hiddenCGs.add(hKey);
-  saveLocalCache();
-  applyHiddenFilter();
-  updateHiddenBadge();
+  hiddenCGs.add(hKey);saveLocalCache();applyHiddenFilter();updateHiddenBadge();
   await persistWrite('hidden_cg',hKey,true);
 }
 function openAddCGModal(){
@@ -2753,10 +2817,7 @@ async function saveManualCG(){
     alert('A caregiver with this name already exists under this homecare');return;
   }
   manualCGs[key]={name:name,homecare:hc,expertise:exp,age:age};
-  hiddenCGs.delete(key);
-  saveLocalCache();
-  closeAddCGModal();
-  renderHCGrid();
+  hiddenCGs.delete(key);saveLocalCache();closeAddCGModal();renderHCGrid();
   await persistWrite('manual_cg',key,manualCGs[key]);
   await persistDelete('hidden_cg',key);
 }
@@ -2764,10 +2825,7 @@ async function restoreCGByKey(btn){
   var card=btn.closest('.cg-card');
   if(!card) return;
   var rKey=card.dataset.cg+'|'+card.dataset.hc;
-  hiddenCGs.delete(rKey);
-  saveLocalCache();
-  applyHiddenFilter();
-  updateHiddenBadge();
+  hiddenCGs.delete(rKey);saveLocalCache();applyHiddenFilter();updateHiddenBadge();
   await persistDelete('hidden_cg',rKey);
 }
 function applyHiddenFilter(){
@@ -2822,6 +2880,134 @@ function updateHiddenBadge(){
     btn.classList.remove('visible');
     showHiddenMode=false;
   }
+}
+
+
+// ── Roster View ──────────────────────────────────────────────────
+var rosterDate=new Date();
+function rosterPrevMonth(){rosterDate.setMonth(rosterDate.getMonth()-1);renderRoster();}
+function rosterNextMonth(){rosterDate.setMonth(rosterDate.getMonth()+1);renderRoster();}
+
+function switchToRoster(){
+  var sel=document.getElementById('roster-hc-filter');
+  if(sel&&rawData&&rawData.length){
+    var cur=sel.value;
+    var hcs=[...new Set(rawData.map(function(r){return r.homecare;}))].filter(Boolean).sort();
+    sel.innerHTML='<option value="">All Homecare</option>';
+    hcs.forEach(function(hc){sel.innerHTML+='<option value="'+hc+'"'+(hc===cur?' selected':'')+'>'+hc+'</option>';});
+  }
+  renderRoster();
+}
+
+function renderRoster(){
+  if(!rawData||!rawData.length||!allData||!allData.length) return;
+  var wrap=document.getElementById('roster-wrap');
+  var lbl=document.getElementById('roster-month-label');
+  if(!wrap) return;
+  var year=rosterDate.getFullYear(),month=rosterDate.getMonth();
+  var dim=new Date(year,month+1,0).getDate();
+  var todayStr=new Date().toISOString().slice(0,10);
+  var MNAMES=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var DNAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var DFULL=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  lbl.textContent=MNAMES[month]+' '+year;
+  var dates=[];
+  for(var d=1;d<=dim;d++) dates.push(year+'-'+String(month+1).padStart(2,'0')+'-'+String(d).padStart(2,'0'));
+  var filterHC=document.getElementById('roster-hc-filter').value;
+  var cgMap={};
+  rawData.forEach(function(r){
+    if(!r.caregiver) return;
+    if(filterHC&&r.homecare!==filterHC) return;
+    if(!cgMap[r.caregiver]) cgMap[r.caregiver]={name:r.caregiver,homecare:r.homecare||''};
+  });
+  Object.entries(manualCGs).forEach(function(e){
+    var v=e[1];
+    if(filterHC&&v.homecare!==filterHC) return;
+    if(!cgMap[v.name]) cgMap[v.name]={name:v.name,homecare:v.homecare||''};
+  });
+  [...hiddenCGs].forEach(function(hk){
+    var n=hk.split('|')[0],hc=hk.split('|')[1];
+    if(!filterHC||hc===filterHC) delete cgMap[n];
+  });
+  var hcGroups={};
+  Object.values(cgMap).forEach(function(cg){
+    var hc=cg.homecare||'Other';
+    if(!hcGroups[hc]) hcGroups[hc]=[];
+    hcGroups[hc].push(cg.name);
+  });
+  var dayMap={};
+  allData.forEach(function(r){
+    if(!r.caregiver||!r.date) return;
+    var k=r.caregiver+'|'+r.date;
+    if(!dayMap[k]) dayMap[k]=[];
+    dayMap[k].push(r);
+  });
+  var woLookup={};
+  Object.entries(weekOffCfg).forEach(function(e){
+    var cfgKey=e[0],woDays=e[1]||[];
+    var rec=rawData.find(function(r){return r.child_order_id===cfgKey||r.order_id===cfgKey||r.caregiver===cfgKey;});
+    if(rec) woLookup[rec.caregiver]=woDays;
+  });
+  var html='<table class="roster-table"><thead><tr>';
+  html+='<th class="col-photo">Photo</th><th class="col-info">Staff</th>';
+  dates.forEach(function(ds){
+    var dow=new Date(ds+'T12:00:00').getDay();
+    var isWE=dow===0||dow===6,isT=ds===todayStr;
+    html+='<th class="'+(isWE?'col-weekend':'')+(isT?' rd-today':'')+'" style="padding:5px 2px;text-align:center;">';
+    html+=DNAMES[dow]+'<br><b>'+parseInt(ds.slice(8))+'</b></th>';
+  });
+  html+='</tr></thead><tbody>';
+  Object.entries(hcGroups).sort().forEach(function(hce){
+    var hcName=hce[0],cgs=hce[1].sort();
+    html+='<tr class="roster-hc-hdr"><td colspan="'+(dim+2)+'">'+hcName+' &mdash; '+cgs.length+' caregivers</td></tr>';
+    cgs.forEach(function(cgName){
+      var parts=cgName.trim().split(' ');
+      var ini=((parts[0]||'')[0]||'')+((parts[1]||'')[0]||'');
+      var hcVal=cgMap[cgName]?cgMap[cgName].homecare:'';
+      html+='<tr><td class="col-photo"><div class="r-photo">'+ini.toUpperCase()+'</div></td>';
+      html+='<td class="col-info"><div class="r-name">'+cgName+'</div><div class="r-hc">'+hcVal+'</div></td>';
+      dates.forEach(function(ds){
+        var dow=new Date(ds+'T12:00:00').getDay();
+        var isWE=dow===0||dow===6,isT=ds===todayStr;
+        var cls='rd'+(isWE?' col-weekend':'')+(isT?' rd-today':'');
+        var inner='';
+        var ov=overrides[cgName+'|'+ds];
+        var recs=dayMap[cgName+'|'+ds]||[];
+        if(ov){
+          if(ov.type==='sick'){cls+=' rd-sick';inner='<div class="rd-in"><div class="rd-cl">Sick</div></div>';}
+          else if(ov.type==='off'||ov.type==='holiday'||ov.type==='unpaid'){cls+=' rd-off';inner='<div class="rd-in"><div class="rd-cl">'+(ov.type==='holiday'?'Holiday':ov.type==='unpaid'?'Unpaid':'Off')+'</div></div>';}
+          else if(ov.type==='cancelled'){cls+=' rd-off';inner='<div class="rd-in"><div class="rd-cl">Cxl</div></div>';}
+          else if(ov.type==='manual'){
+            cls+=' rd-manual';
+            var t2=ov.time_start&&ov.time_end?ov.time_start+'-'+ov.time_end:(ov.time_start||'');
+            inner='<div class="rd-in"><div class="rd-cl">'+(ov.client_name||'Manual')+'</div>'+(t2?'<div class="rd-tm">'+t2+'</div>':'')+'</div>';
+          }
+        } else if(recs.length>0){
+          var ev=recs[0];
+          var st=(ev.status||'').toLowerCase().replace(/\s+/g,'');
+          if(st==='weekoff'){cls+=' rd-wo';inner='<div class="rd-in"><div class="rd-cl">Week Off</div></div>';}
+          else if(st==='sick'){cls+=' rd-sick';inner='<div class="rd-in"><div class="rd-cl">Sick</div></div>';}
+          else if(st==='cancelled'||st==='absent'){cls+=' rd-off';inner='<div class="rd-in"><div class="rd-cl">'+st+'</div></div>';}
+          else{
+            cls+=' rd-duty';
+            var cl2=(ev.client_name||'').split(' ')[0];
+            var t3=ev.time_start&&ev.time_end?ev.time_start+'-'+ev.time_end:(ev.time_start||'');
+            var oid=ev.order_id||ev.child_order_id||'';
+            inner='<div class="rd-in">'+(cl2?'<div class="rd-cl">'+cl2+'</div>':'')+(t3?'<div class="rd-tm">'+t3+'</div>':'')+(oid?'<div class="rd-od">#'+oid+'</div>':'')+'</div>';
+          }
+        } else {
+          var woDays2=woLookup[cgName]||[];
+          var isWO=woDays2.some(function(wd){return wd&&wd.startsWith(DFULL[dow].slice(0,3));});
+          if(isWO){cls+=' rd-wo';inner='<div class="rd-in"><div class="rd-cl">Week Off</div></div>';}
+        }
+        var safeN=cgName.replace(/'/g,'&#39;').replace(/"/g,'&quot;');
+        html+='<td class="'+cls+'" title="'+safeN+' | '+ds+'" data-cg="'+safeN+'" data-ds="'+ds+'" onclick="openOvModal(this.dataset.cg,this.dataset.ds)">'+inner+'</td>';
+      });
+      html+='</tr>';
+    });
+  });
+  html+='</tbody></table>';
+  wrap.innerHTML=html;
 }
 
 // ── Init ─────────────────────────────────────────────────────────
