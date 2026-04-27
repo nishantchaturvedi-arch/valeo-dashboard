@@ -3247,27 +3247,42 @@ async function doLogin(){
 function doLogout(){if(_auth)_auth.signOut();}
 
 function showApp(user){
-  document.getElementById('login-screen').style.display='none';
-  document.getElementById('main-app').style.display='block';
+  var ls=document.getElementById('login-screen');
+  var ma=document.getElementById('main-app');
+  if(ls) ls.style.display='none';
+  if(ma) ma.style.display='block';
   var ub=document.getElementById('user-badge');
   var sb=document.getElementById('signout-btn');
   if(ub){ub.textContent=user.email;ub.style.display='inline';}
-  if(sb)sb.style.display='inline-block';
+  if(sb) sb.style.display='inline-block';
   loadData();
 }
 
 function showLogin(){
-  document.getElementById('login-screen').style.display='flex';
-  document.getElementById('main-app').style.display='none';
+  var ls=document.getElementById('login-screen');
+  var ma=document.getElementById('main-app');
+  if(ls) ls.style.display='flex';
+  if(ma) ma.style.display='none';
 }
 
 async function initAuth(){
   await initFirebase();
-  document.getElementById('login-screen').style.display='flex';
-  _auth.onAuthStateChanged(function(user){
-    if(user)showApp(user);
-    else showLogin();
-  });
+  // Wait for DOM to be fully ready before touching elements
+  function startAuth(){
+    var ls=document.getElementById('login-screen');
+    var ma=document.getElementById('main-app');
+    if(ls) ls.style.display='flex';
+    if(ma) ma.style.display='none';
+    _auth.onAuthStateChanged(function(user){
+      if(user) showApp(user);
+      else showLogin();
+    });
+  }
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded', startAuth);
+  } else {
+    startAuth();
+  }
 }
 
 // ── Init ─────────────────────────────────────────────────────────
