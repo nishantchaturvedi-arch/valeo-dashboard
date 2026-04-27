@@ -442,15 +442,60 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 
 
 /* ── Drag Override ─────────────────────────────────────────────── */
-.cal-day.drag-source{outline:2px solid var(--accent);opacity:.7;}
-.cal-day.drag-over{background:rgba(99,102,241,.15)!important;outline:2px dashed var(--accent);}
+.cal-cell.drag-source .cal-ev{opacity:.5;}
+.cal-cell.drag-over{background:rgba(99,102,241,.18)!important;outline:2px dashed var(--accent);outline-offset:-2px;}
 .cg-card.drag-over-cg{outline:2px dashed var(--accent);background:rgba(99,102,241,.08)!important;}
-.drag-handle{position:absolute;bottom:2px;right:2px;width:12px;height:12px;cursor:grab;opacity:.4;font-size:9px;line-height:1;}
-.drag-handle:hover{opacity:.9;}
+.drag-handle{cursor:grab;opacity:.5;font-size:10px;margin-left:3px;display:inline;}
+.drag-handle:hover{opacity:1;}
+/* Allow drop events to pass through cal-ev to the parent cal-cell */
+.cal-cell .cal-ev{pointer-events:auto;}
+body.dragging .cal-cell .cal-ev{pointer-events:none;}
+
+
+/* ── Mobile Responsive ─────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .header{padding:8px 12px;}
+  #user-badge{display:none!important;}
+  #signout-btn{font-size:10px;padding:3px 8px;}
+  .main-tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;padding:0 8px;gap:4px;scrollbar-width:none;}
+  .main-tabs::-webkit-scrollbar{display:none;}
+  .main-tab{white-space:nowrap;padding:8px 12px;font-size:12px;flex-shrink:0;}
+  .avail-bar{flex-wrap:wrap;gap:6px;padding:8px 10px;}
+  .avail-input{flex:1;min-width:120px!important;}
+  #avail-time{width:100%!important;}
+  .avail-btn,.avail-clear{flex:1;}
+  .hc-grid,.hc-section-grid{grid-template-columns:1fr!important;}
+  .cg-card{min-width:0;width:100%;}
+  .cal-header{font-size:9px;padding:4px 1px;}
+  .cal-cell{min-height:50px;}
+  .cal-ev{font-size:9px;padding:2px 3px;}
+  .analytics-kpi-grid,.kpi-grid{grid-template-columns:1fr 1fr!important;}
+  .analytics-chart-grid,.chart-grid{grid-template-columns:1fr!important;}
+  .ops-table-wrap,.table-responsive{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .planner-controls{flex-direction:column;}
+  .planner-field,.planner-select,.planner-btn{width:100%;box-sizing:border-box;}
+  .planner-summary{flex-wrap:wrap;gap:8px;}
+  .planner-kpi{flex:1;min-width:70px;}
+  .pl-toolbar{flex-wrap:wrap;gap:6px;}
+  .pl-copy-btn{flex:1;min-width:90px;font-size:11px;}
+  .modal-box,.ov-modal-box{width:96vw!important;max-width:none!important;margin:0 auto!important;}
+  .roster-toolbar{gap:6px;padding:8px 10px;}
+  .roster-legend{display:none;}
+  .chat-bubble{bottom:12px;right:12px;}
+  .chat-window{width:calc(100vw - 20px)!important;right:10px!important;left:10px!important;}
+  .page{padding:8px!important;}
+  #login-screen{padding:16px;}
+}
+@media (max-width: 480px) {
+  .main-tab{padding:7px 10px;font-size:11px;}
+  .analytics-kpi-grid,.kpi-grid{grid-template-columns:1fr!important;}
+  .cg-card{padding:10px 12px;}
+}
 
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 </head>
 <body>
 
@@ -1910,13 +1955,13 @@ function populateCGHCFilter(){
 var ovCG='', ovDate='', ovType='';
 
 // ── Firebase Firestore persistence ───────────────────────────────
-var _db=null;
+var _db=null,_auth=null;
 
 async function initFirebase(){
   try{
     var fa=firebase.initializeApp({apiKey:"AIzaSyDL_cSwxL8x90rDVLHaj9fPE1cTcdEEmII",authDomain:"valeo-dashboard.firebaseapp.com",projectId:"valeo-dashboard",storageBucket:"valeo-dashboard.firebasestorage.app",messagingSenderId:"892578266142",appId:"1:892578266142:web:115b3b677c4d53c8c5020f"});
-    _db=firebase.firestore(fa);console.log('[fb] connected');
-  }catch(e){try{_db=firebase.firestore(firebase.app());}catch(e2){console.warn('[fb] failed:',e2);}}
+    _db=firebase.firestore(fa);_auth=firebase.auth(fa);console.log('[fb] connected');
+  }catch(e){try{_db=firebase.firestore(firebase.app());_auth=firebase.auth(firebase.app());}catch(e2){console.warn('[fb] failed:',e2);}}
 }
 
 async function persistWrite(dt,dk,dv){
@@ -3119,33 +3164,47 @@ var _dragOvPayload = null; // {caregiver, type, client_name, time_start, time_en
 
 function onOvDragStart(e, cg, date){
   var ov = overrides[cg+'|'+date];
-  if(!ov) return;
+  if(!ov){ e.preventDefault(); return; }
   _dragOvPayload = Object.assign({}, ov, {sourceCG: cg, sourceDate: date});
+  // Must set dataTransfer data for drag to work in all browsers
   e.dataTransfer.effectAllowed = 'copy';
-  e.currentTarget.closest('.cal-day') && e.currentTarget.closest('.cal-day').classList.add('drag-source');
+  e.dataTransfer.setData('text/plain', cg+'|'+date);
+  e.currentTarget.classList.add('drag-source');
+  document.body.classList.add('dragging');
 }
 
 function onOvDragEnd(e){
+  document.body.classList.remove('dragging');
   document.querySelectorAll('.drag-source').forEach(function(el){el.classList.remove('drag-source');});
   document.querySelectorAll('.drag-over').forEach(function(el){el.classList.remove('drag-over');});
   document.querySelectorAll('.drag-over-cg').forEach(function(el){el.classList.remove('drag-over-cg');});
+  _dragOvPayload = null;
 }
 
 function onDayDragOver(e, cg, date){
-  if(!_dragOvPayload) return;
   e.preventDefault();
+  e.stopPropagation();
   e.dataTransfer.dropEffect = 'copy';
   e.currentTarget.classList.add('drag-over');
 }
 
 function onDayDragLeave(e){
-  e.currentTarget.classList.remove('drag-over');
+  // Only remove if leaving the cell itself, not a child element
+  if(!e.currentTarget.contains(e.relatedTarget)){
+    e.currentTarget.classList.remove('drag-over');
+  }
 }
 
 async function onDayDrop(e, targetCG, targetDate){
   e.preventDefault();
+  e.stopPropagation();
   e.currentTarget.classList.remove('drag-over');
-  if(!_dragOvPayload) return;
+  // Fallback: read from dataTransfer if _dragOvPayload was lost
+  if(!_dragOvPayload){
+    var dt=e.dataTransfer.getData('text/plain');
+    if(dt && overrides[dt]) _dragOvPayload=Object.assign({},overrides[dt],{sourceCG:dt.split('|')[0],sourceDate:dt.split('|')[1]});
+    else return;
+  }
   var p = _dragOvPayload;
   // Don't copy to same cell
   if(targetCG === p.sourceCG && targetDate === p.sourceDate) return;
@@ -3164,8 +3223,57 @@ async function onDayDrop(e, targetCG, targetDate){
   _dragOvPayload = null;
 }
 
+
+// ── Auth ─────────────────────────────────────────────────────────
+async function doLogin(){
+  var email=document.getElementById('login-email').value.trim();
+  var pass=document.getElementById('login-pass').value;
+  var errEl=document.getElementById('login-error');
+  var btn=document.getElementById('login-btn');
+  if(!email||!pass){errEl.textContent='Please enter email and password';errEl.style.display='block';return;}
+  btn.textContent='Signing in...';btn.disabled=true;errEl.style.display='none';
+  try{
+    if(!_auth) await initFirebase();
+    await _auth.signInWithEmailAndPassword(email,pass);
+  }catch(e){
+    var msg=['auth/user-not-found','auth/wrong-password','auth/invalid-credential'].includes(e.code)
+      ?'Invalid email or password'
+      :e.code==='auth/too-many-requests'?'Too many attempts — try again later'
+      :e.message;
+    errEl.textContent=msg;errEl.style.display='block';
+  }finally{btn.textContent='Sign In';btn.disabled=false;}
+}
+
+function doLogout(){if(_auth)_auth.signOut();}
+
+function showApp(user){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('main-app').style.display='block';
+  var ub=document.getElementById('user-badge');
+  var sb=document.getElementById('signout-btn');
+  if(ub){ub.textContent=user.email;ub.style.display='inline';}
+  if(sb)sb.style.display='inline-block';
+  loadData();
+}
+
+function showLogin(){
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('main-app').style.display='none';
+}
+
+async function initAuth(){
+  await initFirebase();
+  document.getElementById('login-screen').style.display='flex';
+  _auth.onAuthStateChanged(function(user){
+    if(user)showApp(user);
+    else showLogin();
+  });
+}
+
 // ── Init ─────────────────────────────────────────────────────────
-loadData();
+setInterval(syncFromSheet,30*1000);
+window.addEventListener('focus',syncFromSheet);
+initAuth();
 </script>
 </body>
 </html>
