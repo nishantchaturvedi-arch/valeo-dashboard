@@ -440,6 +440,14 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .rd-tm{font-size:8px;opacity:.85;}
 .rd-od{font-size:8px;opacity:.65;}
 
+
+/* ── Drag Override ─────────────────────────────────────────────── */
+.cal-day.drag-source{outline:2px solid var(--accent);opacity:.7;}
+.cal-day.drag-over{background:rgba(99,102,241,.15)!important;outline:2px dashed var(--accent);}
+.cg-card.drag-over-cg{outline:2px dashed var(--accent);background:rgba(99,102,241,.08)!important;}
+.drag-handle{position:absolute;bottom:2px;right:2px;width:12px;height:12px;cursor:grab;opacity:.4;font-size:9px;line-height:1;}
+.drag-handle:hover{opacity:.9;}
+
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -707,6 +715,12 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
  <!-- Controls -->
  <div class="planner-controls">
  <div class="planner-field">
+ <span class="planner-label">Homecare</span>
+ <select class="planner-select" id="pl-hc-select" onchange="filterPlannerByHC()">
+ <option value="">— All Homecare —</option>
+ </select>
+ </div>
+ <div class="planner-field">
  <span class="planner-label">Caregiver</span>
  <select class="planner-select" id="pl-cg-select">
  <option value="">— Select Caregiver —</option>
@@ -779,6 +793,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
  <span class="sched-modal-title">📋 Client Schedule Preview</span>
  <div class="sched-modal-actions">
  <button class="sched-action-btn" style="background:rgba(255,255,255,.15);color:#fff" onclick="printSchedModal()">🖨 Print</button>
+ <button class="sched-action-btn" style="background:#2d8a4e;color:#fff" onclick="downloadSchedJPG()">📷 Download JPG</button>
  <button class="sched-action-btn" style="background:#2f81f7;color:#fff" onclick="downloadSchedHTML()">⬇ Download HTML</button>
  </div>
  <button class="sched-close-btn" onclick="closeSchedModal()">✕</button>
@@ -1352,7 +1367,7 @@ function renderCalendar(){
         const emptyT = emptyOv.time_start&&emptyOv.time_end ? emptyOv.time_start+' – '+emptyOv.time_end : (emptyOv.time_start||'');
         const ovLbl = emptyOv.type==='manual' ? (emptyOv.client_name||'Manual')+(emptyT?' · '+emptyT:'') : (ovLabels[emptyOv.type]||emptyOv.type);
         const safe = encodeURIComponent(JSON.stringify({caregiver:activeCG, date:dateStr, status:emptyOv.type, override:emptyOv}));
-        evHtml += `<div class="cal-ev ${ovCls}" onclick="openEvModal('${safe}')">${ovLbl}</div>`;
+        evHtml += `<div class="cal-ev ${ovCls}" draggable="true" ondragstart="onOvDragStart(event,'${activeCG}','${dateStr}')" ondragend="onOvDragEnd(event)" onclick="openEvModal('${safe}')">${ovLbl} <span class="drag-handle">&#8942;</span></div>`;
       }
     }
     evs.forEach(ev=>{
@@ -1391,11 +1406,11 @@ function renderCalendar(){
         else if(ev.time_start)lbl+=(lbl?' · ':'')+ev.time_start;
         if(!lbl)lbl='Duty';
       }
-      evHtml+=`<div class="cal-ev ${cls2}" onclick="openEvModal('${safe}')">${lbl}</div>`;
+      evHtml+=`<div class="cal-ev ${cls2}" ${ov?`draggable="true" ondragstart="onOvDragStart(event,'${activeCG}','${ds}')" ondragend="onOvDragEnd(event)"`:\'\' } onclick="openEvModal('${safe}')">${lbl}${ov?\' <span class="drag-handle">&#8942;</span>\':\'\'}</div>`;
     });
     // Show + button on ALL non-other-month days (not just days with events)
     const addBtn = !other ? `<div class="day-add-btn" onclick="event.stopPropagation();openOvModal('${activeCG}','${dateStr}')" title="Add entry">+</div>` : '';
-    html+=`<div class="${cls}">${addBtn}<div class="day-num">${day}</div>${evHtml}</div>`;
+    html+=`<div class="${cls}" ondragover="onDayDragOver(event,'${activeCG}','${dateStr}')" ondragleave="onDayDragLeave(event)" ondrop="onDayDrop(event,'${activeCG}','${dateStr}')">${addBtn}<div class="day-num">${day}</div>${evHtml}</div>`;
   }
   document.getElementById('cal-body').innerHTML=html;
 }
@@ -2152,7 +2167,16 @@ function renderPlanner(){
     loadSharedPlanner(urlParams.get('planner'));
     return;
   }
-  const cgs = [...new Set(rawData.map(r=>r.caregiver).filter(Boolean))].sort();
+  // Populate HC dropdown
+  var hcSel=document.getElementById('pl-hc-select');
+  var curHC=hcSel.value;
+  var hcs=[...new Set(rawData.map(function(r){return r.homecare;}).filter(Boolean))].sort();
+  hcSel.innerHTML='<option value="">— All Homecare —</option>';
+  hcs.forEach(function(hc){hcSel.innerHTML+='<option value="'+hc+'"'+(hc===curHC?' selected':'')+'>'+hc+'</option>';});
+
+  // Populate CG dropdown (filtered by HC if selected)
+  var filterHC=hcSel.value;
+  var cgs=[...new Set(rawData.filter(function(r){return !filterHC||r.homecare===filterHC;}).map(function(r){return r.caregiver;}).filter(Boolean))].sort();
   const sel = document.getElementById('pl-cg-select');
   const cur = sel.value;
   sel.innerHTML = '<option value="">— Select Caregiver —</option>';
@@ -2160,6 +2184,17 @@ function renderPlanner(){
     sel.innerHTML += '<option value="'+cg+'"'+(cg===cur?' selected':'')+'>'+cg+'</option>';
   });
   if(cur) loadPlannerOrders(cur);
+}
+
+function filterPlannerByHC(){
+  var filterHC=document.getElementById('pl-hc-select').value;
+  var cgs=[...new Set(rawData.filter(function(r){return !filterHC||r.homecare===filterHC;}).map(function(r){return r.caregiver;}).filter(Boolean))].sort();
+  var sel=document.getElementById('pl-cg-select');
+  sel.innerHTML='<option value="">— Select Caregiver —</option>';
+  cgs.forEach(function(cg){sel.innerHTML+='<option value="'+cg+'">'+cg+'</option>';});
+  document.getElementById('pl-order-select').innerHTML='<option value="">— Select Order —</option>';
+  document.getElementById('pl-summary').style.display='none';
+  document.getElementById('pl-table-wrap').style.display='none';
 }
 
 function loadPlannerOrders(cg){
@@ -2399,6 +2434,37 @@ function printSchedModal(){
   w.document.close();
   w.focus();
   setTimeout(function(){ w.print(); }, 600);
+}
+
+async function downloadSchedJPG(){
+  var iframe=document.querySelector('#sched-modal-body iframe');
+  if(!iframe){alert('Open a schedule first');return;}
+  var btn=event.target;
+  var origText=btn.textContent;
+  btn.textContent='Generating...';btn.disabled=true;
+  try{
+    if(typeof html2canvas==='undefined'){
+      await new Promise(function(res,rej){
+        var s=document.createElement('script');
+        s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+        s.onload=res;s.onerror=rej;document.head.appendChild(s);
+      });
+    }
+    var iDoc=iframe.contentDocument||iframe.contentWindow.document;
+    var target=iDoc.body;
+    var canvas=await html2canvas(target,{
+      scale:2,useCORS:true,backgroundColor:'#f0f2f5',logging:false,
+      width:target.scrollWidth,height:target.scrollHeight,
+      windowWidth:target.scrollWidth,windowHeight:target.scrollHeight
+    });
+    var rec=plannerData[0]||{};
+    var cgName=(rec.babysitter||'schedule').replace(/\s+/g,'_');
+    var link=document.createElement('a');
+    link.download='Schedule_'+cgName+'_'+new Date().toISOString().slice(0,10)+'.jpg';
+    link.href=canvas.toDataURL('image/jpeg',0.95);
+    link.click();
+  }catch(e){alert('JPG export failed: '+e.message);}
+  finally{btn.textContent=origText;btn.disabled=false;}
 }
 
 function downloadSchedHTML(){
@@ -3010,6 +3076,59 @@ function renderRoster(){
   });
   html+='</tbody></table>';
   wrap.innerHTML=html;
+}
+
+
+// ── Drag Override ────────────────────────────────────────────────
+// Allows dragging an override cell to copy it to other dates (horizontal)
+// or to other CGs (vertical) in the calendar view.
+var _dragOvPayload = null; // {caregiver, type, client_name, time_start, time_end, note}
+
+function onOvDragStart(e, cg, date){
+  var ov = overrides[cg+'|'+date];
+  if(!ov) return;
+  _dragOvPayload = Object.assign({}, ov, {sourceCG: cg, sourceDate: date});
+  e.dataTransfer.effectAllowed = 'copy';
+  e.currentTarget.closest('.cal-day') && e.currentTarget.closest('.cal-day').classList.add('drag-source');
+}
+
+function onOvDragEnd(e){
+  document.querySelectorAll('.drag-source').forEach(function(el){el.classList.remove('drag-source');});
+  document.querySelectorAll('.drag-over').forEach(function(el){el.classList.remove('drag-over');});
+  document.querySelectorAll('.drag-over-cg').forEach(function(el){el.classList.remove('drag-over-cg');});
+}
+
+function onDayDragOver(e, cg, date){
+  if(!_dragOvPayload) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'copy';
+  e.currentTarget.classList.add('drag-over');
+}
+
+function onDayDragLeave(e){
+  e.currentTarget.classList.remove('drag-over');
+}
+
+async function onDayDrop(e, targetCG, targetDate){
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if(!_dragOvPayload) return;
+  var p = _dragOvPayload;
+  // Don't copy to same cell
+  if(targetCG === p.sourceCG && targetDate === p.sourceDate) return;
+  var payload = {
+    caregiver: targetCG, date: targetDate,
+    type: p.type, note: p.note||'',
+    client_name: p.client_name||'', time_start: p.time_start||'', time_end: p.time_end||'',
+    saved_at: new Date().toISOString()
+  };
+  overrides[targetCG+'|'+targetDate] = payload;
+  saveLocalCache();
+  applyOverrides(); renderCalendar(); renderHCGrid();
+  var rp=document.getElementById('page-roster');
+  if(rp&&rp.classList.contains('active')) renderRoster();
+  await persistWrite('override', targetCG+'|'+targetDate, payload);
+  _dragOvPayload = null;
 }
 
 // ── Init ─────────────────────────────────────────────────────────
