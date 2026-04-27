@@ -34,7 +34,7 @@
 }
 
 *{box-sizing:border-box;margin:0;padding:0}
-@media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}body{background:#f0f2f5!important;}}
+@media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}}
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-size:13px;min-height:100vh;transition:background .2s,color .2s}
 
 /* ── Header ── */
@@ -440,23 +440,16 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .rd-tm{font-size:8px;opacity:.85;}
 .rd-od{font-size:8px;opacity:.65;}
 
-
 /* ── Drag Override ─────────────────────────────────────────────── */
 .cal-cell.drag-source .cal-ev{opacity:.5;}
 .cal-cell.drag-over{background:rgba(99,102,241,.18)!important;outline:2px dashed var(--accent);outline-offset:-2px;}
-.cg-card.drag-over-cg{outline:2px dashed var(--accent);background:rgba(99,102,241,.08)!important;}
 .drag-handle{cursor:grab;opacity:.5;font-size:10px;margin-left:3px;display:inline;}
 .drag-handle:hover{opacity:1;}
-/* Allow drop events to pass through cal-ev to the parent cal-cell */
-.cal-cell .cal-ev{pointer-events:auto;}
 body.dragging .cal-cell .cal-ev{pointer-events:none;}
-
 
 /* ── Mobile Responsive ─────────────────────────────────────────── */
 @media (max-width: 768px) {
   .header{padding:8px 12px;}
-  #user-badge{display:none!important;}
-  #signout-btn{font-size:10px;padding:3px 8px;}
   .main-tabs{overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap;padding:0 8px;gap:4px;scrollbar-width:none;}
   .main-tabs::-webkit-scrollbar{display:none;}
   .main-tab{white-space:nowrap;padding:8px 12px;font-size:12px;flex-shrink:0;}
@@ -484,7 +477,6 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
   .chat-bubble{bottom:12px;right:12px;}
   .chat-window{width:calc(100vw - 20px)!important;right:10px!important;left:10px!important;}
   .page{padding:8px!important;}
-  #login-screen{padding:16px;}
 }
 @media (max-width: 480px) {
   .main-tab{padding:7px 10px;font-size:11px;}
@@ -495,7 +487,6 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 </head>
 <body>
 
@@ -814,8 +805,8 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <span style="font-size:11px;font-weight:600;color:var(--text);white-space:nowrap">🔗 Client Link:</span>
  <input class="pl-share-url" id="pl-share-url" readonly>
  <button class="pl-copy-btn" onclick="copyPlannerLink()">Copy Link</button>
- <button class="pl-copy-btn" style="background:var(--duty)" onclick="savePlannerToPortal()">&#x1F4BE; Save to Portal</button>
- <button class="pl-copy-btn" style="background:var(--bg3);color:var(--text2)" onclick="openSavedPlanners()">&#x1F4C2; Load Saved</button>
+ <button class="pl-copy-btn" style="background:var(--duty)" onclick="savePlannerToPortal()">&#x1F4BE; Save</button>
+ <button class="pl-copy-btn" style="background:var(--bg3);color:var(--text2)" onclick="openSavedPlanners()">&#x1F4C2; Load</button>
  </div>
 
  <!-- Table -->
@@ -1451,9 +1442,9 @@ function renderCalendar(){
         else if(ev.time_start)lbl+=(lbl?' · ':'')+ev.time_start;
         if(!lbl)lbl='Duty';
       }
-      var dragAttrs=ov?'draggable="true" ondragstart="onOvDragStart(event,\''+activeCG+'\',\''+ds+'\')" ondragend="onOvDragEnd(event)"':'';
-      var dragHandle=ov?' <span class="drag-handle">&#8942;</span>':'';
-      evHtml+='<div class="cal-ev '+cls2+'" '+dragAttrs+' onclick="openEvModal(\''+safe+'\')">'+lbl+dragHandle+'</div>';
+      var dragAttrs2=ov?'draggable="true" ondragstart="onOvDragStart(event,\''+activeCG+'\',\''+ds+'\')" ondragend="onOvDragEnd(event)"':'';
+      var dragHandle2=ov?' <span class="drag-handle">&#8942;</span>':'';
+      evHtml+='<div class="cal-ev '+cls2+'" '+dragAttrs2+' onclick="openEvModal(\''+safe+'\')">' +lbl+dragHandle2+'</div>';
     });
     // Show + button on ALL non-other-month days (not just days with events)
     const addBtn = !other ? `<div class="day-add-btn" onclick="event.stopPropagation();openOvModal('${activeCG}','${dateStr}')" title="Add entry">+</div>` : '';
@@ -1510,31 +1501,78 @@ async function applyWo(){
 function closeWoModal(){document.getElementById('wo-modal').classList.remove('show');}
 
 // ── Availability check ───────────────────────────────────────────
+var MIN_REST_MINS=720;
+function timeToMins24(t){var p=(t||'').split(':');return parseInt(p[0]||0)*60+parseInt(p[1]||0);}
+function timeToMins12(t){
+  if(!t)return 0;
+  var isPM=/PM/i.test(t),isAM=/AM/i.test(t);
+  var clean=t.replace(/\s*(AM|PM)/i,'').trim().split('-')[0].trim();
+  var p=clean.split(':'),h=parseInt(p[0])||0,m=parseInt(p[1])||0;
+  if(isPM&&h<12)h+=12;if(isAM&&h===12)h=0;return h*60+m;
+}
+function fmt12hrFromInput(t){
+  var p=(t||'').split(':'),h=parseInt(p[0]||0),mi=p[1]||'00';
+  var ap=h>=12?'PM':'AM';h=h%12||12;return h+':'+mi+' '+ap;
+}
+function bookedConflicts(bS,bE,req){return req>=(bS-MIN_REST_MINS)&&req<=(bE+MIN_REST_MINS);}
 function checkAvail(){
-  const from=document.getElementById('avail-from').value;
-  const to=document.getElementById('avail-to').value||from;
+  var from=document.getElementById('avail-from').value;
+  var to=document.getElementById('avail-to').value||from;
+  var reqTimeStr=document.getElementById('avail-time').value;
   if(!from){document.getElementById('avail-result').textContent='Pick a start date';return;}
-
-  const cgs=[...new Set(rawData.map(r=>r.caregiver))].filter(Boolean);
-  let avail=0;
-  cgs.forEach(cg=>{
-    const id='cgc-'+cg.replace(/[^a-zA-Z0-9]/g,'_');
-    const card=document.getElementById(id);
+  var reqStart=reqTimeStr?timeToMins24(reqTimeStr):null;
+  var dayBefore=addDays(from,-1);
+  var cgs=[...new Set(rawData.map(function(r){return r.caregiver;}))].filter(Boolean);
+  var avail=0;
+  cgs.forEach(function(cg){
+    var id='cgc-'+cg.replace(/[^a-zA-Z0-9]/g,'_');
+    var card=document.getElementById(id);
     if(!card)return;
-    const busy=rawData.some(r=>r.caregiver===cg&&r.status!=='Cancelled'&&(r.date||'')<=to&&(r.end_date||r.date||'')>=from);
+    var busy=false;
+    if(!busy)busy=rawData.some(function(r){return r.caregiver===cg&&r.status!=='Cancelled'&&(r.date||'')<=to&&(r.end_date||r.date||'')>=from;});
+    if(!busy)busy=Object.entries(overrides).some(function(e){
+      var k=e[0],ov=e[1];
+      if(!k.startsWith(cg+'|'))return false;
+      var ovDate=ov.date||k.split('|')[1];
+      if(!ovDate||ovDate<from||ovDate>to)return false;
+      return['sick','off','holiday','unpaid'].includes(ov.type);
+    });
+    if(!busy)busy=Object.entries(overrides).some(function(e){
+      var k=e[0],ov=e[1];
+      if(!k.startsWith(cg+'|')||ov.type!=='manual')return false;
+      var ovDate=ov.date||k.split('|')[1];
+      if(!ovDate||ovDate<from||ovDate>to)return false;
+      if(reqStart!==null&&ov.time_start&&ov.time_end){
+        var s=timeToMins12(ov.time_start),e2=timeToMins12(ov.time_end);
+        if(ovDate===from)return bookedConflicts(s,e2,reqStart);
+        if(ovDate===dayBefore)return((24*60-e2)+reqStart)<MIN_REST_MINS;
+      }
+      return true;
+    });
+    if(!busy&&reqStart!==null)busy=allData.some(function(r){
+      if(r.caregiver!==cg)return false;
+      var rDate=r.date||'';
+      if(rDate!==from&&rDate!==dayBefore)return false;
+      if(!r.time_start)return false;
+      var st=(r.status||'').toLowerCase().replace(/\s+/g,'');
+      if(['cancelled','removed','weekoff'].includes(st))return false;
+      var bS=timeToMins12(r.time_start),bE=r.time_end?timeToMins12(r.time_end):bS+720;
+      return rDate===from?bookedConflicts(bS,bE,reqStart):((24*60-bE)+reqStart)<MIN_REST_MINS;
+    });
     card.classList.remove('available','unavailable');
     if(busy)card.classList.add('unavailable');
     else{card.classList.add('available');avail++;}
   });
-
-  const lbl=from===to?from:from+' → '+to;
-  document.getElementById('avail-result').textContent=`${avail} of ${cgs.length} available · ${lbl}`;
+  var lbl=from===to?from:from+' → '+to;
+  var timeLbl=reqTimeStr?' · '+fmt12hrFromInput(reqTimeStr)+' (12h rest enforced)':'';
+  document.getElementById('avail-result').textContent=avail+' of '+cgs.length+' available · '+lbl+timeLbl;
 }
 function clearAvail(){
   document.getElementById('avail-from').value='';
   document.getElementById('avail-to').value='';
+  document.getElementById('avail-time').value='';
   document.getElementById('avail-result').textContent='';
-  document.querySelectorAll('.cg-card').forEach(c=>c.classList.remove('available','unavailable'));
+  document.querySelectorAll('.cg-card').forEach(function(c){c.classList.remove('available','unavailable');});
 }
 
 // ── Analytics v2 ────────────────────────────────────────────────
@@ -1955,13 +1993,13 @@ function populateCGHCFilter(){
 var ovCG='', ovDate='', ovType='';
 
 // ── Firebase Firestore persistence ───────────────────────────────
-var _db=null,_auth=null;
+var _db=null;
 
 async function initFirebase(){
   try{
     var fa=firebase.initializeApp({apiKey:"AIzaSyDL_cSwxL8x90rDVLHaj9fPE1cTcdEEmII",authDomain:"valeo-dashboard.firebaseapp.com",projectId:"valeo-dashboard",storageBucket:"valeo-dashboard.firebasestorage.app",messagingSenderId:"892578266142",appId:"1:892578266142:web:115b3b677c4d53c8c5020f"});
-    _db=firebase.firestore(fa);_auth=firebase.auth(fa);console.log('[fb] connected');
-  }catch(e){try{_db=firebase.firestore(firebase.app());_auth=firebase.auth(firebase.app());}catch(e2){console.warn('[fb] failed:',e2);}}
+    _db=firebase.firestore(fa);console.log('[fb] connected');
+  }catch(e){try{_db=firebase.firestore(firebase.app());}catch(e2){console.warn('[fb] failed:',e2);}}
 }
 
 async function persistWrite(dt,dk,dv){
@@ -1969,7 +2007,6 @@ async function persistWrite(dt,dk,dv){
   try{
     var id=dt+'__'+dk.replace(/[^a-zA-Z0-9_-]/g,'_');
     await _db.collection('valeo_state').doc(id).set({type:dt,key:dk,value:JSON.stringify(dv),updated_at:new Date().toISOString()});
-    console.log('[persist] wrote:',dt,dk);
   }catch(e){console.warn('[persist] write failed:',e);}
 }
 
@@ -1978,7 +2015,6 @@ async function persistDelete(dt,dk){
   try{
     var id=dt+'__'+dk.replace(/[^a-zA-Z0-9_-]/g,'_');
     await _db.collection('valeo_state').doc(id).delete();
-    console.log('[persist] deleted:',dt,dk);
   }catch(e){console.warn('[persist] delete failed:',e);}
 }
 
@@ -2214,16 +2250,15 @@ function renderPlanner(){
     loadSharedPlanner(urlParams.get('planner'));
     return;
   }
-  // Populate HC dropdown
   var hcSel=document.getElementById('pl-hc-select');
-  var curHC=hcSel.value;
-  var hcs=[...new Set(rawData.map(function(r){return r.homecare;}).filter(Boolean))].sort();
-  hcSel.innerHTML='<option value="">— All Homecare —</option>';
-  hcs.forEach(function(hc){hcSel.innerHTML+='<option value="'+hc+'"'+(hc===curHC?' selected':'')+'>'+hc+'</option>';});
-
-  // Populate CG dropdown (filtered by HC if selected)
-  var filterHC=hcSel.value;
-  var cgs=[...new Set(rawData.filter(function(r){return !filterHC||r.homecare===filterHC;}).map(function(r){return r.caregiver;}).filter(Boolean))].sort();
+  if(hcSel){
+    var curHC=hcSel.value;
+    var hcs=[...new Set(rawData.map(function(r){return r.homecare;}).filter(Boolean))].sort();
+    hcSel.innerHTML='<option value="">— All Homecare —</option>';
+    hcs.forEach(function(hc){hcSel.innerHTML+='<option value="'+hc+'"'+(hc===curHC?' selected':'')+'>'+hc+'</option>';});
+  }
+  var filterHC=hcSel?hcSel.value:'';
+  const cgs=[...new Set(rawData.filter(function(r){return !filterHC||r.homecare===filterHC;}).map(function(r){return r.caregiver;}).filter(Boolean))].sort();
   const sel = document.getElementById('pl-cg-select');
   const cur = sel.value;
   sel.innerHTML = '<option value="">— Select Caregiver —</option>';
@@ -2231,17 +2266,6 @@ function renderPlanner(){
     sel.innerHTML += '<option value="'+cg+'"'+(cg===cur?' selected':'')+'>'+cg+'</option>';
   });
   if(cur) loadPlannerOrders(cur);
-}
-
-function filterPlannerByHC(){
-  var filterHC=document.getElementById('pl-hc-select').value;
-  var cgs=[...new Set(rawData.filter(function(r){return !filterHC||r.homecare===filterHC;}).map(function(r){return r.caregiver;}).filter(Boolean))].sort();
-  var sel=document.getElementById('pl-cg-select');
-  sel.innerHTML='<option value="">— Select Caregiver —</option>';
-  cgs.forEach(function(cg){sel.innerHTML+='<option value="'+cg+'">'+cg+'</option>';});
-  document.getElementById('pl-order-select').innerHTML='<option value="">— Select Order —</option>';
-  document.getElementById('pl-summary').style.display='none';
-  document.getElementById('pl-table-wrap').style.display='none';
 }
 
 function loadPlannerOrders(cg){
@@ -2307,7 +2331,6 @@ function generatePlannerTable(){
       num: i+1, date: ds, day: dayName,
       timeSlot: rec.time_start&&rec.time_end ? formatTime(rec.time_start)+' – '+formatTime(rec.time_end) : formatTime(rec.time_start)||'—',
       babysitter: cg, homecare: rec.homecare||'—', status: status,
-      // Store selected order details on every row so buildClientScheduleHTML uses correct data
       _orderId: rec.child_order_id||rec.order_id||'—',
       _clientName: rec.client_name||'—',
       _package: rec.package_type||rec.package_raw||'—',
@@ -2488,43 +2511,6 @@ function printSchedModal(){
   setTimeout(function(){ w.print(); }, 600);
 }
 
-async function downloadSchedJPG(){
-  var iframe=document.querySelector('#sched-modal-body iframe');
-  if(!iframe){alert('Open a schedule first');return;}
-  var btn=event.target;
-  var origText=btn.textContent;
-  btn.textContent='Generating...';btn.disabled=true;
-  try{
-    if(typeof html2canvas==='undefined'){
-      await new Promise(function(res,rej){
-        var s=document.createElement('script');
-        s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-        s.onload=res;s.onerror=rej;document.head.appendChild(s);
-      });
-    }
-    var iDoc=iframe.contentDocument||iframe.contentWindow.document;
-    // Target the schedule wrapper div, not full body (avoids blank space)
-    var target=iDoc.querySelector('.sched-wrap')||iDoc.querySelector('.schedule-page')||iDoc.body;
-    // Scroll to top first
-    iDoc.documentElement.scrollTop=0;iDoc.body.scrollTop=0;
-    var canvas=await html2canvas(target,{
-      scale:2,useCORS:true,backgroundColor:'#f0f2f5',logging:false,
-      scrollX:0,scrollY:0,
-      width:target.offsetWidth||target.scrollWidth,
-      height:target.offsetHeight||target.scrollHeight,
-      windowWidth:target.offsetWidth||target.scrollWidth,
-      windowHeight:target.offsetHeight||target.scrollHeight
-    });
-    var rec=plannerData[0]||{};
-    var cgName=(rec.babysitter||'schedule').replace(/\s+/g,'_');
-    var link=document.createElement('a');
-    link.download='Schedule_'+cgName+'_'+new Date().toISOString().slice(0,10)+'.jpg';
-    link.href=canvas.toDataURL('image/jpeg',0.95);
-    link.click();
-  }catch(e){alert('JPG export failed: '+e.message);}
-  finally{btn.textContent=origText;btn.disabled=false;}
-}
-
 function downloadSchedHTML(){
   const blob = new Blob([_schedHTMLCache], {type:'text/html'});
   const a = document.createElement('a');
@@ -2535,12 +2521,10 @@ function downloadSchedHTML(){
 }
 
 function buildClientScheduleHTML(){
-  // Gather meta from planner context — use stored order details from selected order
+  // Gather meta from selected order stored on plannerData
   const rec = plannerData[0] || {};
   const cgName = toTitleCase(rec.babysitter || '—');
   const homecare = rec.homecare || '—';
-  // Use _orderId/_clientName/_package stored during generatePlannerTable
-  // These reflect the SELECTED order, not just any order for this CG
   const orderId = rec._orderId || '—';
   const clientName = toTitleCase(rec._clientName || '—');
   const pkg = rec._package || '—';
@@ -2700,7 +2684,7 @@ tr.week-sep:hover td{background:#f7f8fa}
 </style>
 </head>
 <body>
-<div class="sched-wrap" style="padding:24px;background:#f0f2f5;min-height:100vh">
+<div class="sched-wrap" style="padding:24px;background:#f0f2f5">
 <div class="hero">
   <div class="hero-label">Caregiver Schedule · ${homecare}</div>
   <div class="hero-name">${clientName}</div>
@@ -2721,8 +2705,8 @@ tr.week-sep:hover td{background:#f7f8fa}
   <tbody>${rowsHTML}</tbody>
 </table>
 </div>
-<div class="footer">Generated by Valeo Health &nbsp;·&nbsp; ${clientName}</div>
 </div>
+<div class="footer">Generated by Valeo Health &nbsp;·&nbsp; ${clientName}</div>
 </body>
 </html>`;
 }
@@ -2732,30 +2716,13 @@ function toTitleCase(str){
 }
 
 function formatTime(t){
-  // Convert "1100", "11:00", "1100 AM", "11:00 AM" → "11:00 AM"
   if(!t) return '';
-  t = String(t).trim();
-  // Already formatted with AM/PM
-  if(/AM|PM/i.test(t)) {
-    // Fix missing colon: "1100 AM" → "11:00 AM"
-    return t.replace(/^(\d{1,2})(\d{2})\s*(AM|PM)/i, function(m,h,mi,ap){return h+':'+mi+' '+ap.toUpperCase();});
-  }
-  // Has colon: "11:00" → "11:00 AM/PM"
-  if(t.includes(':')) {
-    var p=t.split(':'),h=parseInt(p[0]),mi=p[1]||'00';
-    var ap=h>=12?'PM':'AM'; h=h%12||12;
-    return h+':'+mi+' '+ap;
-  }
-  // Pure digits: "1100" → "11:00 AM/PM"
-  if(/^\d{3,4}$/.test(t)){
-    var h2=t.length===3?parseInt(t[0]):parseInt(t.slice(0,2));
-    var mi2=t.length===3?t.slice(1):t.slice(2);
-    var ap2=h2>=12?'PM':'AM'; h2=h2%12||12;
-    return h2+':'+mi2+' '+ap2;
-  }
+  t=String(t).trim();
+  if(/AM|PM/i.test(t)) return t.replace(/^(\d{1,2})(\d{2})\s*(AM|PM)/i,function(m,h,mi,ap){return h+':'+mi+' '+ap.toUpperCase();});
+  if(t.includes(':')){var p=t.split(':'),h=parseInt(p[0]),mi=p[1]||'00';var ap=h>=12?'PM':'AM';h=h%12||12;return h+':'+mi+' '+ap;}
+  if(/^\d{3,4}$/.test(t)){var h2=t.length===3?parseInt(t[0]):parseInt(t.slice(0,2));var mi2=t.length===3?t.slice(1):t.slice(2);var ap2=h2>=12?'PM':'AM';h2=h2%12||12;return h2+':'+mi2+' '+ap2;}
   return t;
 }
-
 function fmtDisplayDate(ds){
   // ds = "YYYY-MM-DD"
   if(!ds) return '';
@@ -2769,78 +2736,6 @@ function updateShareLink(){
   const encoded = btoa(encodeURIComponent(JSON.stringify(payload)));
   const url = window.location.href.split('?')[0] + '?planner=' + encoded + '#planner';
   document.getElementById('pl-share-url').value = url;
-}
-
-async function savePlannerToPortal(){
-  if(!plannerData.length){alert('Generate a schedule first');return;}
-  if(!_db){await initFirebase();if(!_db){alert('Firebase not connected');return;}}
-  var cg=(plannerData[0]||{}).babysitter||'unknown';
-  var dates=plannerData.map(function(r){return r.date;}).filter(Boolean).sort();
-  var start=dates[0]||'',end=dates[dates.length-1]||'';
-  var docId='planner__'+cg.replace(/[^a-zA-Z0-9]/g,'_')+'__'+start;
-  var payload={caregiver:cg,homecare:(plannerData[0]||{}).homecare||'',start:start,end:end,rows:plannerData,cols:plannerCustomCols,saved_at:new Date().toISOString()};
-  try{
-    await _db.collection('valeo_planners').doc(docId).set(payload);
-    alert('Saved! '+cg+' '+start+' to '+end);
-  }catch(e){alert('Save failed: '+e.message);}
-}
-
-async function openSavedPlanners(){
-  document.getElementById('saved-planners-overlay').style.display='flex';
-  var list=document.getElementById('saved-planners-list');
-  list.innerHTML='<div style="color:var(--text2);font-size:13px">Loading...</div>';
-  if(!_db) await initFirebase();
-  try{
-    var snap=await _db.collection('valeo_planners').get();
-    if(snap.empty){list.innerHTML='<div style="color:var(--text2);font-size:13px">No saved schedules yet.</div>';return;}
-    var items=[];
-    snap.forEach(function(doc){items.push({id:doc.id,data:doc.data()});});
-    items.sort(function(a,b){return(b.data.saved_at||'').localeCompare(a.data.saved_at||'');});
-    var html='';
-    items.forEach(function(item){
-      var d=item.data;
-      var dt=d.saved_at?new Date(d.saved_at).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'';
-      html+='<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">';
-      html+='<div><div style="font-size:13px;font-weight:600;color:var(--text1)">'+(d.caregiver||'Unknown')+'</div>';
-      html+='<div style="font-size:11px;color:var(--text2)">'+(d.homecare||'')+(d.start?' &middot; '+d.start+' &rarr; '+d.end:'')+'</div>';
-      html+='<div style="font-size:10px;color:var(--text3)">Saved '+dt+'</div></div>';
-      html+='<div style="display:flex;gap:8px">';
-      html+='<button data-id="'+item.id+'" onclick="loadSavedPlannerDoc(this.dataset.id)" style="padding:5px 12px;background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:11px;cursor:pointer">Load</button>';
-      html+='<button data-id="'+item.id+'" onclick="deleteSavedPlanner(this.dataset.id)" style="padding:5px 10px;background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);border-radius:6px;color:var(--absent);font-size:11px;cursor:pointer">Del</button>';
-      html+='</div></div>';
-    });
-    list.innerHTML=html;
-  }catch(e){list.innerHTML='<div style="color:var(--absent);font-size:13px">Error: '+e.message+'</div>';}
-}
-
-async function loadSavedPlannerDoc(docId){
-  if(!_db) await initFirebase();
-  try{
-    var snap=await _db.collection('valeo_planners').doc(docId).get();
-    if(!snap.exists){alert('Not found');return;}
-    var d=snap.data();
-    plannerData=d.rows||[];plannerCustomCols=d.cols||[];
-    document.getElementById('saved-planners-overlay').style.display='none';
-    switchTab('planner');
-    document.getElementById('pl-summary').style.display='flex';
-    document.getElementById('pl-table-wrap').style.display='block';
-    var w=plannerData.filter(function(r){return r.status==='Duty'||r.status==='Manual';}).length;
-    var off=plannerData.filter(function(r){return['Off','Week Off'].includes(r.status);}).length;
-    var sick=plannerData.filter(function(r){return['Sick','Holiday','Unpaid','Cancelled','Removed'].includes(r.status);}).length;
-    document.getElementById('pl-total-days').textContent=plannerData.length;
-    document.getElementById('pl-working-days').textContent=w;
-    document.getElementById('pl-off-days').textContent=off;
-    document.getElementById('pl-sick-days').textContent=sick;
-    renderPlannerTable();
-    alert('Loaded: '+(d.caregiver||''));
-  }catch(e){alert('Load failed: '+e.message);}
-}
-
-async function deleteSavedPlanner(docId){
-  if(!confirm('Delete this saved schedule?')) return;
-  if(!_db) await initFirebase();
-  try{await _db.collection('valeo_planners').doc(docId).delete();openSavedPlanners();}
-  catch(e){alert('Delete failed: '+e.message);}
 }
 
 function copyPlannerLink(){
@@ -3029,6 +2924,126 @@ function updateHiddenBadge(){
 }
 
 
+// ── filterPlannerByHC ─────────────────────────────────────────────
+function filterPlannerByHC(){
+  var filterHC=document.getElementById('pl-hc-select').value;
+  var cgs=[...new Set(rawData.filter(function(r){return !filterHC||r.homecare===filterHC;}).map(function(r){return r.caregiver;}).filter(Boolean))].sort();
+  var sel=document.getElementById('pl-cg-select');
+  sel.innerHTML='<option value="">— Select Caregiver —</option>';
+  cgs.forEach(function(cg){sel.innerHTML+='<option value="'+cg+'">'+cg+'</option>';});
+  document.getElementById('pl-order-select').innerHTML='<option value="">— Select Order —</option>';
+  document.getElementById('pl-summary').style.display='none';
+  document.getElementById('pl-table-wrap').style.display='none';
+}
+
+// ── Save/Load Planners ────────────────────────────────────────────
+async function savePlannerToPortal(){
+  if(!plannerData.length){alert('Generate a schedule first');return;}
+  if(!_db){await initFirebase();if(!_db){alert('Firebase not connected');return;}}
+  var cg=(plannerData[0]||{}).babysitter||'unknown';
+  var dates=plannerData.map(function(r){return r.date;}).filter(Boolean).sort();
+  var start=dates[0]||'',end=dates[dates.length-1]||'';
+  var docId='planner__'+cg.replace(/[^a-zA-Z0-9]/g,'_')+'__'+start;
+  try{
+    await _db.collection('valeo_planners').doc(docId).set({caregiver:cg,homecare:(plannerData[0]||{}).homecare||'',start:start,end:end,rows:plannerData,cols:plannerCustomCols,saved_at:new Date().toISOString()});
+    alert('Saved! '+cg+' '+start+' to '+end);
+  }catch(e){alert('Save failed: '+e.message);}
+}
+
+async function openSavedPlanners(){
+  document.getElementById('saved-planners-overlay').style.display='flex';
+  var list=document.getElementById('saved-planners-list');
+  list.innerHTML='<div style="color:var(--text2);font-size:13px">Loading...</div>';
+  if(!_db) await initFirebase();
+  try{
+    var snap=await _db.collection('valeo_planners').get();
+    if(snap.empty){list.innerHTML='<div style="color:var(--text2);font-size:13px">No saved schedules yet.</div>';return;}
+    var items=[];
+    snap.forEach(function(doc){items.push({id:doc.id,data:doc.data()});});
+    items.sort(function(a,b){return(b.data.saved_at||'').localeCompare(a.data.saved_at||'');});
+    var html='';
+    items.forEach(function(item){
+      var d=item.data;
+      var dt=d.saved_at?new Date(d.saved_at).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'';
+      html+='<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">';
+      html+='<div><div style="font-size:13px;font-weight:600;color:var(--text1)">'+(d.caregiver||'Unknown')+'</div>';
+      html+='<div style="font-size:11px;color:var(--text2)">'+(d.homecare||'')+(d.start?' &middot; '+d.start+' &rarr; '+d.end:'')+'</div>';
+      html+='<div style="font-size:10px;color:var(--text3)">Saved '+dt+'</div></div>';
+      html+='<div style="display:flex;gap:8px">';
+      html+='<button data-id="'+item.id+'" onclick="loadSavedPlannerDoc(this.dataset.id)" style="padding:5px 12px;background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:11px;cursor:pointer">Load</button>';
+      html+='<button data-id="'+item.id+'" onclick="deleteSavedPlanner(this.dataset.id)" style="padding:5px 10px;background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);border-radius:6px;color:var(--absent);font-size:11px;cursor:pointer">Del</button>';
+      html+='</div></div>';
+    });
+    list.innerHTML=html;
+  }catch(e){list.innerHTML='<div style="color:var(--absent);font-size:13px">Error: '+e.message+'</div>';}
+}
+
+async function loadSavedPlannerDoc(docId){
+  if(!_db) await initFirebase();
+  try{
+    var snap=await _db.collection('valeo_planners').doc(docId).get();
+    if(!snap.exists){alert('Not found');return;}
+    var d=snap.data();
+    plannerData=d.rows||[];plannerCustomCols=d.cols||[];
+    document.getElementById('saved-planners-overlay').style.display='none';
+    switchTab('planner');
+    document.getElementById('pl-summary').style.display='flex';
+    document.getElementById('pl-table-wrap').style.display='block';
+    var w=plannerData.filter(function(r){return r.status==='Duty'||r.status==='Manual';}).length;
+    var off=plannerData.filter(function(r){return['Off','Week Off'].includes(r.status);}).length;
+    var sick=plannerData.filter(function(r){return['Sick','Holiday','Unpaid','Cancelled','Removed'].includes(r.status);}).length;
+    document.getElementById('pl-total-days').textContent=plannerData.length;
+    document.getElementById('pl-working-days').textContent=w;
+    document.getElementById('pl-off-days').textContent=off;
+    document.getElementById('pl-sick-days').textContent=sick;
+    renderPlannerTable();
+    alert('Loaded: '+(d.caregiver||''));
+  }catch(e){alert('Load failed: '+e.message);}
+}
+
+async function deleteSavedPlanner(docId){
+  if(!confirm('Delete this saved schedule?')) return;
+  if(!_db) await initFirebase();
+  try{await _db.collection('valeo_planners').doc(docId).delete();openSavedPlanners();}
+  catch(e){alert('Delete failed: '+e.message);}
+}
+
+// ── JPG Download ──────────────────────────────────────────────────
+async function downloadSchedJPG(){
+  var iframe=document.querySelector('#sched-modal-body iframe');
+  if(!iframe){alert('Open a schedule first');return;}
+  var btn=event.target;
+  var origText=btn.textContent;
+  btn.textContent='Generating...';btn.disabled=true;
+  try{
+    if(typeof html2canvas==='undefined'){
+      await new Promise(function(res,rej){
+        var s=document.createElement('script');
+        s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+        s.onload=res;s.onerror=rej;document.head.appendChild(s);
+      });
+    }
+    var iDoc=iframe.contentDocument||iframe.contentWindow.document;
+    var target=iDoc.querySelector('.sched-wrap')||iDoc.body;
+    iDoc.documentElement.scrollTop=0;iDoc.body.scrollTop=0;
+    var canvas=await html2canvas(target,{
+      scale:2,useCORS:true,backgroundColor:'#f0f2f5',logging:false,
+      scrollX:0,scrollY:0,
+      width:target.offsetWidth||target.scrollWidth,
+      height:target.offsetHeight||target.scrollHeight
+    });
+    var rec=plannerData[0]||{};
+    var cgName=(rec.babysitter||'schedule').replace(/\s+/g,'_');
+    var link=document.createElement('a');
+    link.download='Schedule_'+cgName+'_'+new Date().toISOString().slice(0,10)+'.jpg';
+    link.href=canvas.toDataURL('image/jpeg',0.95);
+    link.click();
+  }catch(e){alert('JPG export failed: '+e.message);}
+  finally{btn.textContent=origText;btn.disabled=false;}
+}
+
+// ── Roster + Drag JS ──────────────────────────────────────────────
+
 // ── Roster View ──────────────────────────────────────────────────
 var rosterDate=new Date();
 function rosterPrevMonth(){rosterDate.setMonth(rosterDate.getMonth()-1);renderRoster();}
@@ -3156,19 +3171,15 @@ function renderRoster(){
   wrap.innerHTML=html;
 }
 
-
 // ── Drag Override ────────────────────────────────────────────────
-// Allows dragging an override cell to copy it to other dates (horizontal)
-// or to other CGs (vertical) in the calendar view.
-var _dragOvPayload = null; // {caregiver, type, client_name, time_start, time_end, note}
+var _dragOvPayload=null;
 
-function onOvDragStart(e, cg, date){
-  var ov = overrides[cg+'|'+date];
-  if(!ov){ e.preventDefault(); return; }
-  _dragOvPayload = Object.assign({}, ov, {sourceCG: cg, sourceDate: date});
-  // Must set dataTransfer data for drag to work in all browsers
-  e.dataTransfer.effectAllowed = 'copy';
-  e.dataTransfer.setData('text/plain', cg+'|'+date);
+function onOvDragStart(e,cg,date){
+  var ov=overrides[cg+'|'+date];
+  if(!ov){e.preventDefault();return;}
+  _dragOvPayload=Object.assign({},ov,{sourceCG:cg,sourceDate:date});
+  e.dataTransfer.effectAllowed='copy';
+  e.dataTransfer.setData('text/plain',cg+'|'+date);
   e.currentTarget.classList.add('drag-source');
   document.body.classList.add('dragging');
 }
@@ -3177,118 +3188,43 @@ function onOvDragEnd(e){
   document.body.classList.remove('dragging');
   document.querySelectorAll('.drag-source').forEach(function(el){el.classList.remove('drag-source');});
   document.querySelectorAll('.drag-over').forEach(function(el){el.classList.remove('drag-over');});
-  document.querySelectorAll('.drag-over-cg').forEach(function(el){el.classList.remove('drag-over-cg');});
-  _dragOvPayload = null;
+  _dragOvPayload=null;
 }
 
-function onDayDragOver(e, cg, date){
-  e.preventDefault();
-  e.stopPropagation();
-  e.dataTransfer.dropEffect = 'copy';
+function onDayDragOver(e,cg,date){
+  e.preventDefault();e.stopPropagation();
+  e.dataTransfer.dropEffect='copy';
   e.currentTarget.classList.add('drag-over');
 }
 
 function onDayDragLeave(e){
-  // Only remove if leaving the cell itself, not a child element
-  if(!e.currentTarget.contains(e.relatedTarget)){
-    e.currentTarget.classList.remove('drag-over');
-  }
+  if(!e.currentTarget.contains(e.relatedTarget)) e.currentTarget.classList.remove('drag-over');
 }
 
-async function onDayDrop(e, targetCG, targetDate){
-  e.preventDefault();
-  e.stopPropagation();
+async function onDayDrop(e,targetCG,targetDate){
+  e.preventDefault();e.stopPropagation();
   e.currentTarget.classList.remove('drag-over');
-  // Fallback: read from dataTransfer if _dragOvPayload was lost
   if(!_dragOvPayload){
-    var dt=e.dataTransfer.getData('text/plain');
-    if(dt && overrides[dt]) _dragOvPayload=Object.assign({},overrides[dt],{sourceCG:dt.split('|')[0],sourceDate:dt.split('|')[1]});
+    var dt2=e.dataTransfer.getData('text/plain');
+    if(dt2&&overrides[dt2]) _dragOvPayload=Object.assign({},overrides[dt2],{sourceCG:dt2.split('|')[0],sourceDate:dt2.split('|')[1]});
     else return;
   }
-  var p = _dragOvPayload;
-  // Don't copy to same cell
-  if(targetCG === p.sourceCG && targetDate === p.sourceDate) return;
-  var payload = {
-    caregiver: targetCG, date: targetDate,
-    type: p.type, note: p.note||'',
-    client_name: p.client_name||'', time_start: p.time_start||'', time_end: p.time_end||'',
-    saved_at: new Date().toISOString()
-  };
-  overrides[targetCG+'|'+targetDate] = payload;
+  var p=_dragOvPayload;
+  if(targetCG===p.sourceCG&&targetDate===p.sourceDate) return;
+  var payload={caregiver:targetCG,date:targetDate,type:p.type,note:p.note||'',
+    client_name:p.client_name||'',time_start:p.time_start||'',time_end:p.time_end||'',
+    saved_at:new Date().toISOString()};
+  overrides[targetCG+'|'+targetDate]=payload;
   saveLocalCache();
-  applyOverrides(); renderCalendar(); renderHCGrid();
+  applyOverrides();renderCalendar();renderHCGrid();
   var rp=document.getElementById('page-roster');
   if(rp&&rp.classList.contains('active')) renderRoster();
-  await persistWrite('override', targetCG+'|'+targetDate, payload);
-  _dragOvPayload = null;
-}
-
-
-// ── Auth ─────────────────────────────────────────────────────────
-async function doLogin(){
-  var email=document.getElementById('login-email').value.trim();
-  var pass=document.getElementById('login-pass').value;
-  var errEl=document.getElementById('login-error');
-  var btn=document.getElementById('login-btn');
-  if(!email||!pass){errEl.textContent='Please enter email and password';errEl.style.display='block';return;}
-  btn.textContent='Signing in...';btn.disabled=true;errEl.style.display='none';
-  try{
-    if(!_auth) await initFirebase();
-    await _auth.signInWithEmailAndPassword(email,pass);
-  }catch(e){
-    var msg=['auth/user-not-found','auth/wrong-password','auth/invalid-credential'].includes(e.code)
-      ?'Invalid email or password'
-      :e.code==='auth/too-many-requests'?'Too many attempts — try again later'
-      :e.message;
-    errEl.textContent=msg;errEl.style.display='block';
-  }finally{btn.textContent='Sign In';btn.disabled=false;}
-}
-
-function doLogout(){if(_auth)_auth.signOut();}
-
-function showApp(user){
-  var ls=document.getElementById('login-screen');
-  var ma=document.getElementById('main-app');
-  if(ls) ls.style.display='none';
-  if(ma) ma.style.display='block';
-  var ub=document.getElementById('user-badge');
-  var sb=document.getElementById('signout-btn');
-  if(ub){ub.textContent=user.email;ub.style.display='inline';}
-  if(sb) sb.style.display='inline-block';
-  loadData();
-}
-
-function showLogin(){
-  var ls=document.getElementById('login-screen');
-  var ma=document.getElementById('main-app');
-  if(ls) ls.style.display='flex';
-  if(ma) ma.style.display='none';
-}
-
-async function initAuth(){
-  await initFirebase();
-  // Wait for DOM to be fully ready before touching elements
-  function startAuth(){
-    var ls=document.getElementById('login-screen');
-    var ma=document.getElementById('main-app');
-    if(ls) ls.style.display='flex';
-    if(ma) ma.style.display='none';
-    _auth.onAuthStateChanged(function(user){
-      if(user) showApp(user);
-      else showLogin();
-    });
-  }
-  if(document.readyState==='loading'){
-    document.addEventListener('DOMContentLoaded', startAuth);
-  } else {
-    startAuth();
-  }
+  await persistWrite('override',targetCG+'|'+targetDate,payload);
+  _dragOvPayload=null;
 }
 
 // ── Init ─────────────────────────────────────────────────────────
-setInterval(syncFromSheet,30*1000);
-window.addEventListener('focus',syncFromSheet);
-initAuth();
+loadData();
 </script>
 </body>
 </html>
