@@ -471,6 +471,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
  <button class="main-tab" onclick="switchTab('analytics')">📊 Analytics</button>
  <button class="main-tab" onclick="switchTab('ops')">⚡ Operations</button>
  <button class="main-tab" onclick="switchTab('planner')">📋 Package Planner</button>
+ <button class="main-tab" onclick="switchTab('roster')">🗓 Roster View</button>
 </div>
 
 <!-- ── Availability bar (calendar only) ── -->
@@ -2659,8 +2660,8 @@ async function openSavedPlanners(){
       html+='<div style="font-size:11px;color:var(--text2)">'+(d.homecare||'')+(d.start?' &middot; '+d.start+' &rarr; '+d.end:'')+'</div>';
       html+='<div style="font-size:10px;color:var(--text3)">Saved '+dt+'</div></div>';
       html+='<div style="display:flex;gap:8px">';
-      html+='<button onclick="loadSavedPlannerDoc(''+item.id+'')" style="padding:5px 12px;background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:11px;cursor:pointer">Load</button>';
-      html+='<button onclick="deleteSavedPlanner(''+item.id+'')" style="padding:5px 10px;background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);border-radius:6px;color:var(--absent);font-size:11px;cursor:pointer">Del</button>';
+      html+='<button data-id="'+item.id+'" onclick="loadSavedPlannerDoc(this.dataset.id)" style="padding:5px 12px;background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:11px;cursor:pointer">Load</button>';
+      html+='<button data-id="'+item.id+'" onclick="deleteSavedPlanner(this.dataset.id)" style="padding:5px 10px;background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);border-radius:6px;color:var(--absent);font-size:11px;cursor:pointer">Del</button>';
       html+='</div></div>';
     });
     list.innerHTML=html;
