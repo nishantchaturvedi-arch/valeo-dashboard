@@ -484,6 +484,34 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
   .cg-card{padding:10px 12px;}
 }
 
+
+/* ── Daily Orders ────────────────────────────────────────────── */
+.daily-toolbar{padding:12px 16px;background:var(--card);border-bottom:1px solid var(--border);}
+.daily-wrap{overflow:auto;max-height:calc(100vh - 160px);padding:16px;}
+.daily-hc-section{margin-bottom:24px;}
+.daily-hc-title{font-size:12px;font-weight:700;color:#fff;padding:5px 12px;border-radius:6px;margin-bottom:8px;display:inline-block;letter-spacing:.4px;}
+.daily-table{width:100%;border-collapse:collapse;font-size:12px;}
+.daily-table th{background:var(--card);color:var(--text2);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;padding:8px 10px;border-bottom:2px solid var(--border);text-align:left;white-space:nowrap;}
+.daily-table td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--text1);vertical-align:middle;}
+.daily-table tr:hover td{background:var(--bg3);}
+.daily-badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap;}
+.badge-assigned{background:rgba(16,185,129,.15);color:#10b981;}
+.badge-unassigned{background:rgba(245,158,11,.15);color:#f59e0b;}
+.badge-cancelled{background:rgba(239,68,68,.15);color:#ef4444;}
+.badge-completed{background:rgba(99,102,241,.15);color:#818cf8;}
+.badge-other{background:var(--bg3);color:var(--text2);}
+.daily-order-id{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);}
+.daily-empty{text-align:center;padding:48px 16px;color:var(--text3);font-size:13px;}
+.daily-kpi-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;}
+.daily-kpi{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 16px;min-width:100px;flex:1;}
+.daily-kpi-val{font-size:22px;font-weight:700;color:var(--text1);}
+.daily-kpi-lbl{font-size:11px;color:var(--text2);margin-top:2px;}
+@media(max-width:768px){
+  .daily-table{font-size:11px;}
+  .daily-table th,.daily-table td{padding:6px 8px;}
+  .daily-kpi{min-width:80px;}
+}
+
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -516,6 +544,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <button class="main-tab" onclick="switchTab('ops')">⚡ Operations</button>
  <button class="main-tab" onclick="switchTab('planner')">📋 Package Planner</button>
  <button class="main-tab" onclick="switchTab('roster')">🗓 Roster View</button>
+ <button class="main-tab" onclick="switchTab('daily')">📆 Daily Orders</button>
 </div>
 
 <!-- ── Availability bar (calendar only) ── -->
@@ -744,6 +773,31 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
   </span>
  </div>
  <div class="roster-wrap" id="roster-wrap"></div>
+</div>
+<div class="page" id="page-daily">
+ <div class="daily-toolbar">
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+   <label style="font-size:12px;font-weight:600;color:var(--text2)">Date</label>
+   <input type="date" id="daily-date" class="avail-input" style="width:160px" onchange="renderDailyOrders()">
+   <button class="avail-btn" onclick="setDailyToday()">Today</button>
+   <button class="roster-nav-btn" onclick="shiftDailyDate(-1)" style="width:28px;height:28px;font-size:16px">&#8249;</button>
+   <button class="roster-nav-btn" onclick="shiftDailyDate(1)" style="width:28px;height:28px;font-size:16px">&#8250;</button>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px">
+   <select id="daily-hc-filter" class="roster-hc-filter" onchange="renderDailyOrders()">
+    <option value="">All Homecare</option>
+   </select>
+   <select id="daily-status-filter" class="roster-hc-filter" onchange="renderDailyOrders()">
+    <option value="">All Status</option>
+    <option value="Assigned">Assigned</option>
+    <option value="Unassigned">Unassigned</option>
+    <option value="Cancelled">Cancelled</option>
+    <option value="Completed">Completed</option>
+   </select>
+   <span id="daily-summary" style="font-size:12px;color:var(--text2);margin-left:8px"></span>
+  </div>
+ </div>
+ <div class="daily-wrap" id="daily-wrap"></div>
 </div>
 <div class="page" id="page-planner">
  <div class="planner-page">
@@ -1128,7 +1182,9 @@ async function loadData(force=false){
         date:datePart,end_date:endDate,
         caregiver:String(r['Nurse_Assigned']||'').trim(),
         homecare:String(r['Homecare']||'').trim(),
-        status,time_start:t1,time_end:t2,
+        status,
+        order_status_raw:String(r['Order_Status']||'').trim(), // raw Metabase status
+        time_start:t1,time_end:t2,
         client_name:String(r['User Name']||'').trim(),
         order_id:String(r['Cart_Order_ID']||'').trim(),
         child_order_id:String(r['Child_Order_ID']||'').trim(),
@@ -1762,6 +1818,7 @@ function renderAnalyticsData(){
 // ── Tab switching ────────────────────────────────────────────────
 function switchTab(tab){
   if(tab==='roster'){setTimeout(switchToRoster,80);}
+  if(tab==='daily'){setTimeout(switchToDaily,80);}
   document.querySelectorAll('.main-tab').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase().includes(tab)));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+tab).classList.add('active');
@@ -3221,6 +3278,171 @@ async function onDayDrop(e,targetCG,targetDate){
   if(rp&&rp.classList.contains('active')) renderRoster();
   await persistWrite('override',targetCG+'|'+targetDate,payload);
   _dragOvPayload=null;
+}
+
+
+// ── Daily Orders Tab ─────────────────────────────────────────────
+function setDailyToday(){
+  document.getElementById('daily-date').value = new Date().toISOString().slice(0,10);
+  renderDailyOrders();
+}
+
+function shiftDailyDate(delta){
+  var inp = document.getElementById('daily-date');
+  var d = inp.value ? new Date(inp.value) : new Date();
+  d.setDate(d.getDate() + delta);
+  inp.value = d.toISOString().slice(0,10);
+  renderDailyOrders();
+}
+
+function switchToDaily(){
+  // Populate HC filter
+  var sel = document.getElementById('daily-hc-filter');
+  if(sel && rawData && rawData.length){
+    var cur = sel.value;
+    var hcs = [...new Set(rawData.map(function(r){return r.homecare;}).filter(Boolean))].sort();
+    sel.innerHTML = '<option value="">All Homecare</option>';
+    hcs.forEach(function(hc){sel.innerHTML += '<option value="'+hc+'"'+(hc===cur?' selected':'')+'>'+hc+'</option>';});
+  }
+  // Default to today if no date set
+  var dateInp = document.getElementById('daily-date');
+  if(!dateInp.value) dateInp.value = new Date().toISOString().slice(0,10);
+  renderDailyOrders();
+}
+
+function renderDailyOrders(){
+  if(!rawData||!rawData.length) return;
+  var wrap = document.getElementById('daily-wrap');
+  var summEl = document.getElementById('daily-summary');
+  if(!wrap) return;
+
+  var selDate = document.getElementById('daily-date').value;
+  var filterHC = document.getElementById('daily-hc-filter').value;
+  var filterStatus = document.getElementById('daily-status-filter').value;
+  if(!selDate){wrap.innerHTML='<div class="daily-empty">Pick a date to view orders</div>';return;}
+
+  // Use allData — already has correct expanded dates, week-off, and overrides applied
+  // Deduplicate by child_order_id|caregiver to avoid multiple rows per order per day
+  var seen = new Set();
+  var orders = [];
+  allData.forEach(function(r){
+    if(!r.date || r.date !== selDate) return;
+    if(filterHC && r.homecare !== filterHC) return;
+
+    // Apply status filter against actual status from allData (which includes override effects)
+    if(filterStatus){
+      var st2=(r.status||'').toLowerCase().replace(/\s+/g,'');
+      var rawSt2=(r.order_status_raw||'').toLowerCase().replace(/\s+/g,'');
+      if(filterStatus==='Assigned'){
+        if(st2==='weekoff'||st2==='sick'||st2==='holiday'||st2==='cancelled') return;
+        if(!r.caregiver) return;
+      }
+      if(filterStatus==='Unassigned' && r.caregiver) return;
+      if(filterStatus==='Cancelled' && st2!=='cancelled'&&rawSt2!=='cancelled') return;
+      if(filterStatus==='Completed' && st2!=='completed'&&rawSt2!=='completed') return;
+    }
+
+    // Deduplicate: one row per order per date per caregiver
+    var k=(r.child_order_id||r.order_id||'')+'|'+(r.caregiver||'');
+    if(seen.has(k)) return;
+    seen.add(k);
+    orders.push(r);
+  });
+
+  if(!orders.length){
+    wrap.innerHTML='<div class="daily-empty">No orders found for '+selDate+(filterHC?' · '+filterHC:'')+'</div>';
+    summEl.textContent='';
+    return;
+  }
+
+  // KPIs
+  var total = orders.length;
+  var assigned = orders.filter(function(r){return r.caregiver && (r.status||'').toLowerCase()!=='cancelled';}).length;
+  var unassigned = orders.filter(function(r){return !r.caregiver && (r.status||'').toLowerCase()!=='cancelled';}).length;
+  var cancelled = orders.filter(function(r){return (r.status||'').toLowerCase()==='cancelled';}).length;
+
+  summEl.textContent = total+' orders · '+assigned+' assigned · '+unassigned+' unassigned · '+cancelled+' cancelled';
+
+  var html = '<div class="daily-kpi-row">';
+  html += '<div class="daily-kpi"><div class="daily-kpi-val">'+total+'</div><div class="daily-kpi-lbl">Total Orders</div></div>';
+  html += '<div class="daily-kpi"><div class="daily-kpi-val" style="color:#10b981">'+assigned+'</div><div class="daily-kpi-lbl">Assigned</div></div>';
+  html += '<div class="daily-kpi"><div class="daily-kpi-val" style="color:#f59e0b">'+unassigned+'</div><div class="daily-kpi-lbl">Unassigned</div></div>';
+  html += '<div class="daily-kpi"><div class="daily-kpi-val" style="color:#ef4444">'+cancelled+'</div><div class="daily-kpi-lbl">Cancelled</div></div>';
+  html += '</div>';
+
+  // Group by HC
+  var hcGroups = {};
+  orders.forEach(function(r){
+    var hc = r.homecare||'Unknown';
+    if(!hcGroups[hc]) hcGroups[hc]=[];
+    hcGroups[hc].push(r);
+  });
+
+  Object.entries(hcGroups).sort().forEach(function(e){
+    var hcName = e[0], rows = e[1];
+    // Get HC color
+    var hcKey = hcName.toLowerCase().split(' ')[0];
+    var hcColor = (typeof HC_COLORS!=='undefined'&&HC_COLORS[hcKey])||'var(--accent)';
+
+    html += '<div class="daily-hc-section">';
+    html += '<div class="daily-hc-title" style="background:'+hcColor+'">'+hcName+' ('+rows.length+')</div>';
+    html += '<table class="daily-table">';
+    html += '<thead><tr>';
+    html += '<th>Order ID</th><th>Client</th><th>Package</th><th>Caregiver</th><th>Timing</th><th>Status</th><th>City</th>';
+    html += '</tr></thead><tbody>';
+
+    rows.forEach(function(r){
+      var oid = r.child_order_id||r.order_id||'—';
+      var client = r.client_name||'—';
+      var pkg = (r.package_type||'—').substring(0,40);
+      var cg = r.caregiver||'<span style="color:var(--text3);font-style:italic">Unassigned</span>';
+      var timing = r.time_start&&r.time_end ? r.time_start+' – '+r.time_end : r.time_start||'—';
+      var city = r.city||r.City||'—';
+
+      // Check override
+      var ov = overrides[r.caregiver+'|'+selDate];
+      var ovBadge = '';
+      if(ov) ovBadge = ' <span class="daily-badge badge-other">'+ov.type+'</span>';
+
+      // Status badge — use allData status (overrides already applied) + raw Metabase status
+      var allSt = (r.status||'').trim();   // from allData: Duty/Week Off/Sick/Holiday etc.
+      var rawSt = (r.order_status_raw||'').trim(); // from Metabase: LAB CONFIRMED etc.
+      var stLower = allSt.toLowerCase().replace(/\s+/g,'');
+      var badgeCls = 'badge-other';
+      // Show override status first, then raw Metabase status
+      var badgeLbl = allSt||rawSt||'Active';
+      if(stLower==='cancelled'){badgeCls='badge-cancelled';}
+      else if(stLower==='completed'){badgeCls='badge-completed';}
+      else if(stLower==='sick'){badgeCls='badge-cancelled'; badgeLbl='Sick';}
+      else if(stLower==='holiday'){badgeCls='badge-other'; badgeLbl='Holiday';}
+      else if(stLower==='weekoff'){badgeCls='badge-other'; badgeLbl='Week Off';}
+      else if(stLower==='duty'||stLower==='manual'){
+        // Use raw Metabase status for active duty orders
+        badgeLbl = rawSt||allSt||'Active';
+        var rawLower = badgeLbl.toLowerCase().replace(/\s+/g,'');
+        if(rawLower==='cancelled'){badgeCls='badge-cancelled';}
+        else if(rawLower==='completed'||rawLower==='done'){badgeCls='badge-completed';}
+        else if(rawLower.includes('confirmed')){badgeCls='badge-assigned';}
+        else if(!r.caregiver){badgeCls='badge-unassigned';}
+        else{badgeCls='badge-assigned';}
+      }
+      else if(!r.caregiver){badgeCls='badge-unassigned';}
+
+      html += '<tr>';
+      html += '<td><span class="daily-order-id">#'+oid+'</span></td>';
+      html += '<td>'+client+'</td>';
+      html += '<td style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+pkg+'">'+pkg+'</td>';
+      html += '<td>'+cg+ovBadge+'</td>';
+      html += '<td style="white-space:nowrap">'+timing+'</td>';
+      html += '<td><span class="daily-badge '+badgeCls+'">'+badgeLbl+'</span></td>';
+      html += '<td>'+city+'</td>';
+      html += '</tr>';
+    });
+
+    html += '</tbody></table></div>';
+  });
+
+  wrap.innerHTML = html;
 }
 
 // ── Init ─────────────────────────────────────────────────────────
