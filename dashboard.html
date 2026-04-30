@@ -1992,11 +1992,19 @@ function renderIdleCGs(){
   var todayStr=today.toISOString().slice(0,10);
   var in14=new Date(today);in14.setDate(in14.getDate()+14);
   var in14Str=in14.toISOString().slice(0,10);
+
+  // Build CG list from allData (calendar view) — respects extensions from overrides
   var allCGs={};
-  rawData.forEach(function(r){
-    if(!r.caregiver||!r.caregiver.trim())return;
-    if(!allCGs[r.caregiver])allCGs[r.caregiver]={caregiver:r.caregiver,homecare:r.homecare||'—',lastDate:'',lastClient:''};
-    if(r.date&&r.date>allCGs[r.caregiver].lastDate){allCGs[r.caregiver].lastDate=r.date;allCGs[r.caregiver].lastClient=r.client_name||'—';}
+  allData.forEach(function(r){
+    if(!r.caregiver||!r.caregiver.trim()) return;
+    var st=(r.status||'').toLowerCase().split(' ').join('');
+    if(st==='cancelled'||st==='removed') return;
+    if(!allCGs[r.caregiver]) allCGs[r.caregiver]={caregiver:r.caregiver,homecare:r.homecare||'—',lastDate:'',lastClient:''};
+    // Track the last active date on calendar
+    if(r.date&&r.date>allCGs[r.caregiver].lastDate){
+      allCGs[r.caregiver].lastDate=r.date;
+      allCGs[r.caregiver].lastClient=r.client_name||'—';
+    }
   });
   var idle=Object.values(allCGs).filter(function(cg){
     return!allData.some(function(r){
