@@ -2097,6 +2097,17 @@ function renderExpiring(){
   const today = new Date(); today.setHours(0,0,0,0);
   const in28 = new Date(today); in28.setDate(in28.getDate()+28);
 
+  // Build calendar end date map — use allData (which reflects overrides/extensions)
+  // The actual last date a CG appears in allData for a given order = calendar end date
+  const calendarEndMap = {};
+  allData.forEach(function(r){
+    if(!r.caregiver||!r.date) return;
+    var st=(r.status||'').toLowerCase().replace(/\s+/g,'');
+    if(st==='cancelled'||st==='removed') return;
+    var key = r.child_order_id||r.order_id||(r.client_name+'|'+r.caregiver);
+    if(!calendarEndMap[key]||r.date>calendarEndMap[key]) calendarEndMap[key]=r.date;
+  });
+
   // Get unique orders from rawData
   const orderMap = {};
   rawData.forEach(r => {
@@ -2106,18 +2117,25 @@ function renderExpiring(){
     if(!orderMap[key]) orderMap[key] = r;
   });
 
+  // Use calendar end date (with overrides applied) instead of raw end_date
+  Object.entries(orderMap).forEach(function(e){
+    var k=e[0], r=e[1];
+    if(calendarEndMap[k]) r._calEnd = calendarEndMap[k];
+    else r._calEnd = r.end_date;
+  });
+
   const orders = Object.values(orderMap).filter(r => {
-    const end = new Date(r.end_date+'T00:00:00');
+    const end = new Date((r._calEnd||r.end_date)+'T00:00:00');
     if(!(end >= today && end <= in28)) return false;
-    // Exclude if already renewed: another non-cancelled order for same client starts on/after this end date
+    // Exclude if already renewed
     const isRenewed = rawData.some(function(r2) {
       return r2.client_name === r.client_name &&
         (r2.child_order_id||r2.order_id) !== (r.child_order_id||r.order_id) &&
         (r2.status||'').toLowerCase() !== 'cancelled' &&
-         r2.date >= addDays(r.end_date, -7);;
+         r2.date >= addDays(r._calEnd||r.end_date, -7);
     });
     return !isRenewed;
-  }).sort((a,b) => a.end_date.localeCompare(b.end_date));
+  }).sort((a,b) => (a._calEnd||a.end_date).localeCompare(b._calEnd||b.end_date));
 
   document.getElementById('exp-count').textContent = orders.length;
 
@@ -2128,7 +2146,7 @@ function renderExpiring(){
 
   let html = '';
   orders.forEach(r => {
-    const end = new Date(r.end_date+'T00:00:00');
+    const end = new Date((r._calEnd||r.end_date)+'T00:00:00'); // use calendar end date
     const diffDays = Math.round((end-today)/(1000*60*60*24));
     const weekNum = diffDays <= 7 ? 1 : diffDays <= 14 ? 2 : diffDays <= 21 ? 3 : 4;
     const weekLabel = `Week ${weekNum}`;
@@ -2140,7 +2158,7 @@ function renderExpiring(){
       <td>${r.caregiver||'—'}</td>
       <td style="font-size:11px;color:var(--text2)">${r.homecare||'—'}</td>
       <td style="font-size:11px;color:var(--text2)">${(r.package_type||'—').substring(0,40)}</td>
-      <td style="font-family:monospace;font-size:11px">${r.end_date||'—'}</td>
+      <td style="font-family:monospace;font-size:11px">${r._calEnd||r.end_date||'—'}</td>
       <td><span class="exp-badge ${wCls}">${daysLabel}</span></td>
       <td><span class="exp-badge ${wCls}">${weekLabel}</span></td>
       <td style="font-size:11px;color:var(--text2)">${r.location||'—'}</td>
@@ -2329,7 +2347,8 @@ function applyOverrides(){
   // Recalculate end dates for caregivers with sick overrides
   // so new days get added at the end
   const affectedCGs = new Set(Object.values(overrides).filter(function(o){
-    return ['sick','off','holiday','unpaid','cancelled','removed','absent'].includes(o.type);
+    // 'removed' excluded — removed bookings do NOT extend the package end date
+    return ['sick','off','holiday','unpaid','cancelled','absent'].includes(o.type);
   }).map(function(o){ return o.caregiver; }));
 
   if(affectedCGs.size > 0){
@@ -2342,7 +2361,8 @@ function applyOverrides(){
       const w = extractWeeks(pkg)||4;
       const baseEnd = addDays(r.date,(w*7)-1);
       const ovCount = Object.values(overrides).filter(function(o){
-        return o.caregiver===r.caregiver && ['sick','off','holiday','unpaid','cancelled','removed','absent'].includes(o.type);
+        // 'removed' excluded — does not add makeup day
+        return o.caregiver===r.caregiver && ['sick','off','holiday','unpaid','cancelled','absent'].includes(o.type);
       }).length;
       r.end_date = ovCount>0 ? addDays(baseEnd,ovCount) : baseEnd;
     });
