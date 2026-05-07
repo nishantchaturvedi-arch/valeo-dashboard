@@ -487,13 +487,21 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 
 /* ── Daily Orders ────────────────────────────────────────────── */
 .daily-toolbar{padding:12px 16px;background:var(--card);border-bottom:1px solid var(--border);}
-.daily-wrap{overflow:auto;max-height:calc(100vh - 160px);padding:16px;}
-.daily-hc-section{margin-bottom:24px;}
+.daily-wrap{overflow-y:auto;max-height:calc(100vh - 160px);padding:16px;}
+.daily-hc-section{margin-bottom:24px;overflow-x:auto;}
 .daily-hc-title{font-size:12px;font-weight:700;color:#fff;padding:5px 12px;border-radius:6px;margin-bottom:8px;display:inline-block;letter-spacing:.4px;}
-.daily-table{width:100%;border-collapse:collapse;font-size:12px;}
-.daily-table th{background:var(--card);color:var(--text2);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;padding:8px 10px;border-bottom:2px solid var(--border);text-align:left;white-space:nowrap;}
-.daily-table td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--text1);vertical-align:middle;}
+.daily-table{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed;}
+.daily-table th{background:var(--card);color:var(--text2);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;padding:8px 10px;border-bottom:2px solid var(--border);text-align:left;white-space:nowrap;overflow:hidden;}
+.daily-table td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--text1);vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .daily-table tr:hover td{background:var(--bg3);}
+/* Column widths */
+.daily-table th:nth-child(1),.daily-table td:nth-child(1){width:90px;}   /* Order ID */
+.daily-table th:nth-child(2),.daily-table td:nth-child(2){width:16%;}    /* Client */
+.daily-table th:nth-child(3),.daily-table td:nth-child(3){width:22%;}    /* Package */
+.daily-table th:nth-child(4),.daily-table td:nth-child(4){width:16%;}    /* Caregiver */
+.daily-table th:nth-child(5),.daily-table td:nth-child(5){width:140px;}  /* Timing */
+.daily-table th:nth-child(6),.daily-table td:nth-child(6){width:120px;}  /* Status */
+.daily-table th:nth-child(7),.daily-table td:nth-child(7){width:80px;}   /* City */
 .daily-badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap;}
 .badge-assigned{background:rgba(16,185,129,.15);color:#10b981;}
 .badge-unassigned{background:rgba(245,158,11,.15);color:#f59e0b;}
@@ -515,6 +523,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -636,10 +645,33 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <div class="month-tabs" id="month-tabs"></div>
  <!-- Week tabs -->
  <div class="week-tabs" id="week-tabs"></div>
+ <!-- KPI explanation -->
+ <div style="font-size:11px;color:var(--text3);padding:8px 4px;margin-bottom:4px;line-height:1.7">
+  <b style="color:var(--text2)">How to read the numbers below:</b>
+  &nbsp; <b>Duty Shifts</b> = confirmed caregiver working days.
+  &nbsp; <b>Active CGs</b> = caregivers with at least one booking.
+  &nbsp; <b>Clients</b> = unique clients served.
+  &nbsp; <b>Utilisation</b> = % of shifts that were actual duty (vs cancelled/off).
+ </div>
  <!-- KPIs -->
  <div class="kpi-grid" id="kpi-grid"></div>
  <!-- Charts -->
  <div class="analytics-grid" id="analytics-grid"></div>
+
+ <!-- Revenue Projection -->
+ <div style="margin-top:28px">
+  <div style="font-size:14px;font-weight:700;color:var(--text1);margin-bottom:4px">📈 Revenue Projection — Next 4 Weeks</div>
+  <div style="font-size:11px;color:var(--text3);margin-bottom:14px;line-height:1.7">
+   📌 <b style="color:var(--text2)">What this shows:</b> Your last 12 weeks of booking revenue (solid line) and a 4-week forecast (dashed line).<br>
+   The model finds the trend in your data and projects it forward — like a simple weather forecast for revenue.<br>
+   🔵 <b>Solid line</b> = actual revenue. &nbsp; 🟡 <b>Dashed line</b> = forecast. &nbsp; 🟢 <b>Thin line</b> = overall trend direction.<br>
+   <b>R² score</b> = how reliable the forecast is. Above 70% = trustworthy. Below 40% = data is too irregular to predict well.
+  </div>
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;overflow-x:auto">
+   <canvas id="revenue-projection-chart" height="220"></canvas>
+  </div>
+  <div id="revenue-projection-stats" style="display:flex;gap:16px;flex-wrap:wrap;margin-top:12px"></div>
+ </div>
  </div>
 </div>
 
@@ -719,6 +751,20 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
   <table class="ops-table">
    <thead><tr><th>Client</th><th>Caregiver</th><th>Homecare</th><th>Package</th><th>Ended</th><th>Days Ago</th><th>City</th></tr></thead>
    <tbody id="churned-tbody"></tbody>
+  </table>
+ </div>
+</div>
+
+<!-- ── Churn Risk Score ── -->
+<div style="margin-top:24px">
+ <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+  <span style="font-size:13px;font-weight:700;color:var(--text1)">🧠 Churn Risk Score <span class="ops-count" id="churn-risk-count">—</span></span>
+  <span style="font-size:11px;color:var(--text3)">Logistic regression · clients ranked by renewal risk</span>
+ </div>
+ <div style="overflow-x:auto">
+  <table class="ops-table">
+   <thead><tr><th>Client</th><th>Homecare</th><th>Risk Score</th><th>Risk Level</th><th>Last Package</th><th>End Date</th><th>Key Factors</th></tr></thead>
+   <tbody id="churn-risk-tbody"></tbody>
   </table>
  </div>
 </div>
@@ -1161,8 +1207,12 @@ function expandOrders(orders){
 async function loadData(force=false){
   setSyncState('loading','Fetching...');
   try{
+    console.log('[loadData] fetching from:', N8N_DATA_URL);
     const res=await fetch(N8N_DATA_URL);
+    console.log('[loadData] HTTP status:', res.status, res.statusText);
     const text=await res.text();
+    console.log('[loadData] response length:', text.length, 'chars');
+    console.log('[loadData] first 200 chars:', text.slice(0,200));
     // n8n returns array of items, each with json property OR direct array
     let rows;
     try{
@@ -1173,7 +1223,13 @@ async function loadData(force=false){
       } else {
         rows=parsed;
       }
-    }catch(e){throw new Error('Bad JSON from n8n');}
+      console.log('[loadData] parsed rows:', rows.length);
+      console.log('[loadData] first row sample:', JSON.stringify(rows[0]).slice(0,200));
+    }catch(e){
+      console.error('[loadData] JSON parse failed:', e.message);
+      console.log('[loadData] raw text was:', text.slice(0,500));
+      throw new Error('Bad JSON from n8n');
+    }
     if(!Array.isArray(rows))throw new Error('Bad data');
 
     // Transform — handle both raw Metabase format and pre-transformed format
@@ -1269,6 +1325,9 @@ async function loadData(force=false){
       if(!all.length) console.warn('No allData records found for: '+frag+' — data loads but calendar will be empty');
     };
     setSyncState('ok','Synced '+new Date().toLocaleTimeString());
+    console.log('[loadData] rawData:', rawData.length, 'records');
+    console.log('[loadData] allData:', allData.length, 'expanded records');
+    console.log('[loadData] HCs:', [...new Set(rawData.map(r=>r.homecare))].filter(Boolean));
     buildChatData();
     renderHCGrid();
     syncFromSheet();
@@ -1682,6 +1741,7 @@ function renderAnalytics(){
   renderMonthTabs();
   renderWeekTabs();
   renderAnalyticsData();
+  setTimeout(renderRevenueProjection, 200); // slight delay to let charts render first
 }
 
 function renderMonthTabs(){
@@ -1814,45 +1874,80 @@ function renderAnalyticsData(){
   const repPct = totalC ? Math.round(repC/totalC*100) : 0;
 
   document.getElementById('analytics-grid').innerHTML = `
+
+    <!-- ── Chart 1: HC Performance ── -->
     <div class="a-card">
-      <div class="a-title"><div class="a-title-bar"></div>HC Performance — ${periodLabel}</div>
+      <div class="a-title"><div class="a-title-bar"></div>Homecare Performance</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.6">
+        📌 <b style="color:var(--text2)">What this shows:</b> Which homecare company delivered the most caregiver shifts this period.<br>
+        The longer the bar, the more work that homecare completed.<br>
+        <span style="color:var(--accent)">Use this to spot which providers are carrying the most load — and which are underperforming.</span>
+      </div>
       ${hcS.length ? hcS.map(([k,v])=>`
-        <div class="bar-row">
-          <div class="bar-label" title="${k}">${k.split(' ')[0]}</div>
-          <div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/maxHC*100)}%;background:${hcColor(k)}"></div></div>
-          <div class="bar-val">${v}</div>
+        <div class="bar-row" style="margin-bottom:6px">
+          <div class="bar-label" title="${k}" style="font-size:11px;font-weight:600">${k.split(' ')[0]}</div>
+          <div class="bar-track">
+            <div class="bar-fill" style="width:${Math.round(v/maxHC*100)}%;background:${hcColor(k)};border-radius:4px"></div>
+          </div>
+          <div class="bar-val" style="font-size:11px">${v} <span style="color:var(--text3)">shifts</span></div>
         </div>`).join('') : '<div style="color:var(--text2);font-size:12px;padding:10px">No data for this period</div>'}
     </div>
-    <div class="a-card" style="grid-column:1/-1">
-      <div class="a-title"><div class="a-title-bar" style="background:var(--duty)"></div>All Caregivers Performance — Hours</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:2px 16px">
-      ${cgS.length ? cgS.map(([k,v])=>`
-        <div class="bar-row">
-          <div class="bar-label" title="${k}" style="width:80px;min-width:80px;overflow:hidden;text-overflow:ellipsis">${k.split(' ')[0]}</div>
-          <div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/maxCG*100)}%;background:${v>=maxCG?'var(--duty)':v>=maxCG*0.7?'var(--accent)':'var(--sick)'}"></div></div>
-          <div class="bar-val">${v}h <span style="color:var(--text3);font-size:9px">${Math.round(v/maxCG*100)}%</span></div>
-        </div>`).join('') : '<div style="color:var(--text2);font-size:12px;padding:10px">No data</div>'}
-      </div>
-    </div>
+
+    <!-- ── Chart 2: New vs Repeat ── -->
     <div class="a-card">
       <div class="a-title"><div class="a-title-bar" style="background:#e879f9"></div>New vs Repeat Clients</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:14px;line-height:1.6">
+        📌 <b style="color:var(--text2)">What this shows:</b> Out of all clients this period, how many are booking for the <b>first time</b> vs <b>coming back</b>.<br>
+        High repeat % = clients are happy and renewing. Very high new % = good acquisition but check if they're returning.<br>
+        <span style="color:var(--accent)">The message at the bottom tells you if retention is strong, okay, or needs action.</span>
+      </div>
       <div class="retention-boxes">
         <div class="ret-box">
           <div class="ret-val" style="color:var(--accent)">${newC}</div>
-          <div class="ret-label">New (${newPct}%)</div>
+          <div class="ret-label">🆕 New Clients</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:2px">${newPct}% of total</div>
         </div>
         <div class="ret-box">
           <div class="ret-val" style="color:var(--duty)">${repC}</div>
-          <div class="ret-label">Repeat (${repPct}%)</div>
+          <div class="ret-label">🔁 Repeat Clients</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:2px">${repPct}% of total</div>
         </div>
       </div>
-      <div style="margin-top:12px;height:8px;border-radius:4px;overflow:hidden;background:var(--bg3);display:flex">
-        <div style="width:${newPct}%;background:var(--accent);transition:width .3s"></div>
-        <div style="width:${repPct}%;background:var(--duty);transition:width .3s"></div>
+      <div style="margin-top:14px">
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text2);margin-bottom:4px">
+          <span>New ${newPct}%</span><span>Repeat ${repPct}%</span>
+        </div>
+        <div style="height:10px;border-radius:5px;overflow:hidden;background:var(--bg3);display:flex">
+          <div style="width:${newPct}%;background:var(--accent);transition:width .3s;border-radius:5px 0 0 5px"></div>
+          <div style="width:${repPct}%;background:var(--duty);transition:width .3s;border-radius:0 5px 5px 0"></div>
+        </div>
+        <div style="font-size:10px;color:var(--text3);margin-top:6px;text-align:center">
+          ${repPct >= 60 ? '✅ Strong retention — majority are repeat clients' : repPct >= 40 ? '⚠️ Moderate retention — room to improve' : '🔴 Low retention — focus on renewal outreach'}
+        </div>
       </div>
-      <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:10px;color:var(--text2)">
-        <span style="color:var(--accent)">■ New</span>
-        <span style="color:var(--duty)">■ Repeat</span>
+    </div>
+
+    <!-- ── Chart 3: CG Utilisation ── -->
+    <div class="a-card" style="grid-column:1/-1">
+      <div class="a-title"><div class="a-title-bar" style="background:var(--duty)"></div>Caregiver Utilisation — Hours Worked</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.6">
+        📌 <b style="color:var(--text2)">What this shows:</b> How busy each caregiver was. Max possible = <b>${MAX_MONTH_HRS} hours/month</b> (fully booked every day).<br>
+        🟢 <b>Green (70%+)</b> = well utilised, good. &nbsp;
+        🔵 <b>Blue (40–70%)</b> = moderate, room to fill. &nbsp;
+        🔴 <b>Red (below 40%)</b> = too many free days — needs a new booking assigned.<br>
+        <span style="color:var(--accent)">Use the red bars as your priority list for new order assignment.</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:4px 20px">
+      ${cgS.length ? cgS.map(([k,v])=>{
+        const pct = Math.round(v/maxCG*100);
+        const col = v>=maxCG*0.7?'var(--duty)':v>=maxCG*0.4?'var(--accent)':'var(--sick)';
+        const emoji = pct>=70?'🟢':pct>=40?'🔵':'🔴';
+        return `<div class="bar-row" style="margin-bottom:4px">
+          <div class="bar-label" title="${k}" style="width:90px;min-width:90px;font-size:11px;overflow:hidden;text-overflow:ellipsis">${emoji} ${k.split(' ')[0]}</div>
+          <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${col};border-radius:4px"></div></div>
+          <div class="bar-val" style="font-size:11px">${v}h <span style="color:var(--text3);font-size:9px">${pct}%</span></div>
+        </div>`;
+      }).join('') : '<div style="color:var(--text2);font-size:12px;padding:10px">No data</div>'}
       </div>
     </div>`;
 }
@@ -1955,20 +2050,36 @@ function renderChurned(){
   var todayStr=today.toISOString().slice(0,10);
   var ago30=new Date(today);ago30.setDate(ago30.getDate()-30);
   var ago30Str=ago30.toISOString().slice(0,10);
+
+  // Build client map using allData — get the LAST date each client appears on calendar
   var clientMap={};
-  rawData.forEach(function(r){
-    if(!r.client_name||!r.end_date)return;
-    if((r.status||'').toLowerCase()==='cancelled')return;
+  allData.forEach(function(r){
+    if(!r.client_name||!r.date) return;
+    var st=(r.status||'').toLowerCase().replace(/\s+/g,'');
+    if(st==='cancelled'||st==='removed') return;
     var k=r.client_name.toLowerCase().trim();
-    if(!clientMap[k]||r.end_date>clientMap[k].end_date)clientMap[k]=r;
+    if(!clientMap[k]) clientMap[k]=Object.assign({},r,{_calLastDate:r.date});
+    if(r.date>clientMap[k]._calLastDate){
+      clientMap[k]._calLastDate=r.date;
+      // Update package info from latest record
+      if(r.package_type) clientMap[k].package_type=r.package_type;
+      if(r.homecare) clientMap[k].homecare=r.homecare;
+      if(r.caregiver) clientMap[k].caregiver=r.caregiver;
+    }
   });
+
+  // Churned = last calendar date was 1-30 days ago, no active order
   var churned=Object.values(clientMap).filter(function(r){
-    if(r.end_date>=todayStr||r.end_date<ago30Str)return false;
-    return!rawData.some(function(r2){
+    var lastDate=r._calLastDate||r.end_date||'';
+    if(lastDate>=todayStr||lastDate<ago30Str) return false;
+    // Check no active booking exists for this client
+    return!allData.some(function(r2){
       return r2.client_name&&r2.client_name.toLowerCase().trim()===r.client_name.toLowerCase().trim()
-        &&(r2.status||'').toLowerCase()!=='cancelled'&&r2.end_date>=todayStr;
+        &&r2.date>=todayStr
+        &&(r2.status||'').toLowerCase().replace(/\s+/g,'')!=='cancelled'
+        &&(r2.status||'').toLowerCase().replace(/\s+/g,'')!=='removed';
     });
-  }).sort(function(a,b){return b.end_date.localeCompare(a.end_date);});
+  }).sort(function(a,b){return (b._calLastDate||'').localeCompare(a._calLastDate||'');});
   document.getElementById('churned-count').textContent=churned.length;
   if(!churned.length){document.getElementById('churned-tbody').innerHTML='<tr><td colspan="7" class="ops-empty">✅ No churned clients in the last 30 days</td></tr>';return;}
   var html='';
@@ -1979,7 +2090,7 @@ function renderChurned(){
     html+='<tr><td style="font-weight:500">'+(r.client_name||'—')+'</td><td>'+(r.caregiver||'—')+'</td>';
     html+='<td style="font-size:11px;color:var(--text2)">'+(r.homecare||'—')+'</td>';
     html+='<td style="font-size:11px;color:var(--text2)">'+(r.package_type||'—').substring(0,35)+'</td>';
-    html+='<td style="font-family:monospace;font-size:11px">'+r.end_date+'</td>';
+    html+='<td style="font-family:monospace;font-size:11px">'+(r._calLastDate||r.end_date||'—')+'</td>';
     html+='<td style="'+c+'">'+daysAgo+' days ago</td>';
     html+='<td style="font-size:11px;color:var(--text2)">'+(r.city||r.City||'—')+'</td></tr>';
   });
@@ -2007,11 +2118,19 @@ function renderIdleCGs(){
     }
   });
   var idle=Object.values(allCGs).filter(function(cg){
-    return!allData.some(function(r){
+    // Check allData — manual overrides are now injected into allData by applyOverrides
+    var hasActiveInAllData = allData.some(function(r){
       if(r.caregiver!==cg.caregiver||!r.date||r.date<todayStr||r.date>in14Str)return false;
       var st=(r.status||'').toLowerCase().split(' ').join('');
-      return st!=='cancelled'&&st!=='weekoff'&&st!=='removed';
+      return st==='duty'||st==='manual'||st==='labconfirmed'||st==='confirmed';
     });
+    if(hasActiveInAllData) return false;
+    // Also directly check overrides for manual bookings (belt-and-suspenders)
+    var hasManualOverride = Object.values(overrides).some(function(ov){
+      return ov.caregiver===cg.caregiver && ov.type==='manual'
+        && ov.date>=todayStr && ov.date<=in14Str;
+    });
+    return !hasManualOverride;
   }).filter(function(cg){
     return![...hiddenCGs].some(function(hk){return hk.startsWith(cg.caregiver+'|');});
   }).sort(function(a,b){return a.lastDate.localeCompare(b.lastDate);});
@@ -2093,12 +2212,340 @@ function renderDoubleBooked(){
   document.getElementById('double-booked-tbody').innerHTML=html;
 }
 
+
+// ── Linear Regression helper ─────────────────────────────────────
+function linearRegression(xArr, yArr){
+  var n=xArr.length, sumX=0, sumY=0, sumXY=0, sumXX=0;
+  for(var i=0;i<n;i++){sumX+=xArr[i];sumY+=yArr[i];sumXY+=xArr[i]*yArr[i];sumXX+=xArr[i]*xArr[i];}
+  var slope=(n*sumXY-sumX*sumY)/(n*sumXX-sumX*sumX)||0;
+  var intercept=(sumY-slope*sumX)/n;
+  // R-squared
+  var yMean=sumY/n, ssTot=0, ssRes=0;
+  for(var i=0;i<n;i++){ssTot+=Math.pow(yArr[i]-yMean,2);ssRes+=Math.pow(yArr[i]-(slope*xArr[i]+intercept),2);}
+  var r2=ssTot>0?1-(ssRes/ssTot):0;
+  return{slope:slope, intercept:intercept, r2:Math.max(0,r2)};
+}
+
+function predictLR(model, x){return model.slope*x+model.intercept;}
+
+// ── Logistic Regression (gradient descent) ────────────────────────
+function sigmoid(z){return 1/(1+Math.exp(-z));}
+
+function logisticRegression(X, y, lr, iters){
+  // X: array of feature arrays, y: array of 0/1 labels
+  var nSamples=X.length, nFeatures=X[0].length;
+  var weights=new Array(nFeatures).fill(0);
+  var bias=0;
+  for(var it=0;it<iters;it++){
+    var dw=new Array(nFeatures).fill(0), db=0;
+    for(var i=0;i<nSamples;i++){
+      var z=bias;
+      for(var j=0;j<nFeatures;j++) z+=weights[j]*X[i][j];
+      var pred=sigmoid(z);
+      var err=pred-y[i];
+      for(var j=0;j<nFeatures;j++) dw[j]+=err*X[i][j];
+      db+=err;
+    }
+    for(var j=0;j<nFeatures;j++) weights[j]-=(lr/nSamples)*dw[j];
+    bias-=(lr/nSamples)*db;
+  }
+  return{weights:weights, bias:bias};
+}
+
+function predictLogistic(model, features){
+  var z=model.bias;
+  for(var j=0;j<features.length;j++) z+=model.weights[j]*features[j];
+  return sigmoid(z);
+}
+
+// ── Revenue Projection ────────────────────────────────────────────
+var _revenueChart = null;
+
+function renderRevenueProjection(){
+  if(!rawData||!rawData.length) return;
+
+  // Package value estimates (AED)
+  var PKG_VALUE = {
+    'hourly':150, 'daily':400, 'weekly':2500, 'monthly':8000
+  };
+
+  function pkgValue(pkg){
+    var p=(pkg||'').toLowerCase();
+    if(p.includes('month')) return PKG_VALUE.monthly;
+    if(p.includes('week')) return PKG_VALUE.weekly;
+    if(p.includes('day')) return PKG_VALUE.daily;
+    return PKG_VALUE.hourly;
+  }
+
+  // Get Monday of week for a date string
+  function getMonday(dateStr){
+    var d=new Date(dateStr+'T12:00:00');
+    var day=d.getDay(), diff=d.getDate()-day+(day===0?-6:1);
+    d.setDate(diff); return d.toISOString().slice(0,10);
+  }
+
+  // Aggregate weekly revenue from rawData (last 12 weeks)
+  var today=new Date(); today.setHours(0,0,0,0);
+  var weekMap={};
+  rawData.forEach(function(r){
+    if(!r.date||(r.status||'').toLowerCase()==='cancelled') return;
+    var mon=getMonday(r.date);
+    if(!weekMap[mon]) weekMap[mon]=0;
+    weekMap[mon]+=pkgValue(r.package_type);
+  });
+
+  var weeks=Object.keys(weekMap).sort();
+  // Take last 12 weeks with data
+  var histWeeks=weeks.slice(-12);
+  if(histWeeks.length<3){
+    document.getElementById('revenue-projection-stats').innerHTML=
+      '<div style="color:var(--text3);font-size:12px">Not enough historical data for projection (need 3+ weeks)</div>';
+    return;
+  }
+
+  var xHist=histWeeks.map(function(_,i){return i;});
+  var yHist=histWeeks.map(function(w){return weekMap[w];});
+
+  // Fit linear regression
+  var model=linearRegression(xHist, yHist);
+
+  // Generate 4 future weeks
+  var lastWeekDate=new Date(histWeeks[histWeeks.length-1]+'T12:00:00');
+  var futureWeeks=[];
+  for(var i=1;i<=4;i++){
+    var fw=new Date(lastWeekDate); fw.setDate(fw.getDate()+7*i);
+    futureWeeks.push(fw.toISOString().slice(0,10));
+  }
+  var xFuture=futureWeeks.map(function(_,i){return histWeeks.length+i;});
+  var yFuture=xFuture.map(function(x){return Math.max(0,predictLR(model,x));});
+
+  // Labels
+  var allLabels=histWeeks.concat(futureWeeks).map(function(w){
+    var d=new Date(w+'T12:00:00');
+    return (d.getMonth()+1)+'/'+d.getDate();
+  });
+
+  // Chart data
+  var histData=yHist.concat(new Array(4).fill(null));
+  var forecastData=new Array(histWeeks.length-1).fill(null).concat([yHist[yHist.length-1]]).concat(yFuture);
+  var trendData=xHist.concat(xFuture).map(function(x){return Math.max(0,predictLR(model,x));});
+
+  // Destroy old chart
+  if(_revenueChart) _revenueChart.destroy();
+
+  var canvas=document.getElementById('revenue-projection-chart');
+  if(!canvas) return;
+  var ctx=canvas.getContext('2d');
+
+  _revenueChart=new Chart(ctx,{
+    type:'line',
+    data:{
+      labels:allLabels,
+      datasets:[
+        {
+          label:'Actual Revenue (AED)',
+          data:histData,
+          borderColor:'#6366f1',
+          backgroundColor:'rgba(99,102,241,.1)',
+          borderWidth:2,
+          pointRadius:4,
+          tension:.3,
+          fill:true
+        },
+        {
+          label:'Forecast (AED)',
+          data:forecastData,
+          borderColor:'#f59e0b',
+          backgroundColor:'rgba(245,158,11,.08)',
+          borderWidth:2,
+          borderDash:[6,4],
+          pointRadius:4,
+          tension:.3,
+          fill:false
+        },
+        {
+          label:'Trend Line',
+          data:trendData,
+          borderColor:'rgba(16,185,129,.5)',
+          borderWidth:1,
+          borderDash:[3,3],
+          pointRadius:0,
+          fill:false
+        }
+      ]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{
+        legend:{labels:{color:'#94a3b8',font:{size:11}}},
+        tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+': AED '+Math.round(ctx.parsed.y).toLocaleString();}}}
+      },
+      scales:{
+        x:{ticks:{color:'#64748b',font:{size:10}},grid:{color:'rgba(255,255,255,.05)'}},
+        y:{ticks:{color:'#64748b',font:{size:10},callback:function(v){return 'AED '+v.toLocaleString();}},grid:{color:'rgba(255,255,255,.05)'}}
+      }
+    }
+  });
+
+  // Stats
+  var totalForecast=yFuture.reduce(function(a,b){return a+b;},0);
+  var avgActual=yHist.reduce(function(a,b){return a+b;},0)/yHist.length;
+  var trend=model.slope>0?'↑ Growing':'↓ Declining';
+  var trendColor=model.slope>0?'#10b981':'#ef4444';
+  var statsHtml='';
+  statsHtml+='<div class="daily-kpi"><div class="daily-kpi-val" style="color:#6366f1">AED '+Math.round(totalForecast).toLocaleString()+'</div><div class="daily-kpi-lbl">Forecast next 4 weeks</div></div>';
+  statsHtml+='<div class="daily-kpi"><div class="daily-kpi-val">AED '+Math.round(avgActual).toLocaleString()+'</div><div class="daily-kpi-lbl">Avg weekly (last 12w)</div></div>';
+  statsHtml+='<div class="daily-kpi"><div class="daily-kpi-val" style="color:'+trendColor+'">'+trend+'</div><div class="daily-kpi-lbl">AED '+Math.round(Math.abs(model.slope)).toLocaleString()+'/week</div></div>';
+  statsHtml+='<div class="daily-kpi"><div class="daily-kpi-val">'+(model.r2*100).toFixed(0)+'%</div><div class="daily-kpi-lbl">Model fit (R²)</div></div>';
+  document.getElementById('revenue-projection-stats').innerHTML=statsHtml;
+}
+
+// ── Churn Risk (Logistic Regression) ─────────────────────────────
+function renderChurnRisk(){
+  if(!rawData||!rawData.length) return;
+
+  var today=new Date(); today.setHours(0,0,0,0);
+  var todayStr=today.toISOString().slice(0,10);
+
+  // Build client profiles
+  var clientMap={};
+  rawData.forEach(function(r){
+    if(!r.client_name) return;
+    var k=r.client_name.toLowerCase().trim();
+    if(!clientMap[k]) clientMap[k]={
+      name:r.client_name, homecare:r.homecare||'—',
+      orders:[], lastPkg:'', lastEnd:'', firstDate:''
+    };
+    clientMap[k].orders.push(r);
+    if(!clientMap[k].firstDate||r.date<clientMap[k].firstDate) clientMap[k].firstDate=r.date;
+    if(!clientMap[k].lastEnd||r.end_date>clientMap[k].lastEnd){
+      clientMap[k].lastEnd=r.end_date;
+      clientMap[k].lastPkg=r.package_type||'—';
+    }
+  });
+
+  var clients=Object.values(clientMap);
+
+  // Feature extraction
+  function extractFeatures(c){
+    var endDate=new Date((c.lastEnd||todayStr)+'T00:00:00');
+    var daysSinceEnd=Math.round((today-endDate)/(1000*60*60*24));
+    var totalOrders=c.orders.filter(function(o){return(o.status||'').toLowerCase()!=='cancelled';}).length;
+    var isMonthly=(c.lastPkg||'').toLowerCase().includes('month')?1:0;
+    var isHourly=(c.lastPkg||'').toLowerCase().includes('hour')?1:0;
+    var tenure=c.firstDate?Math.round((today-new Date(c.firstDate+'T00:00:00'))/(1000*60*60*24)):0;
+    var hasRenewed=c.orders.length>1?1:0;
+    return[
+      Math.min(daysSinceEnd/90,1),    // days since last end (normalised)
+      Math.min(totalOrders/10,1),      // total orders (normalised)
+      isMonthly,
+      isHourly,
+      Math.min(tenure/365,1),          // tenure in years
+      hasRenewed
+    ];
+  }
+
+  // Label: churned = ended >14 days ago, no active order
+  function isChurned(c){
+    var end=new Date((c.lastEnd||todayStr)+'T00:00:00');
+    var daysSince=Math.round((today-end)/(1000*60*60*24));
+    if(daysSince<=14) return 0; // too recent to classify
+    var hasActive=rawData.some(function(r){
+      return r.client_name&&r.client_name.toLowerCase().trim()===c.name.toLowerCase().trim()
+        &&(r.status||'').toLowerCase()!=='cancelled'&&r.end_date>=todayStr;
+    });
+    return hasActive?0:1;
+  }
+
+  // Build training set from clients with ended packages
+  var trainX=[], trainY=[];
+  clients.forEach(function(c){
+    var end=new Date((c.lastEnd||todayStr)+'T00:00:00');
+    var daysSince=Math.round((today-end)/(1000*60*60*24));
+    if(daysSince>14){ // only use past clients for training
+      trainX.push(extractFeatures(c));
+      trainY.push(isChurned(c));
+    }
+  });
+
+  if(trainX.length<5){
+    document.getElementById('churn-risk-tbody').innerHTML=
+      '<tr><td colspan="7" class="ops-empty">Not enough historical data to train model (need 5+ past clients)</td></tr>';
+    document.getElementById('churn-risk-count').textContent='—';
+    return;
+  }
+
+  // Train logistic regression
+  var model=logisticRegression(trainX, trainY, 0.1, 1000);
+
+  // Score ALL current active clients (packages ending in next 60 days)
+  var scored=[];
+  clients.forEach(function(c){
+    var end=new Date((c.lastEnd||todayStr)+'T00:00:00');
+    var daysSince=Math.round((today-end)/(1000*60*60*24));
+    // Only score clients whose package ends soon or just ended
+    if(daysSince>30) return; // already churned/classified
+    var features=extractFeatures(c);
+    var risk=predictLogistic(model, features);
+    var hasActive=rawData.some(function(r){
+      return r.client_name&&r.client_name.toLowerCase().trim()===c.name.toLowerCase().trim()
+        &&(r.status||'').toLowerCase()!=='cancelled'&&r.end_date>=todayStr;
+    });
+    if(!hasActive) return; // skip already churned
+    scored.push({
+      name:c.name, homecare:c.homecare,
+      risk:risk, lastPkg:c.lastPkg, lastEnd:c.lastEnd,
+      orders:c.orders.length, tenure:c.firstDate?Math.round((today-new Date(c.firstDate+'T00:00:00'))/(1000*60*60*24)):0,
+      isMonthly:(c.lastPkg||'').toLowerCase().includes('month')
+    });
+  });
+
+  scored.sort(function(a,b){return b.risk-a.risk;});
+  // Show top 30 highest risk
+  var topRisk=scored.slice(0,30);
+
+  document.getElementById('churn-risk-count').textContent=scored.filter(function(s){return s.risk>0.5;}).length+' high risk';
+
+  if(!topRisk.length){
+    document.getElementById('churn-risk-tbody').innerHTML=
+      '<tr><td colspan="7" class="ops-empty">✅ No clients with significant churn risk detected</td></tr>';
+    return;
+  }
+
+  var html='';
+  topRisk.forEach(function(c){
+    var pct=Math.round(c.risk*100);
+    var riskCls=pct>=70?'color:#ef4444;font-weight:700':pct>=50?'color:#f59e0b;font-weight:600':pct>=30?'color:#eab308':'color:#10b981';
+    var riskLabel=pct>=70?'🔴 High':pct>=50?'🟡 Medium':pct>=30?'🟢 Watch':'✅ Low';
+    var barColor=pct>=70?'#ef4444':pct>=50?'#f59e0b':pct>=30?'#eab308':'#10b981';
+    var factors=[];
+    if(c.orders===1) factors.push('1st time client');
+    if(!c.isMonthly) factors.push('Hourly/daily pkg');
+    if(c.tenure<30) factors.push('New client');
+    if(c.tenure>180) factors.push('Loyal client');
+    html+='<tr>';
+    html+='<td style="font-weight:500">'+c.name+'</td>';
+    html+='<td style="font-size:11px;color:var(--text2)">'+c.homecare+'</td>';
+    html+='<td><div style="display:flex;align-items:center;gap:8px">';
+    html+='<div style="width:60px;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden"><div style="width:'+pct+'%;height:100%;background:'+barColor+'"></div></div>';
+    html+='<span style="'+riskCls+';font-size:12px">'+pct+'%</span></div></td>';
+    html+='<td><span style="font-size:12px">'+riskLabel+'</span></td>';
+    html+='<td style="font-size:11px;color:var(--text2)">'+(c.lastPkg||'—').substring(0,35)+'</td>';
+    html+='<td style="font-size:11px;font-family:monospace">'+(c.lastEnd||'—')+'</td>';
+    html+='<td style="font-size:10px;color:var(--text3)">'+factors.join(' · ')+'</td>';
+    html+='</tr>';
+  });
+  document.getElementById('churn-risk-tbody').innerHTML=html;
+}
+
 function renderOps(){
   renderExpiring();
   renderUnassigned();
   renderChurned();
   renderIdleCGs();
   renderDoubleBooked();
+  renderChurnRisk();
 }
 
 function renderExpiring(){
@@ -2176,21 +2623,22 @@ function renderExpiring(){
 }
 
 function renderUnassigned(){
-  // Find orders from rawData where caregiver is empty/null
-  // These come from Metabase where Nurse_Assigned is null
-  // We detect them by checking if caregiver field is empty
-  const unassigned = rawData.filter(r => {
-    if(!r.client_name) return false;
-    if((r.status||'').toLowerCase()==='cancelled') return false;
-    return !r.caregiver || r.caregiver.trim()==='' || r.caregiver==='null';
-  });
-
-  // Deduplicate by order_id
-  const seen = new Set();
-  const unique = unassigned.filter(r => {
-    const k = r.child_order_id || r.order_id || (r.client_name+'|'+r.date);
-    if(seen.has(k)) return false;
-    seen.add(k); return true;
+  // Use allData (calendar view) — overrides already applied
+  // Filter to orders today and future that have no caregiver assigned
+  var today = new Date(); today.setHours(0,0,0,0);
+  var todayStr = today.toISOString().slice(0,10);
+  var seen = new Set();
+  var unique = [];
+  allData.forEach(function(r){
+    if(!r.client_name) return;
+    if(!r.date || r.date < todayStr) return; // only current/future
+    var st = (r.status||'').toLowerCase().replace(/\s+/g,'');
+    if(st==='cancelled'||st==='removed') return;
+    if(r.caregiver && r.caregiver.trim() && r.caregiver!=='null') return; // has CG
+    var k = r.child_order_id||r.order_id||(r.client_name+'|'+r.date);
+    if(seen.has(k)) return;
+    seen.add(k);
+    unique.push(r);
   });
 
   document.getElementById('unassigned-count').textContent = unique.length;
@@ -2294,10 +2742,17 @@ function saveLocalCache(){
 }
 
 function reRenderAll(){
-  applyOverrides();renderHCGrid();applyHiddenFilter();updateHiddenBadge();
+  applyOverrides(); // always first — rebuilds allData with overrides
+  renderHCGrid();
+  applyHiddenFilter();
+  updateHiddenBadge();
   if(activeCG) renderCalendar();
   var rp=document.getElementById('page-roster');
   if(rp&&rp.classList.contains('active')) renderRoster();
+  var op=document.getElementById('page-ops');
+  if(op&&op.classList.contains('active')) renderOps();
+  var dp=document.getElementById('page-daily');
+  if(dp&&dp.classList.contains('active')) renderDailyOrders();
 }
 
 function loadLocalCache(){
@@ -2403,6 +2858,49 @@ function applyOverrides(){
       }
     });
   }
+
+  // ── Inject manual overrides into allData ─────────────────────
+  // Manual bookings added via override modal must appear in allData
+  // so all tabs (idle CGs, daily orders, roster etc.) see them
+  Object.values(overrides).forEach(function(ov){
+    if(ov.type !== 'manual') return;
+    if(!ov.caregiver || !ov.date) return;
+    var key = ov.caregiver + '|' + ov.date;
+    // Check if allData already has a record for this CG+date
+    var exists = allData.some(function(r){
+      return r.caregiver === ov.caregiver && r.date === ov.date;
+    });
+    if(!exists){
+      // Create a virtual allData record from the manual override
+      allData.push({
+        caregiver: ov.caregiver,
+        date: ov.date,
+        status: 'Manual',
+        client_name: ov.client_name || '',
+        time_start: ov.time_start || '',
+        time_end: ov.time_end || '',
+        homecare: (function(){
+          var r = rawData.find(function(r2){ return r2.caregiver === ov.caregiver; });
+          return r ? r.homecare : '';
+        })(),
+        order_id: '',
+        child_order_id: '',
+        package_type: 'Manual',
+        end_date: ov.date,
+        _manual: true
+      });
+    } else {
+      // Update existing record's status to Manual
+      allData.forEach(function(r){
+        if(r.caregiver === ov.caregiver && r.date === ov.date){
+          r.status = 'Manual';
+          if(ov.client_name) r.client_name = ov.client_name;
+          if(ov.time_start) r.time_start = ov.time_start;
+          if(ov.time_end) r.time_end = ov.time_end;
+        }
+      });
+    }
+  });
 }
 
 function openOvModal(cg, date){
@@ -2457,18 +2955,16 @@ async function saveOverride(){
   }
   var ovKey=ovCG+'|'+ovDate;
   overrides[ovKey]=payload;saveLocalCache();
-  applyOverrides();closeOvModal();renderCalendar();renderHCGrid();
-  var rp=document.getElementById('page-roster');
-  if(rp&&rp.classList.contains('active')) renderRoster();
+  reRenderAll(); // refresh ALL tabs — calendar, roster, ops, daily
+  closeOvModal();
   await persistWrite('override',ovKey,payload);
 }
 
 async function clearOverride(){
   var ovKey=ovCG+'|'+ovDate;
   delete overrides[ovKey];saveLocalCache();
-  applyOverrides();closeOvModal();renderCalendar();renderHCGrid();
-  var rp=document.getElementById('page-roster');
-  if(rp&&rp.classList.contains('active')) renderRoster();
+  reRenderAll();
+  closeOvModal();
   await persistDelete('override',ovKey);
 }
 
@@ -3521,7 +4017,7 @@ function switchToDaily(){
 }
 
 function renderDailyOrders(){
-  if(!rawData||!rawData.length) return;
+  if(!allData||!allData.length) return;
   var wrap = document.getElementById('daily-wrap');
   var summEl = document.getElementById('daily-summary');
   if(!wrap) return;
