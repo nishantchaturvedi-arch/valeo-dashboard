@@ -1137,10 +1137,13 @@ function calcEndDate(start,pkg,cgKey){
   let baseEnd;
   if(pt==='monthly'){
     const w=extractWeeks(pkg)||4;
-    baseEnd = addDays(start,(w*7)-1); // always block ALL days e.g. 28 days
+    baseEnd = addDays(start,(w*7)-1); // monthly: always 28 days (4 weeks × 7)
   } else if(pt==='weekly'){
     const w=extractWeeks(pkg)||1;
-    baseEnd = addDays(start,(w*7)-1); // weekly also blocks full weeks
+    // For weekly plans use days-per-week × number-of-weeks
+    // e.g. "Weekly plan: 6 days" = 6 days, "Weekly plan: 5 days, 4 Weeks" = 20 days
+    const daysPerWeek = extractDays2(pkg) || 7;
+    baseEnd = addDays(start,(w * daysPerWeek)-1);
   } else {
     return start;
   }
@@ -2821,8 +2824,10 @@ function applyOverrides(){
       const pkg = r.package_type||'';
       const pt = pkgType(pkg);
       if(pt!=='monthly'&&pt!=='weekly') return;
-      const w = extractWeeks(pkg)||4;
-      const baseEnd = addDays(r.date,(w*7)-1);
+      const w = extractWeeks(pkg)||(pt==='monthly'?4:1);
+      // Use correct days per week for weekly plans (not always 7)
+      const daysPerWk = pt==='weekly' ? (extractDays2(pkg)||7) : 7;
+      const baseEnd = addDays(r.date,(w*daysPerWk)-1);
       const ovCount = Object.values(overrides).filter(function(o){
         // 'removed' excluded — does not add makeup day
         return o.caregiver===r.caregiver && ['sick','off','holiday','unpaid','cancelled','absent'].includes(o.type);
