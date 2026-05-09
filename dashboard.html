@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
@@ -520,6 +521,24 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
   .daily-kpi{min-width:80px;}
 }
 
+
+/* ── Roster Copy/Cut/Paste ─────────────────────────────────── */
+.rd.rd-copied{outline:2px solid #f59e0b!important;outline-offset:-2px;}
+.rd.rd-cut{outline:2px dashed #ef4444!important;outline-offset:-2px;opacity:.6;}
+.roster-action-bar{display:none;align-items:center;gap:8px;padding:7px 16px;background:var(--bg3);border-bottom:1px solid var(--border);font-size:12px;}
+.roster-action-bar.active{display:flex;}
+.rab-badge{background:var(--accent);color:#fff;border-radius:6px;padding:3px 10px;font-size:11px;font-weight:600;}
+.rab-btn{padding:5px 12px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;}
+.rab-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent);}
+.rab-btn.danger{border-color:rgba(248,81,73,.4);color:var(--absent);}
+.rab-btn.danger:hover{background:var(--absent);color:#fff;}
+.ctx-menu{position:fixed;background:var(--bg2);border:1px solid var(--border2);border-radius:10px;padding:6px;z-index:9999;min-width:160px;box-shadow:0 8px 24px rgba(0,0,0,.3);display:none;}
+.ctx-item{padding:8px 12px;font-size:12px;cursor:pointer;border-radius:6px;color:var(--text);}
+.ctx-item:hover{background:var(--bg3);}
+.ctx-item.ctx-danger{color:var(--absent);}
+.ctx-item.ctx-danger:hover{background:rgba(248,81,73,.1);}
+.ctx-divider{height:1px;background:var(--border);margin:4px 0;}
+
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -845,6 +864,18 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 </div>
 <!-- ── PACKAGE PLANNER PAGE ── -->
 <div class="page" id="page-roster">
+ <div class="roster-action-bar" id="roster-action-bar">
+  <span id="rab-label" class="rab-badge">—</span>
+  <button class="rab-btn" onclick="">📌 Click any cell to paste</button>
+  <button class="rab-btn danger" onclick="rosterClearClip()">✕ Cancel</button>
+ </div>
+ <div class="ctx-menu" id="roster-ctx-menu">
+  <div class="ctx-item" onclick="rosterCopy()">📋 Copy</div>
+  <div class="ctx-item" onclick="rosterCut()">✂️ Cut</div>
+  <div class="ctx-item" id="ctx-paste-item" style="display:none" onclick="rosterPasteCtx()">📌 Paste</div>
+  <div class="ctx-divider"></div>
+  <div class="ctx-item ctx-danger" id="ctx-clear-item" style="display:none" onclick="rosterClearCell()">🗑 Clear Override</div>
+ </div>
  <div class="roster-toolbar">
   <button class="roster-nav-btn" onclick="rosterPrevMonth()">&#8249;</button>
   <span class="roster-month-label" id="roster-month-label"></span>
@@ -2707,6 +2738,8 @@ function populateCGHCFilter(){
 
 // ── Override System ──────────────────────────────────────────────
 var ovCG='', ovDate='', ovType='';
+var _rClip=null;
+var _rCtxCG='', _rCtxDS='';
 
 // ── Firebase Firestore persistence ───────────────────────────────
 var _db=null;
@@ -3930,7 +3963,7 @@ function renderRoster(){
           if(isWO){cls+=' rd-wo';inner='<div class="rd-in"><div class="rd-cl">Week Off</div></div>';}
         }
         var safeN=cgName.replace(/'/g,'&#39;').replace(/"/g,'&quot;');
-        html+='<td class="'+cls+'" title="'+safeN+' | '+ds+'" data-cg="'+safeN+'" data-ds="'+ds+'" onclick="openOvModal(this.dataset.cg,this.dataset.ds)">'+inner+'</td>';
+        html+='<td class="'+cls+'" title="'+safeN+' | '+ds+'" data-cg="'+safeN+'" data-ds="'+ds+'" onclick="rosterCellClick(event,this)" oncontextmenu="rosterCtxMenu(event,this)">'+inner+'</td>';
       });
       html+='</tr>';
     });
@@ -4150,6 +4183,84 @@ function renderDailyOrders(){
   });
 
   wrap.innerHTML = html;
+}
+
+
+// ── Roster Copy / Cut / Paste ─────────────────────────────────────
+function rosterCellClick(e,td){
+  if(_rClip){_rCtxCG=td.dataset.cg;_rCtxDS=td.dataset.ds;rosterPasteCtx();return;}
+  openOvModal(td.dataset.cg,td.dataset.ds);
+}
+function rosterCtxMenu(e,td){
+  e.preventDefault();
+  _rCtxCG=td.dataset.cg;_rCtxDS=td.dataset.ds;
+  var menu=document.getElementById('roster-ctx-menu');
+  var hasOv=!!overrides[_rCtxCG+'|'+_rCtxDS];
+  document.getElementById('ctx-paste-item').style.display=_rClip?'block':'none';
+  document.getElementById('ctx-clear-item').style.display=hasOv?'block':'none';
+  menu.style.left=Math.min(e.clientX,window.innerWidth-170)+'px';
+  menu.style.top=Math.min(e.clientY,window.innerHeight-200)+'px';
+  menu.style.display='block';
+}
+document.addEventListener('click',function(e){
+  var m=document.getElementById('roster-ctx-menu');
+  if(m&&!m.contains(e.target))m.style.display='none';
+});
+function rosterCopy(){
+  document.getElementById('roster-ctx-menu').style.display='none';
+  var ov=overrides[_rCtxCG+'|'+_rCtxDS];
+  if(!ov){alert('No override on this cell to copy');return;}
+  _rClip={cg:_rCtxCG,date:_rCtxDS,ov:Object.assign({},ov),isCut:false};
+  _updateRosterActionBar();
+  document.querySelectorAll('.rd').forEach(function(el){el.classList.remove('rd-copied','rd-cut');});
+  document.querySelectorAll('[data-cg="'+_rCtxCG+'"][data-ds="'+_rCtxDS+'"]').forEach(function(el){el.classList.add('rd-copied');});
+}
+function rosterCut(){
+  document.getElementById('roster-ctx-menu').style.display='none';
+  var ov=overrides[_rCtxCG+'|'+_rCtxDS];
+  if(!ov){alert('No override on this cell to cut');return;}
+  _rClip={cg:_rCtxCG,date:_rCtxDS,ov:Object.assign({},ov),isCut:true};
+  _updateRosterActionBar();
+  document.querySelectorAll('.rd').forEach(function(el){el.classList.remove('rd-copied','rd-cut');});
+  document.querySelectorAll('[data-cg="'+_rCtxCG+'"][data-ds="'+_rCtxDS+'"]').forEach(function(el){el.classList.add('rd-cut');});
+}
+async function rosterPasteCtx(){
+  document.getElementById('roster-ctx-menu').style.display='none';
+  if(!_rClip||!_rCtxCG||!_rCtxDS)return;
+  var payload=Object.assign({},_rClip.ov,{caregiver:_rCtxCG,date:_rCtxDS,saved_at:new Date().toISOString()});
+  var targetKey=_rCtxCG+'|'+_rCtxDS;
+  overrides[targetKey]=payload;
+  if(_rClip.isCut){
+    var srcKey=_rClip.cg+'|'+_rClip.date;
+    delete overrides[srcKey];
+    await persistDelete('override',srcKey);
+  }
+  saveLocalCache();reRenderAll();
+  await persistWrite('override',targetKey,payload);
+  rosterClearClip();
+}
+async function rosterClearCell(){
+  document.getElementById('roster-ctx-menu').style.display='none';
+  var k=_rCtxCG+'|'+_rCtxDS;
+  if(!overrides[k])return;
+  delete overrides[k];saveLocalCache();reRenderAll();
+  await persistDelete('override',k);
+}
+function rosterClearClip(){
+  _rClip=null;
+  document.querySelectorAll('.rd.rd-copied,.rd.rd-cut').forEach(function(el){el.classList.remove('rd-copied','rd-cut');});
+  _updateRosterActionBar();
+}
+function _updateRosterActionBar(){
+  var bar=document.getElementById('roster-action-bar');
+  var lbl=document.getElementById('rab-label');
+  if(!bar)return;
+  if(_rClip){
+    bar.classList.add('active');
+    lbl.textContent=(_rClip.isCut?'✂️ Cut':'📋 Copied')+': '+(_rClip.cg||'').split(' ')[0]+' · '+_rClip.date;
+  } else {
+    bar.classList.remove('active');
+  }
 }
 
 // ── Init ─────────────────────────────────────────────────────────
