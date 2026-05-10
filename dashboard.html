@@ -521,24 +521,6 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
   .daily-kpi{min-width:80px;}
 }
 
-
-/* ── Roster Copy/Cut/Paste ─────────────────────────────────── */
-.rd.rd-copied{outline:2px solid #f59e0b!important;outline-offset:-2px;}
-.rd.rd-cut{outline:2px dashed #ef4444!important;outline-offset:-2px;opacity:.6;}
-.roster-action-bar{display:none;align-items:center;gap:8px;padding:7px 16px;background:var(--bg3);border-bottom:1px solid var(--border);font-size:12px;}
-.roster-action-bar.active{display:flex;}
-.rab-badge{background:var(--accent);color:#fff;border-radius:6px;padding:3px 10px;font-size:11px;font-weight:600;}
-.rab-btn{padding:5px 12px;border:1px solid var(--border);border-radius:6px;background:var(--bg2);color:var(--text);font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;}
-.rab-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent);}
-.rab-btn.danger{border-color:rgba(248,81,73,.4);color:var(--absent);}
-.rab-btn.danger:hover{background:var(--absent);color:#fff;}
-.ctx-menu{position:fixed;background:var(--bg2);border:1px solid var(--border2);border-radius:10px;padding:6px;z-index:9999;min-width:160px;box-shadow:0 8px 24px rgba(0,0,0,.3);display:none;}
-.ctx-item{padding:8px 12px;font-size:12px;cursor:pointer;border-radius:6px;color:var(--text);}
-.ctx-item:hover{background:var(--bg3);}
-.ctx-item.ctx-danger{color:var(--absent);}
-.ctx-item.ctx-danger:hover{background:rgba(248,81,73,.1);}
-.ctx-divider{height:1px;background:var(--border);margin:4px 0;}
-
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -823,8 +805,9 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 <!-- ── OVERRIDE MODAL ── -->
 <div class="override-modal" id="override-modal">
  <div class="override-box">
- <div class="override-title">📝 Add Override</div>
+ <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div class="override-title" style="margin:0">📝 Add Override</div><button onclick="closeOvModal()" style="background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer">✕</button></div>
  <div class="override-date-info" id="ov-date-info">—</div>
+ <div id="ov-existing-list" style="margin-bottom:8px"></div>
  <div class="override-type-grid">
  <div class="ov-type-btn sick" onclick="selectOvType('sick',this)">🤒 Sick Leave</div>
  <div class="ov-type-btn off" onclick="selectOvType('off',this)">🌙 Day Off</div>
@@ -846,7 +829,8 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <div class="ov-actions">
  <button class="ov-cancel-btn" onclick="closeOvModal()">Cancel</button>
  <button class="ov-remove-btn" onclick="clearOverride()">Clear</button>
- <button class="ov-save-btn" onclick="saveOverride()">Save Override</button>
+ <button class="ov-save-btn" onclick="saveOverride()">Save</button>
+ <button id="ov-add-another" style="display:none;flex:1;padding:9px;background:var(--duty);border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer" onclick="saveAndAddAnother()">+ Add Another</button>
  </div>
  </div>
 </div>
@@ -864,18 +848,6 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 </div>
 <!-- ── PACKAGE PLANNER PAGE ── -->
 <div class="page" id="page-roster">
- <div class="roster-action-bar" id="roster-action-bar">
-  <span id="rab-label" class="rab-badge">—</span>
-  <button class="rab-btn" onclick="">📌 Click any cell to paste</button>
-  <button class="rab-btn danger" onclick="rosterClearClip()">✕ Cancel</button>
- </div>
- <div class="ctx-menu" id="roster-ctx-menu">
-  <div class="ctx-item" onclick="rosterCopy()">📋 Copy</div>
-  <div class="ctx-item" onclick="rosterCut()">✂️ Cut</div>
-  <div class="ctx-item" id="ctx-paste-item" style="display:none" onclick="rosterPasteCtx()">📌 Paste</div>
-  <div class="ctx-divider"></div>
-  <div class="ctx-item ctx-danger" id="ctx-clear-item" style="display:none" onclick="rosterClearCell()">🗑 Clear Override</div>
- </div>
  <div class="roster-toolbar">
   <button class="roster-nav-btn" onclick="rosterPrevMonth()">&#8249;</button>
   <span class="roster-month-label" id="roster-month-label"></span>
@@ -1587,15 +1559,7 @@ function renderCalendar(){
     let evHtml='';
     // Show override even on empty days (no Metabase booking)
     if(!other && evs.length===0 && dateStr){
-      const emptyOv = overrides[activeCG+'|'+dateStr];
-      if(emptyOv){
-        const ovLabels = {sick:'🤒 Sick',off:'🌙 Off',holiday:'🎉 Holiday',unpaid:'💸 Unpaid',cancelled:'❌ Cancelled',removed:'🗑 Removed',manual:'📋 Manual'};
-        const ovCls = emptyOv.type==='manual'?'duty':emptyOv.type==='sick'?'sick':emptyOv.type==='off'?'off-day':emptyOv.type==='holiday'?'holiday':emptyOv.type==='unpaid'?'unpaid':'cancelled';
-        const emptyT = emptyOv.time_start&&emptyOv.time_end ? emptyOv.time_start+' – '+emptyOv.time_end : (emptyOv.time_start||'');
-        const ovLbl = emptyOv.type==='manual' ? (emptyOv.client_name||'Manual')+(emptyT?' · '+emptyT:'') : (ovLabels[emptyOv.type]||emptyOv.type);
-        const safe = encodeURIComponent(JSON.stringify({caregiver:activeCG, date:dateStr, status:emptyOv.type, override:emptyOv}));
-        evHtml += `<div class="cal-ev ${ovCls}" draggable="true" ondragstart="onOvDragStart(event,'${activeCG}','${dateStr}')" ondragend="onOvDragEnd(event)" onclick="openEvModal('${safe}')">${ovLbl} <span class="drag-handle">&#8942;</span></div>`;
-      }
+      evHtml += renderDayOverrides(activeCG, dateStr);
     }
     evs.forEach(ev=>{
       const ds = !other ? calYear+'-'+pad(calMo+1)+'-'+pad(day) : '';
@@ -1637,6 +1601,7 @@ function renderCalendar(){
       var dragHandle2=ov?' <span class="drag-handle">&#8942;</span>':'';
       evHtml+='<div class="cal-ev '+cls2+'" '+dragAttrs2+' onclick="openEvModal(\''+safe+'\')">' +lbl+dragHandle2+'</div>';
     });
+    if(!other&&evs.length>0&&dateStr) evHtml+=renderManualChips(activeCG,dateStr);
     // Show + button on ALL non-other-month days (not just days with events)
     const addBtn = !other ? `<div class="day-add-btn" onclick="event.stopPropagation();openOvModal('${activeCG}','${dateStr}')" title="Add entry">+</div>` : '';
     html+=`<div class="${cls}" ondragover="onDayDragOver(event,'${activeCG}','${dateStr}')" ondragleave="onDayDragLeave(event)" ondrop="onDayDrop(event,'${activeCG}','${dateStr}')">${addBtn}<div class="day-num">${day}</div>${evHtml}</div>`;
@@ -2738,8 +2703,6 @@ function populateCGHCFilter(){
 
 // ── Override System ──────────────────────────────────────────────
 var ovCG='', ovDate='', ovType='';
-var _rClip=null;
-var _rCtxCG='', _rCtxDS='';
 
 // ── Firebase Firestore persistence ───────────────────────────────
 var _db=null;
@@ -2941,30 +2904,25 @@ function applyOverrides(){
   });
 }
 
-function openOvModal(cg, date){
-  ovCG = cg; ovDate = date;
-  // Check if this is an existing booking or empty slot
-  const hasBooking = allData.some(function(r){ return r.caregiver===cg && r.date===date; });
-  document.getElementById('ov-date-info').textContent = cg + '  ·  ' + date + (hasBooking ? '' : '  (empty slot)');
-  document.getElementById('ov-note').value = '';
-  document.getElementById('ov-manual-fields').style.display = 'none';
-  document.getElementById('ov-client').value = '';
-  document.getElementById('ov-time-start').value = '';
-  document.getElementById('ov-time-end').value = '';
-  // Pre-select existing override
-  const existing = overrides[cg+'|'+date];
-  document.querySelectorAll('.ov-type-btn').forEach(b=>b.classList.remove('selected'));
-  if(existing){
-    ovType = existing.type;
-    document.getElementById('ov-note').value = existing.note||'';
-    if(existing.type==='manual'){
-      document.getElementById('ov-manual-fields').style.display='block';
-      document.getElementById('ov-client').value = existing.client_name||'';
-      document.getElementById('ov-time-start').value = existing.time_start||'';
-      document.getElementById('ov-time-end').value = existing.time_end||'';
-    }
-    document.querySelector('.ov-type-btn.'+existing.type)?.classList.add('selected');
-  } else { ovType = ''; }
+function openOvModal(cg,date){
+  ovCG=cg; ovDate=date; ovType='';
+  document.getElementById('ov-note').value='';
+  document.getElementById('ov-manual-fields').style.display='none';
+  document.getElementById('ov-client').value='';
+  document.getElementById('ov-time-start').value='';
+  document.getElementById('ov-time-end').value='';
+  document.querySelectorAll('.ov-type-btn').forEach(function(b){b.classList.remove('selected');});
+  var aab=document.getElementById('ov-add-another');
+  if(aab) aab.style.display='none';
+  document.getElementById('ov-date-info').textContent=cg+'  ·  '+date;
+  renderExistingBookings(cg,date);
+  var existing=overrides[cg+'|'+date];
+  if(existing&&existing.type!=='manual'&&existing.type!=='manual_list'){
+    ovType=existing.type;
+    document.getElementById('ov-note').value=existing.note||'';
+    var btn=document.querySelector('.ov-type-btn.'+existing.type);
+    if(btn) btn.classList.add('selected');
+  }
   document.getElementById('override-modal').classList.add('show');
 }
 
@@ -2973,11 +2931,58 @@ function closeOvModal(){
   ovCG=''; ovDate=''; ovType='';
 }
 
-function selectOvType(type, el){
-  ovType = type;
-  document.querySelectorAll('.ov-type-btn').forEach(b=>b.classList.remove('selected'));
+function selectOvType(type,el){
+  ovType=type;
+  document.querySelectorAll('.ov-type-btn').forEach(function(b){b.classList.remove('selected');});
   el.classList.add('selected');
-  document.getElementById('ov-manual-fields').style.display = type==='manual' ? 'block' : 'none';
+  document.getElementById('ov-manual-fields').style.display=type==='manual'?'block':'none';
+  var aab=document.getElementById('ov-add-another');
+  if(aab) aab.style.display=type==='manual'?'flex':'none';
+}
+function getManualBookings(cg,date){
+  var ov=overrides[cg+'|'+date];
+  if(!ov) return [];
+  if(ov.type==='manual_list') return ov.bookings;
+  if(ov.type==='manual') return [ov];
+  return [];
+}
+function setManualBookings(cg,date,bookings){
+  var key=cg+'|'+date;
+  if(bookings.length===0) delete overrides[key];
+  else if(bookings.length===1) overrides[key]=Object.assign({},bookings[0],{type:'manual',caregiver:cg,date:date});
+  else overrides[key]={type:'manual_list',caregiver:cg,date:date,bookings:bookings.slice()};
+}
+function renderExistingBookings(cg,date){
+  var el=document.getElementById('ov-existing-list');
+  if(!el) return;
+  var bks=getManualBookings(cg,date);
+  if(!bks.length){el.innerHTML='';return;}
+  var h='<div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px">Existing bookings on this day:</div>';
+  bks.forEach(function(b,i){
+    var t=b.time_start?(b.time_end?' ('+b.time_start+' - '+b.time_end+')':' ('+b.time_start+')'):'';
+    h+='<div style="display:flex;align-items:center;background:var(--bg3);border-radius:6px;padding:5px 8px;margin-bottom:4px;font-size:12px;gap:8px">';
+    h+='<span style="flex:1;color:var(--duty)">&#9679; '+(b.client_name||'Manual')+t+'</span>';
+    h+='<button data-cg="'+cg.replace(/"/g,'&quot;')+'" data-date="'+date+'" data-i="'+i+'" onclick="rmBooking(this)" style="background:rgba(248,81,73,.15);border:1px solid rgba(248,81,73,.35);border-radius:4px;color:#f85149;font-size:10px;padding:2px 8px;cursor:pointer;white-space:nowrap">Remove</button>';
+    h+='</div>';
+  });
+  el.innerHTML=h;
+}
+function rmBooking(btn){
+  var cg=btn.dataset.cg,date=btn.dataset.date,i=+btn.dataset.i;
+  var bks=getManualBookings(cg,date);
+  bks.splice(i,1);
+  setManualBookings(cg,date,bks);
+  saveLocalCache();
+  var key=cg+'|'+date;
+  if(overrides[key]) persistWrite('override',key,JSON.parse(JSON.stringify(overrides[key])));
+  else persistDelete('override',key);
+  reRenderAll();
+  renderExistingBookings(cg,date);
+}
+async function saveAndAddAnother(){
+  var cg=ovCG,dt=ovDate;
+  await saveOverride();
+  setTimeout(function(){openOvModal(cg,dt);var mb=document.querySelector('.ov-type-btn.manual');if(mb)selectOvType('manual',mb);},200);
 }
 
 async function saveOverride(){
@@ -2992,10 +2997,15 @@ async function saveOverride(){
     payload.client_name=client;payload.time_start=tStart;payload.time_end=tEnd;
   }
   var ovKey=ovCG+'|'+ovDate;
-  overrides[ovKey]=payload;saveLocalCache();
-  reRenderAll(); // refresh ALL tabs — calendar, roster, ops, daily
-  closeOvModal();
-  await persistWrite('override',ovKey,payload);
+  if(ovType==='manual'){
+    var bks=getManualBookings(ovCG,ovDate);
+    bks.push(payload);
+    setManualBookings(ovCG,ovDate,bks);
+  } else {
+    overrides[ovKey]=payload;
+  }
+  saveLocalCache();reRenderAll();closeOvModal();
+  await persistWrite('override',ovKey,JSON.parse(JSON.stringify(overrides[ovKey])));
 }
 
 async function clearOverride(){
@@ -3963,7 +3973,7 @@ function renderRoster(){
           if(isWO){cls+=' rd-wo';inner='<div class="rd-in"><div class="rd-cl">Week Off</div></div>';}
         }
         var safeN=cgName.replace(/'/g,'&#39;').replace(/"/g,'&quot;');
-        html+='<td class="'+cls+'" title="'+safeN+' | '+ds+'" data-cg="'+safeN+'" data-ds="'+ds+'" onclick="rosterCellClick(event,this)" oncontextmenu="rosterCtxMenu(event,this)">'+inner+'</td>';
+        html+='<td class="'+cls+'" title="'+safeN+' | '+ds+'" data-cg="'+safeN+'" data-ds="'+ds+'" onclick="openOvModal(this.dataset.cg,this.dataset.ds)">'+inner+'</td>';
       });
       html+='</tr>';
     });
@@ -4186,81 +4196,38 @@ function renderDailyOrders(){
 }
 
 
-// ── Roster Copy / Cut / Paste ─────────────────────────────────────
-function rosterCellClick(e,td){
-  if(_rClip){_rCtxCG=td.dataset.cg;_rCtxDS=td.dataset.ds;rosterPasteCtx();return;}
-  openOvModal(td.dataset.cg,td.dataset.ds);
+// ── Calendar chip renderers — no quote nesting ────────────────────
+function renderManualChips(cg,date){
+  var html='';
+  getManualBookings(cg,date).forEach(function(b){
+    var t=b.time_start?(b.time_end?' '+b.time_start+'-'+b.time_end:' '+b.time_start):'';
+    var div=document.createElement('div');
+    div.className='cal-ev duty';
+    div.style.cursor='pointer';
+    div.textContent=(b.client_name||'Manual')+t;
+    div.onclick=function(){openOvModal(cg,date);};
+    html+=div.outerHTML;
+  });
+  return html;
 }
-function rosterCtxMenu(e,td){
-  e.preventDefault();
-  _rCtxCG=td.dataset.cg;_rCtxDS=td.dataset.ds;
-  var menu=document.getElementById('roster-ctx-menu');
-  var hasOv=!!overrides[_rCtxCG+'|'+_rCtxDS];
-  document.getElementById('ctx-paste-item').style.display=_rClip?'block':'none';
-  document.getElementById('ctx-clear-item').style.display=hasOv?'block':'none';
-  menu.style.left=Math.min(e.clientX,window.innerWidth-170)+'px';
-  menu.style.top=Math.min(e.clientY,window.innerHeight-200)+'px';
-  menu.style.display='block';
-}
-document.addEventListener('click',function(e){
-  var m=document.getElementById('roster-ctx-menu');
-  if(m&&!m.contains(e.target))m.style.display='none';
-});
-function rosterCopy(){
-  document.getElementById('roster-ctx-menu').style.display='none';
-  var ov=overrides[_rCtxCG+'|'+_rCtxDS];
-  if(!ov){alert('No override on this cell to copy');return;}
-  _rClip={cg:_rCtxCG,date:_rCtxDS,ov:Object.assign({},ov),isCut:false};
-  _updateRosterActionBar();
-  document.querySelectorAll('.rd').forEach(function(el){el.classList.remove('rd-copied','rd-cut');});
-  document.querySelectorAll('[data-cg="'+_rCtxCG+'"][data-ds="'+_rCtxDS+'"]').forEach(function(el){el.classList.add('rd-copied');});
-}
-function rosterCut(){
-  document.getElementById('roster-ctx-menu').style.display='none';
-  var ov=overrides[_rCtxCG+'|'+_rCtxDS];
-  if(!ov){alert('No override on this cell to cut');return;}
-  _rClip={cg:_rCtxCG,date:_rCtxDS,ov:Object.assign({},ov),isCut:true};
-  _updateRosterActionBar();
-  document.querySelectorAll('.rd').forEach(function(el){el.classList.remove('rd-copied','rd-cut');});
-  document.querySelectorAll('[data-cg="'+_rCtxCG+'"][data-ds="'+_rCtxDS+'"]').forEach(function(el){el.classList.add('rd-cut');});
-}
-async function rosterPasteCtx(){
-  document.getElementById('roster-ctx-menu').style.display='none';
-  if(!_rClip||!_rCtxCG||!_rCtxDS)return;
-  var payload=Object.assign({},_rClip.ov,{caregiver:_rCtxCG,date:_rCtxDS,saved_at:new Date().toISOString()});
-  var targetKey=_rCtxCG+'|'+_rCtxDS;
-  overrides[targetKey]=payload;
-  if(_rClip.isCut){
-    var srcKey=_rClip.cg+'|'+_rClip.date;
-    delete overrides[srcKey];
-    await persistDelete('override',srcKey);
+function renderDayOverrides(cg,date){
+  if(!date) return '';
+  var html='';
+  var ov=overrides[cg+'|'+date];
+  if(ov){
+    if(ov.type!=='manual'&&ov.type!=='manual_list'){
+      var cls={sick:'sick',off:'off-day',holiday:'holiday',unpaid:'unpaid',cancelled:'cancelled',removed:'override-removed'}[ov.type]||'absent';
+      var lbl={sick:'Sick',off:'Day Off',holiday:'Holiday',unpaid:'Unpaid',cancelled:'Cancelled',removed:'Removed'}[ov.type]||ov.type;
+      var safe=encodeURIComponent(JSON.stringify({caregiver:cg,date:date,status:ov.type,override:ov}));
+      var d=document.createElement('div');
+      d.className='cal-ev '+cls;
+      d.textContent=lbl;
+      d.onclick=function(){openEvModal(safe);};
+      html+=d.outerHTML;
+    }
+    html+=renderManualChips(cg,date);
   }
-  saveLocalCache();reRenderAll();
-  await persistWrite('override',targetKey,payload);
-  rosterClearClip();
-}
-async function rosterClearCell(){
-  document.getElementById('roster-ctx-menu').style.display='none';
-  var k=_rCtxCG+'|'+_rCtxDS;
-  if(!overrides[k])return;
-  delete overrides[k];saveLocalCache();reRenderAll();
-  await persistDelete('override',k);
-}
-function rosterClearClip(){
-  _rClip=null;
-  document.querySelectorAll('.rd.rd-copied,.rd.rd-cut').forEach(function(el){el.classList.remove('rd-copied','rd-cut');});
-  _updateRosterActionBar();
-}
-function _updateRosterActionBar(){
-  var bar=document.getElementById('roster-action-bar');
-  var lbl=document.getElementById('rab-label');
-  if(!bar)return;
-  if(_rClip){
-    bar.classList.add('active');
-    lbl.textContent=(_rClip.isCut?'✂️ Cut':'📋 Copied')+': '+(_rClip.cg||'').split(' ')[0]+' · '+_rClip.date;
-  } else {
-    bar.classList.remove('active');
-  }
+  return html;
 }
 
 // ── Init ─────────────────────────────────────────────────────────
