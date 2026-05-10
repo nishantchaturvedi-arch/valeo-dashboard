@@ -4224,16 +4224,20 @@ async function doLogin(){
   btn.disabled=true; btn.textContent='Signing in...'; err.style.display='none';
   try{
     if(!_db) await initFirebase();
-    var snap=await _db.collection('valeo_users')
-      .where('username','==',user).limit(1).get();
-    console.log('[login] snap size:', snap.size, 'user tried:', user);
-    if(snap.empty){
-      console.log('[login] username not found in valeo_users');
-      throw new Error('invalid');
-    }
-    var d=snap.docs[0].data();
-    console.log('[login] found doc, role:', d.role, 'pass match:', d.password===pass, 'stored pass length:', (d.password||'').length, 'entered pass length:', pass.length);
-    if(d.password!==pass) throw new Error('invalid');
+    // All credentials hardcoded — no Firebase needed for auth
+    var ALL_USERS = [
+      {username:'valeo_admin',  password:'valeo2026',    role:'master', homecare:null},
+      {username:'shifa',        password:'shifa2026',    role:'hc',     homecare:'Shifa'},
+      {username:'magical',      password:'magical2026',  role:'hc',     homecare:'Magical Hands'},
+      {username:'unicare',      password:'unicare2026',  role:'hc',     homecare:'Unicare'},
+      {username:'nasmat',       password:'nasmat2026',   role:'hc',     homecare:'Nasmat Babysitter HC'},
+      {username:'zakha',        password:'zakha2026',    role:'hc',     homecare:'ZAKHA HOME HEALTHCARE CENTER L.L.C'},
+      {username:'bayti',        password:'bayti2026',    role:'hc',     homecare:'Bayti Dubai and Abudhabi Caregiver'},
+      {username:'mahara',       password:'mahara2026',   role:'hc',     homecare:'Mahara HC AD'},
+    ];
+    var match = ALL_USERS.find(function(u){ return u.username===user && u.password===pass; });
+    if(!match) throw new Error('invalid');
+    var d = match;
     _session={username:d.username,role:d.role,homecare:d.homecare||null};
     sessionStorage.setItem('valeo_session',JSON.stringify(_session));
     document.getElementById('login-screen').style.display='none';
