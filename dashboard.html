@@ -696,7 +696,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 
  <!-- Revenue Projection -->
  <div style="margin-top:28px">
-  <div style="font-size:14px;font-weight:700;color:var(--text1);margin-bottom:4px">📈 Revenue Projection — Next 4 Weeks</div>
+  <div style="font-size:14px;font-weight:700;color:var(--text1);margin-bottom:4px">📈 Revenue Projection — Month by Month</div>
   <div style="font-size:11px;color:var(--text3);margin-bottom:14px;line-height:1.7">
    📌 <b style="color:var(--text2)">What this shows:</b> Your last 12 weeks of booking revenue (solid line) and a 4-week forecast (dashed line).<br>
    The model finds the trend in your data and projects it forward — like a simple weather forecast for revenue.<br>
@@ -741,7 +741,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <th>Package</th>
  <th>End Date</th>
  <th>Expires In</th>
- <th>Week</th>
+ <th>Amount Paid</th>
  <th>Location</th>
  </tr>
  </thead>
@@ -1469,7 +1469,8 @@ async function loadData(force=false){
         package_type:pkg.trim(),
         package_raw:String(r['Package']||'').trim(),
         location:String(r['City']||'').trim(),
-        type_of_user:String(r['Type_Of_User']||'').trim()
+        type_of_user:String(r['Type_Of_User']||'').trim(),
+        final_price:parseFloat(r['Final_Price']||r['Order_Price']||0)||0
       };
     }).filter(Boolean);
 
@@ -1922,6 +1923,7 @@ var anaWk = 'all'; // 'all', 'w1', 'w2', 'w3', 'w4'
 var anaYr = new Date().getFullYear();
 
 function renderAnalytics(){
+  applyOverrides();
   renderMonthTabs();
   renderWeekTabs();
   renderAnalyticsData();
@@ -1982,7 +1984,7 @@ function renderAnalyticsData(){
   const periodLabel = anaWk==='all' ? MONTHS[anaMo]+' '+anaYr : `${MONTHS[anaMo]} W — ${anaWkStart} to ${anaWkEnd}`;
 
   const total = data.length;
-  const duty = data.filter(r=>r.status.toLowerCase()==='duty').length;
+  const duty = data.filter(function(r){var s=(r.status||'').toLowerCase().replace(/\s+/g,'');return s!=='cancelled'&&s!=='removed'&&s!=='weekoff'&&s!=='sick'&&s!=='off'&&s!=='holiday'&&s!=='unpaid';}).length;
   const cgs = new Set(data.map(r=>r.caregiver)).size;
   const util = total ? Math.round((duty/total)*100) : 0;
 
@@ -1995,9 +1997,12 @@ function renderAnalyticsData(){
     <div class="kpi k3"><div class="kpi-val" style="color:var(--text2)">${clients}</div><div class="kpi-label">Clients</div></div>
     <div class="kpi k4"><div class="kpi-val" style="color:var(--sick)">${util}%</div><div class="kpi-label">Utilization</div></div>`;
 
-  // HC performance
+  function isActiveShift(r){
+    var s=(r.status||'').toLowerCase().replace(/\s+/g,'');
+    return s!=='cancelled'&&s!=='removed'&&s!=='weekoff'&&s!=='sick'&&s!=='off'&&s!=='holiday'&&s!=='unpaid';
+  }
   const hcMap={};
-  data.filter(r=>r.status.toLowerCase()==='duty').forEach(r=>{if(r.homecare)hcMap[r.homecare]=(hcMap[r.homecare]||0)+1;});
+  data.filter(isActiveShift).forEach(r=>{if(r.homecare)hcMap[r.homecare]=(hcMap[r.homecare]||0)+1;});
   const hcS=Object.entries(hcMap).sort((a,b)=>b[1]-a[1]);
   const maxHC=hcS[0]?hcS[0][1]:1;
 
@@ -2007,39 +2012,43 @@ function renderAnalyticsData(){
   // Include all caregivers in period (even 0 hours)
   data.forEach(r=>{ if(r.caregiver && !cgMap[r.caregiver]) cgMap[r.caregiver]=0; });
   // For each duty day, add hours_per_day
-  data.filter(r=>(r.status||'').toLowerCase()==='duty').forEach(r=>{
+  data.filter(isActiveShift).forEach(r=>{
     if(!r.caregiver) return;
     const pkg = r.package_type||r.package_raw||'';
     const hrsPerDay = extractHours(pkg)||0;
     cgMap[r.caregiver] = (cgMap[r.caregiver]||0) + hrsPerDay;
   });
-  // Add manual booking hours from overrides
+  // Add manual booking hours — handles single and multi-booking (manual_list)
+  function calcBookingHrs(b){
+    if(!b.time_start||!b.time_end) return 1;
+    try{
+      var toH=function(t){
+        var isPM=/PM/i.test(t);
+        t=t.replace(/\s*(AM|PM)/i,'').trim();
+        var p=t.split(':'),h=parseInt(p[0])||0,m=parseInt(p[1])||0;
+        if(isPM&&h<12)h+=12; if(!isPM&&h===12)h=0;
+        return h+m/60;
+      };
+      var diff=toH(b.time_end)-toH(b.time_start);
+      return diff>0?diff:24+diff;
+    }catch(e){return 1;}
+  }
   Object.values(overrides).forEach(function(ov){
-    if(ov.type !== 'manual' || !ov.caregiver) return;
-    const d = parseD(ov.date);
-    if(!d || d.y !== anaYr || d.m !== anaMo) return;
-    if(anaWk !== 'all' && anaWkStart && anaWkEnd){
-      if(ov.date < anaWkStart || ov.date > anaWkEnd) return;
-    }
-    let manualHrs = 1;
-    if(ov.time_start && ov.time_end){
-      try{
-        const toH = function(t){
-          const isPM = /PM/i.test(t);
-          t = t.replace(/\s*(AM|PM)/i,'').trim();
-          const p = t.split(':');
-          let h = parseInt(p[0])||0;
-          const m = parseInt(p[1])||0;
-          if(isPM && h < 12) h += 12;
-          if(!isPM && h === 12) h = 0;
-          return h + m/60;
-        };
-        const diff = toH(ov.time_end) - toH(ov.time_start);
-        if(diff > 0) manualHrs = Math.round(diff);
-      }catch(e){}
-    }
-    if(!cgMap[ov.caregiver]) cgMap[ov.caregiver] = 0;
-    cgMap[ov.caregiver] += manualHrs;
+    if(!ov.caregiver) return;
+    var d=parseD(ov.date);
+    if(!d||d.y!==anaYr||d.m!==anaMo) return;
+    if(anaWk!=='all'&&anaWkStart&&anaWkEnd){if(ov.date<anaWkStart||ov.date>anaWkEnd)return;}
+    var bookings=[];
+    if(ov.type==='manual') bookings=[ov];
+    else if(ov.type==='manual_list'&&ov.bookings) bookings=ov.bookings;
+    bookings.forEach(function(b){
+      var hrs=calcBookingHrs(b);
+      var cg=b.caregiver||ov.caregiver;
+      if(!cgMap[cg]) cgMap[cg]=0;
+      cgMap[cg]+=hrs;
+      var hc=b.homecare||ov.homecare||(rawData.find(function(r){return r.caregiver===cg;})||{}).homecare||'';
+      if(hc) hcMap[hc]=(hcMap[hc]||0)+1;
+    });
   });
   const MAX_MONTH_HRS = 288; // 6 days × 4 weeks × 12h = 100% utilization
   const cgS = Object.entries(cgMap).map(function(e){ return [e[0], Math.min(e[1], MAX_MONTH_HRS)]; }).sort((a,b)=>b[1]-a[1]);
@@ -2447,142 +2456,52 @@ var _revenueChart = null;
 
 function renderRevenueProjection(){
   if(!rawData||!rawData.length) return;
-
-  // Package value estimates (AED)
-  var PKG_VALUE = {
-    'hourly':150, 'daily':400, 'weekly':2500, 'monthly':8000
-  };
-
-  function pkgValue(pkg){
-    var p=(pkg||'').toLowerCase();
-    if(p.includes('month')) return PKG_VALUE.monthly;
-    if(p.includes('week')) return PKG_VALUE.weekly;
-    if(p.includes('day')) return PKG_VALUE.daily;
-    return PKG_VALUE.hourly;
-  }
-
-  // Get Monday of week for a date string
-  function getMonday(dateStr){
-    var d=new Date(dateStr+'T12:00:00');
-    var day=d.getDay(), diff=d.getDate()-day+(day===0?-6:1);
-    d.setDate(diff); return d.toISOString().slice(0,10);
-  }
-
-  // Aggregate weekly revenue from rawData (last 12 weeks)
-  var today=new Date(); today.setHours(0,0,0,0);
-  var weekMap={};
+  var monthMap={};
   rawData.forEach(function(r){
     if(!r.date||(r.status||'').toLowerCase()==='cancelled') return;
-    var mon=getMonday(r.date);
-    if(!weekMap[mon]) weekMap[mon]=0;
-    weekMap[mon]+=pkgValue(r.package_type);
+    if(!r.final_price||r.final_price<=0) return;
+    var mo=r.date.slice(0,7);
+    if(!monthMap[mo]) monthMap[mo]=0;
+    monthMap[mo]+=r.final_price;
   });
-
-  var weeks=Object.keys(weekMap).sort();
-  // Take last 12 weeks with data
-  var histWeeks=weeks.slice(-12);
-  if(histWeeks.length<3){
-    document.getElementById('revenue-projection-stats').innerHTML=
-      '<div style="color:var(--text3);font-size:12px">Not enough historical data for projection (need 3+ weeks)</div>';
+  var months=Object.keys(monthMap).sort();
+  if(months.length<2){
+    document.getElementById('revenue-projection-stats').innerHTML='<div style="color:var(--text3);font-size:12px">Not enough monthly data (need 2+ months with Final_Price)</div>';
     return;
   }
-
-  var xHist=histWeeks.map(function(_,i){return i;});
-  var yHist=histWeeks.map(function(w){return weekMap[w];});
-
-  // Fit linear regression
-  var model=linearRegression(xHist, yHist);
-
-  // Generate 4 future weeks
-  var lastWeekDate=new Date(histWeeks[histWeeks.length-1]+'T12:00:00');
-  var futureWeeks=[];
-  for(var i=1;i<=4;i++){
-    var fw=new Date(lastWeekDate); fw.setDate(fw.getDate()+7*i);
-    futureWeeks.push(fw.toISOString().slice(0,10));
-  }
-  var xFuture=futureWeeks.map(function(_,i){return histWeeks.length+i;});
+  var xHist=months.map(function(_,i){return i;});
+  var yHist=months.map(function(m){return monthMap[m];});
+  var model=linearRegression(xHist,yHist);
+  var lastMo=months[months.length-1];
+  var futureMonths=[];
+  for(var i=1;i<=3;i++){var d=new Date(lastMo+'-01');d.setMonth(d.getMonth()+i);futureMonths.push(d.toISOString().slice(0,7));}
+  var xFuture=futureMonths.map(function(_,i){return months.length+i;});
   var yFuture=xFuture.map(function(x){return Math.max(0,predictLR(model,x));});
-
-  // Labels
-  var allLabels=histWeeks.concat(futureWeeks).map(function(w){
-    var d=new Date(w+'T12:00:00');
-    return (d.getMonth()+1)+'/'+d.getDate();
-  });
-
-  // Chart data
-  var histData=yHist.concat(new Array(4).fill(null));
-  var forecastData=new Array(histWeeks.length-1).fill(null).concat([yHist[yHist.length-1]]).concat(yFuture);
-  var trendData=xHist.concat(xFuture).map(function(x){return Math.max(0,predictLR(model,x));});
-
-  // Destroy old chart
+  var allLabels=months.concat(futureMonths).map(function(m){return new Date(m+'-01').toLocaleString('default',{month:'short',year:'2-digit'});});
+  var histData=yHist.concat(new Array(3).fill(null));
+  var forecastData=new Array(months.length-1).fill(null).concat([yHist[yHist.length-1]]).concat(yFuture);
   if(_revenueChart) _revenueChart.destroy();
-
   var canvas=document.getElementById('revenue-projection-chart');
   if(!canvas) return;
-  var ctx=canvas.getContext('2d');
-
-  _revenueChart=new Chart(ctx,{
-    type:'line',
-    data:{
-      labels:allLabels,
-      datasets:[
-        {
-          label:'Actual Revenue (AED)',
-          data:histData,
-          borderColor:'#6366f1',
-          backgroundColor:'rgba(99,102,241,.1)',
-          borderWidth:2,
-          pointRadius:4,
-          tension:.3,
-          fill:true
-        },
-        {
-          label:'Forecast (AED)',
-          data:forecastData,
-          borderColor:'#f59e0b',
-          backgroundColor:'rgba(245,158,11,.08)',
-          borderWidth:2,
-          borderDash:[6,4],
-          pointRadius:4,
-          tension:.3,
-          fill:false
-        },
-        {
-          label:'Trend Line',
-          data:trendData,
-          borderColor:'rgba(16,185,129,.5)',
-          borderWidth:1,
-          borderDash:[3,3],
-          pointRadius:0,
-          fill:false
-        }
-      ]
-    },
-    options:{
-      responsive:true,
-      maintainAspectRatio:false,
-      plugins:{
-        legend:{labels:{color:'#94a3b8',font:{size:11}}},
-        tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+': AED '+Math.round(ctx.parsed.y).toLocaleString();}}}
-      },
-      scales:{
-        x:{ticks:{color:'#64748b',font:{size:10}},grid:{color:'rgba(255,255,255,.05)'}},
-        y:{ticks:{color:'#64748b',font:{size:10},callback:function(v){return 'AED '+v.toLocaleString();}},grid:{color:'rgba(255,255,255,.05)'}}
-      }
-    }
+  _revenueChart=new Chart(canvas.getContext('2d'),{type:'bar',
+    data:{labels:allLabels,datasets:[
+      {label:'Actual (AED)',data:histData,backgroundColor:'rgba(47,129,247,.65)',borderColor:'#2f81f7',borderWidth:1,borderRadius:4},
+      {label:'Forecast (AED)',data:forecastData,backgroundColor:'rgba(245,158,11,.45)',borderColor:'#f59e0b',borderWidth:1,borderRadius:4}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#94a3b8',font:{size:11}}},
+        tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+': AED '+Math.round(ctx.parsed.y||0).toLocaleString();}}}},
+      scales:{x:{ticks:{color:'#64748b',font:{size:10}},grid:{color:'rgba(255,255,255,.05)'}},
+        y:{ticks:{color:'#64748b',font:{size:10},callback:function(v){return 'AED '+Math.round(v).toLocaleString();}},grid:{color:'rgba(255,255,255,.05)'}}}}
   });
-
-  // Stats
-  var totalForecast=yFuture.reduce(function(a,b){return a+b;},0);
-  var avgActual=yHist.reduce(function(a,b){return a+b;},0)/yHist.length;
-  var trend=model.slope>0?'↑ Growing':'↓ Declining';
-  var trendColor=model.slope>0?'#10b981':'#ef4444';
-  var statsHtml='';
-  statsHtml+='<div class="daily-kpi"><div class="daily-kpi-val" style="color:#6366f1">AED '+Math.round(totalForecast).toLocaleString()+'</div><div class="daily-kpi-lbl">Forecast next 4 weeks</div></div>';
-  statsHtml+='<div class="daily-kpi"><div class="daily-kpi-val">AED '+Math.round(avgActual).toLocaleString()+'</div><div class="daily-kpi-lbl">Avg weekly (last 12w)</div></div>';
-  statsHtml+='<div class="daily-kpi"><div class="daily-kpi-val" style="color:'+trendColor+'">'+trend+'</div><div class="daily-kpi-lbl">AED '+Math.round(Math.abs(model.slope)).toLocaleString()+'/week</div></div>';
-  statsHtml+='<div class="daily-kpi"><div class="daily-kpi-val">'+(model.r2*100).toFixed(0)+'%</div><div class="daily-kpi-lbl">Model fit (R²)</div></div>';
-  document.getElementById('revenue-projection-stats').innerHTML=statsHtml;
+  var total=yHist.reduce(function(a,b){return a+b;},0);
+  var fTotal=yFuture.reduce(function(a,b){return a+b;},0);
+  var tc=model.slope>0?'#10b981':'#ef4444';
+  document.getElementById('revenue-projection-stats').innerHTML=
+    '<div class="daily-kpi"><div class="daily-kpi-val" style="color:#2f81f7">AED '+Math.round(total).toLocaleString()+'</div><div class="daily-kpi-lbl">Total actual</div></div>'
+   +'<div class="daily-kpi"><div class="daily-kpi-val">AED '+Math.round(total/yHist.length).toLocaleString()+'</div><div class="daily-kpi-lbl">Avg/month</div></div>'
+   +'<div class="daily-kpi"><div class="daily-kpi-val" style="color:#f59e0b">AED '+Math.round(fTotal).toLocaleString()+'</div><div class="daily-kpi-lbl">Forecast 3 months</div></div>'
+   +'<div class="daily-kpi"><div class="daily-kpi-val" style="color:'+tc+'">'+(model.slope>0?'Trending Up':'Trending Down')+'</div><div class="daily-kpi-lbl">AED '+Math.round(Math.abs(model.slope)).toLocaleString()+'/month</div></div>';
 }
 
 // ── Churn Risk (Logistic Regression) ─────────────────────────────
@@ -2787,10 +2706,8 @@ function renderExpiring(){
   orders.forEach(r => {
     const end = new Date((r._calEnd||r.end_date)+'T00:00:00'); // use calendar end date
     const diffDays = Math.round((end-today)/(1000*60*60*24));
-    const weekNum = diffDays <= 7 ? 1 : diffDays <= 14 ? 2 : diffDays <= 21 ? 3 : 4;
-    const weekLabel = `Week ${weekNum}`;
-    const wCls = `w${weekNum}`;
-    const daysLabel = diffDays === 0 ? 'Today' : diffDays === 1 ? 'Tomorrow' : `${diffDays} days`;
+    const wCls=diffDays<=7?'w1':diffDays<=14?'w2':diffDays<=21?'w3':'w4';
+    const daysLabel=diffDays===0?'Today':diffDays===1?'Tomorrow':`${diffDays} days`;
 
     html += `<tr>
       <td style="font-weight:500">${r.client_name||'—'}</td>
@@ -2799,7 +2716,7 @@ function renderExpiring(){
       <td style="font-size:11px;color:var(--text2)">${(r.package_type||'—').substring(0,40)}</td>
       <td style="font-family:monospace;font-size:11px">${r._calEnd||r.end_date||'—'}</td>
       <td><span class="exp-badge ${wCls}">${daysLabel}</span></td>
-      <td><span class="exp-badge ${wCls}">${weekLabel}</span></td>
+      <td style="font-family:monospace;font-size:12px;color:var(--duty)">${r.final_price?'AED '+r.final_price.toLocaleString():'—'}</td>
       <td style="font-size:11px;color:var(--text2)">${r.location||'—'}</td>
     </tr>`;
   });
