@@ -1,27 +1,4 @@
 
-<div id="login-screen">
-  <div class="login-box">
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:28px">
-      <div class="login-logo-icon">V</div>
-      <div>
-        <div style="font-size:18px;font-weight:700">Valeo Health</div>
-        <div style="font-size:11px;color:var(--text2)">Caregiver Operations</div>
-      </div>
-    </div>
-    <div style="font-size:14px;font-weight:600;margin-bottom:6px">Welcome back</div>
-    <div style="font-size:12px;color:var(--text2);margin-bottom:22px">Sign in to access your dashboard</div>
-    <div style="margin-bottom:14px">
-      <label class="login-label">Username</label>
-      <input class="login-input" id="login-user" type="text" placeholder="Enter username" onkeydown="if(event.key==='Enter')doLogin()">
-    </div>
-    <div style="margin-bottom:14px">
-      <label class="login-label">Password</label>
-      <input class="login-input" id="login-pass" type="password" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()">
-    </div>
-    <button class="login-btn" id="login-btn" onclick="doLogin()">Sign In</button>
-    <div class="login-error" id="login-error">Incorrect username or password</div>
-  </div>
-</div>
 
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
@@ -544,17 +521,6 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
   .daily-kpi{min-width:80px;}
 }
 
-
-#login-screen{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center;}
-.login-box{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;padding:36px 40px;width:360px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,.4);}
-.login-logo-icon{width:44px;height:44px;background:linear-gradient(135deg,var(--accent),#6f42c1);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;font-weight:700;}
-.login-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);display:block;margin-bottom:5px;}
-.login-input{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'Inter',sans-serif;font-size:13px;padding:10px 12px;border-radius:8px;outline:none;}
-.login-input:focus{border-color:var(--accent);}
-.login-btn{width:100%;padding:11px;background:var(--accent);border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;margin-top:6px;}
-.login-btn:disabled{opacity:.5;cursor:not-allowed;}
-.login-error{font-size:12px;color:var(--absent);margin-top:10px;text-align:center;display:none;}
-
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -586,7 +552,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <button class="main-tab active" onclick="switchTab('calendar')">📅 Calendar</button>
  <button class="main-tab" onclick="switchTab('analytics')">📊 Analytics</button>
  <button class="main-tab" onclick="switchTab('ops')">⚡ Operations</button>
- <button class="main-tab" onclick="switchTab('planner')">📋 Package Planner</button>
+ <button class="main-tab" onclick="switchTab('planner')">📋 Schedule Builder</button>
  <button class="main-tab" onclick="switchTab('roster')">🗓 Roster View</button>
  <button class="main-tab" onclick="switchTab('daily')">📆 Daily Orders</button>
 </div>
@@ -925,39 +891,179 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 <div class="page" id="page-planner">
  <div class="planner-page">
 
- <!-- Controls -->
- <div class="planner-controls">
- <div class="planner-field">
- <span class="planner-label">Homecare</span>
- <select class="planner-select" id="pl-hc-select" onchange="filterPlannerByHC()">
- <option value="">— All Homecare —</option>
- </select>
- </div>
- <div class="planner-field">
- <span class="planner-label">Caregiver</span>
- <select class="planner-select" id="pl-cg-select">
- <option value="">— Select Caregiver —</option>
- </select>
- </div>
- <div class="planner-field">
- <span class="planner-label">Order / Package</span>
- <select class="planner-select" id="pl-order-select">
- <option value="">— Select Order —</option>
- </select>
- </div>
- <div class="planner-field">
- <span class="planner-label">Week Off Days</span>
- <div class="day-selector" id="pl-day-selector">
- <div class="day-chip-pl" data-day="Sunday" onclick="togglePlannerDay(this)">Sun</div>
- <div class="day-chip-pl" data-day="Monday" onclick="togglePlannerDay(this)">Mon</div>
- <div class="day-chip-pl" data-day="Tuesday" onclick="togglePlannerDay(this)">Tue</div>
- <div class="day-chip-pl" data-day="Wednesday" onclick="togglePlannerDay(this)">Wed</div>
- <div class="day-chip-pl" data-day="Thursday" onclick="togglePlannerDay(this)">Thu</div>
- <div class="day-chip-pl" data-day="Friday" onclick="togglePlannerDay(this)">Fri</div>
- <div class="day-chip-pl" data-day="Saturday" onclick="togglePlannerDay(this)">Sat</div>
- </div>
- </div>
- <button class="planner-btn" onclick="generatePlannerTable()">Generate Schedule</button>
+ <!-- ── Schedule Builder Controls ── -->
+ <div class="planner-controls" style="flex-direction:column;gap:0;padding:0;border:none;background:none">
+
+  <!-- Mode toggle -->
+  <div style="display:flex;gap:8px;margin-bottom:16px">
+   <button id="sb-mode-pre" onclick="sbSetMode('pre')" style="flex:1;padding:9px;border-radius:8px;border:2px solid var(--accent);background:var(--accent);color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">📋 Pre-Booking (New Client)</button>
+   <button id="sb-mode-post" onclick="sbSetMode('post')" style="flex:1;padding:9px;border-radius:8px;border:2px solid var(--border);background:var(--bg3);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">📦 Post-Booking (Existing Order)</button>
+  </div>
+
+  <!-- PRE-BOOKING FORM -->
+  <div id="sb-pre-form" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:18px 20px">
+   <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:14px;text-transform:uppercase;letter-spacing:.06em">Client & Package Details</div>
+   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:16px">
+    <div class="planner-field">
+     <span class="planner-label">Client Name</span>
+     <input class="planner-input" id="sb-client" type="text" placeholder="e.g. Noor Al Mansouri">
+    </div>
+    <div class="planner-field">
+     <span class="planner-label">Package Type</span>
+     <select class="planner-select" id="sb-pkg-type" onchange="sbPkgTypeChange()">
+      <option value="monthly">Monthly Plan</option>
+      <option value="weekly">Weekly Plan</option>
+     </select>
+    </div>
+    <div class="planner-field">
+     <span class="planner-label">Days/Week</span>
+     <select class="planner-select" id="sb-days-per-week">
+      <option value="5">5 days</option>
+      <option value="6">6 days</option>
+      <option value="7">7 days</option>
+     </select>
+    </div>
+    <div class="planner-field" id="sb-weeks-field">
+     <span class="planner-label">Weeks</span>
+     <select class="planner-select" id="sb-weeks">
+      <option value="4">4 weeks</option>
+      <option value="1">1 week</option>
+      <option value="2">2 weeks</option>
+      <option value="3">3 weeks</option>
+     </select>
+    </div>
+    <div class="planner-field">
+     <span class="planner-label">Start Date</span>
+     <input class="planner-input" id="sb-start" type="date">
+    </div>
+   </div>
+
+   <!-- Shift 1 -->
+   <div style="background:var(--bg3);border-radius:8px;padding:14px;margin-bottom:10px">
+    <div style="font-size:11px;font-weight:600;color:var(--duty);margin-bottom:10px">☀️ Caregiver 1 (Day Shift)</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px">
+     <div class="planner-field">
+      <span class="planner-label">Homecare</span>
+      <select class="planner-select" id="sb-hc1" onchange="sbLoadCGs(1)">
+       <option value="">— Select HC —</option>
+      </select>
+     </div>
+     <div class="planner-field">
+      <span class="planner-label">Caregiver</span>
+      <select class="planner-select" id="sb-cg1">
+       <option value="">— Select CG —</option>
+      </select>
+     </div>
+     <div class="planner-field">
+      <span class="planner-label">Start Time</span>
+      <input class="planner-input" id="sb-t1s" type="text" placeholder="e.g. 9:00 AM">
+     </div>
+     <div class="planner-field">
+      <span class="planner-label">End Time</span>
+      <input class="planner-input" id="sb-t1e" type="text" placeholder="e.g. 9:00 PM">
+     </div>
+    </div>
+    <div style="margin-top:10px">
+     <span class="planner-label">Week Off Days (CG1)</span>
+     <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:4px" id="sb-wo1">
+      <div class="day-chip-pl" data-day="Sunday" onclick="this.classList.toggle('on')">Sun</div>
+      <div class="day-chip-pl" data-day="Monday" onclick="this.classList.toggle('on')">Mon</div>
+      <div class="day-chip-pl" data-day="Tuesday" onclick="this.classList.toggle('on')">Tue</div>
+      <div class="day-chip-pl" data-day="Wednesday" onclick="this.classList.toggle('on')">Wed</div>
+      <div class="day-chip-pl" data-day="Thursday" onclick="this.classList.toggle('on')">Thu</div>
+      <div class="day-chip-pl" data-day="Friday" onclick="this.classList.toggle('on')">Fri</div>
+      <div class="day-chip-pl" data-day="Saturday" onclick="this.classList.toggle('on')">Sat</div>
+     </div>
+    </div>
+   </div>
+
+   <!-- Toggle CG2 -->
+   <div style="margin-bottom:10px">
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--text2)">
+     <input type="checkbox" id="sb-split-toggle" onchange="sbToggleSplit()" style="width:16px;height:16px;cursor:pointer">
+     <span>Add second caregiver (split shift / night shift)</span>
+    </label>
+   </div>
+
+   <!-- Shift 2 (hidden by default) -->
+   <div id="sb-cg2-section" style="display:none;background:var(--bg3);border-radius:8px;padding:14px;margin-bottom:10px">
+    <div style="font-size:11px;font-weight:600;color:var(--accent);margin-bottom:10px">🌙 Caregiver 2 (Night Shift)</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px">
+     <div class="planner-field">
+      <span class="planner-label">Homecare</span>
+      <select class="planner-select" id="sb-hc2" onchange="sbLoadCGs(2)">
+       <option value="">— Select HC —</option>
+      </select>
+     </div>
+     <div class="planner-field">
+      <span class="planner-label">Caregiver</span>
+      <select class="planner-select" id="sb-cg2">
+       <option value="">— Select CG —</option>
+      </select>
+     </div>
+     <div class="planner-field">
+      <span class="planner-label">Start Time</span>
+      <input class="planner-input" id="sb-t2s" type="text" placeholder="e.g. 9:00 PM">
+     </div>
+     <div class="planner-field">
+      <span class="planner-label">End Time</span>
+      <input class="planner-input" id="sb-t2e" type="text" placeholder="e.g. 9:00 AM">
+     </div>
+    </div>
+    <div style="margin-top:10px">
+     <span class="planner-label">Week Off Days (CG2)</span>
+     <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:4px" id="sb-wo2">
+      <div class="day-chip-pl" data-day="Sunday" onclick="this.classList.toggle('on')">Sun</div>
+      <div class="day-chip-pl" data-day="Monday" onclick="this.classList.toggle('on')">Mon</div>
+      <div class="day-chip-pl" data-day="Tuesday" onclick="this.classList.toggle('on')">Tue</div>
+      <div class="day-chip-pl" data-day="Wednesday" onclick="this.classList.toggle('on')">Wed</div>
+      <div class="day-chip-pl" data-day="Thursday" onclick="this.classList.toggle('on')">Thu</div>
+      <div class="day-chip-pl" data-day="Friday" onclick="this.classList.toggle('on')">Fri</div>
+      <div class="day-chip-pl" data-day="Saturday" onclick="this.classList.toggle('on')">Sat</div>
+     </div>
+    </div>
+   </div>
+
+   <button class="planner-btn" onclick="sbGenerate()" style="margin-top:6px;width:100%">Generate Schedule</button>
+  </div>
+
+  <!-- POST-BOOKING FORM (original) -->
+  <div id="sb-post-form" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:18px 20px">
+   <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end">
+    <div class="planner-field">
+     <span class="planner-label">Homecare</span>
+     <select class="planner-select" id="pl-hc-select" onchange="filterPlannerByHC()">
+      <option value="">— All Homecare —</option>
+     </select>
+    </div>
+    <div class="planner-field">
+     <span class="planner-label">Caregiver</span>
+     <select class="planner-select" id="pl-cg-select">
+      <option value="">— Select Caregiver —</option>
+     </select>
+    </div>
+    <div class="planner-field">
+     <span class="planner-label">Order / Package</span>
+     <select class="planner-select" id="pl-order-select">
+      <option value="">— Select Order —</option>
+     </select>
+    </div>
+    <div class="planner-field">
+     <span class="planner-label">Week Off Days</span>
+     <div class="day-selector" id="pl-day-selector">
+      <div class="day-chip-pl" data-day="Sunday" onclick="togglePlannerDay(this)">Sun</div>
+      <div class="day-chip-pl" data-day="Monday" onclick="togglePlannerDay(this)">Mon</div>
+      <div class="day-chip-pl" data-day="Tuesday" onclick="togglePlannerDay(this)">Tue</div>
+      <div class="day-chip-pl" data-day="Wednesday" onclick="togglePlannerDay(this)">Wed</div>
+      <div class="day-chip-pl" data-day="Thursday" onclick="togglePlannerDay(this)">Thu</div>
+      <div class="day-chip-pl" data-day="Friday" onclick="togglePlannerDay(this)">Fri</div>
+      <div class="day-chip-pl" data-day="Saturday" onclick="togglePlannerDay(this)">Sat</div>
+     </div>
+    </div>
+    <button class="planner-btn" onclick="generatePlannerTable()">Generate Schedule</button>
+   </div>
+  </div>
+
  </div>
 
  <!-- Summary KPIs -->
@@ -1366,19 +1472,11 @@ async function loadData(force=false){
     console.log('[loadData] rawData:', rawData.length, 'records');
     console.log('[loadData] allData:', allData.length, 'expanded records');
     console.log('[loadData] HCs:', [...new Set(rawData.map(r=>r.homecare))].filter(Boolean));
-    if(_session&&_session.role==='hc'&&_session.homecare){
-      rawData=rawData.filter(function(r){return r.homecare===_session.homecare;});
-      allData=allData.filter(function(r){return r.homecare===_session.homecare;});
-    }
     buildChatData();
     renderHCGrid();
     syncFromSheet();
-    setInterval(syncFromSheet,5*60*1000); // every 5 min instead of 30 sec
-    var _lastSync=0;
-window.addEventListener('focus',function(){
-  var now=Date.now();
-  if(now-_lastSync > 2*60*1000){ _lastSync=now; syncFromSheet(); }
-});
+    setInterval(syncFromSheet,30*1000);
+    window.addEventListener('focus',syncFromSheet);
     if(document.getElementById('page-analytics').classList.contains('active'))renderAnalytics();
     populateCGHCFilter();
     document.getElementById('cg-result-count').textContent = [...new Set(rawData.map(r=>r.caregiver)).values()].filter(Boolean).length + ' caregivers';
@@ -1399,8 +1497,7 @@ function setSyncState(state,text){
 // ── HC Grid ──────────────────────────────────────────────────────
 function renderHCGrid(){
   const now=new Date();const yr=now.getFullYear(),mo=now.getMonth();
-  var hcs=[...new Set(rawData.map(r=>r.homecare))].filter(Boolean).sort();
-  if(_session&&_session.role==='hc'&&_session.homecare) hcs=[_session.homecare];
+  const hcs=[...new Set(rawData.map(r=>r.homecare))].filter(Boolean).sort();
   let html='';
 
   hcs.forEach(hc=>{
@@ -2762,26 +2859,12 @@ async function initFirebase(){
   }catch(e){try{_db=firebase.firestore(firebase.app());}catch(e2){console.warn('[fb] failed:',e2);}}
 }
 
-var _writeQueue={};
-var _writeTimer=null;
 async function persistWrite(dt,dk,dv){
   if(!_db) return;
-  var id=dt+'__'+dk.replace(/[^a-zA-Z0-9_-]/g,'_');
-  _writeQueue[id]={type:dt,key:dk,value:JSON.stringify(dv),updated_at:new Date().toISOString()};
-  if(_writeTimer) clearTimeout(_writeTimer);
-  _writeTimer=setTimeout(flushWriteQueue, 3000); // batch writes every 3s
-}
-async function flushWriteQueue(){
-  if(!_db||!Object.keys(_writeQueue).length) return;
-  var batch=_db.batch();
-  var count=0;
-  Object.entries(_writeQueue).forEach(function(e){
-    batch.set(_db.collection('valeo_state').doc(e[0]), e[1]);
-    count++;
-  });
-  _writeQueue={};
-  try{ await batch.commit(); console.log('[persist] batch wrote',count,'docs'); }
-  catch(e){ console.warn('[persist] batch failed:',e); }
+  try{
+    var id=dt+'__'+dk.replace(/[^a-zA-Z0-9_-]/g,'_');
+    await _db.collection('valeo_state').doc(id).set({type:dt,key:dk,value:JSON.stringify(dv),updated_at:new Date().toISOString()});
+  }catch(e){console.warn('[persist] write failed:',e);}
 }
 
 async function persistDelete(dt,dk){
@@ -2828,8 +2911,6 @@ function loadLocalCache(){
 
 async function syncFromSheet(){
   if(!_db){await initFirebase();if(!_db)return;}
-  // Skip sync if tab not visible — saves reads
-  if(document.hidden) return;
   try{
     var snap=await _db.collection('valeo_state').get();
     if(snap.empty) return;
@@ -3072,6 +3153,11 @@ var plannerCustomCols = []; // extra custom columns
 var plannerData = []; // editable data store
 
 function renderPlanner(){
+  sbPopulateHCs();
+  sbSetMode('pre');
+  // Set today as default start date
+  var sb = document.getElementById('sb-start');
+  if(sb && !sb.value) sb.value = new Date().toISOString().slice(0,10);
   // Check if shared view mode
   const urlParams = new URLSearchParams(window.location.search);
   if(urlParams.get('planner')){
@@ -4213,82 +4299,137 @@ function renderDailyOrders(){
 }
 
 
-// ── Auth ──────────────────────────────────────────────────────────
-var _session=null;
+// ── Schedule Builder ──────────────────────────────────────────────
+var _sbMode = 'pre';
 
-async function doLogin(){
-  var user=document.getElementById('login-user').value.trim();
-  var pass=document.getElementById('login-pass').value.trim();
-  if(!user||!pass) return;
-  var btn=document.getElementById('login-btn'),err=document.getElementById('login-error');
-  btn.disabled=true; btn.textContent='Signing in...'; err.style.display='none';
-  try{
-    if(!_db) await initFirebase();
-    // All credentials hardcoded — no Firebase needed for auth
-    var ALL_USERS = [
-      {username:'valeo_admin',  password:'valeo2026',    role:'master', homecare:null},
-      {username:'shifa',        password:'shifa2026',    role:'hc',     homecare:'Shifa'},
-      {username:'magical',      password:'magical2026',  role:'hc',     homecare:'Magical Hands'},
-      {username:'unicare',      password:'unicare2026',  role:'hc',     homecare:'Unicare'},
-      {username:'nasmat',       password:'nasmat2026',   role:'hc',     homecare:'Nasmat Babysitter HC'},
-      {username:'zakha',        password:'zakha2026',    role:'hc',     homecare:'ZAKHA HOME HEALTHCARE CENTER L.L.C'},
-      {username:'bayti',        password:'bayti2026',    role:'hc',     homecare:'Bayti Dubai and Abudhabi Caregiver'},
-      {username:'mahara',       password:'mahara2026',   role:'hc',     homecare:'Mahara HC AD'},
-    ];
-    var match = ALL_USERS.find(function(u){ return u.username===user && u.password===pass; });
-    if(!match) throw new Error('invalid');
-    var d = match;
-    _session={username:d.username,role:d.role,homecare:d.homecare||null};
-    sessionStorage.setItem('valeo_session',JSON.stringify(_session));
-    document.getElementById('login-screen').style.display='none';
-    applySessionUI();
-    loadData();
-  }catch(e){
-    err.style.display='block';
-    btn.disabled=false; btn.textContent='Sign In';
+function sbSetMode(mode){
+  _sbMode = mode;
+  document.getElementById('sb-pre-form').style.display  = mode==='pre'  ? 'block' : 'none';
+  document.getElementById('sb-post-form').style.display = mode==='post' ? 'block' : 'none';
+  var btnPre  = document.getElementById('sb-mode-pre');
+  var btnPost = document.getElementById('sb-mode-post');
+  btnPre.style.background  = mode==='pre'  ? 'var(--accent)' : 'var(--bg3)';
+  btnPre.style.color       = mode==='pre'  ? '#fff' : 'var(--text2)';
+  btnPre.style.borderColor = mode==='pre'  ? 'var(--accent)' : 'var(--border)';
+  btnPost.style.background  = mode==='post' ? 'var(--accent)' : 'var(--bg3)';
+  btnPost.style.color       = mode==='post' ? '#fff' : 'var(--text2)';
+  btnPost.style.borderColor = mode==='post' ? 'var(--accent)' : 'var(--border)';
+}
+
+function sbToggleSplit(){
+  var show = document.getElementById('sb-split-toggle').checked;
+  document.getElementById('sb-cg2-section').style.display = show ? 'block' : 'none';
+}
+
+function sbPkgTypeChange(){
+  var type = document.getElementById('sb-pkg-type').value;
+  document.getElementById('sb-weeks-field').style.display = type==='weekly' ? 'block' : 'block';
+  var weeksEl = document.getElementById('sb-weeks');
+  if(type==='monthly'){
+    weeksEl.innerHTML = '<option value="4">4 weeks</option><option value="1">1 week</option><option value="2">2 weeks</option><option value="3">3 weeks</option>';
+  } else {
+    weeksEl.innerHTML = '<option value="1">1 week</option><option value="2">2 weeks</option><option value="3">3 weeks</option><option value="4">4 weeks</option>';
   }
 }
 
-function applySessionUI(){
-  if(!_session) return;
-  var header=document.querySelector('.header-right');
-  if(header){
-    var badge=document.createElement('div');
-    badge.style.cssText='display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text2);margin-right:8px';
-    badge.innerHTML=(_session.role==='master'?'&#x1F451;':'&#x1F3E5;')+' <b style="color:var(--text)">'+_session.username+'</b>'
-      +' <button onclick="doLogout()" style="background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);border-radius:5px;color:var(--absent);font-size:10px;padding:2px 8px;cursor:pointer;font-family:Inter,sans-serif">Sign out</button>';
-    header.insertBefore(badge, header.firstChild);
-  }
-  if(_session.role==='hc'){
-    document.querySelectorAll('.main-tab').forEach(function(t){
-      if(!t.textContent.trim().includes('Calendar')) t.style.display='none';
-    });
-    var addBtn=document.querySelector('.add-cg-btn');
-    if(addBtn) addBtn.style.display='none';
-  }
+function sbPopulateHCs(){
+  var hcs = [...new Set(rawData.map(function(r){return r.homecare;}).filter(Boolean))].sort();
+  ['sb-hc1','sb-hc2'].forEach(function(id){
+    var sel = document.getElementById(id);
+    if(!sel) return;
+    var cur = sel.value;
+    sel.innerHTML = '<option value="">— Select HC —</option>';
+    hcs.forEach(function(hc){ sel.innerHTML += '<option value="'+hc+'"'+(hc===cur?' selected':'')+'>'+hc+'</option>'; });
+  });
 }
 
-function doLogout(){
-  sessionStorage.removeItem('valeo_session');
-  _session=null; location.reload();
+function sbLoadCGs(num){
+  var hc = document.getElementById('sb-hc'+num).value;
+  var cgs = [...new Set(rawData.filter(function(r){return !hc||r.homecare===hc;}).map(function(r){return r.caregiver;}).filter(Boolean))].sort();
+  var sel = document.getElementById('sb-cg'+num);
+  sel.innerHTML = '<option value="">— Select CG —</option>';
+  cgs.forEach(function(cg){ sel.innerHTML += '<option value="'+cg+'">'+cg+'</option>'; });
 }
 
-function checkExistingSession(){
-  try{
-    var s=JSON.parse(sessionStorage.getItem('valeo_session')||'null');
-    if(s&&s.username&&s.role){ _session=s; return true; }
-  }catch(e){}
-  return false;
+function sbGetWODays(containerId){
+  return [...document.querySelectorAll('#'+containerId+' .day-chip-pl.on')].map(function(b){return b.dataset.day;});
+}
+
+function sbGenerate(){
+  var client  = document.getElementById('sb-client').value.trim();
+  var pkgType = document.getElementById('sb-pkg-type').value;
+  var dpw     = +document.getElementById('sb-days-per-week').value;
+  var weeks   = +document.getElementById('sb-weeks').value;
+  var start   = document.getElementById('sb-start').value;
+  var cg1     = document.getElementById('sb-cg1').value;
+  var hc1     = document.getElementById('sb-hc1').value;
+  var t1s     = document.getElementById('sb-t1s').value.trim();
+  var t1e     = document.getElementById('sb-t1e').value.trim();
+  var wo1     = sbGetWODays('sb-wo1');
+  var splitOn = document.getElementById('sb-split-toggle').checked;
+  var cg2     = splitOn ? document.getElementById('sb-cg2').value : '';
+  var hc2     = splitOn ? document.getElementById('sb-hc2').value : '';
+  var t2s     = splitOn ? document.getElementById('sb-t2s').value.trim() : '';
+  var t2e     = splitOn ? document.getElementById('sb-t2e').value.trim() : '';
+  var wo2     = splitOn ? sbGetWODays('sb-wo2') : [];
+
+  if(!client){ alert('Please enter client name'); return; }
+  if(!start){ alert('Please select a start date'); return; }
+  if(!cg1){ alert('Please select Caregiver 1'); return; }
+
+  var totalDays = weeks * 7;
+  var pkgLabel  = (pkgType==='monthly'?'Monthly':'Weekly')+' plan: '+dpw+' days'+
+                  (pkgType==='monthly'?', '+weeks+' weeks':'');
+
+  plannerData = [];
+  plannerCustomCols = splitOn ? ['Night Shift CG','Night Shift Time'] : [];
+
+  for(var i=0; i<totalDays; i++){
+    var d = new Date(start+'T12:00:00');
+    d.setDate(d.getDate()+i);
+    var ds      = d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+    var dayName = DAYS[d.getDay()];
+    var isOff1  = wo1.includes(dayName);
+    var isOff2  = splitOn && wo2.includes(dayName);
+    var status  = isOff1 ? 'Off' : 'Duty';
+    var shift1  = !isOff1 && t1s && t1e ? t1s+' – '+t1e : (isOff1 ? '—' : t1s||'—');
+
+    var row = {
+      num: i+1, date: ds, day: dayName,
+      timeSlot: shift1,
+      babysitter: isOff1 ? '—' : cg1,
+      homecare: isOff1 ? '—' : hc1,
+      status: status,
+      _orderId: '—', _clientName: client,
+      _package: pkgLabel,
+      _shift: t1s&&t1e ? t1s+' – '+t1e : t1s||'—'
+    };
+
+    if(splitOn){
+      row['Night Shift CG']   = isOff2 ? '—' : (cg2||'—');
+      row['Night Shift Time'] = !isOff2 && t2s && t2e ? t2s+' – '+t2e : (isOff2?'—':t2s||'—');
+    }
+    plannerData.push(row);
+  }
+
+  // KPIs
+  var workDays1 = plannerData.filter(function(r){return r.status==='Duty';}).length;
+  document.getElementById('pl-total-days').textContent    = plannerData.length;
+  document.getElementById('pl-working-days').textContent  = workDays1;
+  document.getElementById('pl-off-days').textContent      = plannerData.length - workDays1;
+  document.getElementById('pl-total-hrs').textContent     = '—';
+  document.getElementById('pl-sick-days').textContent     = '0';
+  document.getElementById('pl-summary').style.display     = 'flex';
+  document.getElementById('pl-table-wrap').style.display  = 'block';
+  document.getElementById('pl-toolbar').style.display     = 'flex';
+  document.getElementById('pl-share-bar').style.display   = 'flex';
+
+  renderPlannerTable();
+  updateShareLink();
 }
 
 // ── Init ─────────────────────────────────────────────────────────
-if(checkExistingSession()){
-  document.getElementById('login-screen').style.display='none';
-  applySessionUI();
-  loadData();
-} else {
-  initFirebase();
-}
+loadData();
 </script>
 </body>
 </html>
