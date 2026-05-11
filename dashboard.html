@@ -521,6 +521,17 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
   .daily-kpi{min-width:80px;}
 }
 
+
+#login-screen{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center;}
+.login-box{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;padding:36px 40px;width:360px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,.4);}
+.login-logo-icon{width:44px;height:44px;background:linear-gradient(135deg,var(--accent),#6f42c1);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;font-weight:700;}
+.login-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);display:block;margin-bottom:5px;}
+.login-input{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'Inter',sans-serif;font-size:13px;padding:10px 12px;border-radius:8px;outline:none;}
+.login-input:focus{border-color:var(--accent);}
+.login-btn{width:100%;padding:11px;background:var(--accent);border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;margin-top:6px;}
+.login-btn:disabled{opacity:.5;cursor:not-allowed;}
+.login-error{font-size:12px;color:var(--absent);margin-top:10px;text-align:center;display:none;}
+
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -529,6 +540,30 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 <body>
 
 <!-- ── Header ── -->
+<div id="login-screen">
+  <div class="login-box">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:28px">
+      <div class="login-logo-icon">V</div>
+      <div>
+        <div style="font-size:18px;font-weight:700">Valeo Health</div>
+        <div style="font-size:11px;color:var(--text2)">Caregiver Operations</div>
+      </div>
+    </div>
+    <div style="font-size:14px;font-weight:600;margin-bottom:6px">Welcome back</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:22px">Sign in to access your dashboard</div>
+    <div style="margin-bottom:14px">
+      <label class="login-label">Username</label>
+      <input class="login-input" id="login-user" type="text" placeholder="Enter username" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div style="margin-bottom:14px">
+      <label class="login-label">Password</label>
+      <input class="login-input" id="login-pass" type="password" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="login-btn" id="login-btn" onclick="doLogin()">Sign In</button>
+    <div class="login-error" id="login-error">Incorrect username or password</div>
+  </div>
+</div>
+
 <div class="header">
  <div class="header-brand">
  <div style="display:flex;align-items:center;gap:10px">
@@ -1472,6 +1507,10 @@ async function loadData(force=false){
     console.log('[loadData] rawData:', rawData.length, 'records');
     console.log('[loadData] allData:', allData.length, 'expanded records');
     console.log('[loadData] HCs:', [...new Set(rawData.map(r=>r.homecare))].filter(Boolean));
+    if(_session&&_session.role==='hc'&&_session.homecare){
+      rawData=rawData.filter(function(r){return r.homecare===_session.homecare;});
+      allData=allData.filter(function(r){return r.homecare===_session.homecare;});
+    }
     buildChatData();
     renderHCGrid();
     syncFromSheet();
@@ -1497,7 +1536,8 @@ function setSyncState(state,text){
 // ── HC Grid ──────────────────────────────────────────────────────
 function renderHCGrid(){
   const now=new Date();const yr=now.getFullYear(),mo=now.getMonth();
-  const hcs=[...new Set(rawData.map(r=>r.homecare))].filter(Boolean).sort();
+  var hcs=[...new Set(rawData.map(r=>r.homecare))].filter(Boolean).sort();
+  if(_session&&_session.role==='hc'&&_session.homecare) hcs=[_session.homecare];
   let html='';
 
   hcs.forEach(hc=>{
@@ -3968,8 +4008,12 @@ function switchToRoster(){
   if(sel&&rawData&&rawData.length){
     var cur=sel.value;
     var hcs=[...new Set(rawData.map(function(r){return r.homecare;}))].filter(Boolean).sort();
+    if(_session&&_session.role==='hc'&&_session.homecare){
+      hcs=[_session.homecare]; sel.style.display='none';
+    }
     sel.innerHTML='<option value="">All Homecare</option>';
     hcs.forEach(function(hc){sel.innerHTML+='<option value="'+hc+'"'+(hc===cur?' selected':'')+'>'+hc+'</option>';});
+    if(_session&&_session.role==='hc'&&_session.homecare) sel.value=_session.homecare;
   }
   renderRoster();
 }
@@ -4428,8 +4472,79 @@ function sbGenerate(){
   updateShareLink();
 }
 
+
+// ── Auth ──────────────────────────────────────────────────────────
+var _session=null;
+
+async function doLogin(){
+  var user=document.getElementById('login-user').value.trim();
+  var pass=document.getElementById('login-pass').value.trim();
+  if(!user||!pass) return;
+  var btn=document.getElementById('login-btn'),err=document.getElementById('login-error');
+  btn.disabled=true; btn.textContent='Signing in...'; err.style.display='none';
+  try{
+    var ALL_USERS=[
+      {username:'valeo_admin', password:'valeo2026',   role:'master', homecare:null},
+      {username:'shifa',       password:'shifa2026',   role:'hc',     homecare:'Shifa'},
+      {username:'magical',     password:'magical2026', role:'hc',     homecare:'Magical Hands'},
+      {username:'unicare',     password:'unicare2026', role:'hc',     homecare:'Unicare'},
+      {username:'nasmat',      password:'nasmat2026',  role:'hc',     homecare:'Nasmat Babysitter HC'},
+      {username:'zakha',       password:'zakha2026',   role:'hc',     homecare:'ZAKHA HOME HEALTHCARE CENTER L.L.C'},
+      {username:'bayti',       password:'bayti2026',   role:'hc',     homecare:'Bayti Dubai and Abudhabi Caregiver'},
+      {username:'mahara',      password:'mahara2026',  role:'hc',     homecare:'Mahara HC AD'},
+    ];
+    var match=ALL_USERS.find(function(u){return u.username===user&&u.password===pass;});
+    if(!match) throw new Error('invalid');
+    _session={username:match.username,role:match.role,homecare:match.homecare||null};
+    sessionStorage.setItem('valeo_session',JSON.stringify(_session));
+    document.getElementById('login-screen').style.display='none';
+    applySessionUI();
+    loadData();
+  }catch(e){
+    err.style.display='block';
+    btn.disabled=false; btn.textContent='Sign In';
+  }
+}
+
+function applySessionUI(){
+  if(!_session) return;
+  var header=document.querySelector('.header-right');
+  if(header){
+    var badge=document.createElement('div');
+    badge.style.cssText='display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text2);margin-right:8px';
+    badge.innerHTML=(_session.role==='master'?'&#x1F451;':'&#x1F3E5;')+' <b style="color:var(--text)">'+_session.username+'</b>'
+      +' <button onclick="doLogout()" style="background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);border-radius:5px;color:var(--absent);font-size:10px;padding:2px 8px;cursor:pointer;font-family:Inter,sans-serif">Sign out</button>';
+    header.insertBefore(badge,header.firstChild);
+  }
+  if(_session.role==='hc'){
+    document.querySelectorAll('.main-tab').forEach(function(t){
+      var txt=t.textContent.trim();
+      if(!txt.includes('Calendar')&&!txt.includes('Roster')) t.style.display='none';
+    });
+    var addBtn=document.querySelector('.add-cg-btn');
+    if(addBtn) addBtn.style.display='none';
+  }
+}
+
+function doLogout(){
+  sessionStorage.removeItem('valeo_session');
+  _session=null; location.reload();
+}
+
+function checkExistingSession(){
+  try{
+    var s=JSON.parse(sessionStorage.getItem('valeo_session')||'null');
+    if(s&&s.username&&s.role){_session=s;return true;}
+  }catch(e){}
+  return false;
+}
+
 // ── Init ─────────────────────────────────────────────────────────
-loadData();
+if(checkExistingSession()){
+  document.getElementById('login-screen').style.display='none';
+  applySessionUI();
+  loadData();
+}
 </script>
 </body>
 </html>
