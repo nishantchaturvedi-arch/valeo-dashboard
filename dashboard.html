@@ -1052,6 +1052,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
   <div style="font-size:15px;font-weight:700">🎯 Lead Tracker</div>
   <div style="display:flex;gap:8px;flex-wrap:wrap">
     <button onclick="loadLeads(true)" style="padding:6px 14px;background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;cursor:pointer">🔄 Refresh</button>
+    <button onclick="exportLeadsCSV()" style="padding:6px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-weight:600;cursor:pointer">📥 Export CSV</button>
     <button onclick="openAddLeadModal()" style="padding:6px 14px;background:var(--duty);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;cursor:pointer">+ Add Lead</button>
     <label style="padding:6px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:11px;cursor:pointer">📤 Upload CSV<input type="file" accept=".csv" id="leads-upload" style="display:none" onchange="uploadLeadsCSV(this)"></label>
   </div>
@@ -3851,10 +3852,8 @@ function switchToRoster(){
   if(sel&&rawData&&rawData.length){
     var cur=sel.value;
     var hcs=[...new Set(rawData.map(function(r){return r.homecare;}))].filter(Boolean).sort();
-    if(_session&&_session.role==='hc'&&_session.homecare){hcs=[_session.homecare];sel.style.display='none';}
     sel.innerHTML='<option value="">All Homecare</option>';
     hcs.forEach(function(hc){sel.innerHTML+='<option value="'+hc+'"'+(hc===cur?' selected':'')+'>'+hc+'</option>';});
-    if(_session&&_session.role==='hc'&&_session.homecare)sel.value=_session.homecare;
   }
   renderRoster();
 }
@@ -4375,6 +4374,31 @@ function renderLeadsKPIs(){
     months.forEach(function(mo){var m=monthMap[mo];html+='<tr style="border-bottom:1px solid var(--border)"><td style="padding:5px 12px;font-weight:500">'+mo+'</td><td style="padding:5px 12px;text-align:center;font-weight:700">'+m.total+'</td><td style="padding:5px 12px;text-align:center;color:#dc2626">'+(m.hot||0)+'</td><td style="padding:5px 12px;text-align:center;color:#d97706">'+(m.warm||0)+'</td><td style="padding:5px 12px;text-align:center;color:#2563eb">'+(m.cold||0)+'</td><td style="padding:5px 12px;text-align:center;color:var(--text2)">'+(m.dead||0)+'</td><td style="padding:5px 12px;text-align:center;color:var(--duty)">'+(m.converted||0)+'</td></tr>';});
     html+='</tbody></table></div>';
   }
+  // Week-wise breakdown
+  var weekMap={};
+  _leads.forEach(function(l){
+    if(!l._date)return;
+    var ov2=getLeadOv(l),heat2=ov2.heat||autoHeat(l),st2=String(l['status']||'').toLowerCase(),isConv2=ov2.converted||st2==='converted';
+    var mo2=l._date.toLocaleString('default',{month:'short',year:'numeric'});
+    var day2=l._date.getDate(),wkNum2=day2<=7?1:day2<=14?2:day2<=21?3:4;
+    var key2=mo2+' W'+wkNum2;
+    if(!weekMap[key2])weekMap[key2]={label:key2,sort:l._date.getFullYear()*10000+(l._date.getMonth()+1)*10+wkNum2,total:0,hot:0,warm:0,cold:0,dead:0,converted:0};
+    weekMap[key2].total++;weekMap[key2][heat2]=(weekMap[key2][heat2]||0)+1;
+    if(isConv2)weekMap[key2].converted=(weekMap[key2].converted||0)+1;
+  });
+  var weeks=Object.values(weekMap).sort(function(a,b){return b.sort-a.sort;}).slice(0,12);
+  function buildBreakdownTable(rows,labelKey){
+    var t='<table style="border-collapse:collapse;font-size:11px;width:100%"><thead><tr>';
+    [labelKey,'Total','🔥','🌤','❄️','💀','✅'].forEach(function(h){t+='<th style="padding:4px 8px;text-align:'+(h===labelKey?'left':'center')+';color:var(--text2);font-weight:600;border-bottom:1px solid var(--border);white-space:nowrap">'+h+'</th>';});
+    t+='</tr></thead><tbody>';
+    rows.forEach(function(r){t+='<tr style="border-bottom:1px solid var(--border)"><td style="padding:4px 8px;font-weight:500;white-space:nowrap">'+r.label+'</td><td style="padding:4px 8px;text-align:center;font-weight:700">'+r.total+'</td><td style="padding:4px 8px;text-align:center;color:#dc2626">'+(r.hot||0)+'</td><td style="padding:4px 8px;text-align:center;color:#d97706">'+(r.warm||0)+'</td><td style="padding:4px 8px;text-align:center;color:#2563eb">'+(r.cold||0)+'</td><td style="padding:4px 8px;text-align:center;color:var(--text2)">'+(r.dead||0)+'</td><td style="padding:4px 8px;text-align:center;color:var(--duty)">'+(r.converted||0)+'</td></tr>';});
+    t+='</tbody></table>';return t;
+  }
+  var monthRows=months.map(function(mo){return Object.assign({label:mo},monthMap[mo]);});
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:8px">';
+  html+='<div><div style="font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">📅 Monthly</div><div style="overflow-x:auto">'+buildBreakdownTable(monthRows,'Month')+'</div></div>';
+  html+='<div><div style="font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">📆 Weekly</div><div style="overflow-x:auto">'+buildBreakdownTable(weeks,'Week')+'</div></div>';
+  html+='</div>';
   html+='</div>';el.innerHTML=html;
 }
 function getFilteredLeads(){
@@ -4466,6 +4490,26 @@ async function saveLeadEdit(){
   closeLeadModal();renderLeadsKPIs();renderLeadsTable();
 }
 async function convertLead(){if(_editLeadIdx<0)return;await saveLeadOverride(getLeadKey(_leads[_editLeadIdx]),{converted:true,converted_at:new Date().toISOString()});closeLeadModal();renderLeadsKPIs();renderLeadsTable();}
+function exportLeadsCSV(){
+  var filtered=getFilteredLeads();
+  if(!filtered.length){alert('No leads to export');return;}
+  var lines=['Name,Phone,City,Package,Status,Classification,Calls,Notes,Days Since Contact'];
+  filtered.forEach(function(l){
+    var ov=getLeadOv(l),heat=ov.heat||autoHeat(l);
+    var heatLabel={hot:'Hot',warm:'Warm',cold:'Cold',dead:'Dead'}[heat]||heat;
+    var calls=ov.calls!==undefined?ov.calls:(parseInt(l['call count'])||0);
+    var notes=(ov.notes||l['notes']||'').split('\n').join(' ');
+    var days=l._date?daysSince(l._date)+'d ago':'';
+    var pkg=(l['package']||'').split('_').pop()||'';
+    function esc(v){var s=String(v||'');return(s.indexOf(',')>=0||s.indexOf('"')>=0)?'"'+s.split('"').join('""')+'"':s;}
+    lines.push([esc(l['full name']||l['name']||''),esc(l['phone number']||l['phone']||''),esc(l['city']||''),esc(pkg),esc(l['status']||''),esc(heatLabel),esc(calls),esc(notes),esc(days)].join(','));
+  });
+  var csv=lines.join('\r\n');
+  var a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='valeo_leads_'+new Date().toISOString().slice(0,10)+'.csv';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+}
 function clearLeadFilters(){['lead-search','lead-filter-status','lead-filter-heat','lead-filter-city','lead-filter-month','lead-filter-week'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});renderLeadsTable();}
 function openAddLeadModal(){['nl-name','nl-phone','nl-email','nl-city','nl-pkg','nl-notes'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});document.getElementById('add-lead-modal').style.display='flex';}
 async function saveNewLead(){
