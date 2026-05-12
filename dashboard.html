@@ -1082,6 +1082,18 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
   <select id="supply-filter-hc" onchange="renderSupplyTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Homecare</option></select>
   <select id="supply-filter-source" onchange="renderSupplyTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Sources</option><option>LinkedIn</option><option>Agency</option><option>Referral</option><option>Walk-in</option><option>Other</option></select>
   <select id="supply-filter-nationality" onchange="renderSupplyTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Nationalities</option></select>
+  <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2)">
+    Interview:
+    <input id="supply-filter-idate-from" type="date" onchange="renderSupplyTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:11px;padding:5px 8px;border-radius:6px;outline:none">
+    <span>–</span>
+    <input id="supply-filter-idate-to" type="date" onchange="renderSupplyTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:11px;padding:5px 8px;border-radius:6px;outline:none">
+  </div>
+  <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2)">
+    Joining:
+    <input id="supply-filter-jdate-from" type="date" onchange="renderSupplyTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:11px;padding:5px 8px;border-radius:6px;outline:none">
+    <span>–</span>
+    <input id="supply-filter-jdate-to" type="date" onchange="renderSupplyTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:11px;padding:5px 8px;border-radius:6px;outline:none">
+  </div>
   <button onclick="clearSupplyFilters()" style="padding:6px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:11px;cursor:pointer">Clear</button>
 </div>
 <div style="overflow:auto;max-height:calc(100vh - 260px);padding:0 20px 20px"><div id="supply-table-wrap" style="margin-top:14px"></div></div>
@@ -4584,7 +4596,7 @@ async function onboardCandidate(){
 }
 function getCandidateForm(){
   function v(id){var el=document.getElementById(id);return el?el.value.trim():'';}
-  return{name:v('cf-name'),phone:v('cf-phone'),email:v('cf-email'),nationality:v('cf-nationality'),age:v('cf-age'),gender:v('cf-gender'),homecare:v('cf-hc'),experience:v('cf-exp'),skills:v('cf-skills'),source:v('cf-source'),stage:v('cf-stage'),interview_date:v('cf-idate'),interviewer:v('cf-interviewer'),notes:v('cf-notes')};
+  return{name:v('cf-name'),phone:v('cf-phone'),email:v('cf-email'),nationality:v('cf-nationality'),age:v('cf-age'),gender:v('cf-gender'),homecare:v('cf-hc'),experience:v('cf-exp'),skills:v('cf-skills'),source:v('cf-source'),stage:v('cf-stage'),interview_date:v('cf-idate'),interview_time:v('cf-itime'),meeting_link:v('cf-mlink'),has_kids:v('cf-kids'),kids_age:v('cf-kage'),joining_date:v('cf-jdate'),interviewer:v('cf-interviewer'),notes:v('cf-notes')};
 }
 function buildCandidateForm(c){
   c=c||{};
@@ -4606,10 +4618,17 @@ function buildCandidateForm(c){
     +sel('Homecare','cf-hc','<option value="">— Select HC —</option>'+hcOpts)
     +field('Experience (years)','cf-exp','text',c.experience,'e.g. 3 years')
     +'<div style="grid-column:1/-1">'+field('Skills / Certifications','cf-skills','text',c.skills,'e.g. Infant care, First Aid')+'</div>'
+    +'<div style="height:1px;background:var(--border);grid-column:1/-1"></div>'
     +sel('Source','cf-source','<option value="">— Select —</option>'+sourceOpts)
     +sel('Stage','cf-stage',stageOpts)
     +field('Interview Date','cf-idate','date',c.interview_date,'')
+    +field('Interview Time','cf-itime','text',c.interview_time,'e.g. 10:30 AM')
+    +'<div style="grid-column:1/-1">'+field('Meeting Link','cf-mlink','text',c.meeting_link,'https://meet.google.com/...')+'</div>'
+    +field('Joining Date','cf-jdate','date',c.joining_date,'')
     +field('Interviewer','cf-interviewer','text',c.interviewer,'e.g. Nishant')
+    +'<div style="height:1px;background:var(--border);grid-column:1/-1"></div>'
+    +'<div><label '+lbl+'>Has Kids?</label><select id="cf-kids" '+inp+'><option value="">—</option><option value="Yes"'+(c.has_kids==='Yes'?' selected':'')+'>Yes</option><option value="No"'+(c.has_kids==='No'?' selected':'')+'>No</option></select></div>'
+    +field('Kids Age(s)','cf-kage','text',c.kids_age,'e.g. 3, 7')
     +'<div style="grid-column:1/-1"><label '+lbl+'>Notes</label><textarea id="cf-notes" rows="3" '+inp.replace('border-radius:7px','border-radius:7px;resize:vertical')+'>'+( c.notes||'')+'</textarea></div>'
     +'</div>';
 }
@@ -4642,10 +4661,20 @@ function getFilteredCandidates(){
   var fH=(document.getElementById('supply-filter-hc')||{}).value||'';
   var fSrc=(document.getElementById('supply-filter-source')||{}).value||'';
   var fN=(document.getElementById('supply-filter-nationality')||{}).value||'';
+  var fIFrom=(document.getElementById('supply-filter-idate-from')||{}).value||'';
+  var fITo=(document.getElementById('supply-filter-idate-to')||{}).value||'';
+  var fJFrom=(document.getElementById('supply-filter-jdate-from')||{}).value||'';
+  var fJTo=(document.getElementById('supply-filter-jdate-to')||{}).value||'';
   return _candidates.filter(function(c){
     if(q&&!(c.name||'').toLowerCase().includes(q.toLowerCase())&&!(c.phone||'').includes(q))return false;
-    if(fS&&c.stage!==fS)return false;if(fH&&c.homecare!==fH)return false;
-    if(fSrc&&c.source!==fSrc)return false;if(fN&&c.nationality!==fN)return false;
+    if(fS&&c.stage!==fS)return false;
+    if(fH&&c.homecare!==fH)return false;
+    if(fSrc&&c.source!==fSrc)return false;
+    if(fN&&c.nationality!==fN)return false;
+    if(fIFrom&&c.interview_date&&c.interview_date<fIFrom)return false;
+    if(fITo&&c.interview_date&&c.interview_date>fITo)return false;
+    if(fJFrom&&c.joining_date&&c.joining_date<fJFrom)return false;
+    if(fJTo&&c.joining_date&&c.joining_date>fJTo)return false;
     return true;
   });
 }
@@ -4663,26 +4692,31 @@ function renderSupplyTable(){
   var filtered=getFilteredCandidates(),wrap=document.getElementById('supply-table-wrap');if(!wrap)return;
   if(!filtered.length){wrap.innerHTML='<div style="padding:40px;text-align:center;color:var(--text2)">No candidates found</div>';return;}
   var html='<div style="font-size:11px;color:var(--text2);margin-bottom:8px">Showing '+filtered.length+' of '+_candidates.length+' candidates</div>';
-  html+='<table class="supply-table"><thead><tr><th>Name</th><th>Phone</th><th>Nationality</th><th>Age</th><th>Homecare</th><th>Experience</th><th>Source</th><th>Stage</th><th>Interview Date</th><th>Interviewer</th><th>Notes</th></tr></thead><tbody>';
+  html+='<table class="supply-table"><thead><tr><th>Name</th><th>Phone</th><th>Nationality</th><th>Age</th><th>Kids</th><th>Homecare</th><th>Experience</th><th>Source</th><th>Stage</th><th>Interview</th><th>Meeting</th><th>Joining Date</th><th>Notes</th></tr></thead><tbody>';
   filtered.forEach(function(c){
     var sb='<span class="stage-badge '+stageCls(c.stage)+'">'+(c.stage||'—')+'</span>';
+    var iDateTime=(c.interview_date||'')+(c.interview_time?' '+c.interview_time:'');
+    var meetLink=c.meeting_link?'<a href="'+c.meeting_link+'" target="_blank" style="color:var(--accent);font-size:11px;text-decoration:none">🔗 Join</a>':'—';
+    var kidsInfo=c.has_kids==='Yes'?('Yes'+(c.kids_age?' ('+c.kids_age+')':'')):(c.has_kids||'—');
     html+='<tr onclick="openEditCandidateModal('+c._idx+')">'
       +'<td style="font-weight:600">'+(c.name||'—')+'</td>'
       +'<td style="font-family:monospace;font-size:11px">'+(c.phone||'—')+'</td>'
       +'<td style="font-size:11px">'+(c.nationality||'—')+'</td>'
       +'<td style="text-align:center">'+(c.age||'—')+'</td>'
+      +'<td style="font-size:11px;text-align:center">'+kidsInfo+'</td>'
       +'<td style="font-size:11px;color:var(--accent)">'+(c.homecare||'—')+'</td>'
       +'<td style="font-size:11px">'+(c.experience||'—')+'</td>'
       +'<td style="font-size:11px">'+(c.source||'—')+'</td>'
       +'<td>'+sb+'</td>'
-      +'<td style="font-size:11px;white-space:nowrap">'+(c.interview_date||'—')+'</td>'
-      +'<td style="font-size:11px">'+(c.interviewer||'—')+'</td>'
-      +'<td style="font-size:11px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(c.notes||'')+'">'+(c.notes||'—').substring(0,40)+'</td>'
+      +'<td style="font-size:11px;white-space:nowrap">'+(iDateTime||'—')+'</td>'
+      +'<td style="text-align:center">'+meetLink+'</td>'
+      +'<td style="font-size:11px;white-space:nowrap">'+(c.joining_date||'—')+'</td>'
+      +'<td style="font-size:11px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(c.notes||'')+'">'+(c.notes||'—').substring(0,35)+'</td>'
       +'</tr>';
   });
   html+='</tbody></table>';wrap.innerHTML=html;
 }
-function clearSupplyFilters(){['supply-search','supply-filter-stage','supply-filter-hc','supply-filter-source','supply-filter-nationality'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});renderSupplyTable();}
+function clearSupplyFilters(){['supply-search','supply-filter-stage','supply-filter-hc','supply-filter-source','supply-filter-nationality','supply-filter-idate-from','supply-filter-idate-to','supply-filter-jdate-from','supply-filter-jdate-to'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});renderSupplyTable();}
 
 
 // ── Init ─────────────────────────────────────────────────────────
