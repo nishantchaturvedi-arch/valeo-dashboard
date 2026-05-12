@@ -526,11 +526,35 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 .login-box{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;padding:36px 40px;width:360px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,.4);}
 .login-logo-icon{width:44px;height:44px;background:linear-gradient(135deg,var(--accent),#6f42c1);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;font-weight:700;}
 .login-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);display:block;margin-bottom:5px;}
-.login-input{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'Inter',sans-serif;font-size:13px;padding:10px 12px;border-radius:8px;outline:none;}
+.login-input{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'Inter',sans-serif;font-size:13px;padding:10px 12px;border-radius:8px;outline:none;box-sizing:border-box;}
 .login-input:focus{border-color:var(--accent);}
 .login-btn{width:100%;padding:11px;background:var(--accent);border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;margin-top:6px;}
 .login-btn:disabled{opacity:.5;cursor:not-allowed;}
 .login-error{font-size:12px;color:var(--absent);margin-top:10px;text-align:center;display:none;}
+.lead-table{width:100%;border-collapse:collapse;font-size:12px;}
+.lead-table th{background:var(--bg3);color:var(--text2);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;padding:8px 10px;border-bottom:2px solid var(--border);text-align:left;white-space:nowrap;position:sticky;top:0;z-index:1;}
+.lead-table td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.lead-table tr:hover td{background:var(--bg3);cursor:pointer;}
+.heat-hot{background:rgba(220,38,38,.15);color:#dc2626;border:1px solid rgba(220,38,38,.3);padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;}
+.heat-warm{background:rgba(217,119,6,.15);color:#d97706;border:1px solid rgba(217,119,6,.3);padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;}
+.heat-cold{background:rgba(37,99,235,.15);color:#2563eb;border:1px solid rgba(37,99,235,.3);padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;}
+.heat-dead{background:rgba(107,114,128,.1);color:#6b7280;border:1px solid rgba(107,114,128,.2);padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;}
+.days-counter{font-size:11px;font-family:monospace;padding:2px 7px;border-radius:10px;}
+.days-ok{background:rgba(63,185,80,.12);color:var(--duty);}
+.days-warn{background:rgba(245,158,11,.12);color:#d97706;}
+.days-late{background:rgba(248,81,73,.12);color:var(--absent);}
+.supply-table{width:100%;border-collapse:collapse;font-size:12px;}
+.supply-table th{background:var(--bg3);color:var(--text2);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;padding:8px 10px;border-bottom:2px solid var(--border);text-align:left;white-space:nowrap;position:sticky;top:0;z-index:1;}
+.supply-table td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.supply-table tr:hover td{background:var(--bg3);cursor:pointer;}
+.stage-badge{padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap;}
+.stage-applied{background:rgba(47,129,247,.15);color:#2f81f7;border:1px solid rgba(47,129,247,.3);}
+.stage-screened{background:rgba(245,158,11,.15);color:#d97706;border:1px solid rgba(245,158,11,.3);}
+.stage-interview-scheduled{background:rgba(139,92,246,.15);color:#7c3aed;border:1px solid rgba(139,92,246,.3);}
+.stage-interviewed{background:rgba(6,182,212,.15);color:#0891b2;border:1px solid rgba(6,182,212,.3);}
+.stage-docs-pending{background:rgba(249,115,22,.15);color:#ea580c;border:1px solid rgba(249,115,22,.3);}
+.stage-onboarded{background:rgba(63,185,80,.15);color:var(--duty);border:1px solid rgba(63,185,80,.3);}
+.stage-rejected{background:rgba(248,81,73,.12);color:var(--absent);border:1px solid rgba(248,81,73,.25);}
 
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -544,21 +568,12 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
   <div class="login-box">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:28px">
       <div class="login-logo-icon">V</div>
-      <div>
-        <div style="font-size:18px;font-weight:700">Valeo Health</div>
-        <div style="font-size:11px;color:var(--text2)">Caregiver Operations</div>
-      </div>
+      <div><div style="font-size:18px;font-weight:700">Valeo Health</div><div style="font-size:11px;color:var(--text2)">Caregiver Operations</div></div>
     </div>
     <div style="font-size:14px;font-weight:600;margin-bottom:6px">Welcome back</div>
-    <div style="font-size:12px;color:var(--text2);margin-bottom:22px">Sign in to access your dashboard</div>
-    <div style="margin-bottom:14px">
-      <label class="login-label">Username</label>
-      <input class="login-input" id="login-user" type="text" placeholder="Enter username" onkeydown="if(event.key==='Enter')doLogin()">
-    </div>
-    <div style="margin-bottom:14px">
-      <label class="login-label">Password</label>
-      <input class="login-input" id="login-pass" type="password" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()">
-    </div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:22px">Sign in to continue</div>
+    <div style="margin-bottom:14px"><label class="login-label">Username</label><input class="login-input" id="login-user" type="text" placeholder="Enter username" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <div style="margin-bottom:14px"><label class="login-label">Password</label><input class="login-input" id="login-pass" type="password" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()"></div>
     <button class="login-btn" id="login-btn" onclick="doLogin()">Sign In</button>
     <div class="login-error" id="login-error">Incorrect username or password</div>
   </div>
@@ -590,6 +605,8 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <button class="main-tab" onclick="switchTab('planner')">📋 Schedule Builder</button>
  <button class="main-tab" onclick="switchTab('roster')">🗓 Roster View</button>
  <button class="main-tab" onclick="switchTab('daily')">📆 Daily Orders</button>
+ <button class="main-tab" onclick="switchTab('leads')">🎯 Lead Tracker</button>
+ <button class="main-tab" onclick="switchTab('supply')">👥 Supply Tracker</button>
 </div>
 
 <!-- ── Availability bar (calendar only) ── -->
@@ -696,7 +713,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 
  <!-- Revenue Projection -->
  <div style="margin-top:28px">
-  <div style="font-size:14px;font-weight:700;color:var(--text1);margin-bottom:4px">📈 Revenue Projection — Month by Month</div>
+  <div style="font-size:14px;font-weight:700;color:var(--text1);margin-bottom:4px">📈 Revenue Projection — Next 4 Weeks</div>
   <div style="font-size:11px;color:var(--text3);margin-bottom:14px;line-height:1.7">
    📌 <b style="color:var(--text2)">What this shows:</b> Your last 12 weeks of booking revenue (solid line) and a 4-week forecast (dashed line).<br>
    The model finds the trend in your data and projects it forward — like a simple weather forecast for revenue.<br>
@@ -842,6 +859,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <div class="override-box">
  <div class="override-title">📝 Add Override</div>
  <div class="override-date-info" id="ov-date-info">—</div>
+ <div id="ov-existing-list" style="margin-bottom:8px"></div>
  <div class="override-type-grid">
  <div class="ov-type-btn sick" onclick="selectOvType('sick',this)">🤒 Sick Leave</div>
  <div class="ov-type-btn off" onclick="selectOvType('off',this)">🌙 Day Off</div>
@@ -864,6 +882,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <button class="ov-cancel-btn" onclick="closeOvModal()">Cancel</button>
  <button class="ov-remove-btn" onclick="clearOverride()">Clear</button>
  <button class="ov-save-btn" onclick="saveOverride()">Save Override</button>
+ <button id="ov-add-another" style="display:none;flex:1;padding:9px;background:var(--duty);border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer" onclick="saveAndAddAnother()">+ Add Another</button>
  </div>
  </div>
 </div>
@@ -926,179 +945,52 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 <div class="page" id="page-planner">
  <div class="planner-page">
 
- <!-- ── Schedule Builder Controls ── -->
+ <!-- Schedule Builder -->
  <div class="planner-controls" style="flex-direction:column;gap:0;padding:0;border:none;background:none">
-
-  <!-- Mode toggle -->
   <div style="display:flex;gap:8px;margin-bottom:16px">
-   <button id="sb-mode-pre" onclick="sbSetMode('pre')" style="flex:1;padding:9px;border-radius:8px;border:2px solid var(--accent);background:var(--accent);color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">📋 Pre-Booking (New Client)</button>
-   <button id="sb-mode-post" onclick="sbSetMode('post')" style="flex:1;padding:9px;border-radius:8px;border:2px solid var(--border);background:var(--bg3);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">📦 Post-Booking (Existing Order)</button>
+   <button id="sb-mode-pre" onclick="sbSetMode('pre')" style="flex:1;padding:9px;border-radius:8px;border:2px solid var(--accent);background:var(--accent);color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">📋 Pre-Booking</button>
+   <button id="sb-mode-post" onclick="sbSetMode('post')" style="flex:1;padding:9px;border-radius:8px;border:2px solid var(--border);background:var(--bg3);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">📦 Post-Booking</button>
   </div>
-
-  <!-- PRE-BOOKING FORM -->
-  <div id="sb-pre-form" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:18px 20px">
-   <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:14px;text-transform:uppercase;letter-spacing:.06em">Client & Package Details</div>
-   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:16px">
-    <div class="planner-field">
-     <span class="planner-label">Client Name</span>
-     <input class="planner-input" id="sb-client" type="text" placeholder="e.g. Noor Al Mansouri">
-    </div>
-    <div class="planner-field">
-     <span class="planner-label">Package Type</span>
-     <select class="planner-select" id="sb-pkg-type" onchange="sbPkgTypeChange()">
-      <option value="monthly">Monthly Plan</option>
-      <option value="weekly">Weekly Plan</option>
-     </select>
-    </div>
-    <div class="planner-field">
-     <span class="planner-label">Days/Week</span>
-     <select class="planner-select" id="sb-days-per-week">
-      <option value="5">5 days</option>
-      <option value="6">6 days</option>
-      <option value="7">7 days</option>
-     </select>
-    </div>
-    <div class="planner-field" id="sb-weeks-field">
-     <span class="planner-label">Weeks</span>
-     <select class="planner-select" id="sb-weeks">
-      <option value="4">4 weeks</option>
-      <option value="1">1 week</option>
-      <option value="2">2 weeks</option>
-      <option value="3">3 weeks</option>
-     </select>
-    </div>
-    <div class="planner-field">
-     <span class="planner-label">Start Date</span>
-     <input class="planner-input" id="sb-start" type="date">
-    </div>
+  <div id="sb-pre-form" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:18px">
+   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:14px">
+    <div class="planner-field"><span class="planner-label">Client Name</span><input class="planner-input" id="sb-client" type="text" placeholder="e.g. Noor Al Mansouri"></div>
+    <div class="planner-field"><span class="planner-label">Package</span><select class="planner-select" id="sb-pkg-type"><option value="monthly">Monthly</option><option value="weekly">Weekly</option></select></div>
+    <div class="planner-field"><span class="planner-label">Days/Week</span><select class="planner-select" id="sb-days-per-week"><option value="5">5 days</option><option value="6">6 days</option><option value="7">7 days</option></select></div>
+    <div class="planner-field"><span class="planner-label">Weeks</span><select class="planner-select" id="sb-weeks"><option value="4">4 weeks</option><option value="1">1 week</option><option value="2">2 weeks</option><option value="3">3 weeks</option></select></div>
+    <div class="planner-field"><span class="planner-label">Start Date</span><input class="planner-input" id="sb-start" type="date"></div>
    </div>
-
-   <!-- Shift 1 -->
-   <div style="background:var(--bg3);border-radius:8px;padding:14px;margin-bottom:10px">
-    <div style="font-size:11px;font-weight:600;color:var(--duty);margin-bottom:10px">☀️ Caregiver 1 (Day Shift)</div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px">
-     <div class="planner-field">
-      <span class="planner-label">Homecare</span>
-      <select class="planner-select" id="sb-hc1" onchange="sbLoadCGs(1)">
-       <option value="">— Select HC —</option>
-      </select>
-     </div>
-     <div class="planner-field">
-      <span class="planner-label">Caregiver</span>
-      <select class="planner-select" id="sb-cg1">
-       <option value="">— Select CG —</option>
-      </select>
-     </div>
-     <div class="planner-field">
-      <span class="planner-label">Start Time</span>
-      <input class="planner-input" id="sb-t1s" type="text" placeholder="e.g. 9:00 AM">
-     </div>
-     <div class="planner-field">
-      <span class="planner-label">End Time</span>
-      <input class="planner-input" id="sb-t1e" type="text" placeholder="e.g. 9:00 PM">
-     </div>
+   <div style="background:var(--bg3);border-radius:8px;padding:12px;margin-bottom:10px">
+    <div style="font-size:11px;font-weight:600;color:var(--duty);margin-bottom:8px">☀️ CG 1 (Day Shift)</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px">
+     <div class="planner-field"><span class="planner-label">Homecare</span><select class="planner-select" id="sb-hc1" onchange="sbLoadCGs(1)"><option value="">— HC —</option></select></div>
+     <div class="planner-field"><span class="planner-label">Caregiver</span><select class="planner-select" id="sb-cg1"><option value="">— CG —</option></select></div>
+     <div class="planner-field"><span class="planner-label">Start Time</span><input class="planner-input" id="sb-t1s" type="text" placeholder="9:00 AM"></div>
+     <div class="planner-field"><span class="planner-label">End Time</span><input class="planner-input" id="sb-t1e" type="text" placeholder="9:00 PM"></div>
     </div>
-    <div style="margin-top:10px">
-     <span class="planner-label">Week Off Days (CG1)</span>
-     <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:4px" id="sb-wo1">
-      <div class="day-chip-pl" data-day="Sunday" onclick="this.classList.toggle('on')">Sun</div>
-      <div class="day-chip-pl" data-day="Monday" onclick="this.classList.toggle('on')">Mon</div>
-      <div class="day-chip-pl" data-day="Tuesday" onclick="this.classList.toggle('on')">Tue</div>
-      <div class="day-chip-pl" data-day="Wednesday" onclick="this.classList.toggle('on')">Wed</div>
-      <div class="day-chip-pl" data-day="Thursday" onclick="this.classList.toggle('on')">Thu</div>
-      <div class="day-chip-pl" data-day="Friday" onclick="this.classList.toggle('on')">Fri</div>
-      <div class="day-chip-pl" data-day="Saturday" onclick="this.classList.toggle('on')">Sat</div>
-     </div>
-    </div>
+    <div style="margin-top:8px"><span class="planner-label">Week Off (CG1)</span><div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px" id="sb-wo1"><div class="day-chip-pl" data-day="Sunday" onclick="this.classList.toggle('on')">Sun</div><div class="day-chip-pl" data-day="Monday" onclick="this.classList.toggle('on')">Mon</div><div class="day-chip-pl" data-day="Tuesday" onclick="this.classList.toggle('on')">Tue</div><div class="day-chip-pl" data-day="Wednesday" onclick="this.classList.toggle('on')">Wed</div><div class="day-chip-pl" data-day="Thursday" onclick="this.classList.toggle('on')">Thu</div><div class="day-chip-pl" data-day="Friday" onclick="this.classList.toggle('on')">Fri</div><div class="day-chip-pl" data-day="Saturday" onclick="this.classList.toggle('on')">Sat</div></div></div>
    </div>
-
-   <!-- Toggle CG2 -->
-   <div style="margin-bottom:10px">
-    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--text2)">
-     <input type="checkbox" id="sb-split-toggle" onchange="sbToggleSplit()" style="width:16px;height:16px;cursor:pointer">
-     <span>Add second caregiver (split shift / night shift)</span>
-    </label>
-   </div>
-
-   <!-- Shift 2 (hidden by default) -->
-   <div id="sb-cg2-section" style="display:none;background:var(--bg3);border-radius:8px;padding:14px;margin-bottom:10px">
-    <div style="font-size:11px;font-weight:600;color:var(--accent);margin-bottom:10px">🌙 Caregiver 2 (Night Shift)</div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px">
-     <div class="planner-field">
-      <span class="planner-label">Homecare</span>
-      <select class="planner-select" id="sb-hc2" onchange="sbLoadCGs(2)">
-       <option value="">— Select HC —</option>
-      </select>
-     </div>
-     <div class="planner-field">
-      <span class="planner-label">Caregiver</span>
-      <select class="planner-select" id="sb-cg2">
-       <option value="">— Select CG —</option>
-      </select>
-     </div>
-     <div class="planner-field">
-      <span class="planner-label">Start Time</span>
-      <input class="planner-input" id="sb-t2s" type="text" placeholder="e.g. 9:00 PM">
-     </div>
-     <div class="planner-field">
-      <span class="planner-label">End Time</span>
-      <input class="planner-input" id="sb-t2e" type="text" placeholder="e.g. 9:00 AM">
-     </div>
+   <div style="margin-bottom:10px"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--text2)"><input type="checkbox" id="sb-split-toggle" onchange="sbToggleSplit()" style="width:16px;height:16px"><span>Add second caregiver (night/split shift)</span></label></div>
+   <div id="sb-cg2-section" style="display:none;background:var(--bg3);border-radius:8px;padding:12px;margin-bottom:10px">
+    <div style="font-size:11px;font-weight:600;color:var(--accent);margin-bottom:8px">🌙 CG 2 (Night Shift)</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px">
+     <div class="planner-field"><span class="planner-label">Homecare</span><select class="planner-select" id="sb-hc2" onchange="sbLoadCGs(2)"><option value="">— HC —</option></select></div>
+     <div class="planner-field"><span class="planner-label">Caregiver</span><select class="planner-select" id="sb-cg2"><option value="">— CG —</option></select></div>
+     <div class="planner-field"><span class="planner-label">Start Time</span><input class="planner-input" id="sb-t2s" type="text" placeholder="9:00 PM"></div>
+     <div class="planner-field"><span class="planner-label">End Time</span><input class="planner-input" id="sb-t2e" type="text" placeholder="9:00 AM"></div>
     </div>
-    <div style="margin-top:10px">
-     <span class="planner-label">Week Off Days (CG2)</span>
-     <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:4px" id="sb-wo2">
-      <div class="day-chip-pl" data-day="Sunday" onclick="this.classList.toggle('on')">Sun</div>
-      <div class="day-chip-pl" data-day="Monday" onclick="this.classList.toggle('on')">Mon</div>
-      <div class="day-chip-pl" data-day="Tuesday" onclick="this.classList.toggle('on')">Tue</div>
-      <div class="day-chip-pl" data-day="Wednesday" onclick="this.classList.toggle('on')">Wed</div>
-      <div class="day-chip-pl" data-day="Thursday" onclick="this.classList.toggle('on')">Thu</div>
-      <div class="day-chip-pl" data-day="Friday" onclick="this.classList.toggle('on')">Fri</div>
-      <div class="day-chip-pl" data-day="Saturday" onclick="this.classList.toggle('on')">Sat</div>
-     </div>
-    </div>
+    <div style="margin-top:8px"><span class="planner-label">Week Off (CG2)</span><div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px" id="sb-wo2"><div class="day-chip-pl" data-day="Sunday" onclick="this.classList.toggle('on')">Sun</div><div class="day-chip-pl" data-day="Monday" onclick="this.classList.toggle('on')">Mon</div><div class="day-chip-pl" data-day="Tuesday" onclick="this.classList.toggle('on')">Tue</div><div class="day-chip-pl" data-day="Wednesday" onclick="this.classList.toggle('on')">Wed</div><div class="day-chip-pl" data-day="Thursday" onclick="this.classList.toggle('on')">Thu</div><div class="day-chip-pl" data-day="Friday" onclick="this.classList.toggle('on')">Fri</div><div class="day-chip-pl" data-day="Saturday" onclick="this.classList.toggle('on')">Sat</div></div></div>
    </div>
-
-   <button class="planner-btn" onclick="sbGenerate()" style="margin-top:6px;width:100%">Generate Schedule</button>
+   <button class="planner-btn" onclick="sbGenerate()" style="width:100%">Generate Schedule</button>
   </div>
-
-  <!-- POST-BOOKING FORM (original) -->
-  <div id="sb-post-form" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:18px 20px">
-   <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end">
-    <div class="planner-field">
-     <span class="planner-label">Homecare</span>
-     <select class="planner-select" id="pl-hc-select" onchange="filterPlannerByHC()">
-      <option value="">— All Homecare —</option>
-     </select>
-    </div>
-    <div class="planner-field">
-     <span class="planner-label">Caregiver</span>
-     <select class="planner-select" id="pl-cg-select">
-      <option value="">— Select Caregiver —</option>
-     </select>
-    </div>
-    <div class="planner-field">
-     <span class="planner-label">Order / Package</span>
-     <select class="planner-select" id="pl-order-select">
-      <option value="">— Select Order —</option>
-     </select>
-    </div>
-    <div class="planner-field">
-     <span class="planner-label">Week Off Days</span>
-     <div class="day-selector" id="pl-day-selector">
-      <div class="day-chip-pl" data-day="Sunday" onclick="togglePlannerDay(this)">Sun</div>
-      <div class="day-chip-pl" data-day="Monday" onclick="togglePlannerDay(this)">Mon</div>
-      <div class="day-chip-pl" data-day="Tuesday" onclick="togglePlannerDay(this)">Tue</div>
-      <div class="day-chip-pl" data-day="Wednesday" onclick="togglePlannerDay(this)">Wed</div>
-      <div class="day-chip-pl" data-day="Thursday" onclick="togglePlannerDay(this)">Thu</div>
-      <div class="day-chip-pl" data-day="Friday" onclick="togglePlannerDay(this)">Fri</div>
-      <div class="day-chip-pl" data-day="Saturday" onclick="togglePlannerDay(this)">Sat</div>
-     </div>
-    </div>
+  <div id="sb-post-form" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:18px">
+   <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end">
+    <div class="planner-field"><span class="planner-label">Homecare</span><select class="planner-select" id="pl-hc-select" onchange="filterPlannerByHC()"><option value="">— All Homecare —</option></select></div>
+    <div class="planner-field"><span class="planner-label">Caregiver</span><select class="planner-select" id="pl-cg-select"><option value="">— Select Caregiver —</option></select></div>
+    <div class="planner-field"><span class="planner-label">Order / Package</span><select class="planner-select" id="pl-order-select"><option value="">— Select Order —</option></select></div>
+    <div class="planner-field"><span class="planner-label">Week Off Days</span><div class="day-selector" id="pl-day-selector"><div class="day-chip-pl" data-day="Sunday" onclick="togglePlannerDay(this)">Sun</div><div class="day-chip-pl" data-day="Monday" onclick="togglePlannerDay(this)">Mon</div><div class="day-chip-pl" data-day="Tuesday" onclick="togglePlannerDay(this)">Tue</div><div class="day-chip-pl" data-day="Wednesday" onclick="togglePlannerDay(this)">Wed</div><div class="day-chip-pl" data-day="Thursday" onclick="togglePlannerDay(this)">Thu</div><div class="day-chip-pl" data-day="Friday" onclick="togglePlannerDay(this)">Fri</div><div class="day-chip-pl" data-day="Saturday" onclick="togglePlannerDay(this)">Sat</div></div></div>
     <button class="planner-btn" onclick="generatePlannerTable()">Generate Schedule</button>
    </div>
   </div>
-
  </div>
 
  <!-- Summary KPIs -->
@@ -1155,6 +1047,86 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <div id="sched-modal-body"></div>
  </div>
 </div>
+<div class="page" id="page-leads">
+<div style="padding:16px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+  <div style="font-size:15px;font-weight:700">🎯 Lead Tracker</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <button onclick="loadLeads(true)" style="padding:6px 14px;background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;cursor:pointer">🔄 Refresh</button>
+    <button onclick="openAddLeadModal()" style="padding:6px 14px;background:var(--duty);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;cursor:pointer">+ Add Lead</button>
+    <label style="padding:6px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:11px;cursor:pointer">📤 Upload CSV<input type="file" accept=".csv" id="leads-upload" style="display:none" onchange="uploadLeadsCSV(this)"></label>
+  </div>
+</div>
+<div id="leads-kpi-row" style="padding:14px 20px;background:var(--bg2);border-bottom:1px solid var(--border)"></div>
+<div style="padding:10px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;gap:8px">
+  <input id="lead-search" type="text" placeholder="🔍 Search name / phone..." style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:Inter,sans-serif;font-size:12px;padding:6px 10px;border-radius:6px;outline:none;width:200px" oninput="renderLeadsTable()">
+  <select id="lead-filter-status" onchange="renderLeadsTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Status</option><option value="connected">Connected</option><option value="no answer">No Answer</option><option value="hung up">Hung Up</option><option value="on fc">On FC</option><option value="converted">Converted</option></select>
+  <select id="lead-filter-heat" onchange="renderLeadsTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Classifications</option><option value="hot">🔥 Hot</option><option value="warm">🌤 Warm</option><option value="cold">❄️ Cold</option><option value="dead">💀 Dead</option></select>
+  <select id="lead-filter-city" onchange="renderLeadsTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Cities</option></select>
+  <select id="lead-filter-month" onchange="renderLeadsTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Months</option></select>
+  <select id="lead-filter-week" onchange="renderLeadsTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Weeks</option><option value="1">Week 1</option><option value="2">Week 2</option><option value="3">Week 3</option><option value="4">Week 4</option></select>
+  <button onclick="clearLeadFilters()" style="padding:6px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:11px;cursor:pointer">Clear</button>
+</div>
+<div style="overflow:auto;max-height:calc(100vh - 260px);padding:0 20px 20px"><div id="leads-table-wrap" style="margin-top:14px"></div></div>
+</div>
+
+<div class="page" id="page-supply">
+<div style="padding:16px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+  <div style="font-size:15px;font-weight:700">👥 Supply Tracker</div>
+  <button onclick="openAddCandidateModal()" style="padding:6px 14px;background:var(--duty);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;cursor:pointer">+ Add Candidate</button>
+</div>
+<div id="supply-kpi-row" style="padding:14px 20px;background:var(--bg2);border-bottom:1px solid var(--border)"></div>
+<div style="padding:10px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;gap:8px">
+  <input id="supply-search" type="text" placeholder="🔍 Search..." style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:Inter,sans-serif;font-size:12px;padding:6px 10px;border-radius:6px;outline:none;width:200px" oninput="renderSupplyTable()">
+  <select id="supply-filter-stage" onchange="renderSupplyTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Stages</option><option>Applied</option><option>Screened</option><option>Interview Scheduled</option><option>Interviewed</option><option>Docs Pending</option><option>Onboarded</option><option>Rejected</option></select>
+  <select id="supply-filter-hc" onchange="renderSupplyTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Homecare</option></select>
+  <select id="supply-filter-source" onchange="renderSupplyTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Sources</option><option>LinkedIn</option><option>Agency</option><option>Referral</option><option>Walk-in</option><option>Other</option></select>
+  <select id="supply-filter-nationality" onchange="renderSupplyTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Nationalities</option></select>
+  <button onclick="clearSupplyFilters()" style="padding:6px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:11px;cursor:pointer">Clear</button>
+</div>
+<div style="overflow:auto;max-height:calc(100vh - 260px);padding:0 20px 20px"><div id="supply-table-wrap" style="margin-top:14px"></div></div>
+</div>
+
+<div id="lead-modal" onclick="if(event.target===this)closeLeadModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:600;align-items:center;justify-content:center">
+ <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:22px;width:480px;max-width:95vw;max-height:90vh;overflow-y:auto">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div style="font-size:14px;font-weight:600" id="lead-modal-title">Lead</div><button onclick="closeLeadModal()" style="background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer">✕</button></div>
+  <div id="lead-modal-body"></div>
+  <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
+   <button onclick="saveLeadEdit()" style="flex:1;padding:9px;background:var(--accent);border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer">Save</button>
+   <button onclick="convertLead()" id="lead-convert-btn" style="flex:1;padding:9px;background:var(--duty);border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer">✅ Converted</button>
+   <button onclick="deleteLead()" style="padding:9px 14px;background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);border-radius:7px;color:var(--absent);font-size:12px;cursor:pointer">🗑</button>
+  </div>
+ </div>
+</div>
+
+<div id="add-lead-modal" onclick="if(event.target===this)this.style.display='none'" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:700;align-items:center;justify-content:center">
+ <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:22px;width:440px;max-width:95vw;max-height:90vh;overflow-y:auto">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div style="font-size:14px;font-weight:600">➕ Add New Lead</div><button onclick="document.getElementById('add-lead-modal').style.display='none'" style="background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer">✕</button></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+   <div><div style="font-size:10px;color:var(--text2);margin-bottom:4px">FULL NAME *</div><input id="nl-name" class="login-input" type="text" placeholder="Name"></div>
+   <div><div style="font-size:10px;color:var(--text2);margin-bottom:4px">PHONE *</div><input id="nl-phone" class="login-input" type="text" placeholder="+971..."></div>
+   <div><div style="font-size:10px;color:var(--text2);margin-bottom:4px">EMAIL</div><input id="nl-email" class="login-input" type="text" placeholder="email@..."></div>
+   <div><div style="font-size:10px;color:var(--text2);margin-bottom:4px">CITY</div><input id="nl-city" class="login-input" type="text" placeholder="Dubai"></div>
+   <div style="grid-column:1/-1"><div style="font-size:10px;color:var(--text2);margin-bottom:4px">PACKAGE</div><input id="nl-pkg" class="login-input" type="text" placeholder="Package"></div>
+   <div><div style="font-size:10px;color:var(--text2);margin-bottom:4px">STATUS</div><select id="nl-status" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:10px;border-radius:8px;outline:none"><option>connected</option><option>no answer</option><option>hung up</option><option>on fc</option></select></div>
+   <div><div style="font-size:10px;color:var(--text2);margin-bottom:4px">CLASSIFICATION</div><select id="nl-heat" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:10px;border-radius:8px;outline:none"><option value="warm">🌤 Warm</option><option value="hot">🔥 Hot</option><option value="cold">❄️ Cold</option><option value="dead">💀 Dead</option></select></div>
+   <div style="grid-column:1/-1"><div style="font-size:10px;color:var(--text2);margin-bottom:4px">NOTES</div><textarea id="nl-notes" rows="2" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:Inter,sans-serif;font-size:12px;padding:8px;border-radius:8px;outline:none;resize:vertical"></textarea></div>
+  </div>
+  <button onclick="saveNewLead()" style="width:100%;margin-top:14px;padding:10px;background:var(--accent);border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:600;cursor:pointer">Add Lead</button>
+ </div>
+</div>
+
+<div id="candidate-modal" onclick="if(event.target===this)closeCandidateModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:600;align-items:center;justify-content:center">
+ <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:22px;width:560px;max-width:95vw;max-height:90vh;overflow-y:auto">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div style="font-size:14px;font-weight:600" id="candidate-modal-title">Candidate</div><button onclick="closeCandidateModal()" style="background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer">✕</button></div>
+  <div id="candidate-modal-body"></div>
+  <div style="display:flex;gap:8px;margin-top:16px">
+   <button onclick="saveCandidate()" style="flex:1;padding:9px;background:var(--accent);border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer">Save</button>
+   <button id="candidate-onboard-btn" onclick="onboardCandidate()" style="flex:1;padding:9px;background:var(--duty);border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer">✅ Onboarded</button>
+   <button id="candidate-delete-btn" onclick="deleteCandidate()" style="padding:9px 14px;background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);border-radius:7px;color:var(--absent);font-size:12px;cursor:pointer">🗑</button>
+  </div>
+ </div>
+</div>
+
 
 
 <!-- ── ADD CAREGIVER MODAL ── -->
@@ -1508,15 +1480,13 @@ async function loadData(force=false){
     console.log('[loadData] rawData:', rawData.length, 'records');
     console.log('[loadData] allData:', allData.length, 'expanded records');
     console.log('[loadData] HCs:', [...new Set(rawData.map(r=>r.homecare))].filter(Boolean));
-    if(_session&&_session.role==='hc'&&_session.homecare){
-      rawData=rawData.filter(function(r){return r.homecare===_session.homecare;});
-      allData=allData.filter(function(r){return r.homecare===_session.homecare;});
-    }
+    if(_session&&_session.role==='hc'&&_session.homecare){rawData=rawData.filter(function(r){return r.homecare===_session.homecare;});allData=allData.filter(function(r){return r.homecare===_session.homecare;});}
     buildChatData();
     renderHCGrid();
     syncFromSheet();
-    setInterval(syncFromSheet,30*1000);
-    window.addEventListener('focus',syncFromSheet);
+    setInterval(syncFromSheet,5*60*1000);
+    var _lastSync=0;
+window.addEventListener('focus',function(){var now=Date.now();if(now-_lastSync>2*60*1000){_lastSync=now;syncFromSheet();}});
     if(document.getElementById('page-analytics').classList.contains('active'))renderAnalytics();
     populateCGHCFilter();
     document.getElementById('cg-result-count').textContent = [...new Set(rawData.map(r=>r.caregiver)).values()].filter(Boolean).length + ' caregivers';
@@ -1738,14 +1708,18 @@ function renderCalendar(){
     let evHtml='';
     // Show override even on empty days (no Metabase booking)
     if(!other && evs.length===0 && dateStr){
-      const emptyOv = overrides[activeCG+'|'+dateStr];
-      if(emptyOv){
-        const ovLabels = {sick:'🤒 Sick',off:'🌙 Off',holiday:'🎉 Holiday',unpaid:'💸 Unpaid',cancelled:'❌ Cancelled',removed:'🗑 Removed',manual:'📋 Manual'};
-        const ovCls = emptyOv.type==='manual'?'duty':emptyOv.type==='sick'?'sick':emptyOv.type==='off'?'off-day':emptyOv.type==='holiday'?'holiday':emptyOv.type==='unpaid'?'unpaid':'cancelled';
-        const emptyT = emptyOv.time_start&&emptyOv.time_end ? emptyOv.time_start+' – '+emptyOv.time_end : (emptyOv.time_start||'');
-        const ovLbl = emptyOv.type==='manual' ? (emptyOv.client_name||'Manual')+(emptyT?' · '+emptyT:'') : (ovLabels[emptyOv.type]||emptyOv.type);
-        const safe = encodeURIComponent(JSON.stringify({caregiver:activeCG, date:dateStr, status:emptyOv.type, override:emptyOv}));
-        evHtml += `<div class="cal-ev ${ovCls}" draggable="true" ondragstart="onOvDragStart(event,'${activeCG}','${dateStr}')" ondragend="onOvDragEnd(event)" onclick="openEvModal('${safe}')">${ovLbl} <span class="drag-handle">&#8942;</span></div>`;
+      var _ov=overrides[activeCG+'|'+dateStr];
+      if(_ov){
+        if(_ov.type!=='manual'&&_ov.type!=='manual_list'){
+          var _cls={sick:'sick',off:'off-day',holiday:'holiday',unpaid:'unpaid',cancelled:'cancelled',removed:'override-removed'}[_ov.type]||'absent';
+          var _lbl={sick:'Sick',off:'Day Off',holiday:'Holiday',unpaid:'Unpaid',cancelled:'Cancelled',removed:'Removed'}[_ov.type]||_ov.type;
+          var _safe=encodeURIComponent(JSON.stringify({caregiver:activeCG,date:dateStr,status:_ov.type,override:_ov}));
+          var _d1=document.createElement('div');_d1.className='cal-ev '+_cls;_d1.textContent=_lbl;_d1.onclick=(function(s){return function(){openEvModal(s);};})(_safe);evHtml+=_d1.outerHTML;
+        }
+        getManualBookings(activeCG,dateStr).forEach(function(b){
+          var _t=b.time_start?(b.time_end?' '+b.time_start+'-'+b.time_end:' '+b.time_start):'';
+          var _d2=document.createElement('div');_d2.className='cal-ev duty';_d2.textContent=(b.client_name||'Manual')+_t;_d2.onclick=(function(cg,dt){return function(){openOvModal(cg,dt);};})(activeCG,dateStr);evHtml+=_d2.outerHTML;
+        });
       }
     }
     evs.forEach(ev=>{
@@ -1788,7 +1762,8 @@ function renderCalendar(){
       var dragHandle2=ov?' <span class="drag-handle">&#8942;</span>':'';
       evHtml+='<div class="cal-ev '+cls2+'" '+dragAttrs2+' onclick="openEvModal(\''+safe+'\')">' +lbl+dragHandle2+'</div>';
     });
-    // Show + button on ALL non-other-month days (not just days with events)
+    if(!other&&evs.length>0&&dateStr){getManualBookings(activeCG,dateStr).forEach(function(b){var _t=b.time_start?(b.time_end?' '+b.time_start+'-'+b.time_end:' '+b.time_start):'';var _d3=document.createElement('div');_d3.className='cal-ev duty';_d3.textContent=(b.client_name||'Manual')+_t;_d3.onclick=(function(cg,dt){return function(){openOvModal(cg,dt);};})(activeCG,dateStr);evHtml+=_d3.outerHTML;});}
+    // Show + button
     const addBtn = !other ? `<div class="day-add-btn" onclick="event.stopPropagation();openOvModal('${activeCG}','${dateStr}')" title="Add entry">+</div>` : '';
     html+=`<div class="${cls}" ondragover="onDayDragOver(event,'${activeCG}','${dateStr}')" ondragleave="onDayDragLeave(event)" ondrop="onDayDrop(event,'${activeCG}','${dateStr}')">${addBtn}<div class="day-num">${day}</div>${evHtml}</div>`;
   }
@@ -1984,7 +1959,7 @@ function renderAnalyticsData(){
   const periodLabel = anaWk==='all' ? MONTHS[anaMo]+' '+anaYr : `${MONTHS[anaMo]} W — ${anaWkStart} to ${anaWkEnd}`;
 
   const total = data.length;
-  const duty = data.filter(function(r){var s=(r.status||'').toLowerCase().replace(/\s+/g,'');return s!=='cancelled'&&s!=='removed'&&s!=='weekoff'&&s!=='sick'&&s!=='off'&&s!=='holiday'&&s!=='unpaid';}).length;
+  const duty=data.filter(function(r){var s=(r.status||'').toLowerCase().replace(/\s+/g,'');return s!=='cancelled'&&s!=='removed'&&s!=='weekoff'&&s!=='sick'&&s!=='off'&&s!=='holiday'&&s!=='unpaid';}).length;
   const cgs = new Set(data.map(r=>r.caregiver)).size;
   const util = total ? Math.round((duty/total)*100) : 0;
 
@@ -1997,10 +1972,7 @@ function renderAnalyticsData(){
     <div class="kpi k3"><div class="kpi-val" style="color:var(--text2)">${clients}</div><div class="kpi-label">Clients</div></div>
     <div class="kpi k4"><div class="kpi-val" style="color:var(--sick)">${util}%</div><div class="kpi-label">Utilization</div></div>`;
 
-  function isActiveShift(r){
-    var s=(r.status||'').toLowerCase().replace(/\s+/g,'');
-    return s!=='cancelled'&&s!=='removed'&&s!=='weekoff'&&s!=='sick'&&s!=='off'&&s!=='holiday'&&s!=='unpaid';
-  }
+  function isActiveShift(r){var s=(r.status||'').toLowerCase().replace(/\s+/g,'');return s!=='cancelled'&&s!=='removed'&&s!=='weekoff'&&s!=='sick'&&s!=='off'&&s!=='holiday'&&s!=='unpaid';}
   const hcMap={};
   data.filter(isActiveShift).forEach(r=>{if(r.homecare)hcMap[r.homecare]=(hcMap[r.homecare]||0)+1;});
   const hcS=Object.entries(hcMap).sort((a,b)=>b[1]-a[1]);
@@ -2018,37 +1990,12 @@ function renderAnalyticsData(){
     const hrsPerDay = extractHours(pkg)||0;
     cgMap[r.caregiver] = (cgMap[r.caregiver]||0) + hrsPerDay;
   });
-  // Add manual booking hours — handles single and multi-booking (manual_list)
-  function calcBookingHrs(b){
-    if(!b.time_start||!b.time_end) return 1;
-    try{
-      var toH=function(t){
-        var isPM=/PM/i.test(t);
-        t=t.replace(/\s*(AM|PM)/i,'').trim();
-        var p=t.split(':'),h=parseInt(p[0])||0,m=parseInt(p[1])||0;
-        if(isPM&&h<12)h+=12; if(!isPM&&h===12)h=0;
-        return h+m/60;
-      };
-      var diff=toH(b.time_end)-toH(b.time_start);
-      return diff>0?diff:24+diff;
-    }catch(e){return 1;}
-  }
+  function calcBookingHrs(b){if(!b.time_start||!b.time_end)return 1;try{var toH=function(t){var isPM=/PM/i.test(t);t=t.replace(/\s*(AM|PM)/i,'').trim();var p=t.split(':'),h=parseInt(p[0])||0,m=parseInt(p[1])||0;if(isPM&&h<12)h+=12;if(!isPM&&h===12)h=0;return h+m/60;};var diff=toH(b.time_end)-toH(b.time_start);return diff>0?diff:24+diff;}catch(e){return 1;}}
   Object.values(overrides).forEach(function(ov){
-    if(!ov.caregiver) return;
-    var d=parseD(ov.date);
-    if(!d||d.y!==anaYr||d.m!==anaMo) return;
+    if(!ov.caregiver)return;var d=parseD(ov.date);if(!d||d.y!==anaYr||d.m!==anaMo)return;
     if(anaWk!=='all'&&anaWkStart&&anaWkEnd){if(ov.date<anaWkStart||ov.date>anaWkEnd)return;}
-    var bookings=[];
-    if(ov.type==='manual') bookings=[ov];
-    else if(ov.type==='manual_list'&&ov.bookings) bookings=ov.bookings;
-    bookings.forEach(function(b){
-      var hrs=calcBookingHrs(b);
-      var cg=b.caregiver||ov.caregiver;
-      if(!cgMap[cg]) cgMap[cg]=0;
-      cgMap[cg]+=hrs;
-      var hc=b.homecare||ov.homecare||(rawData.find(function(r){return r.caregiver===cg;})||{}).homecare||'';
-      if(hc) hcMap[hc]=(hcMap[hc]||0)+1;
-    });
+    var bookings=[];if(ov.type==='manual')bookings=[ov];else if(ov.type==='manual_list'&&ov.bookings)bookings=ov.bookings;
+    bookings.forEach(function(b){var hrs=calcBookingHrs(b),cg=b.caregiver||ov.caregiver;if(!cgMap[cg])cgMap[cg]=0;cgMap[cg]+=hrs;var hc=b.homecare||ov.homecare||(rawData.find(function(r){return r.caregiver===cg;})||{}).homecare||'';if(hc)hcMap[hc]=(hcMap[hc]||0)+1;});
   });
   const MAX_MONTH_HRS = 288; // 6 days × 4 weeks × 12h = 100% utilization
   const cgS = Object.entries(cgMap).map(function(e){ return [e[0], Math.min(e[1], MAX_MONTH_HRS)]; }).sort((a,b)=>b[1]-a[1]);
@@ -2151,11 +2098,13 @@ function switchTab(tab){
   if(tab==='daily'){setTimeout(switchToDaily,80);}
   document.querySelectorAll('.main-tab').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase().includes(tab)));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.getElementById('page-'+tab).classList.add('active');
+  var _pg=document.getElementById('page-'+tab);if(_pg)_pg.classList.add('active');
   document.getElementById('avail-bar').style.display=tab==='calendar'?'flex':'none';
   if(tab==='analytics')renderAnalytics();
   if(tab==='ops')renderOps();
   if(tab==='planner')renderPlanner();
+  if(tab==='leads'){if(_session&&_session.role!=='master'){alert('Master access only');return;}loadLeads();}
+  if(tab==='supply'){if(_session&&_session.role!=='master'){alert('Master access only');return;}loadSupply();}
 }
 
 // ── Theme toggle ─────────────────────────────────────────────────
@@ -2455,53 +2404,24 @@ function predictLogistic(model, features){
 var _revenueChart = null;
 
 function renderRevenueProjection(){
-  if(!rawData||!rawData.length) return;
+  if(!rawData||!rawData.length)return;
   var monthMap={};
-  rawData.forEach(function(r){
-    if(!r.date||(r.status||'').toLowerCase()==='cancelled') return;
-    if(!r.final_price||r.final_price<=0) return;
-    var mo=r.date.slice(0,7);
-    if(!monthMap[mo]) monthMap[mo]=0;
-    monthMap[mo]+=r.final_price;
-  });
+  rawData.forEach(function(r){if(!r.date||(r.status||'').toLowerCase()==='cancelled')return;if(!r.final_price||r.final_price<=0)return;var mo=r.date.slice(0,7);if(!monthMap[mo])monthMap[mo]=0;monthMap[mo]+=r.final_price;});
   var months=Object.keys(monthMap).sort();
-  if(months.length<2){
-    document.getElementById('revenue-projection-stats').innerHTML='<div style="color:var(--text3);font-size:12px">Not enough monthly data (need 2+ months with Final_Price)</div>';
-    return;
-  }
-  var xHist=months.map(function(_,i){return i;});
-  var yHist=months.map(function(m){return monthMap[m];});
-  var model=linearRegression(xHist,yHist);
-  var lastMo=months[months.length-1];
-  var futureMonths=[];
-  for(var i=1;i<=3;i++){var d=new Date(lastMo+'-01');d.setMonth(d.getMonth()+i);futureMonths.push(d.toISOString().slice(0,7));}
-  var xFuture=futureMonths.map(function(_,i){return months.length+i;});
-  var yFuture=xFuture.map(function(x){return Math.max(0,predictLR(model,x));});
-  var allLabels=months.concat(futureMonths).map(function(m){return new Date(m+'-01').toLocaleString('default',{month:'short',year:'2-digit'});});
-  var histData=yHist.concat(new Array(3).fill(null));
-  var forecastData=new Array(months.length-1).fill(null).concat([yHist[yHist.length-1]]).concat(yFuture);
-  if(_revenueChart) _revenueChart.destroy();
-  var canvas=document.getElementById('revenue-projection-chart');
-  if(!canvas) return;
-  _revenueChart=new Chart(canvas.getContext('2d'),{type:'bar',
-    data:{labels:allLabels,datasets:[
-      {label:'Actual (AED)',data:histData,backgroundColor:'rgba(47,129,247,.65)',borderColor:'#2f81f7',borderWidth:1,borderRadius:4},
-      {label:'Forecast (AED)',data:forecastData,backgroundColor:'rgba(245,158,11,.45)',borderColor:'#f59e0b',borderWidth:1,borderRadius:4}
-    ]},
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{labels:{color:'#94a3b8',font:{size:11}}},
-        tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+': AED '+Math.round(ctx.parsed.y||0).toLocaleString();}}}},
-      scales:{x:{ticks:{color:'#64748b',font:{size:10}},grid:{color:'rgba(255,255,255,.05)'}},
-        y:{ticks:{color:'#64748b',font:{size:10},callback:function(v){return 'AED '+Math.round(v).toLocaleString();}},grid:{color:'rgba(255,255,255,.05)'}}}}
-  });
-  var total=yHist.reduce(function(a,b){return a+b;},0);
-  var fTotal=yFuture.reduce(function(a,b){return a+b;},0);
-  var tc=model.slope>0?'#10b981':'#ef4444';
-  document.getElementById('revenue-projection-stats').innerHTML=
-    '<div class="daily-kpi"><div class="daily-kpi-val" style="color:#2f81f7">AED '+Math.round(total).toLocaleString()+'</div><div class="daily-kpi-lbl">Total actual</div></div>'
-   +'<div class="daily-kpi"><div class="daily-kpi-val">AED '+Math.round(total/yHist.length).toLocaleString()+'</div><div class="daily-kpi-lbl">Avg/month</div></div>'
-   +'<div class="daily-kpi"><div class="daily-kpi-val" style="color:#f59e0b">AED '+Math.round(fTotal).toLocaleString()+'</div><div class="daily-kpi-lbl">Forecast 3 months</div></div>'
-   +'<div class="daily-kpi"><div class="daily-kpi-val" style="color:'+tc+'">'+(model.slope>0?'Trending Up':'Trending Down')+'</div><div class="daily-kpi-lbl">AED '+Math.round(Math.abs(model.slope)).toLocaleString()+'/month</div></div>';
+  if(months.length<2){document.getElementById('revenue-projection-stats').innerHTML='<div style="color:var(--text3);font-size:12px">Not enough monthly data</div>';return;}
+  var xH=months.map(function(_,i){return i;}),yH=months.map(function(m){return monthMap[m];});
+  var model=linearRegression(xH,yH),lastMo=months[months.length-1],fm=[];
+  for(var i=1;i<=3;i++){var d=new Date(lastMo+'-01');d.setMonth(d.getMonth()+i);fm.push(d.toISOString().slice(0,7));}
+  var xF=fm.map(function(_,i){return months.length+i;});
+  var yF=xF.map(function(x){return Math.max(0,predictLR(model,x));});
+  var labels=months.concat(fm).map(function(m){return new Date(m+'-01').toLocaleString('default',{month:'short',year:'2-digit'});});
+  var hd=yH.concat(new Array(3).fill(null));
+  var fd=new Array(months.length-1).fill(null).concat([yH[yH.length-1]]).concat(yF);
+  if(_revenueChart)_revenueChart.destroy();
+  var canvas=document.getElementById('revenue-projection-chart');if(!canvas)return;
+  _revenueChart=new Chart(canvas.getContext('2d'),{type:'bar',data:{labels:labels,datasets:[{label:'Actual (AED)',data:hd,backgroundColor:'rgba(47,129,247,.65)',borderColor:'#2f81f7',borderWidth:1,borderRadius:4},{label:'Forecast (AED)',data:fd,backgroundColor:'rgba(245,158,11,.45)',borderColor:'#f59e0b',borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',font:{size:11}}},tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+': AED '+Math.round(ctx.parsed.y||0).toLocaleString();}}}},scales:{x:{ticks:{color:'#64748b',font:{size:10}},grid:{color:'rgba(255,255,255,.05)'}},y:{ticks:{color:'#64748b',font:{size:10},callback:function(v){return 'AED '+Math.round(v).toLocaleString();}},grid:{color:'rgba(255,255,255,.05)'}}}}});
+  var total=yH.reduce(function(a,b){return a+b;},0),fTotal=yF.reduce(function(a,b){return a+b;},0),tc=model.slope>0?'#10b981':'#ef4444';
+  document.getElementById('revenue-projection-stats').innerHTML='<div class="daily-kpi"><div class="daily-kpi-val" style="color:#2f81f7">AED '+Math.round(total).toLocaleString()+'</div><div class="daily-kpi-lbl">Total actual</div></div><div class="daily-kpi"><div class="daily-kpi-val">AED '+Math.round(total/yH.length).toLocaleString()+'</div><div class="daily-kpi-lbl">Avg/month</div></div><div class="daily-kpi"><div class="daily-kpi-val" style="color:#f59e0b">AED '+Math.round(fTotal).toLocaleString()+'</div><div class="daily-kpi-lbl">Forecast 3m</div></div><div class="daily-kpi"><div class="daily-kpi-val" style="color:'+tc+'">'+(model.slope>0?'Trending Up':'Trending Down')+'</div><div class="daily-kpi-lbl">AED '+Math.round(Math.abs(model.slope)).toLocaleString()+'/mo</div></div>';
 }
 
 // ── Churn Risk (Logistic Regression) ─────────────────────────────
@@ -2816,12 +2736,20 @@ async function initFirebase(){
   }catch(e){try{_db=firebase.firestore(firebase.app());}catch(e2){console.warn('[fb] failed:',e2);}}
 }
 
+var _writeQueue={},_writeTimer=null;
 async function persistWrite(dt,dk,dv){
-  if(!_db) return;
-  try{
-    var id=dt+'__'+dk.replace(/[^a-zA-Z0-9_-]/g,'_');
-    await _db.collection('valeo_state').doc(id).set({type:dt,key:dk,value:JSON.stringify(dv),updated_at:new Date().toISOString()});
-  }catch(e){console.warn('[persist] write failed:',e);}
+  if(!_db)return;
+  var id=dt+'__'+dk.replace(/[^a-zA-Z0-9_-]/g,'_');
+  _writeQueue[id]={type:dt,key:dk,value:JSON.stringify(dv),updated_at:new Date().toISOString()};
+  if(_writeTimer)clearTimeout(_writeTimer);
+  _writeTimer=setTimeout(flushWriteQueue,3000);
+}
+async function flushWriteQueue(){
+  if(!_db||!Object.keys(_writeQueue).length)return;
+  var batch=_db.batch(),count=0;
+  Object.entries(_writeQueue).forEach(function(e){batch.set(_db.collection('valeo_state').doc(e[0]),e[1]);count++;});
+  _writeQueue={};
+  try{await batch.commit();}catch(e){console.warn('[persist]',e);}
 }
 
 async function persistDelete(dt,dk){
@@ -2868,6 +2796,7 @@ function loadLocalCache(){
 
 async function syncFromSheet(){
   if(!_db){await initFirebase();if(!_db)return;}
+  if(document.hidden)return;
   try{
     var snap=await _db.collection('valeo_state').get();
     if(snap.empty) return;
@@ -3006,30 +2935,19 @@ function applyOverrides(){
   });
 }
 
-function openOvModal(cg, date){
-  ovCG = cg; ovDate = date;
-  // Check if this is an existing booking or empty slot
-  const hasBooking = allData.some(function(r){ return r.caregiver===cg && r.date===date; });
-  document.getElementById('ov-date-info').textContent = cg + '  ·  ' + date + (hasBooking ? '' : '  (empty slot)');
-  document.getElementById('ov-note').value = '';
-  document.getElementById('ov-manual-fields').style.display = 'none';
-  document.getElementById('ov-client').value = '';
-  document.getElementById('ov-time-start').value = '';
-  document.getElementById('ov-time-end').value = '';
-  // Pre-select existing override
-  const existing = overrides[cg+'|'+date];
-  document.querySelectorAll('.ov-type-btn').forEach(b=>b.classList.remove('selected'));
-  if(existing){
-    ovType = existing.type;
-    document.getElementById('ov-note').value = existing.note||'';
-    if(existing.type==='manual'){
-      document.getElementById('ov-manual-fields').style.display='block';
-      document.getElementById('ov-client').value = existing.client_name||'';
-      document.getElementById('ov-time-start').value = existing.time_start||'';
-      document.getElementById('ov-time-end').value = existing.time_end||'';
-    }
-    document.querySelector('.ov-type-btn.'+existing.type)?.classList.add('selected');
-  } else { ovType = ''; }
+function openOvModal(cg,date){
+  ovCG=cg;ovDate=date;ovType='';
+  document.getElementById('ov-note').value='';document.getElementById('ov-manual-fields').style.display='none';
+  document.getElementById('ov-client').value='';document.getElementById('ov-time-start').value='';document.getElementById('ov-time-end').value='';
+  document.querySelectorAll('.ov-type-btn').forEach(function(b){b.classList.remove('selected');});
+  var aab=document.getElementById('ov-add-another');if(aab)aab.style.display='none';
+  document.getElementById('ov-date-info').textContent=cg+'  ·  '+date;
+  var el=document.getElementById('ov-existing-list');if(el)renderExistingBookings(cg,date);
+  var existing=overrides[cg+'|'+date];
+  if(existing&&existing.type!=='manual'&&existing.type!=='manual_list'){
+    ovType=existing.type;document.getElementById('ov-note').value=existing.note||'';
+    var btn=document.querySelector('.ov-type-btn.'+existing.type);if(btn)btn.classList.add('selected');
+  }
   document.getElementById('override-modal').classList.add('show');
 }
 
@@ -3038,12 +2956,24 @@ function closeOvModal(){
   ovCG=''; ovDate=''; ovType='';
 }
 
-function selectOvType(type, el){
-  ovType = type;
-  document.querySelectorAll('.ov-type-btn').forEach(b=>b.classList.remove('selected'));
+function selectOvType(type,el){
+  ovType=type;
+  document.querySelectorAll('.ov-type-btn').forEach(function(b){b.classList.remove('selected');});
   el.classList.add('selected');
-  document.getElementById('ov-manual-fields').style.display = type==='manual' ? 'block' : 'none';
+  document.getElementById('ov-manual-fields').style.display=type==='manual'?'block':'none';
+  var aab=document.getElementById('ov-add-another');if(aab)aab.style.display=type==='manual'?'flex':'none';
 }
+function getManualBookings(cg,date){var ov=overrides[cg+'|'+date];if(!ov)return[];if(ov.type==='manual_list')return ov.bookings;if(ov.type==='manual')return[ov];return[];}
+function setManualBookings(cg,date,bks){var key=cg+'|'+date;if(!bks.length)delete overrides[key];else if(bks.length===1)overrides[key]=Object.assign({},bks[0],{type:'manual',caregiver:cg,date:date});else overrides[key]={type:'manual_list',caregiver:cg,date:date,bookings:bks.slice()};}
+function renderExistingBookings(cg,date){
+  var el=document.getElementById('ov-existing-list');if(!el)return;
+  var bks=getManualBookings(cg,date);if(!bks.length){el.innerHTML='';return;}
+  var h='<div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px">Existing bookings:</div>';
+  bks.forEach(function(b,i){var t=b.time_start?(b.time_end?' ('+b.time_start+' - '+b.time_end+')':' ('+b.time_start+')'):'';h+='<div style="display:flex;align-items:center;background:var(--bg3);border-radius:6px;padding:5px 8px;margin-bottom:4px;font-size:12px;gap:8px"><span style="flex:1;color:var(--duty)">&#9679; '+(b.client_name||'Manual')+t+'</span><button data-cg="'+cg.replace(/"/g,"&quot;")+'" data-date="'+date+'" data-i="'+i+'" onclick="rmBooking(this)" style="background:rgba(248,81,73,.15);border:1px solid rgba(248,81,73,.35);border-radius:4px;color:#f85149;font-size:10px;padding:2px 8px;cursor:pointer">Remove</button></div>';});
+  el.innerHTML=h;
+}
+function rmBooking(btn){var cg=btn.dataset.cg,date=btn.dataset.date,i=+btn.dataset.i;var bks=getManualBookings(cg,date);bks.splice(i,1);setManualBookings(cg,date,bks);saveLocalCache();var key=cg+'|'+date;if(overrides[key])persistWrite('override',key,JSON.parse(JSON.stringify(overrides[key])));else persistDelete('override',key);reRenderAll();renderExistingBookings(cg,date);}
+async function saveAndAddAnother(){var cg=ovCG,dt=ovDate;await saveOverride();setTimeout(function(){openOvModal(cg,dt);var mb=document.querySelector('.ov-type-btn.manual');if(mb)selectOvType('manual',mb);},200);}
 
 async function saveOverride(){
   if(!ovType){alert('Please select an override type');return;}
@@ -3057,10 +2987,11 @@ async function saveOverride(){
     payload.client_name=client;payload.time_start=tStart;payload.time_end=tEnd;
   }
   var ovKey=ovCG+'|'+ovDate;
-  overrides[ovKey]=payload;saveLocalCache();
-  reRenderAll(); // refresh ALL tabs — calendar, roster, ops, daily
-  closeOvModal();
-  await persistWrite('override',ovKey,payload);
+  if(ovType==='manual'){
+    var bks=getManualBookings(ovCG,ovDate);bks.push(payload);setManualBookings(ovCG,ovDate,bks);
+  } else {overrides[ovKey]=payload;}
+  saveLocalCache();reRenderAll();closeOvModal();
+  await persistWrite('override',ovKey,JSON.parse(JSON.stringify(overrides[ovKey])));
 }
 
 async function clearOverride(){
@@ -3110,11 +3041,6 @@ var plannerCustomCols = []; // extra custom columns
 var plannerData = []; // editable data store
 
 function renderPlanner(){
-  sbPopulateHCs();
-  sbSetMode('pre');
-  // Set today as default start date
-  var sb = document.getElementById('sb-start');
-  if(sb && !sb.value) sb.value = new Date().toISOString().slice(0,10);
   // Check if shared view mode
   const urlParams = new URLSearchParams(window.location.search);
   if(urlParams.get('planner')){
@@ -3925,12 +3851,10 @@ function switchToRoster(){
   if(sel&&rawData&&rawData.length){
     var cur=sel.value;
     var hcs=[...new Set(rawData.map(function(r){return r.homecare;}))].filter(Boolean).sort();
-    if(_session&&_session.role==='hc'&&_session.homecare){
-      hcs=[_session.homecare]; sel.style.display='none';
-    }
+    if(_session&&_session.role==='hc'&&_session.homecare){hcs=[_session.homecare];sel.style.display='none';}
     sel.innerHTML='<option value="">All Homecare</option>';
     hcs.forEach(function(hc){sel.innerHTML+='<option value="'+hc+'"'+(hc===cur?' selected':'')+'>'+hc+'</option>';});
-    if(_session&&_session.role==='hc'&&_session.homecare) sel.value=_session.homecare;
+    if(_session&&_session.role==='hc'&&_session.homecare)sel.value=_session.homecare;
   }
   renderRoster();
 }
@@ -4259,202 +4183,463 @@ function renderDailyOrders(){
   wrap.innerHTML = html;
 }
 
-
-// ── Schedule Builder ──────────────────────────────────────────────
-var _sbMode = 'pre';
-
-function sbSetMode(mode){
-  _sbMode = mode;
-  document.getElementById('sb-pre-form').style.display  = mode==='pre'  ? 'block' : 'none';
-  document.getElementById('sb-post-form').style.display = mode==='post' ? 'block' : 'none';
-  var btnPre  = document.getElementById('sb-mode-pre');
-  var btnPost = document.getElementById('sb-mode-post');
-  btnPre.style.background  = mode==='pre'  ? 'var(--accent)' : 'var(--bg3)';
-  btnPre.style.color       = mode==='pre'  ? '#fff' : 'var(--text2)';
-  btnPre.style.borderColor = mode==='pre'  ? 'var(--accent)' : 'var(--border)';
-  btnPost.style.background  = mode==='post' ? 'var(--accent)' : 'var(--bg3)';
-  btnPost.style.color       = mode==='post' ? '#fff' : 'var(--text2)';
-  btnPost.style.borderColor = mode==='post' ? 'var(--accent)' : 'var(--border)';
-}
-
-function sbToggleSplit(){
-  var show = document.getElementById('sb-split-toggle').checked;
-  document.getElementById('sb-cg2-section').style.display = show ? 'block' : 'none';
-}
-
-function sbPkgTypeChange(){
-  var type = document.getElementById('sb-pkg-type').value;
-  document.getElementById('sb-weeks-field').style.display = type==='weekly' ? 'block' : 'block';
-  var weeksEl = document.getElementById('sb-weeks');
-  if(type==='monthly'){
-    weeksEl.innerHTML = '<option value="4">4 weeks</option><option value="1">1 week</option><option value="2">2 weeks</option><option value="3">3 weeks</option>';
-  } else {
-    weeksEl.innerHTML = '<option value="1">1 week</option><option value="2">2 weeks</option><option value="3">3 weeks</option><option value="4">4 weeks</option>';
-  }
-}
-
-function sbPopulateHCs(){
-  var hcs = [...new Set(rawData.map(function(r){return r.homecare;}).filter(Boolean))].sort();
-  ['sb-hc1','sb-hc2'].forEach(function(id){
-    var sel = document.getElementById(id);
-    if(!sel) return;
-    var cur = sel.value;
-    sel.innerHTML = '<option value="">— Select HC —</option>';
-    hcs.forEach(function(hc){ sel.innerHTML += '<option value="'+hc+'"'+(hc===cur?' selected':'')+'>'+hc+'</option>'; });
-  });
-}
-
-function sbLoadCGs(num){
-  var hc = document.getElementById('sb-hc'+num).value;
-  var cgs = [...new Set(rawData.filter(function(r){return !hc||r.homecare===hc;}).map(function(r){return r.caregiver;}).filter(Boolean))].sort();
-  var sel = document.getElementById('sb-cg'+num);
-  sel.innerHTML = '<option value="">— Select CG —</option>';
-  cgs.forEach(function(cg){ sel.innerHTML += '<option value="'+cg+'">'+cg+'</option>'; });
-}
-
-function sbGetWODays(containerId){
-  return [...document.querySelectorAll('#'+containerId+' .day-chip-pl.on')].map(function(b){return b.dataset.day;});
-}
-
-function sbGenerate(){
-  var client  = document.getElementById('sb-client').value.trim();
-  var pkgType = document.getElementById('sb-pkg-type').value;
-  var dpw     = +document.getElementById('sb-days-per-week').value;
-  var weeks   = +document.getElementById('sb-weeks').value;
-  var start   = document.getElementById('sb-start').value;
-  var cg1     = document.getElementById('sb-cg1').value;
-  var hc1     = document.getElementById('sb-hc1').value;
-  var t1s     = document.getElementById('sb-t1s').value.trim();
-  var t1e     = document.getElementById('sb-t1e').value.trim();
-  var wo1     = sbGetWODays('sb-wo1');
-  var splitOn = document.getElementById('sb-split-toggle').checked;
-  var cg2     = splitOn ? document.getElementById('sb-cg2').value : '';
-  var hc2     = splitOn ? document.getElementById('sb-hc2').value : '';
-  var t2s     = splitOn ? document.getElementById('sb-t2s').value.trim() : '';
-  var t2e     = splitOn ? document.getElementById('sb-t2e').value.trim() : '';
-  var wo2     = splitOn ? sbGetWODays('sb-wo2') : [];
-
-  if(!client){ alert('Please enter client name'); return; }
-  if(!start){ alert('Please select a start date'); return; }
-  if(!cg1){ alert('Please select Caregiver 1'); return; }
-
-  var totalDays = weeks * 7;
-  var pkgLabel  = (pkgType==='monthly'?'Monthly':'Weekly')+' plan: '+dpw+' days'+
-                  (pkgType==='monthly'?', '+weeks+' weeks':'');
-
-  plannerData = [];
-  plannerCustomCols = splitOn ? ['Night Shift CG','Night Shift Time'] : [];
-
-  for(var i=0; i<totalDays; i++){
-    var d = new Date(start+'T12:00:00');
-    d.setDate(d.getDate()+i);
-    var ds      = d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
-    var dayName = DAYS[d.getDay()];
-    var isOff1  = wo1.includes(dayName);
-    var isOff2  = splitOn && wo2.includes(dayName);
-    var status  = isOff1 ? 'Off' : 'Duty';
-    var shift1  = !isOff1 && t1s && t1e ? t1s+' – '+t1e : (isOff1 ? '—' : t1s||'—');
-
-    var row = {
-      num: i+1, date: ds, day: dayName,
-      timeSlot: shift1,
-      babysitter: isOff1 ? '—' : cg1,
-      homecare: isOff1 ? '—' : hc1,
-      status: status,
-      _orderId: '—', _clientName: client,
-      _package: pkgLabel,
-      _shift: t1s&&t1e ? t1s+' – '+t1e : t1s||'—'
-    };
-
-    if(splitOn){
-      row['Night Shift CG']   = isOff2 ? '—' : (cg2||'—');
-      row['Night Shift Time'] = !isOff2 && t2s && t2e ? t2s+' – '+t2e : (isOff2?'—':t2s||'—');
-    }
-    plannerData.push(row);
-  }
-
-  // KPIs
-  var workDays1 = plannerData.filter(function(r){return r.status==='Duty';}).length;
-  document.getElementById('pl-total-days').textContent    = plannerData.length;
-  document.getElementById('pl-working-days').textContent  = workDays1;
-  document.getElementById('pl-off-days').textContent      = plannerData.length - workDays1;
-  document.getElementById('pl-total-hrs').textContent     = '—';
-  document.getElementById('pl-sick-days').textContent     = '0';
-  document.getElementById('pl-summary').style.display     = 'flex';
-  document.getElementById('pl-table-wrap').style.display  = 'block';
-  document.getElementById('pl-toolbar').style.display     = 'flex';
-  document.getElementById('pl-share-bar').style.display   = 'flex';
-
-  renderPlannerTable();
-  updateShareLink();
-}
-
-
 // ── Auth ──────────────────────────────────────────────────────────
 var _session=null;
-
 async function doLogin(){
-  var user=document.getElementById('login-user').value.trim();
-  var pass=document.getElementById('login-pass').value.trim();
-  if(!user||!pass) return;
+  var user=document.getElementById('login-user').value.trim(),pass=document.getElementById('login-pass').value.trim();
+  if(!user||!pass)return;
   var btn=document.getElementById('login-btn'),err=document.getElementById('login-error');
-  btn.disabled=true; btn.textContent='Signing in...'; err.style.display='none';
+  btn.disabled=true;btn.textContent='Signing in...';err.style.display='none';
   try{
     var ALL_USERS=[
-      {username:'valeo_admin', password:'valeo2026',   role:'master', homecare:null},
-      {username:'shifa',       password:'shifa2026',   role:'hc',     homecare:'Shifa'},
-      {username:'magical',     password:'magical2026', role:'hc',     homecare:'Magical Hands'},
-      {username:'unicare',     password:'unicare2026', role:'hc',     homecare:'Unicare'},
-      {username:'nasmat',      password:'nasmat2026',  role:'hc',     homecare:'Nasmat Babysitter HC'},
-      {username:'zakha',       password:'zakha2026',   role:'hc',     homecare:'ZAKHA HOME HEALTHCARE CENTER L.L.C'},
-      {username:'bayti',       password:'bayti2026',   role:'hc',     homecare:'Bayti Dubai and Abudhabi Caregiver'},
-      {username:'mahara',      password:'mahara2026',  role:'hc',     homecare:'Mahara HC AD'},
+      {username:'valeo_admin',password:'valeo2026',role:'master',homecare:null},
+      {username:'shifa',password:'shifa2026',role:'hc',homecare:'Shifa'},
+      {username:'magical',password:'magical2026',role:'hc',homecare:'Magical Hands'},
+      {username:'unicare',password:'unicare2026',role:'hc',homecare:'Unicare'},
+      {username:'nasmat',password:'nasmat2026',role:'hc',homecare:'Nasmat Babysitter HC'},
+      {username:'zakha',password:'zakha2026',role:'hc',homecare:'ZAKHA HOME HEALTHCARE CENTER L.L.C'},
+      {username:'bayti',password:'bayti2026',role:'hc',homecare:'Bayti Dubai and Abudhabi Caregiver'},
+      {username:'mahara',password:'mahara2026',role:'hc',homecare:'Mahara HC AD'},
     ];
     var match=ALL_USERS.find(function(u){return u.username===user&&u.password===pass;});
-    if(!match) throw new Error('invalid');
+    if(!match)throw new Error('invalid');
     _session={username:match.username,role:match.role,homecare:match.homecare||null};
     sessionStorage.setItem('valeo_session',JSON.stringify(_session));
     document.getElementById('login-screen').style.display='none';
-    applySessionUI();
-    loadData();
-  }catch(e){
-    err.style.display='block';
-    btn.disabled=false; btn.textContent='Sign In';
-  }
+    applySessionUI();loadData();
+  }catch(e){err.style.display='block';btn.disabled=false;btn.textContent='Sign In';}
 }
-
 function applySessionUI(){
-  if(!_session) return;
+  if(!_session)return;
   var header=document.querySelector('.header-right');
   if(header){
     var badge=document.createElement('div');
     badge.style.cssText='display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text2);margin-right:8px';
-    badge.innerHTML=(_session.role==='master'?'&#x1F451;':'&#x1F3E5;')+' <b style="color:var(--text)">'+_session.username+'</b>'
-      +' <button onclick="doLogout()" style="background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);border-radius:5px;color:var(--absent);font-size:10px;padding:2px 8px;cursor:pointer;font-family:Inter,sans-serif">Sign out</button>';
+    badge.innerHTML=(_session.role==='master'?'&#x1F451;':'&#x1F3E5;')+' <b style="color:var(--text)">'+_session.username+'</b> <button onclick="doLogout()" style="background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);border-radius:5px;color:var(--absent);font-size:10px;padding:2px 8px;cursor:pointer;font-family:Inter,sans-serif">Sign out</button>';
     header.insertBefore(badge,header.firstChild);
   }
   if(_session.role==='hc'){
-    document.querySelectorAll('.main-tab').forEach(function(t){
-      var txt=t.textContent.trim();
-      if(!txt.includes('Calendar')&&!txt.includes('Roster')) t.style.display='none';
-    });
-    var addBtn=document.querySelector('.add-cg-btn');
-    if(addBtn) addBtn.style.display='none';
+    document.querySelectorAll('.main-tab').forEach(function(t){var txt=t.textContent.trim();if(!txt.includes('Calendar')&&!txt.includes('Roster'))t.style.display='none';});
+    var ab=document.querySelector('.add-cg-btn');if(ab)ab.style.display='none';
   }
 }
+function doLogout(){sessionStorage.removeItem('valeo_session');_session=null;location.reload();}
+function checkExistingSession(){try{var s=JSON.parse(sessionStorage.getItem('valeo_session')||'null');if(s&&s.username&&s.role){_session=s;return true;}}catch(e){}return false;}
 
-function doLogout(){
-  sessionStorage.removeItem('valeo_session');
-  _session=null; location.reload();
+// ── Schedule Builder ──────────────────────────────────────────────
+var _sbMode='pre';
+function sbSetMode(mode){
+  _sbMode=mode;
+  document.getElementById('sb-pre-form').style.display=mode==='pre'?'block':'none';
+  document.getElementById('sb-post-form').style.display=mode==='post'?'block':'none';
+  var p=document.getElementById('sb-mode-pre'),q=document.getElementById('sb-mode-post');
+  p.style.background=mode==='pre'?'var(--accent)':'var(--bg3)';p.style.color=mode==='pre'?'#fff':'var(--text2)';p.style.borderColor=mode==='pre'?'var(--accent)':'var(--border)';
+  q.style.background=mode==='post'?'var(--accent)':'var(--bg3)';q.style.color=mode==='post'?'#fff':'var(--text2)';q.style.borderColor=mode==='post'?'var(--accent)':'var(--border)';
 }
+function sbToggleSplit(){document.getElementById('sb-cg2-section').style.display=document.getElementById('sb-split-toggle').checked?'block':'none';}
+function sbPopulateHCs(){
+  var hcs=[...new Set(rawData.map(function(r){return r.homecare;}).filter(Boolean))].sort();
+  ['sb-hc1','sb-hc2'].forEach(function(id){var sel=document.getElementById(id);if(!sel)return;var cur=sel.value;sel.innerHTML='<option value="">— HC —</option>';hcs.forEach(function(hc){sel.innerHTML+='<option value="'+hc+'"'+(hc===cur?' selected':'')+'>'+hc+'</option>';});});
+}
+function sbLoadCGs(num){
+  var hc=document.getElementById('sb-hc'+num).value;
+  var cgs=[...new Set(rawData.filter(function(r){return !hc||r.homecare===hc;}).map(function(r){return r.caregiver;}).filter(Boolean))].sort();
+  var sel=document.getElementById('sb-cg'+num);sel.innerHTML='<option value="">— CG —</option>';cgs.forEach(function(cg){sel.innerHTML+='<option value="'+cg+'">'+cg+'</option>';});
+}
+function sbGetWODays(id){return[...document.querySelectorAll('#'+id+' .day-chip-pl.on')].map(function(b){return b.dataset.day;});}
+function sbGenerate(){
+  var client=document.getElementById('sb-client').value.trim();
+  if(!client){alert('Please enter client name');return;}
+  var start=document.getElementById('sb-start').value;if(!start){alert('Please select start date');return;}
+  var cg1=document.getElementById('sb-cg1').value;if(!cg1){alert('Please select Caregiver 1');return;}
+  var pkgType=document.getElementById('sb-pkg-type').value,dpw=+document.getElementById('sb-days-per-week').value,weeks=+document.getElementById('sb-weeks').value;
+  var hc1=document.getElementById('sb-hc1').value,t1s=document.getElementById('sb-t1s').value.trim(),t1e=document.getElementById('sb-t1e').value.trim(),wo1=sbGetWODays('sb-wo1');
+  var splitOn=document.getElementById('sb-split-toggle').checked;
+  var cg2=splitOn?document.getElementById('sb-cg2').value:'',hc2=splitOn?document.getElementById('sb-hc2').value:'';
+  var t2s=splitOn?document.getElementById('sb-t2s').value.trim():'',t2e=splitOn?document.getElementById('sb-t2e').value.trim():'',wo2=splitOn?sbGetWODays('sb-wo2'):[];
+  var totalDays=weeks*7,pkgLabel=(pkgType==='monthly'?'Monthly':'Weekly')+' plan: '+dpw+' days, '+weeks+' weeks';
+  plannerData=[];plannerCustomCols=splitOn?['Night Shift CG','Night Shift Time']:[];
+  for(var i=0;i<totalDays;i++){
+    var d=new Date(start+'T12:00:00');d.setDate(d.getDate()+i);
+    var ds=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()),dayName=DAYS[d.getDay()];
+    var off1=wo1.includes(dayName),off2=splitOn&&wo2.includes(dayName);
+    var row={num:i+1,date:ds,day:dayName,timeSlot:!off1&&t1s&&t1e?t1s+' - '+t1e:(off1?'—':t1s||'—'),babysitter:off1?'—':cg1,homecare:off1?'—':hc1,status:off1?'Off':'Duty',_orderId:'—',_clientName:client,_package:pkgLabel};
+    if(splitOn){row['Night Shift CG']=off2?'—':(cg2||'—');row['Night Shift Time']=!off2&&t2s&&t2e?t2s+' - '+t2e:(off2?'—':t2s||'—');}
+    plannerData.push(row);
+  }
+  var workDays=plannerData.filter(function(r){return r.status==='Duty';}).length;
+  document.getElementById('pl-total-days').textContent=plannerData.length;
+  document.getElementById('pl-working-days').textContent=workDays;
+  document.getElementById('pl-off-days').textContent=plannerData.length-workDays;
+  document.getElementById('pl-total-hrs').textContent='—';document.getElementById('pl-sick-days').textContent='0';
+  document.getElementById('pl-summary').style.display='flex';document.getElementById('pl-table-wrap').style.display='block';document.getElementById('pl-toolbar').style.display='flex';document.getElementById('pl-share-bar').style.display='flex';
+  renderPlannerTable();updateShareLink();
+}
+function renderPlanner(){sbPopulateHCs();sbSetMode('pre');var sb=document.getElementById('sb-start');if(sb&&!sb.value)sb.value=new Date().toISOString().slice(0,10);}
 
-function checkExistingSession(){
+// ── Lead Tracker ──────────────────────────────────────────────────
+var _leads=[],_leadsOverrides={},_editLeadIdx=-1;
+function parseLeadDate(s){
+  if(!s)return null;s=String(s).trim();
+  if(/^\d{5}$/.test(s)){var d=new Date(1899,11,30);d.setDate(d.getDate()+parseInt(s));return d;}
+  var m=s.match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+  if(m){var day=+m[1],mo=+m[2]-1,yr=+m[3];if(yr<100)yr+=2000;return new Date(yr,mo,day);}
+  return null;
+}
+function leadDateStr(d){if(!d)return'';return d.getDate().toString().padStart(2,'0')+'/'+(d.getMonth()+1).toString().padStart(2,'0')+'/'+d.getFullYear();}
+function daysSince(d){if(!d)return null;return Math.floor((Date.now()-d.getTime())/(1000*60*60*24));}
+async function loadLeads(force){
+  if(!force&&_leads.length)return;
+  var wrap=document.getElementById('leads-table-wrap');
+  if(wrap)wrap.innerHTML='<div style="padding:40px;text-align:center;color:var(--text2)">Loading leads...</div>';
   try{
-    var s=JSON.parse(sessionStorage.getItem('valeo_session')||'null');
-    if(s&&s.username&&s.role){_session=s;return true;}
-  }catch(e){}
-  return false;
+    var res=await fetch('https://nishi25.app.n8n.cloud/webhook/valeo-leads');
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    var json=await res.json();
+    _leads=parseLeadsJSON(json);
+    await loadLeadsOverrides();populateLeadFilters();renderLeadsKPIs();renderLeadsTable();
+  }catch(e){
+    if(wrap)wrap.innerHTML='<div style="padding:40px;text-align:center;color:var(--absent)"><div style="font-size:15px;margin-bottom:10px">Could not load leads</div><div style="font-size:12px;color:var(--text2);margin-bottom:12px">'+e.message+'</div><button onclick="loadLeads(true)" style="padding:8px 20px;background:var(--accent);border:none;border-radius:6px;color:#fff;cursor:pointer;font-size:12px">Retry</button><br><br><div style="font-size:11px;color:var(--text3)">Or use Upload CSV</div></div>';
+  }
 }
+function parseLeadsJSON(rows){
+  var leads=[];
+  rows.forEach(function(row){
+    var obj={};
+    Object.keys(row).forEach(function(k){var v=row[k];obj[k.toLowerCase().trim()]=(v===null||v===undefined)?'':String(v);});
+    var name=String(obj['full name']||obj['name']||obj['platform full name']||'').trim();
+    var dateRaw=String(obj['date']||'').trim();
+    if(!name&&!dateRaw)return;
+    if(name.toLowerCase()==='full name')return;
+    if(/^\d+\s+[A-Za-z]+$/.test(name)&&!obj['phone number']&&!obj['phone'])return;
+    var parsedDate=parseLeadDate(dateRaw);
+    if(!parsedDate&&!obj['phone number']&&!obj['phone'])return;
+    obj._date=parsedDate;obj._idx=leads.length;leads.push(obj);
+  });
+  return leads;
+}
+function parseLeadsCSV(csv){
+  var lines=csv.split('\n'),leads=[],headerIdx=0;
+  for(var i=0;i<Math.min(5,lines.length);i++){if(lines[i].toLowerCase().includes('full name')||lines[i].toLowerCase().includes('phone')){headerIdx=i;break;}}
+  var headers=csvParseLine(lines[headerIdx]).map(function(h){return h.toLowerCase().trim();});
+  for(var r=headerIdx+1;r<lines.length;r++){
+    var line=lines[r].trim();if(!line)continue;
+    var cells=csvParseLine(line),obj={};
+    headers.forEach(function(h,i){obj[h]=(cells[i]||'').trim();});
+    var name=obj['full name']||obj['name']||'',dateRaw=obj['date']||'';
+    if(!name&&!dateRaw)continue;
+    obj._date=parseLeadDate(dateRaw);obj._idx=leads.length;leads.push(obj);
+  }
+  return leads;
+}
+function csvParseLine(line){var result=[],cur='',inQ=false;for(var i=0;i<line.length;i++){var c=line[i];if(c==='"'){inQ=!inQ;}else if(c===','&&!inQ){result.push(cur);cur='';}else cur+=c;}result.push(cur);return result;}
+async function loadLeadsOverrides(){if(!_db)return;try{var snap=await _db.collection('valeo_leads').get();_leadsOverrides={};snap.forEach(function(doc){_leadsOverrides[doc.id]=doc.data();});}catch(e){}}
+async function saveLeadOverride(key,data){_leadsOverrides[key]=Object.assign(_leadsOverrides[key]||{},data);if(_db)await _db.collection('valeo_leads').doc(key).set(_leadsOverrides[key],{merge:true});}
+function getLeadKey(lead){return String(lead['phone number']||lead['phone']||'').replace(/[^0-9+]/g,'')+'_'+String(lead['full name']||lead['name']||'').replace(/\s+/g,'_').toLowerCase().slice(0,20);}
+function getLeadOv(lead){return _leadsOverrides[getLeadKey(lead)]||{};}
+function autoHeat(lead){
+  var ov=getLeadOv(lead);if(ov.heat)return ov.heat;
+  var st=String(lead['status']||'').toLowerCase(),cur=String(lead['current status']||lead['current_status']||'').toLowerCase();
+  if(st==='converted'||cur.includes('booked')||cur.includes('convert'))return'hot';
+  if(st==='on fc'||st==='connected')return'warm';
+  if(st==='no answer'||st==='hung up')return'cold';
+  if(cur.includes('not interested')||cur.includes('high price'))return'dead';
+  return'cold';
+}
+function kpiCard(val,lbl,col){return'<div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 16px;min-width:90px"><div style="font-size:22px;font-weight:700;color:'+col+'">'+val+'</div><div style="font-size:10px;color:var(--text2);margin-top:2px">'+lbl+'</div></div>';}
+function populateLeadFilters(){
+  var cities=[...new Set(_leads.map(function(l){return(l['city']||'').trim();}).filter(Boolean))].sort();
+  var cityEl=document.getElementById('lead-filter-city');
+  if(cityEl){cityEl.innerHTML='<option value="">All Cities</option>';cities.forEach(function(c){cityEl.innerHTML+='<option value="'+c+'">'+c+'</option>';});}
+  var months=[...new Set(_leads.map(function(l){return l._date?l._date.toLocaleString('default',{month:'long',year:'numeric'}):null;}).filter(Boolean))].reverse();
+  var moEl=document.getElementById('lead-filter-month');
+  if(moEl){moEl.innerHTML='<option value="">All Months</option>';months.forEach(function(m){moEl.innerHTML+='<option value="'+m+'">'+m+'</option>';});}
+}
+function renderLeadsKPIs(){
+  var total=_leads.length,hot=0,warm=0,cold=0,dead=0,converted=0,monthMap={};
+  _leads.forEach(function(l){
+    var ov=getLeadOv(l),heat=ov.heat||autoHeat(l),st=String(l['status']||'').toLowerCase(),isConv=ov.converted||st==='converted';
+    if(isConv)converted++;
+    if(heat==='hot')hot++;else if(heat==='warm')warm++;else if(heat==='cold')cold++;else if(heat==='dead')dead++;
+    if(l._date){var mo=l._date.toLocaleString('default',{month:'short',year:'numeric'});if(!monthMap[mo])monthMap[mo]={total:0,hot:0,warm:0,cold:0,dead:0,converted:0};monthMap[mo].total++;monthMap[mo][heat]=(monthMap[mo][heat]||0)+1;if(isConv)monthMap[mo].converted=(monthMap[mo].converted||0)+1;}
+  });
+  var el=document.getElementById('leads-kpi-row');if(!el)return;
+  var html='<div style="width:100%"><div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">';
+  html+=kpiCard(total,'Total','var(--accent)')+kpiCard(hot,'🔥 Hot','#dc2626')+kpiCard(warm,'🌤 Warm','#d97706')+kpiCard(cold,'❄️ Cold','#2563eb')+kpiCard(dead,'💀 Dead','var(--text2)')+kpiCard(converted,'✅ Converted','var(--duty)');
+  html+='</div>';
+  var months=Object.keys(monthMap).sort(function(a,b){return new Date('1 '+a)-new Date('1 '+b);}).reverse().slice(0,6);
+  if(months.length){
+    html+='<div style="font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Month-wise Breakdown</div><div style="overflow-x:auto"><table style="border-collapse:collapse;font-size:11px;min-width:400px"><thead><tr>';
+    ['Month','Total','🔥','🌤','❄️','💀','✅'].forEach(function(h){html+='<th style="padding:5px 12px;text-align:'+(h==='Month'?'left':'center')+';color:var(--text2);font-weight:600;border-bottom:1px solid var(--border)">'+h+'</th>';});
+    html+='</tr></thead><tbody>';
+    months.forEach(function(mo){var m=monthMap[mo];html+='<tr style="border-bottom:1px solid var(--border)"><td style="padding:5px 12px;font-weight:500">'+mo+'</td><td style="padding:5px 12px;text-align:center;font-weight:700">'+m.total+'</td><td style="padding:5px 12px;text-align:center;color:#dc2626">'+(m.hot||0)+'</td><td style="padding:5px 12px;text-align:center;color:#d97706">'+(m.warm||0)+'</td><td style="padding:5px 12px;text-align:center;color:#2563eb">'+(m.cold||0)+'</td><td style="padding:5px 12px;text-align:center;color:var(--text2)">'+(m.dead||0)+'</td><td style="padding:5px 12px;text-align:center;color:var(--duty)">'+(m.converted||0)+'</td></tr>';});
+    html+='</tbody></table></div>';
+  }
+  html+='</div>';el.innerHTML=html;
+}
+function getFilteredLeads(){
+  var q=(document.getElementById('lead-search')||{}).value||'';
+  var fStatus=(document.getElementById('lead-filter-status')||{}).value||'';
+  var fHeat=(document.getElementById('lead-filter-heat')||{}).value||'';
+  var fCity=(document.getElementById('lead-filter-city')||{}).value||'';
+  var fMonth=(document.getElementById('lead-filter-month')||{}).value||'';
+  var fWeek=(document.getElementById('lead-filter-week')||{}).value||'';
+  return _leads.filter(function(l){
+    var ov=getLeadOv(l);
+    if(q&&!(l['full name']||l['name']||'').toLowerCase().includes(q.toLowerCase())&&!(l['phone number']||l['phone']||'').includes(q))return false;
+    if(fStatus&&String(l['status']||'').toLowerCase()!==fStatus)return false;
+    if(fHeat&&(ov.heat||autoHeat(l))!==fHeat)return false;
+    if(fCity&&(l['city']||'').trim()!==fCity)return false;
+    if(fMonth&&l._date&&l._date.toLocaleString('default',{month:'long',year:'numeric'})!==fMonth)return false;
+    if(fWeek&&l._date){var day=l._date.getDate(),wk=day<=7?'1':day<=14?'2':day<=21?'3':'4';if(wk!==fWeek)return false;}
+    return true;
+  });
+}
+function renderLeadsTable(){
+  var filtered=getFilteredLeads(),wrap=document.getElementById('leads-table-wrap');if(!wrap)return;
+  if(!filtered.length){wrap.innerHTML='<div style="padding:40px;text-align:center;color:var(--text2)">No leads match filters</div>';return;}
+  var html='<div style="font-size:11px;color:var(--text2);margin-bottom:8px">Showing '+filtered.length+' of '+_leads.length+' leads</div>';
+  html+='<table class="lead-table"><thead><tr><th>Date</th><th>Name</th><th>Phone</th><th>Package</th><th>City</th><th>Status</th><th>Classification</th><th>Calls</th><th>Last Contact</th><th>Notes</th><th>Converted</th></tr></thead><tbody>';
+  filtered.forEach(function(l){
+    var ov=getLeadOv(l),heat=ov.heat||autoHeat(l);
+    var heatBadge='<span class="heat-'+heat+'">'+(heat==='hot'?'🔥 Hot':heat==='warm'?'🌤 Warm':heat==='cold'?'❄️ Cold':'💀 Dead')+'</span>';
+    var days=l._date?daysSince(l._date):null,dayCls=days===null?'':days<=3?'days-ok':days<=7?'days-warn':'days-late';
+    var calls=ov.calls!==undefined?ov.calls:(parseInt(l['call count'])||0);
+    var isConv=ov.converted||String(l['status']||'').toLowerCase()==='converted';
+    html+='<tr onclick="openLeadModal('+l._idx+')" '+(isConv?'style="opacity:.6"':'')+'>'
+      +'<td style="font-size:11px;color:var(--text2);white-space:nowrap">'+(l._date?leadDateStr(l._date):'—')+'</td>'
+      +'<td style="font-weight:500">'+(l['full name']||l['name']||'—')+'</td>'
+      +'<td style="font-family:monospace;font-size:11px">'+(l['phone number']||l['phone']||'—')+'</td>'
+      +'<td style="font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(l['package']||'')+'">'+(((l['package']||'').split('_').pop())||'—')+'</td>'
+      +'<td style="font-size:11px">'+(l['city']||'—')+'</td>'
+      +'<td style="font-size:11px">'+(l['status']||'—')+'</td>'
+      +'<td>'+heatBadge+'</td>'
+      +'<td style="text-align:center;font-weight:600">'+calls+'</td>'
+      +'<td><span class="days-counter '+dayCls+'">'+(days!==null?days+'d ago':'—')+'</span></td>'
+      +'<td style="font-size:11px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(ov.notes||l['notes']||'')+'">'+(((ov.notes||l['notes']||'').substring(0,35))||'—')+'</td>'
+      +'<td style="text-align:center">'+(isConv?'<span style="color:var(--duty)">✅</span>':'')+'</td>'
+      +'</tr>';
+  });
+  html+='</tbody></table>';wrap.innerHTML=html;
+}
+function openLeadModal(idx){
+  _editLeadIdx=idx;var l=_leads[idx],ov=getLeadOv(l),heat=ov.heat||autoHeat(l);
+  var isConv=ov.converted||String(l['status']||'').toLowerCase()==='converted';
+  document.getElementById('lead-modal-title').textContent=l['full name']||l['name']||'—';
+  var html='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;font-size:12px">';
+  html+='<div><div style="font-size:10px;color:var(--text2);margin-bottom:3px">DATE</div><div>'+(l._date?leadDateStr(l._date):'—')+'</div></div>';
+  html+='<div><div style="font-size:10px;color:var(--text2);margin-bottom:3px">PHONE</div><div style="font-family:monospace">'+(l['phone number']||l['phone']||'—')+'</div></div>';
+  html+='<div><div style="font-size:10px;color:var(--text2);margin-bottom:3px">CITY</div><div>'+(l['city']||'—')+'</div></div>';
+  html+='<div><div style="font-size:10px;color:var(--text2);margin-bottom:3px">STATUS</div><div>'+(l['status']||'—')+'</div></div>';
+  html+='<div style="grid-column:1/-1"><div style="font-size:10px;color:var(--text2);margin-bottom:3px">PACKAGE</div><div style="font-size:11px;color:var(--text2)">'+(l['package']||'—')+'</div></div>';
+  html+='</div><div style="height:1px;background:var(--border);margin-bottom:14px"></div>';
+  html+='<div style="margin-bottom:12px"><div style="font-size:10px;font-weight:600;color:var(--text2);margin-bottom:6px;text-transform:uppercase">Classification</div><div style="display:flex;gap:6px" id="heat-row"></div></div>';
+  html+='<div style="margin-bottom:12px"><div style="font-size:10px;font-weight:600;color:var(--text2);margin-bottom:6px;text-transform:uppercase">Call Attempts</div><div style="display:flex;align-items:center;gap:8px"><button onclick="adjustCalls(-1)" style="width:30px;height:30px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:16px;cursor:pointer">−</button><span id="lead-modal-calls" style="font-size:20px;font-weight:700;font-family:monospace;min-width:32px;text-align:center">'+(ov.calls!==undefined?ov.calls:(parseInt(l['call count'])||0))+'</span><button onclick="adjustCalls(1)" style="width:30px;height:30px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:16px;cursor:pointer">+</button></div></div>';
+  html+='<div><div style="font-size:10px;font-weight:600;color:var(--text2);margin-bottom:6px;text-transform:uppercase">Notes (from sheet)</div><div style="font-size:12px;color:var(--text2);background:var(--bg3);border-radius:6px;padding:8px;margin-bottom:8px">'+(l['notes']||'—')+'</div><div style="font-size:10px;font-weight:600;color:var(--text2);margin-bottom:4px;text-transform:uppercase">Additional Notes</div><textarea id="lead-modal-notes" rows="3" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:Inter,sans-serif;font-size:12px;padding:8px;border-radius:6px;outline:none;resize:vertical">'+(ov.notes||'')+'</textarea></div>';
+  document.getElementById('lead-modal-body').innerHTML=html;
+  document.getElementById('lead-convert-btn').style.display=isConv?'none':'block';
+  setTimeout(function(){
+    var row=document.getElementById('heat-row');if(!row)return;
+    ['hot','warm','cold','dead'].forEach(function(h){
+      var labels={hot:'🔥 Hot',warm:'🌤 Warm',cold:'❄️ Cold',dead:'💀 Dead'};
+      var btn=document.createElement('button');btn.id='heat-btn-'+h;btn.dataset.heat=h;btn.textContent=labels[h];
+      btn.onclick=function(){setLeadHeat(this.dataset.heat);};
+      var sel=heat===h;btn.style.cssText='flex:1;padding:6px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600;border:2px solid '+(sel?'transparent':'var(--border)')+';background:'+(sel?'var(--accent)':'var(--bg3)')+';color:'+(sel?'#fff':'var(--text2)');
+      row.appendChild(btn);
+    });
+  },10);
+  document.getElementById('lead-modal').style.display='flex';
+}
+function setLeadHeat(heat){
+  ['hot','warm','cold','dead'].forEach(function(h){var btn=document.getElementById('heat-btn-'+h);if(!btn)return;var sel=h===heat;btn.style.background=sel?'var(--accent)':'var(--bg3)';btn.style.color=sel?'#fff':'var(--text2)';btn.style.borderColor=sel?'transparent':'var(--border)';});
+  window._pendingHeat=heat;
+}
+function adjustCalls(delta){var el=document.getElementById('lead-modal-calls');el.textContent=Math.max(0,(parseInt(el.textContent)||0)+delta);}
+function closeLeadModal(){document.getElementById('lead-modal').style.display='none';_editLeadIdx=-1;window._pendingHeat=null;}
+async function saveLeadEdit(){
+  if(_editLeadIdx<0)return;
+  var l=_leads[_editLeadIdx],ov=getLeadOv(l);
+  var calls=+(document.getElementById('lead-modal-calls')||{}).textContent||0;
+  var notes=(document.getElementById('lead-modal-notes')||{}).value||'';
+  var heat=window._pendingHeat||(ov.heat||autoHeat(l));
+  await saveLeadOverride(getLeadKey(l),{heat:heat,calls:calls,notes:notes});
+  closeLeadModal();renderLeadsKPIs();renderLeadsTable();
+}
+async function convertLead(){if(_editLeadIdx<0)return;await saveLeadOverride(getLeadKey(_leads[_editLeadIdx]),{converted:true,converted_at:new Date().toISOString()});closeLeadModal();renderLeadsKPIs();renderLeadsTable();}
+function clearLeadFilters(){['lead-search','lead-filter-status','lead-filter-heat','lead-filter-city','lead-filter-month','lead-filter-week'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});renderLeadsTable();}
+function openAddLeadModal(){['nl-name','nl-phone','nl-email','nl-city','nl-pkg','nl-notes'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});document.getElementById('add-lead-modal').style.display='flex';}
+async function saveNewLead(){
+  var name=document.getElementById('nl-name').value.trim(),phone=document.getElementById('nl-phone').value.trim();
+  if(!name||!phone){alert('Name and phone are required');return;}
+  var today=new Date();
+  var lead={'full name':name,'phone number':phone,'email':document.getElementById('nl-email').value.trim(),'city':document.getElementById('nl-city').value.trim(),'package':document.getElementById('nl-pkg').value.trim(),'status':document.getElementById('nl-status').value,'notes':document.getElementById('nl-notes').value.trim(),'date':pad(today.getDate())+'/'+pad(today.getMonth()+1)+'/'+today.getFullYear(),'call count':'0','current status':'','_date':today,'_idx':_leads.length};
+  _leads.push(lead);
+  await saveLeadOverride(getLeadKey(lead),{heat:document.getElementById('nl-heat').value,notes:lead['notes']});
+  document.getElementById('add-lead-modal').style.display='none';
+  populateLeadFilters();renderLeadsKPIs();renderLeadsTable();
+}
+async function deleteLead(){
+  if(_editLeadIdx<0)return;
+  var l=_leads[_editLeadIdx];
+  if(!confirm('Delete '+(l['full name']||'this lead')+'?'))return;
+  var key=getLeadKey(l);delete _leadsOverrides[key];
+  if(_db)_db.collection('valeo_leads').doc(key).delete().catch(function(){});
+  _leads.splice(_editLeadIdx,1);_leads.forEach(function(l,i){l._idx=i;});
+  closeLeadModal();populateLeadFilters();renderLeadsKPIs();renderLeadsTable();
+}
+function uploadLeadsCSV(input){
+  var file=input.files[0];if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var extra=parseLeadsCSV(e.target.result),existing=new Set(_leads.map(function(l){return String(l['phone number']||l['phone']||'').replace(/[^0-9]/g,'');})),added=0;
+    extra.forEach(function(l){var p=String(l['phone number']||l['phone']||'').replace(/[^0-9]/g,'');if(p&&!existing.has(p)){l._idx=_leads.length;_leads.push(l);existing.add(p);added++;}});
+    alert('Imported '+added+' new leads');populateLeadFilters();renderLeadsKPIs();renderLeadsTable();
+  };reader.readAsText(file);
+}
+
+// ── Supply Tracker ────────────────────────────────────────────────
+var _candidates=[],_editCandIdx=-1;
+var SUPPLY_STAGES=['Applied','Screened','Interview Scheduled','Interviewed','Docs Pending','Onboarded','Rejected'];
+var SUPPLY_SOURCES=['LinkedIn','Agency','Referral','Walk-in','Other'];
+function stageCls(stage){return'stage-'+(stage||'applied').toLowerCase().replace(/\s+/g,'-');}
+async function loadSupply(){
+  if(!_db)await initFirebase();
+  try{var snap=await _db.collection('valeo_supply').get();_candidates=[];snap.forEach(function(doc){var d=doc.data();d._id=doc.id;d._idx=_candidates.length;_candidates.push(d);});}
+  catch(e){console.warn('[supply]',e);}
+  populateSupplyFilters();renderSupplyKPIs();renderSupplyTable();
+}
+async function saveCandidate(){
+  var form=getCandidateForm();if(!form.name){alert('Name is required');return;}
+  var isEdit=_editCandIdx>=0,existing=isEdit?_candidates[_editCandIdx]:null;
+  var id=existing&&existing._id?existing._id:'cand_'+Date.now();
+  var data=Object.assign({},form,{updated_at:new Date().toISOString()});
+  if(!isEdit)data.created_at=new Date().toISOString();
+  try{
+    await _db.collection('valeo_supply').doc(id).set(data,{merge:true});
+    data._id=id;
+    if(isEdit){_candidates[_editCandIdx]=Object.assign({},data,{_idx:_editCandIdx});}
+    else{data._idx=_candidates.length;_candidates.push(data);}
+    closeCandidateModal();populateSupplyFilters();renderSupplyKPIs();renderSupplyTable();
+  }catch(e){alert('Save failed: '+e.message);}
+}
+async function deleteCandidate(){
+  if(_editCandIdx<0)return;
+  var c=_candidates[_editCandIdx];
+  if(!confirm('Delete '+c.name+'?'))return;
+  try{
+    await _db.collection('valeo_supply').doc(c._id).delete();
+    _candidates.splice(_editCandIdx,1);_candidates.forEach(function(c,i){c._idx=i;});
+    closeCandidateModal();populateSupplyFilters();renderSupplyKPIs();renderSupplyTable();
+  }catch(e){alert('Delete failed: '+e.message);}
+}
+async function onboardCandidate(){
+  if(_editCandIdx<0)return;
+  var c=_candidates[_editCandIdx];c.stage='Onboarded';c.onboarded_at=new Date().toISOString();
+  await _db.collection('valeo_supply').doc(c._id).set(c,{merge:true});
+  closeCandidateModal();renderSupplyKPIs();renderSupplyTable();
+}
+function getCandidateForm(){
+  function v(id){var el=document.getElementById(id);return el?el.value.trim():'';}
+  return{name:v('cf-name'),phone:v('cf-phone'),email:v('cf-email'),nationality:v('cf-nationality'),age:v('cf-age'),gender:v('cf-gender'),homecare:v('cf-hc'),experience:v('cf-exp'),skills:v('cf-skills'),source:v('cf-source'),stage:v('cf-stage'),interview_date:v('cf-idate'),interviewer:v('cf-interviewer'),notes:v('cf-notes')};
+}
+function buildCandidateForm(c){
+  c=c||{};
+  var hcs=[...new Set(rawData.map(function(r){return r.homecare;}).filter(Boolean))].sort();
+  var hcOpts=hcs.map(function(h){return'<option value="'+h+'"'+(c.homecare===h?' selected':'')+'>'+h+'</option>';}).join('');
+  var stageOpts=SUPPLY_STAGES.map(function(s){return'<option value="'+s+'"'+(c.stage===s?' selected':'')+'>'+s+'</option>';}).join('');
+  var sourceOpts=SUPPLY_SOURCES.map(function(s){return'<option value="'+s+'"'+(c.source===s?' selected':'')+'>'+s+'</option>';}).join('');
+  var inp='style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:Inter,sans-serif;font-size:12px;padding:8px 10px;border-radius:7px;outline:none;box-sizing:border-box"';
+  var lbl='style="font-size:10px;color:var(--text2);font-weight:600;text-transform:uppercase;display:block;margin-bottom:4px"';
+  function field(label,id,type,val,ph){return'<div><label '+lbl+'>'+label+'</label><input type="'+(type||'text')+'" id="'+id+'" '+inp+' value="'+(val||'')+'" placeholder="'+(ph||'')+'"></div>';}
+  function sel(label,id,opts){return'<div><label '+lbl+'>'+label+'</label><select id="'+id+'" '+inp+'>'+opts+'</select></div>';}
+  return'<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'
+    +field('Full Name *','cf-name','text',c.name,'e.g. Maria Santos')
+    +field('Phone','cf-phone','text',c.phone,'+971...')
+    +field('Email','cf-email','text',c.email,'')
+    +field('Nationality','cf-nationality','text',c.nationality,'e.g. Filipino')
+    +field('Age','cf-age','number',c.age,'')
+    +'<div><label '+lbl+'>Gender</label><select id="cf-gender" '+inp+'><option value="">—</option><option'+(c.gender==='Female'?' selected':'')+'>Female</option><option'+(c.gender==='Male'?' selected':'')+'>Male</option></select></div>'
+    +sel('Homecare','cf-hc','<option value="">— Select HC —</option>'+hcOpts)
+    +field('Experience (years)','cf-exp','text',c.experience,'e.g. 3 years')
+    +'<div style="grid-column:1/-1">'+field('Skills / Certifications','cf-skills','text',c.skills,'e.g. Infant care, First Aid')+'</div>'
+    +sel('Source','cf-source','<option value="">— Select —</option>'+sourceOpts)
+    +sel('Stage','cf-stage',stageOpts)
+    +field('Interview Date','cf-idate','date',c.interview_date,'')
+    +field('Interviewer','cf-interviewer','text',c.interviewer,'e.g. Nishant')
+    +'<div style="grid-column:1/-1"><label '+lbl+'>Notes</label><textarea id="cf-notes" rows="3" '+inp.replace('border-radius:7px','border-radius:7px;resize:vertical')+'>'+( c.notes||'')+'</textarea></div>'
+    +'</div>';
+}
+function openAddCandidateModal(){
+  _editCandIdx=-1;
+  document.getElementById('candidate-modal-title').textContent='Add Candidate';
+  document.getElementById('candidate-modal-body').innerHTML=buildCandidateForm();
+  document.getElementById('candidate-onboard-btn').style.display='none';
+  document.getElementById('candidate-delete-btn').style.display='none';
+  document.getElementById('candidate-modal').style.display='flex';
+}
+function openEditCandidateModal(idx){
+  _editCandIdx=idx;var c=_candidates[idx];
+  document.getElementById('candidate-modal-title').textContent='Edit — '+c.name;
+  document.getElementById('candidate-modal-body').innerHTML=buildCandidateForm(c);
+  document.getElementById('candidate-onboard-btn').style.display=c.stage==='Onboarded'?'none':'block';
+  document.getElementById('candidate-delete-btn').style.display='block';
+  document.getElementById('candidate-modal').style.display='flex';
+}
+function closeCandidateModal(){document.getElementById('candidate-modal').style.display='none';_editCandIdx=-1;}
+function populateSupplyFilters(){
+  var hcs=[...new Set(_candidates.map(function(c){return c.homecare||'';}).filter(Boolean))].sort();
+  var nats=[...new Set(_candidates.map(function(c){return c.nationality||'';}).filter(Boolean))].sort();
+  var hcEl=document.getElementById('supply-filter-hc');if(hcEl){hcEl.innerHTML='<option value="">All Homecare</option>';hcs.forEach(function(h){hcEl.innerHTML+='<option>'+h+'</option>';});}
+  var natEl=document.getElementById('supply-filter-nationality');if(natEl){natEl.innerHTML='<option value="">All Nationalities</option>';nats.forEach(function(n){natEl.innerHTML+='<option>'+n+'</option>';});}
+}
+function getFilteredCandidates(){
+  var q=(document.getElementById('supply-search')||{}).value||'';
+  var fS=(document.getElementById('supply-filter-stage')||{}).value||'';
+  var fH=(document.getElementById('supply-filter-hc')||{}).value||'';
+  var fSrc=(document.getElementById('supply-filter-source')||{}).value||'';
+  var fN=(document.getElementById('supply-filter-nationality')||{}).value||'';
+  return _candidates.filter(function(c){
+    if(q&&!(c.name||'').toLowerCase().includes(q.toLowerCase())&&!(c.phone||'').includes(q))return false;
+    if(fS&&c.stage!==fS)return false;if(fH&&c.homecare!==fH)return false;
+    if(fSrc&&c.source!==fSrc)return false;if(fN&&c.nationality!==fN)return false;
+    return true;
+  });
+}
+function renderSupplyKPIs(){
+  var counts={};SUPPLY_STAGES.forEach(function(s){counts[s]=0;});
+  _candidates.forEach(function(c){if(counts[c.stage]!==undefined)counts[c.stage]++;});
+  var el=document.getElementById('supply-kpi-row');if(!el)return;
+  var html='<div style="display:flex;gap:10px;flex-wrap:wrap">';
+  html+=kpiCard(_candidates.length,'Total','var(--accent)');
+  var cols={Onboarded:'var(--duty)',Applied:'#2f81f7','Interview Scheduled':'#7c3aed',Rejected:'var(--absent)'};
+  SUPPLY_STAGES.forEach(function(s){html+=kpiCard(counts[s],s,cols[s]||'var(--text2)');});
+  html+='</div>';el.innerHTML=html;
+}
+function renderSupplyTable(){
+  var filtered=getFilteredCandidates(),wrap=document.getElementById('supply-table-wrap');if(!wrap)return;
+  if(!filtered.length){wrap.innerHTML='<div style="padding:40px;text-align:center;color:var(--text2)">No candidates found</div>';return;}
+  var html='<div style="font-size:11px;color:var(--text2);margin-bottom:8px">Showing '+filtered.length+' of '+_candidates.length+' candidates</div>';
+  html+='<table class="supply-table"><thead><tr><th>Name</th><th>Phone</th><th>Nationality</th><th>Age</th><th>Homecare</th><th>Experience</th><th>Source</th><th>Stage</th><th>Interview Date</th><th>Interviewer</th><th>Notes</th></tr></thead><tbody>';
+  filtered.forEach(function(c){
+    var sb='<span class="stage-badge '+stageCls(c.stage)+'">'+(c.stage||'—')+'</span>';
+    html+='<tr onclick="openEditCandidateModal('+c._idx+')">'
+      +'<td style="font-weight:600">'+(c.name||'—')+'</td>'
+      +'<td style="font-family:monospace;font-size:11px">'+(c.phone||'—')+'</td>'
+      +'<td style="font-size:11px">'+(c.nationality||'—')+'</td>'
+      +'<td style="text-align:center">'+(c.age||'—')+'</td>'
+      +'<td style="font-size:11px;color:var(--accent)">'+(c.homecare||'—')+'</td>'
+      +'<td style="font-size:11px">'+(c.experience||'—')+'</td>'
+      +'<td style="font-size:11px">'+(c.source||'—')+'</td>'
+      +'<td>'+sb+'</td>'
+      +'<td style="font-size:11px;white-space:nowrap">'+(c.interview_date||'—')+'</td>'
+      +'<td style="font-size:11px">'+(c.interviewer||'—')+'</td>'
+      +'<td style="font-size:11px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(c.notes||'')+'">'+(c.notes||'—').substring(0,40)+'</td>'
+      +'</tr>';
+  });
+  html+='</tbody></table>';wrap.innerHTML=html;
+}
+function clearSupplyFilters(){['supply-search','supply-filter-stage','supply-filter-hc','supply-filter-source','supply-filter-nationality'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});renderSupplyTable();}
+
 
 // ── Init ─────────────────────────────────────────────────────────
 if(checkExistingSession()){
