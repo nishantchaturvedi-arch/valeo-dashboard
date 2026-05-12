@@ -4442,7 +4442,8 @@ function renderLeadsTable(){
   filtered.forEach(function(l){
     var ov=getLeadOv(l),heat=ov.heat||autoHeat(l);
     var heatBadge='<span class="heat-'+heat+'">'+(heat==='hot'?'🔥 Hot':heat==='warm'?'🌤 Warm':heat==='cold'?'❄️ Cold':'💀 Dead')+'</span>';
-    var days=l._date?daysSince(l._date):null,dayCls=days===null?'':days<=3?'days-ok':days<=7?'days-warn':'days-late';
+    var _lc=ov.last_contacted?new Date(ov.last_contacted+'T12:00:00'):l._date;
+    var days=_lc?daysSince(_lc):null,dayCls=days===null?'':days<=3?'days-ok':days<=7?'days-warn':'days-late';
     var calls=ov.calls!==undefined?ov.calls:(parseInt(l['call count'])||0);
     var isConv=ov.converted||String(l['status']||'').toLowerCase()==='converted';
     html+='<tr onclick="openLeadModal('+l._idx+')" '+(isConv?'style="opacity:.6"':'')+'>'
@@ -4501,7 +4502,11 @@ async function saveLeadEdit(){
   var calls=+(document.getElementById('lead-modal-calls')||{}).textContent||0;
   var notes=(document.getElementById('lead-modal-notes')||{}).value||'';
   var heat=window._pendingHeat||(ov.heat||autoHeat(l));
-  await saveLeadOverride(getLeadKey(l),{heat:heat,calls:calls,notes:notes});
+  var prevCalls=ov.calls!==undefined?ov.calls:(parseInt(l['call count'])||0);
+  // If call count changed → reset last_contacted to today
+  var update={heat:heat,calls:calls,notes:notes};
+  if(calls!==prevCalls) update.last_contacted=new Date().toISOString().slice(0,10);
+  await saveLeadOverride(getLeadKey(l),update);
   closeLeadModal();renderLeadsKPIs();renderLeadsTable();
 }
 async function convertLead(){if(_editLeadIdx<0)return;await saveLeadOverride(getLeadKey(_leads[_editLeadIdx]),{converted:true,converted_at:new Date().toISOString()});closeLeadModal();renderLeadsKPIs();renderLeadsTable();}
@@ -4514,7 +4519,8 @@ function exportLeadsCSV(){
     var heatLabel={hot:'Hot',warm:'Warm',cold:'Cold',dead:'Dead'}[heat]||heat;
     var calls=ov.calls!==undefined?ov.calls:(parseInt(l['call count'])||0);
     var notes=(ov.notes||l['notes']||'').split('\n').join(' ');
-    var days=l._date?daysSince(l._date)+'d ago':'';
+    var _lcExp=ov.last_contacted?new Date(ov.last_contacted+'T12:00:00'):l._date;
+    var days=_lcExp?daysSince(_lcExp)+'d ago':'';
     var pkg=(l['package']||'').split('_').pop()||'';
     function esc(v){var s=String(v||'');return(s.indexOf(',')>=0||s.indexOf('"')>=0)?'"'+s.split('"').join('""')+'"':s;}
     lines.push([esc(l['full name']||l['name']||''),esc(l['phone number']||l['phone']||''),esc(l['city']||''),esc(pkg),esc(l['status']||''),esc(heatLabel),esc(calls),esc(notes),esc(days)].join(','));
