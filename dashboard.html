@@ -802,7 +802,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  </div>
  <div style="overflow-x:auto">
   <table class="ops-table">
-   <thead><tr><th>Client</th><th>Caregiver</th><th>Homecare</th><th>Package</th><th>Ended</th><th>Days Ago</th><th>City</th></tr></thead>
+   <thead><tr><th>Client</th><th>${splitCg2?"Day ":""}Caregiver</th>${splitCg2?"<th>Night Caregiver</th>":""}<th>Homecare</th><th>Package</th><th>Ended</th><th>Days Ago</th><th>City</th></tr></thead>
    <tbody id="churned-tbody"></tbody>
   </table>
  </div>
@@ -947,10 +947,6 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 
  <!-- Schedule Builder -->
  <div class="planner-controls" style="flex-direction:column;gap:0;padding:0;border:none;background:none">
-  <div style="display:flex;gap:8px;margin-bottom:16px">
-   <button id="sb-mode-pre" onclick="sbSetMode('pre')" style="flex:1;padding:9px;border-radius:8px;border:2px solid var(--accent);background:var(--accent);color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">📋 Pre-Booking</button>
-   <button id="sb-mode-post" onclick="sbSetMode('post')" style="flex:1;padding:9px;border-radius:8px;border:2px solid var(--border);background:var(--bg3);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">📦 Post-Booking</button>
-  </div>
   <div id="sb-pre-form" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:18px">
    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:14px">
     <div class="planner-field"><span class="planner-label">Client Name</span><input class="planner-input" id="sb-client" type="text" placeholder="e.g. Noor Al Mansouri"></div>
@@ -982,15 +978,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
    </div>
    <button class="planner-btn" onclick="sbGenerate()" style="width:100%">Generate Schedule</button>
   </div>
-  <div id="sb-post-form" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:18px">
-   <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end">
-    <div class="planner-field"><span class="planner-label">Homecare</span><select class="planner-select" id="pl-hc-select" onchange="filterPlannerByHC()"><option value="">— All Homecare —</option></select></div>
-    <div class="planner-field"><span class="planner-label">Caregiver</span><select class="planner-select" id="pl-cg-select"><option value="">— Select Caregiver —</option></select></div>
-    <div class="planner-field"><span class="planner-label">Order / Package</span><select class="planner-select" id="pl-order-select"><option value="">— Select Order —</option></select></div>
-    <div class="planner-field"><span class="planner-label">Week Off Days</span><div class="day-selector" id="pl-day-selector"><div class="day-chip-pl" data-day="Sunday" onclick="togglePlannerDay(this)">Sun</div><div class="day-chip-pl" data-day="Monday" onclick="togglePlannerDay(this)">Mon</div><div class="day-chip-pl" data-day="Tuesday" onclick="togglePlannerDay(this)">Tue</div><div class="day-chip-pl" data-day="Wednesday" onclick="togglePlannerDay(this)">Wed</div><div class="day-chip-pl" data-day="Thursday" onclick="togglePlannerDay(this)">Thu</div><div class="day-chip-pl" data-day="Friday" onclick="togglePlannerDay(this)">Fri</div><div class="day-chip-pl" data-day="Saturday" onclick="togglePlannerDay(this)">Sat</div></div></div>
-    <button class="planner-btn" onclick="generatePlannerTable()">Generate Schedule</button>
-   </div>
-  </div>
+
  </div>
 
  <!-- Summary KPIs -->
@@ -3063,7 +3051,7 @@ function renderPlanner(){
   var hcSel=document.getElementById('pl-hc-select');
   if(hcSel){
     var curHC=hcSel.value;
-    var hcs=[...new Set(rawData.map(function(r){return r.homecare;}).filter(Boolean))].sort();
+    var hcs=rawData?[...new Set(rawData.map(function(r){return r.homecare;}).filter(Boolean))].sort():[];
     hcSel.innerHTML='<option value="">— All Homecare —</option>';
     hcs.forEach(function(hc){hcSel.innerHTML+='<option value="'+hc+'"'+(hc===curHC?' selected':'')+'>'+hc+'</option>';});
   }
@@ -3091,7 +3079,7 @@ function loadPlannerOrders(cg){
   });
 }
 
-document.getElementById('pl-cg-select').addEventListener('change', function(){
+var _plCgEl=document.getElementById('pl-cg-select');if(_plCgEl)_plCgEl.addEventListener('change', function(){
   loadPlannerOrders(this.value);
   document.getElementById('pl-summary').style.display='none';
   document.getElementById('pl-table-wrap').style.display='none';
@@ -3353,7 +3341,9 @@ function buildClientScheduleHTML(){
   const totalHrs = workDays * hrsPerDay;
 
   // Detect relief caregiver from split assignments
-  const splitCg2 = splitAssignments[orderId] ? toTitleCase(splitAssignments[orderId]) : '';
+  var _nightCgScan='';
+  for(var _ni=0;_ni<plannerData.length;_ni++){var _nr=plannerData[_ni];if(_nr['Night Shift CG']&&_nr['Night Shift CG']!=='—'){_nightCgScan=_nr['Night Shift CG'];break;}}
+  const splitCg2=_nightCgScan?toTitleCase(_nightCgScan):(splitAssignments[orderId]?toTitleCase(splitAssignments[orderId]):'');
 
   // Build week groups
   var weekSize = 7;
@@ -3388,6 +3378,7 @@ function buildClientScheduleHTML(){
     var cg = r.status === 'Off' ? null : toTitleCase(r.babysitter||'');
     if(!cg) return;
     cgShiftCounts[cg] = (cgShiftCounts[cg]||0) + 1;
+    var _nightCgRow=r['Night Shift CG']&&r['Night Shift CG']!=='—'?toTitleCase(r['Night Shift CG']):null;if(_nightCgRow&&r.status!=='Off')cgShiftCounts[_nightCgRow]=(cgShiftCounts[_nightCgRow]||0)+1;
   });
   var summaryCardsHTML = '';
   cgList.forEach(function(cg, i){
@@ -3421,12 +3412,19 @@ function buildClientScheduleHTML(){
       var dow = dateObj ? ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][dateObj.getDay()] : r.day||'';
       var dateDisp = dateObj ? fmtDisplayDate(r.date) : r.date||'';
 
+      // Night shift cell
+      var _nc=r['Night Shift CG']&&r['Night Shift CG']!=='—'?toTitleCase(r['Night Shift CG']):'';
+      var _nt=r['Night Shift Time']&&r['Night Shift Time']!=='—'?r['Night Shift Time']:'';
+      var _ncol=_nc&&cgColors[_nc]?cgColors[_nc]:{bg:'#dbeafe',text:'#1d4ed8'};
+      var nightCell=!_nc||isOff?'<span style="color:#bbb">—</span>':'<span class="cg-chip" style="background:'+_ncol.bg+';color:'+_ncol.text+';border:1.5px solid '+_ncol.text+';border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600">'+_nc+(_nt?' · '+_nt:'')+'</span>';
+
       rowsHTML += '<tr'+(isOff?' style="opacity:.5"':'')+'>'
         + '<td class="td-day">Day '+r.num+'</td>'
         + '<td class="td-date">'+dateDisp+'</td>'
         + '<td class="td-dow">'+dow+'</td>'
         + '<td>'+r.timeSlot+'</td>'
         + '<td><span class="cg-chip" style="'+chipStyle+'">'+statusLabel+'</span></td>'
+        + (splitCg2 ? '<td>'+nightCell+'</td>' : '')
         + '</tr>';
     });
   });
@@ -3510,7 +3508,7 @@ tr.week-sep:hover td{background:#f7f8fa}
 <div class="table-wrap">
 <table>
   <thead><tr>
-    <th>Day</th><th>Date</th><th>DOW</th><th>Shift</th><th>Caregiver</th>
+    <th>Day</th><th>Date</th><th>DOW</th><th>Shift</th><th>${splitCg2?"Day ":""}Caregiver</th>${splitCg2?"<th>Night Caregiver</th>":""}
   </tr></thead>
   <tbody>${rowsHTML}</tbody>
 </table>
@@ -3875,6 +3873,7 @@ function renderRoster(){
   var wrap=document.getElementById('roster-wrap');
   var lbl=document.getElementById('roster-month-label');
   if(!wrap) return;
+  if(!rosterDate) rosterDate=new Date();
   var year=rosterDate.getFullYear(),month=rosterDate.getMonth();
   var dim=new Date(year,month+1,0).getDate();
   var todayStr=new Date().toISOString().slice(0,10);
@@ -4269,7 +4268,8 @@ function sbGenerate(){
   var cg2=splitOn?document.getElementById('sb-cg2').value:'',hc2=splitOn?document.getElementById('sb-hc2').value:'';
   var t2s=splitOn?document.getElementById('sb-t2s').value.trim():'',t2e=splitOn?document.getElementById('sb-t2e').value.trim():'',wo2=splitOn?sbGetWODays('sb-wo2'):[];
   var totalDays=weeks*7,pkgLabel=(pkgType==='monthly'?'Monthly':'Weekly')+' plan: '+dpw+' days, '+weeks+' weeks';
-  plannerData=[];plannerCustomCols=splitOn?['Night Shift CG','Night Shift Time']:[];
+  plannerCustomCols=splitOn?['Night Shift CG','Night Shift Time']:[];
+  plannerData=[];
   for(var i=0;i<totalDays;i++){
     var d=new Date(start+'T12:00:00');d.setDate(d.getDate()+i);
     var ds=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()),dayName=DAYS[d.getDay()];
@@ -4286,7 +4286,10 @@ function sbGenerate(){
   document.getElementById('pl-summary').style.display='flex';document.getElementById('pl-table-wrap').style.display='block';document.getElementById('pl-toolbar').style.display='flex';document.getElementById('pl-share-bar').style.display='flex';
   renderPlannerTable();updateShareLink();
 }
-function renderPlanner(){sbPopulateHCs();sbSetMode('pre');var sb=document.getElementById('sb-start');if(sb&&!sb.value)sb.value=new Date().toISOString().slice(0,10);}
+function renderPlanner(){
+  sbPopulateHCs();
+  var sb=document.getElementById('sb-start');if(sb&&!sb.value)sb.value=new Date().toISOString().slice(0,10);
+}
 
 // ── Lead Tracker ──────────────────────────────────────────────────
 var _leads=[],_leadsOverrides={},_editLeadIdx=-1;
@@ -4300,7 +4303,7 @@ function parseLeadDate(s){
 function leadDateStr(d){if(!d)return'';return d.getDate().toString().padStart(2,'0')+'/'+(d.getMonth()+1).toString().padStart(2,'0')+'/'+d.getFullYear();}
 function daysSince(d){if(!d)return null;return Math.floor((Date.now()-d.getTime())/(1000*60*60*24));}
 async function loadLeads(force){
-  if(!force&&_leads.length)return;
+  if(!force&&_leads&&_leads.length)return;
   var wrap=document.getElementById('leads-table-wrap');
   if(wrap)wrap.innerHTML='<div style="padding:40px;text-align:center;color:var(--text2)">Loading leads...</div>';
   try{
@@ -4679,7 +4682,7 @@ function getFilteredCandidates(){
   });
 }
 function renderSupplyKPIs(){
-  var counts={};SUPPLY_STAGES.forEach(function(s){counts[s]=0;});
+  if(!_candidates||!SUPPLY_STAGES)return;var counts={};SUPPLY_STAGES.forEach(function(s){counts[s]=0;});
   _candidates.forEach(function(c){if(counts[c.stage]!==undefined)counts[c.stage]++;});
   var el=document.getElementById('supply-kpi-row');if(!el)return;
   var html='<div style="display:flex;gap:10px;flex-wrap:wrap">';
