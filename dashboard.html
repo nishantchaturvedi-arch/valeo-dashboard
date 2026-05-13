@@ -4589,7 +4589,10 @@ function exportLeadsCSV(){
     var days=_lcExp?daysSince(_lcExp)+'d ago':'';
     var pkg=(l['package']||'').split('_').pop()||'';
     function esc(v){var s=String(v||'');return(s.indexOf(',')>=0||s.indexOf('"')>=0)?'"'+s.split('"').join('""')+'"':s;}
-    lines.push([esc(l['full name']||l['name']||''),esc(l['phone number']||l['phone']||''),esc(l['city']||''),esc(pkg),esc(l['status']||''),esc(heatLabel),esc(calls),esc(notes),esc(days)].join(','));
+    var phoneVal=String(l['phone number']||l['phone']||'').trim();
+    // Prefix phone with = so Excel treats as text, not scientific notation
+    var phoneCell=phoneVal?'="'+phoneVal+'"':'';
+    lines.push([esc(l['full name']||l['name']||''),phoneCell,esc(l['city']||''),esc(pkg),esc(l['status']||''),esc(heatLabel),esc(calls),esc(notes),esc(days)].join(','));
   });
   var csv=lines.join('\r\n');
   var a=document.createElement('a');
