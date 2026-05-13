@@ -1745,11 +1745,11 @@ function renderCalendar(){
                   ov.type==='removed'?'🗑 Removed':'Override';
         }
       }
-      const cls2 = ov ? (ov.type==='removed'?'override-removed':ov.type==='manual'?'duty':ov.type==='sick'?'sick':ov.type==='off'?'off-day':ov.type==='holiday'?'holiday':ov.type==='unpaid'?'unpaid':'cancelled') :
+      const cls2 = ov&&ov.type!=='manual'&&ov.type!=='manual_list' ? (ov.type==='removed'?'override-removed':ov.type==='sick'?'sick':ov.type==='off'?'off-day':ov.type==='holiday'?'holiday':ov.type==='unpaid'?'unpaid':'cancelled') :
                    st==='duty'?'duty':st==='weekoff'?'weekoff':st==='sick'?'sick':st==='cancelled'?'cancelled':'absent';
       const safe=encodeURIComponent(JSON.stringify({...ev, override: ov}));
       let lbl='';
-      if(ov){ lbl=ovLbl; }
+      if(ov&&ov.type!=='manual'&&ov.type!=='manual_list'){ lbl=ovLbl; }
       else if(st==='weekoff')lbl='Week Off';
       else if(st==='sick')lbl='Sick';
       else if(st==='absent')lbl='Absent';
@@ -2839,60 +2839,7 @@ function applyOverrides(){
       else if(ov.type==='removed')   r.status='Removed';
     }
   });
-  // Recalculate end dates for caregivers with sick overrides
-  // so new days get added at the end
-  const affectedCGs = new Set(Object.values(overrides).filter(function(o){
-    // 'removed' excluded — removed bookings do NOT extend the package end date
-    return ['sick','off','holiday','unpaid','cancelled','absent'].includes(o.type);
-  }).map(function(o){ return o.caregiver; }));
-
-  if(affectedCGs.size > 0){
-    // Recompute rawData end dates for affected caregivers
-    rawData.forEach(function(r){
-      if(!affectedCGs.has(r.caregiver)) return;
-      const pkg = r.package_type||'';
-      const pt = pkgType(pkg);
-      if(pt!=='monthly'&&pt!=='weekly') return;
-      const w = extractWeeks(pkg)||(pt==='monthly'?4:1);
-      // Use correct days per week for weekly plans (not always 7)
-      const daysPerWk = pt==='weekly' ? (extractDays2(pkg)||7) : 7;
-      const baseEnd = addDays(r.date,(w*daysPerWk)-1);
-      const ovCount = Object.values(overrides).filter(function(o){
-        // 'removed' excluded — does not add makeup day
-        return o.caregiver===r.caregiver && ['sick','off','holiday','unpaid','cancelled','absent'].includes(o.type);
-      }).length;
-      r.end_date = ovCount>0 ? addDays(baseEnd,ovCount) : baseEnd;
-    });
-    // Re-expand with new end dates
-    const expandedRaw = expandOrders(rawData);
-    const dedupMap = {};
-    expandedRaw.forEach(function(r){
-      const key=(r.caregiver||'')+'|'+(r.date||'');
-      if(!dedupMap[key]){
-        dedupMap[key]=r;
-      } else {
-        const existing=dedupMap[key];
-        const newHasMore=(r.package_type||'').length>(existing.package_type||'').length;
-        const newIsOff=(r.status||'').toLowerCase().includes('off')||(r.status||'').toLowerCase()==='sick';
-        if(newHasMore||newIsOff) dedupMap[key]=r;
-      }
-    });
-    allData = Object.values(dedupMap);
-    // Re-apply status overrides after re-expansion
-    allData.forEach(function(r){
-      const key = r.caregiver+'|'+r.date;
-      const ov = overrides[key];
-      if(ov){
-        if(ov.type==='sick')       r.status='Sick';
-        else if(ov.type==='off')   r.status='Week Off';
-        else if(ov.type==='holiday') r.status='Holiday';
-        else if(ov.type==='unpaid')  r.status='Unpaid';
-        else if(ov.type==='cancelled') r.status='Cancelled';
-        else if(ov.type==='removed')   r.status='Removed';
-      }
-    });
-  }
-
+  // Sick/override end-date extension removed
   // ── Inject manual overrides into allData ─────────────────────
   // Manual bookings added via override modal must appear in allData
   // so all tabs (idle CGs, daily orders, roster etc.) see them
@@ -2923,17 +2870,7 @@ function applyOverrides(){
         end_date: ov.date,
         _manual: true
       });
-    } else {
-      // Update existing record's status to Manual
-      allData.forEach(function(r){
-        if(r.caregiver === ov.caregiver && r.date === ov.date){
-          r.status = 'Manual';
-          if(ov.client_name) r.client_name = ov.client_name;
-          if(ov.time_start) r.time_start = ov.time_start;
-          if(ov.time_end) r.time_end = ov.time_end;
-        }
-      });
-    }
+    } // manual on existing record: render via getManualBookings
   });
 }
 
