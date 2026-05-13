@@ -4370,52 +4370,118 @@ function populateLeadFilters(){
   if(moEl){moEl.innerHTML='<option value="">All Months</option>';months.forEach(function(m){moEl.innerHTML+='<option value="'+m+'">'+m+'</option>';});}
 }
 function renderLeadsKPIs(){
-  var total=_leads.length,hot=0,warm=0,cold=0,dead=0,converted=0,monthMap={};
+  var total=_leads.length,hot=0,warm=0,cold=0,dead=0,converted=0;
+
+  // Build intake map (by lead date) and conversion map (by converted_at date)
+  var monthMap={};  // key: 'YYYY-MM' -> {total,hot,warm,cold,dead,converted, weeks:{W1,W2,W3,W4}}
+  var convMap={};   // key: 'YYYY-MM' -> converted count by conversion date
+
   _leads.forEach(function(l){
-    var ov=getLeadOv(l),heat=ov.heat||autoHeat(l),st=String(l['status']||'').toLowerCase(),isConv=ov.converted||st==='converted';
+    var ov=getLeadOv(l),heat=ov.heat||autoHeat(l),st=String(l['status']||'').toLowerCase();
+    var isConv=ov.converted||st==='converted';
     if(isConv)converted++;
     if(heat==='hot')hot++;else if(heat==='warm')warm++;else if(heat==='cold')cold++;else if(heat==='dead')dead++;
-    if(l._date){var mo=l._date.toLocaleString('default',{month:'short',year:'numeric'});if(!monthMap[mo])monthMap[mo]={total:0,hot:0,warm:0,cold:0,dead:0,converted:0};monthMap[mo].total++;monthMap[mo][heat]=(monthMap[mo][heat]||0)+1;if(isConv)monthMap[mo].converted=(monthMap[mo].converted||0)+1;}
+
+    // Intake date grouping
+    if(l._date){
+      var mo=l._date.getFullYear()+'-'+String(l._date.getMonth()+1).padStart(2,'0');
+      var day=l._date.getDate(),wk=day<=7?'W1':day<=14?'W2':day<=21?'W3':'W4';
+      if(!monthMap[mo])monthMap[mo]={total:0,hot:0,warm:0,cold:0,dead:0,converted_intake:0,weeks:{}};
+      monthMap[mo].total++;
+      monthMap[mo][heat]=(monthMap[mo][heat]||0)+1;
+      if(!monthMap[mo].weeks[wk])monthMap[mo].weeks[wk]={total:0,hot:0,warm:0,cold:0,dead:0,converted_here:0};
+      monthMap[mo].weeks[wk].total++;
+      monthMap[mo].weeks[wk][heat]=(monthMap[mo].weeks[wk][heat]||0)+1;
+    }
+
+    // Conversion date grouping (separate from intake)
+    if(isConv){
+      var convDateStr=ov.converted_at?ov.converted_at.slice(0,10):(l._date?l._date.toISOString().slice(0,10):null);
+      if(convDateStr){
+        var cd=new Date(convDateStr+'T12:00:00');
+        var cmo=cd.getFullYear()+'-'+String(cd.getMonth()+1).padStart(2,'0');
+        var cday=cd.getDate(),cwk=cday<=7?'W1':cday<=14?'W2':cday<=21?'W3':'W4';
+        if(!convMap[cmo])convMap[cmo]={total:0,weeks:{}};
+        convMap[cmo].total++;
+        if(!convMap[cmo].weeks[cwk])convMap[cmo].weeks[cwk]=0;
+        convMap[cmo].weeks[cwk]++;
+      }
+    }
   });
+
   var el=document.getElementById('leads-kpi-row');if(!el)return;
-  var html='<div style="width:100%"><div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">';
+
+  // Top summary cards
+  var html='<div style="width:100%">';
+  html+='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px">';
   html+=kpiCard(total,'Total','var(--accent)')+kpiCard(hot,'🔥 Hot','#dc2626')+kpiCard(warm,'🌤 Warm','#d97706')+kpiCard(cold,'❄️ Cold','#2563eb')+kpiCard(dead,'💀 Dead','var(--text2)')+kpiCard(converted,'✅ Converted','var(--duty)');
   html+='</div>';
-  var months=Object.keys(monthMap).sort(function(a,b){return new Date('1 '+a)-new Date('1 '+b);}).reverse().slice(0,6);
+
+  // Interactive month → week breakdown
+  var months=Object.keys(monthMap).sort().reverse();
   if(months.length){
-    html+='<div style="font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Month-wise Breakdown</div><div style="overflow-x:auto"><table style="border-collapse:collapse;font-size:11px;min-width:400px"><thead><tr>';
-    ['Month','Total','🔥','🌤','❄️','💀','✅'].forEach(function(h){html+='<th style="padding:5px 12px;text-align:'+(h==='Month'?'left':'center')+';color:var(--text2);font-weight:600;border-bottom:1px solid var(--border)">'+h+'</th>';});
-    html+='</tr></thead><tbody>';
-    months.forEach(function(mo){var m=monthMap[mo];html+='<tr style="border-bottom:1px solid var(--border)"><td style="padding:5px 12px;font-weight:500">'+mo+'</td><td style="padding:5px 12px;text-align:center;font-weight:700">'+m.total+'</td><td style="padding:5px 12px;text-align:center;color:#dc2626">'+(m.hot||0)+'</td><td style="padding:5px 12px;text-align:center;color:#d97706">'+(m.warm||0)+'</td><td style="padding:5px 12px;text-align:center;color:#2563eb">'+(m.cold||0)+'</td><td style="padding:5px 12px;text-align:center;color:var(--text2)">'+(m.dead||0)+'</td><td style="padding:5px 12px;text-align:center;color:var(--duty)">'+(m.converted||0)+'</td></tr>';});
-    html+='</tbody></table></div>';
+    html+='<div style="font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Monthly Breakdown — click to expand weeks</div>';
+    html+='<div style="display:flex;flex-direction:column;gap:6px" id="lead-month-accordion">';
+    months.forEach(function(mo,mi){
+      var m=monthMap[mo];
+      var cconv=(convMap[mo]&&convMap[mo].total)||0;
+      var moLabel=new Date(mo+'-01').toLocaleString('default',{month:'long',year:'numeric'});
+      var isOpen=mi===0; // first month open by default
+      html+='<div class="lead-mo-block" style="border:1px solid var(--border);border-radius:8px;overflow:hidden">';
+      // Month header row - clickable
+      html+='<div onclick="toggleLeadMonth(this)" style="display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:var(--bg3);cursor:pointer;user-select:none">';
+      html+='<div style="display:flex;align-items:center;gap:16px">';
+      html+='<span style="font-size:12px;font-weight:600">'+moLabel+'</span>';
+      html+='<span style="font-size:11px;color:var(--text2)">'+m.total+' leads</span>';
+      html+='<span style="font-size:11px;color:#dc2626">🔥 '+(m.hot||0)+'</span>';
+      html+='<span style="font-size:11px;color:#d97706">🌤 '+(m.warm||0)+'</span>';
+      html+='<span style="font-size:11px;color:#2563eb">❄️ '+(m.cold||0)+'</span>';
+      html+='<span style="font-size:11px;color:var(--text2)">💀 '+(m.dead||0)+'</span>';
+      html+='<span style="font-size:11px;color:var(--duty)">✅ '+cconv+' converted</span>';
+      html+='</div>';
+      html+='<span style="font-size:14px;color:var(--text2);transition:transform .2s" class="mo-arrow">'+(isOpen?'▲':'▼')+'</span>';
+      html+='</div>';
+      // Week breakdown (hidden by default except first)
+      html+='<div class="lead-mo-weeks" style="display:'+(isOpen?'block':'none')+';padding:10px 14px;background:var(--bg2)">';
+      var weekOrder=['W1','W2','W3','W4'];
+      html+='<table style="border-collapse:collapse;font-size:11px;width:100%"><thead><tr>';
+      ['Week','Leads','🔥','🌤','❄️','💀','✅ Converted'].forEach(function(h){
+        html+='<th style="padding:5px 10px;text-align:'+(h==='Week'?'left':'center')+';color:var(--text2);font-weight:600;border-bottom:1px solid var(--border)">'+h+'</th>';
+      });
+      html+='</tr></thead><tbody>';
+      weekOrder.forEach(function(wk){
+        if(!m.weeks[wk])return;
+        var w=m.weeks[wk];
+        var wconv=(convMap[mo]&&convMap[mo].weeks[wk])||0;
+        html+='<tr style="border-bottom:1px solid var(--border)">'
+          +'<td style="padding:5px 10px;font-weight:500">'+mo+' '+wk+'</td>'
+          +'<td style="padding:5px 10px;text-align:center;font-weight:700">'+w.total+'</td>'
+          +'<td style="padding:5px 10px;text-align:center;color:#dc2626">'+(w.hot||0)+'</td>'
+          +'<td style="padding:5px 10px;text-align:center;color:#d97706">'+(w.warm||0)+'</td>'
+          +'<td style="padding:5px 10px;text-align:center;color:#2563eb">'+(w.cold||0)+'</td>'
+          +'<td style="padding:5px 10px;text-align:center;color:var(--text2)">'+(w.dead||0)+'</td>'
+          +'<td style="padding:5px 10px;text-align:center;color:var(--duty);font-weight:600">'+wconv+'</td>'
+          +'</tr>';
+      });
+      html+='</tbody></table>';
+      html+='</div>';
+      html+='</div>';
+    });
+    html+='</div>';
   }
-  // Week-wise breakdown
-  var weekMap={};
-  _leads.forEach(function(l){
-    if(!l._date)return;
-    var ov2=getLeadOv(l),heat2=ov2.heat||autoHeat(l),st2=String(l['status']||'').toLowerCase(),isConv2=ov2.converted||st2==='converted';
-    var mo2=l._date.toLocaleString('default',{month:'short',year:'numeric'});
-    var day2=l._date.getDate(),wkNum2=day2<=7?1:day2<=14?2:day2<=21?3:4;
-    var key2=mo2+' W'+wkNum2;
-    if(!weekMap[key2])weekMap[key2]={label:key2,sort:l._date.getFullYear()*10000+(l._date.getMonth()+1)*10+wkNum2,total:0,hot:0,warm:0,cold:0,dead:0,converted:0};
-    weekMap[key2].total++;weekMap[key2][heat2]=(weekMap[key2][heat2]||0)+1;
-    if(isConv2)weekMap[key2].converted=(weekMap[key2].converted||0)+1;
-  });
-  var weeks=Object.values(weekMap).sort(function(a,b){return b.sort-a.sort;}).slice(0,12);
-  function buildBreakdownTable(rows,labelKey){
-    var t='<table style="border-collapse:collapse;font-size:11px;width:100%"><thead><tr>';
-    [labelKey,'Total','🔥','🌤','❄️','💀','✅'].forEach(function(h){t+='<th style="padding:4px 8px;text-align:'+(h===labelKey?'left':'center')+';color:var(--text2);font-weight:600;border-bottom:1px solid var(--border);white-space:nowrap">'+h+'</th>';});
-    t+='</tr></thead><tbody>';
-    rows.forEach(function(r){t+='<tr style="border-bottom:1px solid var(--border)"><td style="padding:4px 8px;font-weight:500;white-space:nowrap">'+r.label+'</td><td style="padding:4px 8px;text-align:center;font-weight:700">'+r.total+'</td><td style="padding:4px 8px;text-align:center;color:#dc2626">'+(r.hot||0)+'</td><td style="padding:4px 8px;text-align:center;color:#d97706">'+(r.warm||0)+'</td><td style="padding:4px 8px;text-align:center;color:#2563eb">'+(r.cold||0)+'</td><td style="padding:4px 8px;text-align:center;color:var(--text2)">'+(r.dead||0)+'</td><td style="padding:4px 8px;text-align:center;color:var(--duty)">'+(r.converted||0)+'</td></tr>';});
-    t+='</tbody></table>';return t;
-  }
-  var monthRows=months.map(function(mo){return Object.assign({label:mo},monthMap[mo]);});
-  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:8px">';
-  html+='<div><div style="font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">📅 Monthly</div><div style="overflow-x:auto">'+buildBreakdownTable(monthRows,'Month')+'</div></div>';
-  html+='<div><div style="font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">📆 Weekly</div><div style="overflow-x:auto">'+buildBreakdownTable(weeks,'Week')+'</div></div>';
   html+='</div>';
-  html+='</div>';el.innerHTML=html;
+  el.innerHTML=html;
 }
+
+function toggleLeadMonth(header){
+  var weeks=header.nextElementSibling;
+  var arrow=header.querySelector('.mo-arrow');
+  var isOpen=weeks.style.display!=='none';
+  weeks.style.display=isOpen?'none':'block';
+  if(arrow)arrow.textContent=isOpen?'▼':'▲';
+}
+
+
 function getFilteredLeads(){
   var q=(document.getElementById('lead-search')||{}).value||'';
   var fStatus=(document.getElementById('lead-filter-status')||{}).value||'';
