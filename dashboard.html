@@ -1061,6 +1061,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 <div class="page" id="page-supply">
 <div style="padding:16px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
   <div style="font-size:15px;font-weight:700">👥 Supply Tracker</div>
+  <button onclick="exportSupplyCSV()" style="padding:6px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-weight:600;cursor:pointer">📥 Export CSV</button>
   <button onclick="openAddCandidateModal()" style="padding:6px 14px;background:var(--duty);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;cursor:pointer">+ Add Candidate</button>
 </div>
 <div id="supply-kpi-row" style="padding:14px 20px;background:var(--bg2);border-bottom:1px solid var(--border)"></div>
@@ -4793,6 +4794,27 @@ function renderSupplyTable(){
       +'</tr>';
   });
   html+='</tbody></table>';wrap.innerHTML=html;
+}
+function exportSupplyCSV(){
+  var filtered=getFilteredCandidates();
+  if(!filtered.length){alert('No candidates to export');return;}
+  var lines=['Name,Phone,Email,Nationality,Age,Gender,Homecare,Experience,Skills,Source,Stage,Has Kids,Kids Age,Interview Date,Interview Time,Meeting Link,Joining Date,Interviewer,Notes'];
+  filtered.forEach(function(c){
+    function esc(v){var s=String(v||'').trim();return(s.indexOf(',')>=0||s.indexOf('"')>=0)?'"'+s.split('"').join('""')+'"':s;}
+    var phoneVal=String(c.phone||'').trim();
+    var phoneCell=phoneVal?'="'+phoneVal+'"':'';
+    lines.push([
+      esc(c.name),phoneCell,esc(c.email),esc(c.nationality),esc(c.age),esc(c.gender),
+      esc(c.homecare),esc(c.experience),esc(c.skills),esc(c.source),esc(c.stage),
+      esc(c.has_kids),esc(c.kids_age),esc(c.interview_date),esc(c.interview_time),
+      esc(c.meeting_link),esc(c.joining_date),esc(c.interviewer),esc(c.notes)
+    ].join(','));
+  });
+  var csv=lines.join('\r\n');
+  var a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='valeo_supply_'+new Date().toISOString().slice(0,10)+'.csv';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
 }
 function clearSupplyFilters(){['supply-search','supply-filter-stage','supply-filter-hc','supply-filter-source','supply-filter-nationality','supply-filter-idate-from','supply-filter-idate-to','supply-filter-jdate-from','supply-filter-jdate-to'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});renderSupplyTable();}
 
