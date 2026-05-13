@@ -1684,7 +1684,7 @@ function renderCalendar(){
   const daysInM=new Date(calYear,calMo+1,0).getDate();
   const daysInPrev=new Date(calYear,calMo,0).getDate();
 
-  const recs=allData.filter(r=>r.caregiver===activeCG);
+  const recs=allData.filter(r=>r.caregiver===activeCG&&!r._manual);
   const dayMap={};
   recs.forEach(r=>{
     const d=parseD(r.date);
