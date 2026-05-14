@@ -3815,6 +3815,13 @@ function switchToRoster(){
     var hcs=[...new Set(rawData.map(function(r){return r.homecare;}))].filter(Boolean).sort();
     sel.innerHTML='<option value="">All Homecare</option>';
     hcs.forEach(function(hc){sel.innerHTML+='<option value="'+hc+'"'+(hc===cur?' selected':'')+'>'+hc+'</option>';});
+    // Lock dropdown for HC role users
+    if(_session&&_session.role==='hc'&&_session.homecare){
+      var _rshcStrip=_session.homecare.toLowerCase().replace(/[\s\u00a0]+/g,'');
+      var _mhc=hcs.find(function(h){return h.toLowerCase().replace(/[\s\u00a0]+/g,'')===_rshcStrip;})||_session.homecare;
+      sel.value=_mhc;
+      sel.disabled=true;
+    }
   }
   renderRoster();
 }
@@ -3835,6 +3842,17 @@ function renderRoster(){
   var dates=[];
   for(var d=1;d<=dim;d++) dates.push(year+'-'+String(month+1).padStart(2,'0')+'-'+String(d).padStart(2,'0'));
   var filterHC=document.getElementById('roster-hc-filter').value;
+  // Restrict roster to session HC for HC role users
+  var _rosterHC = (_session&&_session.role==='hc'&&_session.homecare) ? _session.homecare : null;
+  if(_rosterHC){
+    var _rshcStrip=_rosterHC.toLowerCase().replace(/[\s\u00a0]+/g,'');
+    var _matchedHC=([...new Set(rawData.map(r=>r.homecare))].filter(Boolean)
+      .find(function(h){return h.toLowerCase().replace(/[\s\u00a0]+/g,'')===_rshcStrip;}))||_rosterHC;
+    filterHC=_matchedHC;
+    // Lock the dropdown to session HC
+    var _rsel=document.getElementById('roster-hc-filter');
+    if(_rsel){_rsel.value=_matchedHC;_rsel.disabled=true;}
+  }
   var cgMap={};
   rawData.forEach(function(r){
     if(!r.caregiver) return;
