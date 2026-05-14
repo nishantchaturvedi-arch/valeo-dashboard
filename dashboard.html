@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
@@ -1482,7 +1483,7 @@ async function loadData(force=false){
     console.log('[loadData] rawData:', rawData.length, 'records');
     console.log('[loadData] allData:', allData.length, 'expanded records');
     console.log('[loadData] HCs:', [...new Set(rawData.map(r=>r.homecare))].filter(Boolean));
-    if(_session&&_session.role==='hc'&&_session.homecare){rawData=rawData.filter(function(r){return r.homecare===_session.homecare;});allData=allData.filter(function(r){return r.homecare===_session.homecare;});}
+    if(_session&&_session.role==='hc'&&_session.homecare){var _hcLower=_session.homecare.toLowerCase().trim();rawData=rawData.filter(function(r){return (r.homecare||'').toLowerCase().trim()===_hcLower;});allData=allData.filter(function(r){return (r.homecare||'').toLowerCase().trim()===_hcLower;});}
     buildChatData();
     renderHCGrid();
     syncFromSheet();
