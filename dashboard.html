@@ -1510,13 +1510,16 @@ function setSyncState(state,text){
 // ── HC Grid ──────────────────────────────────────────────────────
 function renderHCGrid(){
   const now=new Date();const yr=now.getFullYear(),mo=now.getMonth();
-  var hcs=[...new Set(rawData.map(r=>r.homecare))].filter(Boolean).sort();
-  if(_session&&_session.role==='hc'&&_session.homecare) hcs=[_session.homecare];
+  var _sessionHC=(_session&&_session.role==='hc'&&_session.homecare)?_session.homecare.toLowerCase().trim():null;
+  var _filteredRaw=_sessionHC?rawData.filter(function(r){return(r.homecare||'').toLowerCase().trim()===_sessionHC;}):rawData;
+  var _filteredAll=_sessionHC?allData.filter(function(r){return(r.homecare||'').toLowerCase().trim()===_sessionHC;}):allData;
+  var hcs=[...new Set(_filteredRaw.map(r=>r.homecare))].filter(Boolean).sort();
+  if(_session&&_session.role==='hc'&&_session.homecare&&!hcs.length) hcs=[_session.homecare];
   let html='';
 
   hcs.forEach(hc=>{
     const col=hcColor(hc);
-    const cgs=[...new Set(rawData.filter(r=>r.homecare===hc).map(r=>r.caregiver))].filter(Boolean).sort();
+    const cgs=[...new Set(_filteredRaw.filter(r=>r.homecare===hc).map(r=>r.caregiver))].filter(Boolean).sort();
     // Also include manually added caregivers for this HC
     Object.values(manualCGs).filter(function(c){return c.homecare===hc;}).forEach(function(c){if(!cgs.includes(c.name))cgs.push(c.name);});
     html+=`<div class="hc-section">
@@ -1528,7 +1531,7 @@ function renderHCGrid(){
       <div class="cg-grid">`;
 
     cgs.forEach(cg=>{
-      const recs=allData.filter(r=>r.caregiver===cg&&r.homecare===hc);
+      const recs=_filteredAll.filter(r=>r.caregiver===cg&&r.homecare===hc);
       const moRecs=recs.filter(r=>{const d=parseD(r.date);return d&&d.y===yr&&d.m===mo;});
       const duty=moRecs.filter(r=>r.status.toLowerCase()==='duty').length;
       const off=moRecs.filter(r=>r.status.toLowerCase().includes('off')).length;
