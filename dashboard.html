@@ -1,6 +1,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
@@ -1483,7 +1484,7 @@ async function loadData(force=false){
     console.log('[loadData] rawData:', rawData.length, 'records');
     console.log('[loadData] allData:', allData.length, 'expanded records');
     console.log('[loadData] HCs:', [...new Set(rawData.map(r=>r.homecare))].filter(Boolean));
-    if(_session&&_session.role==='hc'&&_session.homecare){var _hcLower=_session.homecare.toLowerCase().trim();rawData=rawData.filter(function(r){return (r.homecare||'').toLowerCase().trim()===_hcLower;});allData=allData.filter(function(r){return (r.homecare||'').toLowerCase().trim()===_hcLower;});}
+    /* HC filter applied at render time */
     buildChatData();
     renderHCGrid();
     syncFromSheet();
@@ -1510,16 +1511,23 @@ function setSyncState(state,text){
 // ── HC Grid ──────────────────────────────────────────────────────
 function renderHCGrid(){
   const now=new Date();const yr=now.getFullYear(),mo=now.getMonth();
-  var _sessionHC=(_session&&_session.role==='hc'&&_session.homecare)?_session.homecare.toLowerCase().trim():null;
-  var _filteredRaw=_sessionHC?rawData.filter(function(r){return(r.homecare||'').toLowerCase().trim()===_sessionHC;}):rawData;
-  var _filteredAll=_sessionHC?allData.filter(function(r){return(r.homecare||'').toLowerCase().trim()===_sessionHC;}):allData;
-  var hcs=[...new Set(_filteredRaw.map(r=>r.homecare))].filter(Boolean).sort();
-  if(_session&&_session.role==='hc'&&_session.homecare&&!hcs.length) hcs=[_session.homecare];
+  // Build hcs from actual rawData strings (guaranteed exact match for cgs lookup)
+  var _allHcs=[...new Set(rawData.map(r=>r.homecare))].filter(Boolean).sort();
+  var hcs;
+  if(_session&&_session.role==='hc'&&_session.homecare){
+    var _shcStrip=_session.homecare.toLowerCase().replace(/[\s\u00a0]+/g,'');
+    hcs=_allHcs.filter(function(h){return h.toLowerCase().replace(/[\s\u00a0]+/g,'')===_shcStrip;});
+    if(!hcs.length){
+      var _shcFirst=_session.homecare.toLowerCase().split(/[\s\u00a0]+/)[0];
+      hcs=_allHcs.filter(function(h){return h.toLowerCase().includes(_shcFirst);});
+    }
+    if(!hcs.length) hcs=[_session.homecare];
+  } else { hcs=_allHcs; }
   let html='';
 
   hcs.forEach(hc=>{
     const col=hcColor(hc);
-    const cgs=[...new Set(_filteredRaw.filter(r=>r.homecare===hc).map(r=>r.caregiver))].filter(Boolean).sort();
+    const cgs=[...new Set(rawData.filter(r=>r.homecare===hc).map(r=>r.caregiver))].filter(Boolean).sort();
     // Also include manually added caregivers for this HC
     Object.values(manualCGs).filter(function(c){return c.homecare===hc;}).forEach(function(c){if(!cgs.includes(c.name))cgs.push(c.name);});
     html+=`<div class="hc-section">
@@ -1531,7 +1539,7 @@ function renderHCGrid(){
       <div class="cg-grid">`;
 
     cgs.forEach(cg=>{
-      const recs=_filteredAll.filter(r=>r.caregiver===cg&&r.homecare===hc);
+      const recs=allData.filter(r=>r.caregiver===cg&&r.homecare===hc);
       const moRecs=recs.filter(r=>{const d=parseD(r.date);return d&&d.y===yr&&d.m===mo;});
       const duty=moRecs.filter(r=>r.status.toLowerCase()==='duty').length;
       const off=moRecs.filter(r=>r.status.toLowerCase().includes('off')).length;
@@ -3620,6 +3628,7 @@ async function restoreCGByKey(btn){
   await persistDelete('hidden_cg',rKey);
 }
 function applyHiddenFilter(){
+  if(_session&&_session.role==='hc'){return;} // HC users always see their caregivers
   document.querySelectorAll('.cg-card').forEach(function(card){
     var cg=card.dataset.cg, hc=card.dataset.hc;
     if(!cg||!hc) return;
