@@ -1,7 +1,4 @@
 
-
-
-
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
@@ -1288,23 +1285,13 @@ function calcEndDate(start,pkg,cgKey){
   const pt=pkgType(pkg);
   let baseEnd;
   if(pt==='monthly'){
-    const w=extractWeeks(pkg)||4;
-    baseEnd = addDays(start,(w*7)-1); // monthly: always 28 days (4 weeks × 7)
+    baseEnd = addDays(start,27); // fixed: start + 27 days, no override extension
   } else if(pt==='weekly'){
     const w=extractWeeks(pkg)||1;
-    // For weekly plans use days-per-week × number-of-weeks
-    // e.g. "Weekly plan: 6 days" = 6 days, "Weekly plan: 5 days, 4 Weeks" = 20 days
     const daysPerWeek = extractDays2(pkg) || 7;
     baseEnd = addDays(start,(w * daysPerWeek)-1);
   } else {
     return start;
-  }
-  // Extend end date for ALL override types
-  if(cgKey){
-    const ovCount = Object.values(overrides).filter(function(o){
-      return o.caregiver===cgKey && ['sick','off','holiday','unpaid','cancelled','removed','absent'].includes(o.type);
-    }).length;
-    if(ovCount>0) baseEnd = addDays(baseEnd, ovCount);
   }
   return baseEnd;
 }
