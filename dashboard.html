@@ -4441,11 +4441,30 @@ function getLeadKey(lead){return String(lead['phone number']||lead['phone']||'')
 function getLeadOv(lead){return _leadsOverrides[getLeadKey(lead)]||{};}
 function autoHeat(lead){
   var ov=getLeadOv(lead);if(ov.heat)return ov.heat;
-  var st=String(lead['status']||'').toLowerCase(),cur=String(lead['current status']||lead['current_status']||'').toLowerCase();
-  if(st==='converted'||cur.includes('booked')||cur.includes('convert'))return'hot';
-  if(st==='on fc'||st==='connected')return'warm';
-  if(st==='no answer'||st==='hung up')return'cold';
-  if(cur.includes('not interested')||cur.includes('high price'))return'dead';
+  var st=String(lead['status']||'').toLowerCase();
+  var cur=String(lead['current status']||lead['current_status']||'').toLowerCase();
+  var notes=String(lead['notes']||'').toLowerCase();
+  var combined=cur+' '+notes+' '+st;
+  // ── Dead leads ────────────────────────────────────────────────
+  if(combined.includes('not interested')) return'dead';
+  if(combined.includes('high price'))     return'dead';
+  if(combined.includes('looking for job'))return'dead';
+  if(combined.includes('dead lead'))      return'dead';
+  if(combined.includes('dead'))           return'dead';
+  if(combined.includes('not relevant'))   return'dead';
+  if(combined.includes('wrong number'))   return'dead';
+  if(combined.includes('already have'))   return'dead';
+  // ── Converted / Hot ──────────────────────────────────────────
+  if(st==='converted'||combined.includes('booked')||combined.includes('convert')) return'hot';
+  // ── Warm ─────────────────────────────────────────────────────
+  if(st==='on fc'||st==='connected') return'warm';
+  if(combined.includes('interested'))    return'warm';
+  if(combined.includes('call back'))     return'warm';
+  if(combined.includes('follow up'))     return'warm';
+  if(combined.includes('thinking'))      return'warm';
+  if(combined.includes('will confirm'))  return'warm';
+  // ── Cold ─────────────────────────────────────────────────────
+  if(st==='no answer'||st==='hung up') return'cold';
   return'cold';
 }
 function kpiCard(val,lbl,col){return'<div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 16px;min-width:90px"><div style="font-size:22px;font-weight:700;color:'+col+'">'+val+'</div><div style="font-size:10px;color:var(--text2);margin-top:2px">'+lbl+'</div></div>';}
