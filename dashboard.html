@@ -604,7 +604,8 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <button class="main-tab" onclick="switchTab('planner')">📋 Schedule Builder</button>
  <button class="main-tab" onclick="switchTab('roster')">🗓 Roster View</button>
  <button class="main-tab" onclick="switchTab('daily')">📆 Daily Orders</button>
- <button class="main-tab" onclick="switchTab('leads')">🎯 Lead Tracker</button>
+ <button class="main-tab" onclick="switchTab('leads')">🎯 SM Lead Tracker</button>
+ <button class="main-tab" onclick="switchTab('fclead')">💬 FC Lead Tracker</button>
  <button class="main-tab" onclick="switchTab('supply')">👥 Supply Tracker</button>
  <button class="main-tab" onclick="switchTab('penalty')">&#x26A0;&#xFE0F; Penalty Tracker</button>
 </div>
@@ -1037,7 +1038,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 </div>
 <div class="page" id="page-leads">
 <div style="padding:16px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-  <div style="font-size:15px;font-weight:700">🎯 Lead Tracker</div>
+  <div style="font-size:15px;font-weight:700">🎯 SM Lead Tracker</div>
   <div style="display:flex;gap:8px;flex-wrap:wrap">
     <button onclick="loadLeads(true)" style="padding:6px 14px;background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;cursor:pointer">🔄 Refresh</button>
     <button onclick="exportLeadsCSV()" style="padding:6px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-weight:600;cursor:pointer">📥 Export CSV</button>
@@ -1194,6 +1195,60 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  </div>
 </div>
 
+
+<div class="page" id="page-fclead">
+<div style="padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+  <div style="font-size:15px;font-weight:700">&#x1F4AC; FC Lead Tracker</div>
+  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+    <span id="fcl-last-sync" style="font-size:11px;color:var(--text3)"></span>
+    <button onclick="loadFCLeads(true)" style="padding:6px 14px;background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">&#x1F504; Refresh</button>
+    <button onclick="exportFCLeadsCSV()" style="padding:6px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">&#x1F4E5; Export CSV</button>
+  </div>
+</div>
+<div id="fcl-kpi-row" style="padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap"></div>
+<div style="padding:10px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;gap:8px">
+  <input id="fcl-search" type="text" placeholder="Search name / phone..." oninput="renderFCLeads()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:Inter,sans-serif;font-size:12px;padding:6px 10px;border-radius:6px;outline:none;width:200px">
+  <select id="fcl-filter-stage" onchange="renderFCLeads()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
+    <option value="">All Stages</option>
+    <option value="New Enquiry">&#x1F195; New Enquiry</option>
+    <option value="Call Done">&#x1F4DE; Call Done</option>
+    <option value="Proposal Sent">&#x1F4CB; Proposal Sent</option>
+    <option value="Follow Up">&#x23F3; Follow Up</option>
+    <option value="Converted">&#x2705; Converted</option>
+    <option value="Lost — Price">&#x1F4B8; Lost — Price</option>
+    <option value="Lost — No Reply">&#x1F47B; Lost — No Reply</option>
+    <option value="Lost — Not Interested">&#x274C; Lost — Not Interested</option>
+  </select>
+  <select id="fcl-filter-agent" onchange="renderFCLeads()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
+    <option value="">All Agents</option>
+  </select>
+  <select id="fcl-filter-month" onchange="renderFCLeads()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
+    <option value="">All Months</option>
+  </select>
+  <select id="fcl-filter-week" onchange="renderFCLeads()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
+    <option value="">All Weeks</option>
+    <option value="W1">Week 1 (1-7)</option>
+    <option value="W2">Week 2 (8-14)</option>
+    <option value="W3">Week 3 (15-21)</option>
+    <option value="W4">Week 4 (22+)</option>
+  </select>
+  <button onclick="clearFCLFilters()" style="padding:6px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:11px;cursor:pointer;font-family:Inter,sans-serif">Clear</button>
+</div>
+<div style="overflow:auto;max-height:calc(100vh - 250px);padding:0 20px 20px">
+  <div id="fcl-table-wrap" style="margin-top:14px">
+    <div style="padding:40px;text-align:center;color:var(--text2)">Click Refresh to load FC leads</div>
+  </div>
+</div>
+<div id="fcl-modal" onclick="if(event.target===this)closeFCLModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:600;align-items:center;justify-content:center">
+  <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:22px;width:420px;max-width:95vw;max-height:90vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div style="font-size:14px;font-weight:600" id="fcl-modal-title">Lead</div>
+      <button onclick="closeFCLModal()" style="background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer">&#x2715;</button>
+    </div>
+    <div id="fcl-modal-body"></div>
+  </div>
+</div>
+</div>
 
 <div class="page" id="page-penalty">
 <div id="sla-panel" style="background:var(--bg2);border-bottom:1px solid var(--border)">
@@ -5133,6 +5188,337 @@ function exportPenaltiesCSV(){
   document.body.appendChild(a);a.click();document.body.removeChild(a);
 }
 
+
+// ── FC Lead Tracker ───────────────────────────────────────────────
+var FCL_WEBHOOK = 'https://nishi25.app.n8n.cloud/webhook/fc-leads';
+var _fclLeads = [];
+var _fclOverrides = {};
+var _fclLoaded = false;
+
+var FCL_STAGES = ['New Enquiry','Call Done','Proposal Sent','Follow Up','Converted','Lost - Price','Lost - No Reply','Lost - Not Interested'];
+
+var FCL_STAGE_STYLE = {
+  'New Enquiry':          {bg:'rgba(47,129,247,.15)',   color:'#2f81f7'},
+  'Call Done':            {bg:'rgba(210,153,34,.15)',   color:'#d29922'},
+  'Proposal Sent':        {bg:'rgba(139,92,246,.15)',   color:'#8b5cf6'},
+  'Follow Up':            {bg:'rgba(245,158,11,.15)',   color:'#f59e0b'},
+  'Converted':            {bg:'rgba(63,185,80,.15)',    color:'#3fb950'},
+  'Lost - Price':         {bg:'rgba(248,81,73,.12)',    color:'#f85149'},
+  'Lost - No Reply':      {bg:'rgba(110,118,129,.15)',  color:'#8b949e'},
+  'Lost - Not Interested':{bg:'rgba(248,81,73,.12)',    color:'#f85149'},
+};
+
+async function loadFCLeads(force) {
+  if (_fclLoaded && !force) return;
+  var wrap = document.getElementById('fcl-table-wrap');
+  if (wrap) wrap.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text2)">Loading FC leads...</div>';
+  try {
+    await loadFCLOverrides();
+    var res = await fetch(FCL_WEBHOOK);
+    if (!res.ok) throw new Error('HTTP ' + res.status + ' - check n8n webhook is active');
+    var data = await res.json();
+    _fclLeads = data.leads || [];
+    _fclLoaded = true;
+    var el = document.getElementById('fcl-last-sync');
+    if (el) el.textContent = 'Synced ' + new Date().toLocaleTimeString();
+    populateFCLFilters();
+    renderFCLKPIs();
+    renderFCLeads();
+  } catch(e) {
+    if (wrap) wrap.innerHTML = '<div style="padding:40px;text-align:center;color:var(--absent)">'
+      + '<div style="font-size:14px;margin-bottom:8px">Failed to load FC leads</div>'
+      + '<div style="font-size:12px;color:var(--text2);margin-bottom:12px">' + e.message + '</div>'
+      + '<button onclick="loadFCLeads(true)" style="padding:8px 20px;background:var(--accent);border:none;border-radius:6px;color:#fff;cursor:pointer;font-size:12px;font-family:Inter,sans-serif">Retry</button></div>';
+  }
+}
+
+async function loadFCLOverrides() {
+  if (!_db) return;
+  try {
+    var snap = await _db.collection('fc_lead_stages').get();
+    _fclOverrides = {};
+    snap.forEach(function(doc) { _fclOverrides[doc.id] = doc.data(); });
+  } catch(e) {}
+}
+
+function fclGetStage(lead) {
+  var ov = _fclOverrides[lead.phone_normalized];
+  return (ov && ov.stage) ? ov.stage : (lead.stage || 'New Enquiry');
+}
+
+function fclGetNotes(lead) {
+  var ov = _fclOverrides[lead.phone_normalized];
+  return ov ? (ov.notes || '') : '';
+}
+
+function populateFCLFilters() {
+  var agents = [...new Set(_fclLeads.map(function(l){return l.agent||'';}).filter(Boolean))].sort();
+  var asel = document.getElementById('fcl-filter-agent');
+  if (asel) { asel.innerHTML = '<option value="">All Agents</option>'; agents.forEach(function(a){asel.innerHTML+='<option>'+a+'</option>';}); }
+  var months = [...new Set(_fclLeads.map(function(l){return l.month||'';}).filter(Boolean))].sort().reverse();
+  var msel = document.getElementById('fcl-filter-month');
+  if (msel) { msel.innerHTML = '<option value="">All Months</option>'; months.forEach(function(m){var ml=new Date(m+'-01').toLocaleString('default',{month:'long',year:'numeric'});msel.innerHTML+='<option value="'+ml+'">'+ ml+'</option>';}); }
+  var weekOrder=['1st Week','2nd Week','3rd Week','4th Week'];
+  var weeks=[...new Set(_fclLeads.map(function(l){return l.week||'';}).filter(Boolean))];
+  weeks.sort(function(a,b){return weekOrder.indexOf(a)-weekOrder.indexOf(b);});
+  var wsel=document.getElementById('fcl-filter-week');
+  if(wsel&&weeks.length){wsel.innerHTML='<option value="">All Weeks</option>';weeks.forEach(function(w){wsel.innerHTML+='<option>'+w+'</option>';});}
+}
+
+function parseFCLDate(str){
+  if(!str) return null;
+  var s=String(str).trim();
+  var d=null;
+  if(s.includes('/')){
+    var p=s.split('/');
+    if(p.length===3){
+      var yr=parseInt(p[2]);
+      // Fix 2-digit year: 25 -> 2025, 26 -> 2026 etc
+      if(yr<100) yr+=2000;
+      var mo=parseInt(p[0]),dy=parseInt(p[1]);
+      // Try MM/DD/YYYY first; if month>12 try DD/MM/YYYY
+      if(mo>12&&dy<=12){ var t=mo;mo=dy;dy=t; }
+      d=new Date(yr,mo-1,dy);
+    }
+  } else {
+    d=new Date(s.slice(0,10)+'T12:00:00');
+  }
+  if(!d||isNaN(d)) return null;
+  // Sanity check — reject future dates and anything before 2024
+  var yr=d.getFullYear();
+  var now=new Date();
+  if(yr<2024||d>now) return null;
+  return d;
+}
+
+function fclWeek(d){ var day=d.getDate(); return day<=7?'W1':day<=14?'W2':day<=21?'W3':'W4'; }
+function fclMonthKey(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+function fclMonthLabel(mo){ return new Date(mo+'-15').toLocaleString('default',{month:'long',year:'numeric'}); }
+
+function getFilteredFCLeads() {
+  var q=(document.getElementById('fcl-search')||{}).value||'';
+  var fS=(document.getElementById('fcl-filter-stage')||{}).value||'';
+  var fA=(document.getElementById('fcl-filter-agent')||{}).value||'';
+  var fM=(document.getElementById('fcl-filter-month')||{}).value||'';
+  var fW=(document.getElementById('fcl-filter-week')||{}).value||'';
+  return _fclLeads.filter(function(l){
+    if(q){var sq=q.toLowerCase();if(!(l.name||'').toLowerCase().includes(sq)&&!(l.phone||'').includes(q))return false;}
+    if(fS&&fclGetStage(l)!==fS)return false;
+    if(fA&&(l.agent||'')!==fA)return false;
+    if(fM||fW){
+      var d=parseFCLDate(l.first_contact);
+      if(!d)return false;
+      if(fM&&fclMonthLabel(fclMonthKey(d))!==fM)return false;
+      if(fW&&fclWeek(d)!==fW)return false;
+    }
+    return true;
+  });
+}
+
+function populateFCLFilters(){
+  var agents=[...new Set(_fclLeads.map(function(l){return l.agent||'';}).filter(Boolean))].sort();
+  var asel=document.getElementById('fcl-filter-agent');
+  if(asel){asel.innerHTML='<option value="">All Agents</option>';agents.forEach(function(a){asel.innerHTML+='<option>'+a+'</option>';});}
+  // Months from parsed dates
+  var moSet={};
+  _fclLeads.forEach(function(l){var d=parseFCLDate(l.first_contact);if(d){var mo=fclMonthKey(d);moSet[mo]=fclMonthLabel(mo);}});
+  var moKeys=Object.keys(moSet).sort().reverse();
+  var msel=document.getElementById('fcl-filter-month');
+  if(msel){msel.innerHTML='<option value="">All Months</option>';moKeys.forEach(function(k){msel.innerHTML+='<option value="'+moSet[k]+'">'+moSet[k]+'</option>';});}
+}
+
+function renderFCLKPIs(){
+  var el=document.getElementById('fcl-kpi-row');if(!el)return;
+  var stageTotals={};
+  FCL_STAGES.forEach(function(s){stageTotals[s]=0;});
+  _fclLeads.forEach(function(l){var s=fclGetStage(l);if(stageTotals[s]!==undefined)stageTotals[s]++;});
+  var total=_fclLeads.length;
+  var converted=stageTotals['Converted']||0;
+  var lostTotal=(stageTotals['Lost - Price']||0)+(stageTotals['Lost - No Reply']||0)+(stageTotals['Lost - Not Interested']||0);
+  var followTotal=(stageTotals['Follow Up']||0)+(stageTotals['Call Done']||0);
+
+  // Monthly map
+  var monthMap={};
+  _fclLeads.forEach(function(l){
+    var d=parseFCLDate(l.first_contact);if(!d)return;
+    var mo=fclMonthKey(d),wk=fclWeek(d);
+    var stage=fclGetStage(l);
+    var isConv=stage==='Converted',isLost=stage.startsWith('Lost');
+    var isNew=stage==='New Enquiry',isFollow=stage==='Follow Up'||stage==='Call Done',isProp=stage==='Proposal Sent';
+    if(!monthMap[mo])monthMap[mo]={total:0,converted:0,new_e:0,follow:0,prop:0,lost:0,weeks:{}};
+    var m=monthMap[mo];
+    m.total++;if(isConv)m.converted++;if(isNew)m.new_e++;if(isFollow)m.follow++;if(isProp)m.prop++;if(isLost)m.lost++;
+    if(!m.weeks[wk])m.weeks[wk]={total:0,converted:0,new_e:0,follow:0,prop:0,lost:0};
+    var w=m.weeks[wk];
+    w.total++;if(isConv)w.converted++;if(isNew)w.new_e++;if(isFollow)w.follow++;if(isProp)w.prop++;if(isLost)w.lost++;
+  });
+
+  var html='<div style="width:100%">';
+  // KPI cards — exact same style as SM Lead Tracker
+  html+='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px">';
+  html+=kpiCard(total,'Total','var(--accent)');
+  html+=kpiCard(stageTotals['New Enquiry']||0,'&#x1F195; New Enquiry','#2f81f7');
+  html+=kpiCard(followTotal,'&#x23F3; Follow Up','#f59e0b');
+  html+=kpiCard(stageTotals['Proposal Sent']||0,'&#x1F4CB; Proposal Sent','#8b5cf6');
+  html+=kpiCard(converted,'&#x2705; Converted','var(--duty)');
+  html+=kpiCard(lostTotal,'&#x274C; Lost','var(--absent)');
+  html+='</div>';
+
+  // Monthly breakdown accordion — exact same structure as SM Lead Tracker
+  var months=Object.keys(monthMap).sort().reverse();
+  if(months.length){
+    html+='<div style="font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Monthly Breakdown \u2014 click to expand weeks</div>';
+    html+='<div style="display:flex;flex-direction:column;gap:6px">';
+    months.forEach(function(mo,mi){
+      var m=monthMap[mo];
+      var moLabel=fclMonthLabel(mo);
+      var isOpen=mi===0;
+      html+='<div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">';
+      html+='<div onclick="toggleFCLMonth(this)" style="display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:var(--bg3);cursor:pointer;user-select:none">';
+      html+='<div style="display:flex;align-items:center;gap:16px">';
+      html+='<span style="font-size:12px;font-weight:600">'+moLabel+'</span>';
+      html+='<span style="font-size:11px;color:var(--text2)">'+m.total+' leads</span>';
+      html+='<span style="font-size:11px;color:#2f81f7">&#x1F195; '+(m.new_e||0)+'</span>';
+      html+='<span style="font-size:11px;color:#f59e0b">&#x23F3; '+(m.follow||0)+'</span>';
+      html+='<span style="font-size:11px;color:#8b5cf6">&#x1F4CB; '+(m.prop||0)+'</span>';
+      html+='<span style="font-size:11px;color:var(--duty)">&#x2705; '+(m.converted||0)+' converted</span>';
+      html+='<span style="font-size:11px;color:var(--absent)">&#x274C; '+(m.lost||0)+' lost</span>';
+      html+='</div>';
+      html+='<span style="font-size:14px;color:var(--text2);transition:transform .2s" class="fcl-mo-arrow">'+(isOpen?'\u25b2':'\u25bc')+'</span>';
+      html+='</div>';
+      html+='<div class="fcl-mo-weeks" style="display:'+(isOpen?'block':'none')+';padding:10px 14px;background:var(--bg2)">';
+      html+='<table style="border-collapse:collapse;font-size:11px;width:100%"><thead><tr>';
+      ['Week','Leads','&#x1F195;','&#x23F3;','&#x1F4CB;','&#x2705; Converted','&#x274C; Lost'].forEach(function(h){
+        html+='<th style="padding:5px 10px;text-align:'+(h==='Week'?'left':'center')+';color:var(--text2);font-weight:600;border-bottom:1px solid var(--border)">'+h+'</th>';
+      });
+      html+='</tr></thead><tbody>';
+      ['W1','W2','W3','W4'].forEach(function(wk){
+        var w=m.weeks[wk];if(!w)return;
+        html+='<tr style="border-bottom:1px solid var(--border)">'
+          +'<td style="padding:5px 10px;font-weight:500">'+mo+' '+wk+'</td>'
+          +'<td style="padding:5px 10px;text-align:center;font-weight:700">'+w.total+'</td>'
+          +'<td style="padding:5px 10px;text-align:center;color:#2f81f7">'+(w.new_e||0)+'</td>'
+          +'<td style="padding:5px 10px;text-align:center;color:#f59e0b">'+(w.follow||0)+'</td>'
+          +'<td style="padding:5px 10px;text-align:center;color:#8b5cf6">'+(w.prop||0)+'</td>'
+          +'<td style="padding:5px 10px;text-align:center;color:var(--duty);font-weight:600">'+(w.converted||0)+'</td>'
+          +'<td style="padding:5px 10px;text-align:center;color:var(--absent)">'+(w.lost||0)+'</td>'
+          +'</tr>';
+      });
+      html+='</tbody></table></div></div>';
+    });
+    html+='</div>';
+  }
+  html+='</div>';
+  el.innerHTML=html;
+}
+
+function toggleFCLMonth(header){
+  var weeks=header.nextElementSibling;
+  var arrow=header.querySelector('.fcl-mo-arrow');
+  var isOpen=weeks.style.display!=='none';
+  weeks.style.display=isOpen?'none':'block';
+  if(arrow)arrow.textContent=isOpen?'\u25bc':'\u25b2';
+}
+
+
+function renderFCLeads() {
+  renderFCLKPIs();
+  var filtered = getFilteredFCLeads();
+  var wrap = document.getElementById('fcl-table-wrap'); if (!wrap) return;
+  if (!filtered.length) {
+    wrap.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text2)">No leads match filters</div>';
+    return;
+  }
+  var html = '<div style="font-size:11px;color:var(--text2);margin-bottom:8px">Showing '+filtered.length+' of '+_fclLeads.length+' leads</div>';
+  html += '<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="background:var(--bg3)">';
+  ['Name','Phone','Agent','Stage','First Contact','Convos','Notes'].forEach(function(h){
+    html += '<th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text2);border-bottom:2px solid var(--border)">'+h+'</th>';
+  });
+  html += '</tr></thead><tbody>';
+  filtered.forEach(function(l) {
+    var stage = fclGetStage(l);
+    var ss = FCL_STAGE_STYLE[stage] || {bg:'var(--bg3)',color:'var(--text2)'};
+    var notes = fclGetNotes(l);
+    var date = (l.first_contact||'').slice(0,10)||'-';
+    html += '<tr onclick="openFCLModal(\''+l.phone_normalized+'\')" style="cursor:pointer;border-bottom:1px solid var(--border)" onmouseover="this.style.background=\'var(--bg3)\'" onmouseout="this.style.background=\'\'">'
+      +'<td style="padding:9px 12px;font-weight:500">'+(l.name||'-')+'</td>'
+      +'<td style="padding:9px 12px;font-family:monospace;font-size:11px;color:var(--text2)">'+(l.phone||'-')+'</td>'
+      +'<td style="padding:9px 12px;font-size:11px;color:var(--text2)">'+(l.agent||'-')+'</td>'
+      +'<td style="padding:9px 12px"><span style="padding:3px 9px;border-radius:20px;font-size:10px;font-weight:600;background:'+ss.bg+';color:'+ss.color+'">'+stage+'</span></td>'
+      +'<td style="padding:9px 12px;font-size:11px;color:var(--text2);font-family:monospace">'+date+'</td>'
+      +'<td style="padding:9px 12px;text-align:center;font-size:11px;color:var(--text2)">'+(l.conversation_count||1)+'</td>'
+      +'<td style="padding:9px 12px;font-size:11px;color:var(--text2);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(notes||'-')+'</td>'
+      +'</tr>';
+  });
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+function openFCLModal(phoneNorm) {
+  var lead = _fclLeads.find(function(l){return l.phone_normalized===phoneNorm;});
+  if (!lead) return;
+  var stage = fclGetStage(lead);
+  var notes = fclGetNotes(lead);
+  document.getElementById('fcl-modal-title').textContent = lead.name || lead.phone || 'Lead';
+  var stageOpts = FCL_STAGES.map(function(s){
+    return '<option value="'+s+'"'+(stage===s?' selected':'')+'>'+s+'</option>';
+  }).join('');
+  var histHtml = (lead.label_history||[]).map(function(lh){
+    return '<span style="font-size:10px;padding:2px 8px;border-radius:10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);margin:2px;display:inline-block">'+lh+'</span>';
+  }).join('');
+  var inp = 'width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:Inter,sans-serif;font-size:12px;padding:8px 10px;border-radius:7px;outline:none;box-sizing:border-box';
+  document.getElementById('fcl-modal-body').innerHTML =
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;font-size:12px">'
+    +'<div><div style="font-size:10px;color:var(--text2);margin-bottom:3px">PHONE</div><div style="font-family:monospace">'+(lead.phone||'-')+'</div></div>'
+    +'<div><div style="font-size:10px;color:var(--text2);margin-bottom:3px">AGENT</div><div>'+(lead.agent||'-')+'</div></div>'
+    +'<div><div style="font-size:10px;color:var(--text2);margin-bottom:3px">FIRST CONTACT</div><div style="font-family:monospace">'+(lead.first_contact||'').slice(0,10)+'</div></div>'
+    +'<div><div style="font-size:10px;color:var(--text2);margin-bottom:3px">CONVOS</div><div>'+(lead.conversation_count||1)+'</div></div>'
+    +'</div>'
+    +'<div style="height:1px;background:var(--border);margin-bottom:14px"></div>'
+    +'<div style="margin-bottom:12px"><div style="font-size:10px;font-weight:600;color:var(--text2);margin-bottom:6px;text-transform:uppercase">FC Label History</div><div>'+histHtml+'</div></div>'
+    +'<div style="margin-bottom:12px"><label style="font-size:10px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px;text-transform:uppercase">Stage</label>'
+    +'<select id="fcl-modal-stage" style="'+inp+'">'+stageOpts+'</select></div>'
+    +'<div style="margin-bottom:14px"><label style="font-size:10px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px;text-transform:uppercase">Notes</label>'
+    +'<textarea id="fcl-modal-notes" rows="3" style="'+inp+';resize:vertical">'+notes+'</textarea></div>'
+    +'<div style="display:flex;gap:8px">'
+    +'<button onclick="saveFCLStage(\''+phoneNorm+'\')" style="flex:1;padding:9px;background:var(--accent);border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">Save</button>'
+    +'<button onclick="closeFCLModal()" style="padding:9px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text2);font-size:12px;cursor:pointer;font-family:Inter,sans-serif">Cancel</button>'
+    +'</div>';
+  document.getElementById('fcl-modal').style.display = 'flex';
+}
+
+async function saveFCLStage(phoneNorm) {
+  var stage = (document.getElementById('fcl-modal-stage')||{}).value||'';
+  var notes = (document.getElementById('fcl-modal-notes')||{}).value||'';
+  _fclOverrides[phoneNorm] = {stage:stage, notes:notes, updated_at:new Date().toISOString()};
+  try { if (_db) await _db.collection('fc_lead_stages').doc(phoneNorm).set(_fclOverrides[phoneNorm]); } catch(e) {}
+  closeFCLModal();
+  renderFCLKPIs();
+  renderFCLeads();
+}
+
+function closeFCLModal() { document.getElementById('fcl-modal').style.display = 'none'; }
+
+function clearFCLFilters() {
+  ['fcl-search','fcl-filter-stage','fcl-filter-agent','fcl-filter-month','fcl-filter-week'].forEach(function(id){
+    var el = document.getElementById(id); if (el) el.value = '';
+  });
+  renderFCLeads();
+}
+
+function exportFCLeadsCSV() {
+  var filtered = getFilteredFCLeads();
+  if (!filtered.length) { alert('No leads to export'); return; }
+  var lines = ['Name,Phone,Agent,Stage,First Contact,Last Contact,Conversations,Month,Notes'];
+  filtered.forEach(function(l) {
+    function esc(v){var s=String(v||'').trim();return(s.includes(',')||s.includes('"'))?'"'+s.replace(/"/g,'""')+'"':s;}
+    lines.push([esc(l.name),esc(l.phone),esc(l.agent),esc(fclGetStage(l)),esc((l.first_contact||'').slice(0,10)),esc((l.last_contact||'').slice(0,10)),esc(l.conversation_count||1),esc(l.month||''),esc(fclGetNotes(l))].join(','));
+  });
+  var a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(lines.join('\r\n'));
+  a.download = 'fc_leads_' + new Date().toISOString().slice(0,10) + '.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
 
 // ── Init ─────────────────────────────────────────────────────────
 if(checkExistingSession()){
