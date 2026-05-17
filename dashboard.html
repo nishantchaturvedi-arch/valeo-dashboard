@@ -1198,42 +1198,54 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 <div class="page" id="page-penalty">
 <div id="sla-panel" style="background:var(--bg2);border-bottom:1px solid var(--border)">
   <div onclick="toggleSLA()" style="padding:10px 20px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none">
-    <span style="font-size:12px;font-weight:600;color:var(--accent)">&#x1F4CB; SLA &amp; Penalty Reference (Magical Hands Agreement) &#x2014; click to expand</span>
+    <span style="font-size:12px;font-weight:600;color:var(--accent)">&#x1F4CB; Valeo SLA &amp; Penalty Reference &#x2014; Applicable to All Homecare Partners &#x2014; click to expand</span>
     <span id="sla-arrow" style="color:var(--text2);font-size:13px">&#x25BC;</span>
   </div>
   <div id="sla-body" style="display:none;padding:0 20px 16px">
+    <div style="padding:8px 0 12px;font-size:11px;color:var(--text2);line-height:1.6">
+      &#x2139;&#xFE0F; These SLA terms and penalty rates apply uniformly to <b style="color:var(--text)">all homecare partners</b> under the Valeo Health agreement.
+    </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div style="background:var(--bg3);border-radius:8px;overflow:hidden;border:1px solid var(--border)">
-        <div style="padding:8px 12px;background:var(--accent);color:#fff;font-size:11px;font-weight:700">VALEO SLA &#x2014; GENERAL EVENTS</div>
+        <div style="padding:8px 12px;background:var(--accent);color:#fff;font-size:11px;font-weight:700">SERVICE QUALITY &amp; ATTENDANCE</div>
         <table style="width:100%;border-collapse:collapse;font-size:11px">
-          <thead><tr style="background:var(--bg4)"><th style="padding:6px 10px;text-align:left;color:var(--text2);font-weight:600">Event</th><th style="padding:6px 10px;text-align:left;color:var(--text2);font-weight:600">Penalty</th></tr></thead>
+          <thead><tr style="background:var(--bg4)">
+            <th style="padding:6px 10px;text-align:left;color:var(--text2);font-weight:600">Event</th>
+            <th style="padding:6px 10px;text-align:left;color:var(--text2);font-weight:600">Penalty / Refund</th>
+          </tr></thead>
           <tbody>
             <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">SP late &lt;30 min</td><td style="padding:6px 10px;color:var(--text2)">AED 0</td></tr>
-            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">SP late 30&#x2013;60 min</td><td style="padding:6px 10px;color:var(--sick)">100% Net Booking or AED 250 (min)</td></tr>
+            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">SP late 30&#x2013;60 min</td><td style="padding:6px 10px;color:var(--sick)">100% Net Booking or AED 250 (min of two)</td></tr>
             <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">SP late &gt;60 min / No show</td><td style="padding:6px 10px;color:var(--absent)">100% Net Booking Amount</td></tr>
-            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">False show</td><td style="padding:6px 10px;color:var(--absent)">100% Net Booking Amount</td></tr>
+            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">False show (marks started, not present)</td><td style="padding:6px 10px;color:var(--absent)">100% Net Booking Amount</td></tr>
             <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Customer unhappy with quality</td><td style="padding:6px 10px;color:var(--sick)">50% Net Booking Amount</td></tr>
+            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Same-day absenteeism</td><td style="padding:6px 10px;color:var(--sick)">AED 300/SP</td></tr>
+            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Absence on critical workday</td><td style="padding:6px 10px;color:var(--sick)">AED 200/SP/day</td></tr>
+            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Missed mandatory training session</td><td style="padding:6px 10px;color:var(--sick)">AED 250/SP</td></tr>
+            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Non-compliance with Valeo uniform</td><td style="padding:6px 10px;color:var(--text2)">AED 100/SP</td></tr>
           </tbody>
         </table>
       </div>
       <div style="background:var(--bg3);border-radius:8px;overflow:hidden;border:1px solid var(--border)">
-        <div style="padding:8px 12px;background:#8b5cf6;color:#fff;font-size:11px;font-weight:700">MAGICAL HANDS &#x2014; PENALTY SCHEDULE</div>
+        <div style="padding:8px 12px;background:var(--absent);color:#fff;font-size:11px;font-weight:700">CONDUCT &amp; COMPLIANCE</div>
         <table style="width:100%;border-collapse:collapse;font-size:11px">
-          <thead><tr style="background:var(--bg4)"><th style="padding:6px 10px;text-align:left;color:var(--text2);font-weight:600">Event</th><th style="padding:6px 10px;text-align:left;color:var(--text2);font-weight:600">Amount</th></tr></thead>
+          <thead><tr style="background:var(--bg4)">
+            <th style="padding:6px 10px;text-align:left;color:var(--text2);font-weight:600">Event</th>
+            <th style="padding:6px 10px;text-align:left;color:var(--text2);font-weight:600">Penalty Amount</th>
+          </tr></thead>
           <tbody>
-            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Customer property damage/loss</td><td style="padding:6px 10px;color:var(--absent)">100% value, max AED 10,000</td></tr>
-            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Disintermediation &#x2013; 1st offence</td><td style="padding:6px 10px;color:var(--absent)">AED 5,000/customer</td></tr>
-            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Continuing to serve after termination</td><td style="padding:6px 10px;color:var(--absent)">Clause 5.2 + AED 100/day</td></tr>
-            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Terminates without notice</td><td style="padding:6px 10px;color:var(--sick)">AED 250/SP</td></tr>
-            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Same-day absenteeism</td><td style="padding:6px 10px;color:var(--sick)">AED 300/SP</td></tr>
-            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Absence on critical workday</td><td style="padding:6px 10px;color:var(--sick)">AED 200/SP/day</td></tr>
-            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Missed mandatory training</td><td style="padding:6px 10px;color:var(--sick)">AED 250/SP</td></tr>
+            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Customer property damage/loss</td><td style="padding:6px 10px;color:var(--absent)">100% item value, max AED 10,000</td></tr>
+            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Disintermediation &#x2013; 1st offence</td><td style="padding:6px 10px;color:var(--absent)">AED 5,000/customer (Liquidated)</td></tr>
+            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Continuing to serve after termination</td><td style="padding:6px 10px;color:var(--absent)">Per contract + AED 100/day</td></tr>
+            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">HC terminates without notice</td><td style="padding:6px 10px;color:var(--sick)">AED 250/SP</td></tr>
             <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Unapproved SP replacement</td><td style="padding:6px 10px;color:var(--absent)">AED 10,000/SP/day</td></tr>
-            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Non-compliance with Valeo uniform</td><td style="padding:6px 10px;color:var(--text2)">AED 100/SP</td></tr>
-            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Customer poaching</td><td style="padding:6px 10px;color:var(--absent)">Liquidated damages</td></tr>
+            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Customer poaching</td><td style="padding:6px 10px;color:var(--absent)">Liquidated damages (per contract)</td></tr>
           </tbody>
         </table>
       </div>
+    </div>
+    <div style="margin-top:10px;padding:8px 12px;background:rgba(47,129,247,.08);border:1px solid rgba(47,129,247,.2);border-radius:6px;font-size:11px;color:var(--text2);line-height:1.6">
+      &#x26A0;&#xFE0F; <b style="color:var(--text)">Note:</b> Penalty amounts marked as percentage (%) are calculated on the <b>net booking amount</b> of the affected order. Fixed AED amounts apply per incident unless stated otherwise. All deductions require Valeo approval before processing.
     </div>
   </div>
 </div>
@@ -1542,8 +1554,19 @@ async function loadData(force=false){
       if(!dedupMap[key]) { dedupMap[key] = r; }
       else {
         const np=_statusPri(r.status), op=_statusPri(dedupMap[key].status);
-        if(np > op) dedupMap[key] = r;
-        else if(np===op && (r.package_type||'').length>(dedupMap[key].package_type||'').length) dedupMap[key] = r;
+        if(np > op) { dedupMap[key] = r; }
+        else if(np===op) {
+          // Prefer record whose order is NOT specifically targeted by a removed/cancelled override
+          var _ovKey=(r.caregiver||'')+'|'+(r.date||'');
+          var _ov=overrides[_ovKey];
+          var _existOid=(dedupMap[key].child_order_id||dedupMap[key].order_id||'');
+          var _newOid=(r.child_order_id||r.order_id||'');
+          var _existOverridden=_ov&&['removed','cancelled'].includes(_ov.type)&&_ov.child_order_id===_existOid;
+          var _newOverridden=_ov&&['removed','cancelled'].includes(_ov.type)&&_ov.child_order_id===_newOid;
+          // New order wins if existing is specifically overridden/removed and new is not
+          if(_existOverridden && !_newOverridden) dedupMap[key] = r;
+          else if(!_existOverridden && !_newOverridden && (r.package_type||'').length>(dedupMap[key].package_type||'').length) dedupMap[key] = r;
+        }
       }
     });
     allData = Object.values(dedupMap);
@@ -1887,6 +1910,15 @@ function openEvModal(safe){
       <div class="modal-field"><div class="modal-label">Location</div><div class="modal-value">${ev.location||'—'}</div></div>
       <div class="modal-field"><div class="modal-label">Homecare</div><div class="modal-value">${ev.homecare||'—'}</div></div>
       `;
+    // Add Override button to event modal
+    var ovBtn=document.createElement('button');
+    ovBtn.style.cssText='margin-top:12px;width:100%;padding:8px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text2);font-size:11px;cursor:pointer;font-family:Inter,sans-serif';
+    ovBtn.textContent='📝 Add / Edit Override for this day';
+    var _evCg=ev.caregiver||activeCG||'';
+    var _evDate=ev.date||'';
+    var _evOid=ev.child_order_id||ev.order_id||null;
+    ovBtn.onclick=function(){closeEvModal();if(_evCg&&_evDate)openOvModal(_evCg,_evDate,_evOid);};
+    document.getElementById('ev-modal-body').appendChild(ovBtn);
     document.getElementById('ev-modal').classList.add('show');
   }catch(e){}
 }
@@ -2928,10 +2960,18 @@ function applyOverrides(){
     const key = r.caregiver+'|'+r.date;
     const ov = overrides[key];
     if(!ov) return;
+    // If override was tied to a specific order_id, only apply to that order
+    // This allows a NEW order on the same day to bypass the override
+    if(ov.child_order_id) {
+      var recOid = r.child_order_id || r.order_id || '';
+      if(recOid && recOid !== ov.child_order_id) return; // different order — skip override
+    }
     // Customer Order wins — real duty days are protected from override removal
+    // UNLESS the override was specifically targeted at this order's child_order_id
     var isRealDuty = (r.status||'').toLowerCase()==='duty' && !r._manual;
-    if(isRealDuty) return; // portal order takes priority, skip override
-    // Apply override (only to non-duty or manual records)
+    var ovTargetsThisOrder = ov.child_order_id && (ov.child_order_id===(r.child_order_id||r.order_id||''));
+    if(isRealDuty && !ovTargetsThisOrder) return; // new/different order — portal wins
+    // Apply override
     if(ov.type==='sick')          { r.status='Sick';      r.time_start=''; r.time_end=''; }
     else if(ov.type==='off')      { r.status='Week Off';  r.time_start=''; r.time_end=''; }
     else if(ov.type==='holiday')  { r.status='Holiday';   r.time_start=''; r.time_end=''; }
@@ -2963,8 +3003,9 @@ function applyOverrides(){
   });
 }
 
-function openOvModal(cg,date){
+function openOvModal(cg,date,orderId){
   ovCG=cg;ovDate=date;ovType='';
+  window._ovOrderId=orderId||null; // track which specific order is being overridden
   document.getElementById('ov-note').value='';document.getElementById('ov-manual-fields').style.display='none';
   document.getElementById('ov-client').value='';document.getElementById('ov-time-start').value='';document.getElementById('ov-time-end').value='';
   document.querySelectorAll('.ov-type-btn').forEach(function(b){b.classList.remove('selected');});
@@ -3007,6 +3048,7 @@ async function saveOverride(){
   if(!ovType){alert('Please select an override type');return;}
   var note=document.getElementById('ov-note').value.trim();
   var payload={caregiver:ovCG,date:ovDate,type:ovType,note:note,saved_at:new Date().toISOString()};
+  if(window._ovOrderId) payload.child_order_id=window._ovOrderId; // tie override to specific order
   if(ovType==='manual'){
     var client=document.getElementById('ov-client').value.trim();
     var tStart=document.getElementById('ov-time-start').value.trim();
