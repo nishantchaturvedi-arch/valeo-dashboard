@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
@@ -607,7 +606,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <button class="main-tab" onclick="switchTab('daily')">📆 Daily Orders</button>
  <button class="main-tab" onclick="switchTab('leads')">🎯 Lead Tracker</button>
  <button class="main-tab" onclick="switchTab('supply')">👥 Supply Tracker</button>
- <button class="main-tab" onclick="switchTab('fclead')">💬 FC Leads</button>
+ <button class="main-tab" onclick="switchTab('penalty')">&#x26A0;&#xFE0F; Penalty Tracker</button>
 </div>
 
 <!-- ── Availability bar (calendar only) ── -->
@@ -1195,6 +1194,87 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  </div>
 </div>
 
+
+<div class="page" id="page-penalty">
+<div id="sla-panel" style="background:var(--bg2);border-bottom:1px solid var(--border)">
+  <div onclick="toggleSLA()" style="padding:10px 20px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none">
+    <span style="font-size:12px;font-weight:600;color:var(--accent)">&#x1F4CB; SLA &amp; Penalty Reference (Magical Hands Agreement) &#x2014; click to expand</span>
+    <span id="sla-arrow" style="color:var(--text2);font-size:13px">&#x25BC;</span>
+  </div>
+  <div id="sla-body" style="display:none;padding:0 20px 16px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div style="background:var(--bg3);border-radius:8px;overflow:hidden;border:1px solid var(--border)">
+        <div style="padding:8px 12px;background:var(--accent);color:#fff;font-size:11px;font-weight:700">VALEO SLA &#x2014; GENERAL EVENTS</div>
+        <table style="width:100%;border-collapse:collapse;font-size:11px">
+          <thead><tr style="background:var(--bg4)"><th style="padding:6px 10px;text-align:left;color:var(--text2);font-weight:600">Event</th><th style="padding:6px 10px;text-align:left;color:var(--text2);font-weight:600">Penalty</th></tr></thead>
+          <tbody>
+            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">SP late &lt;30 min</td><td style="padding:6px 10px;color:var(--text2)">AED 0</td></tr>
+            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">SP late 30&#x2013;60 min</td><td style="padding:6px 10px;color:var(--sick)">100% Net Booking or AED 250 (min)</td></tr>
+            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">SP late &gt;60 min / No show</td><td style="padding:6px 10px;color:var(--absent)">100% Net Booking Amount</td></tr>
+            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">False show</td><td style="padding:6px 10px;color:var(--absent)">100% Net Booking Amount</td></tr>
+            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Customer unhappy with quality</td><td style="padding:6px 10px;color:var(--sick)">50% Net Booking Amount</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="background:var(--bg3);border-radius:8px;overflow:hidden;border:1px solid var(--border)">
+        <div style="padding:8px 12px;background:#8b5cf6;color:#fff;font-size:11px;font-weight:700">MAGICAL HANDS &#x2014; PENALTY SCHEDULE</div>
+        <table style="width:100%;border-collapse:collapse;font-size:11px">
+          <thead><tr style="background:var(--bg4)"><th style="padding:6px 10px;text-align:left;color:var(--text2);font-weight:600">Event</th><th style="padding:6px 10px;text-align:left;color:var(--text2);font-weight:600">Amount</th></tr></thead>
+          <tbody>
+            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Customer property damage/loss</td><td style="padding:6px 10px;color:var(--absent)">100% value, max AED 10,000</td></tr>
+            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Disintermediation &#x2013; 1st offence</td><td style="padding:6px 10px;color:var(--absent)">AED 5,000/customer</td></tr>
+            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Continuing to serve after termination</td><td style="padding:6px 10px;color:var(--absent)">Clause 5.2 + AED 100/day</td></tr>
+            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Terminates without notice</td><td style="padding:6px 10px;color:var(--sick)">AED 250/SP</td></tr>
+            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Same-day absenteeism</td><td style="padding:6px 10px;color:var(--sick)">AED 300/SP</td></tr>
+            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Absence on critical workday</td><td style="padding:6px 10px;color:var(--sick)">AED 200/SP/day</td></tr>
+            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Missed mandatory training</td><td style="padding:6px 10px;color:var(--sick)">AED 250/SP</td></tr>
+            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Unapproved SP replacement</td><td style="padding:6px 10px;color:var(--absent)">AED 10,000/SP/day</td></tr>
+            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Non-compliance with Valeo uniform</td><td style="padding:6px 10px;color:var(--text2)">AED 100/SP</td></tr>
+            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Customer poaching</td><td style="padding:6px 10px;color:var(--absent)">Liquidated damages</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<div style="padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+  <div style="font-size:15px;font-weight:700">&#x26A0;&#xFE0F; Penalty Tracker</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+    <span id="penalty-total-badge" style="font-size:12px;font-weight:600;padding:5px 12px;background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);border-radius:6px;color:var(--absent)"></span>
+    <button onclick="openAddPenaltyModal()" style="padding:6px 14px;background:var(--absent);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">+ Add Penalty</button>
+    <button onclick="exportPenaltiesCSV()" style="padding:6px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">&#x1F4E5; Export CSV</button>
+  </div>
+</div>
+<div id="penalty-kpi-row" style="padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap"></div>
+<div style="padding:10px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;gap:8px">
+  <input id="penalty-search" type="text" placeholder="Search CG / Order ID..." oninput="renderPenaltyTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:Inter,sans-serif;font-size:12px;padding:6px 10px;border-radius:6px;outline:none;width:200px">
+  <select id="penalty-filter-hc" onchange="renderPenaltyTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All HC</option></select>
+  <select id="penalty-filter-reason" onchange="renderPenaltyTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Reasons</option></select>
+  <select id="penalty-filter-month" onchange="renderPenaltyTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Months</option></select>
+  <select id="penalty-filter-status" onchange="renderPenaltyTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Status</option><option value="pending">Pending</option><option value="paid">Paid</option><option value="waived">Waived</option></select>
+  <button onclick="clearPenaltyFilters()" style="padding:6px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:11px;cursor:pointer;font-family:Inter,sans-serif">Clear</button>
+</div>
+<div style="overflow:auto;max-height:calc(100vh - 290px);padding:0 20px 20px">
+  <div id="penalty-table-wrap" style="margin-top:14px">
+    <div style="padding:40px;text-align:center;color:var(--text2)">Loading...</div>
+  </div>
+</div>
+<div id="penalty-modal" onclick="if(event.target===this)closePenaltyModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:600;align-items:center;justify-content:center">
+  <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:22px;width:500px;max-width:95vw;max-height:90vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div style="font-size:14px;font-weight:600" id="penalty-modal-title">Add Penalty</div>
+      <button onclick="closePenaltyModal()" style="background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer">&#x2715;</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px" id="penalty-modal-body"></div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button onclick="savePenalty()" style="flex:1;padding:9px;background:var(--absent);border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">Save Penalty</button>
+      <button id="penalty-delete-btn" onclick="deletePenalty()" style="display:none;padding:9px 14px;background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);border-radius:7px;color:var(--absent);font-size:12px;cursor:pointer;font-family:Inter,sans-serif">&#x1F5D1; Delete</button>
+      <button onclick="closePenaltyModal()" style="padding:9px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text2);font-size:12px;cursor:pointer;font-family:Inter,sans-serif">Cancel</button>
+    </div>
+  </div>
+</div>
+</div>
+
 <script>
 // ── CONFIG ──────────────────────────────────────────────────────
 const N8N_DATA_URL      = 'https://nishi25.app.n8n.cloud/webhook/d0f62c8a-6d05-4834-885e-6ca9bb589d9a';
@@ -1283,29 +1363,18 @@ function fmtTime(t){
   let h=+p[0];const mi=p[1]||'00',ap=h>=12?'PM':'AM';h=h%12||12;
   return `${h}:${mi} ${ap}`;
 }
-function calcEndDate(start,pkg,cgKey){
+function calcEndDate(start,pkg){
+  // Monthly: ALWAYS start + 27 days = 28 calendar days. No extension for overrides.
+  // Removing a day does NOT shift or extend the package — that day is simply gone.
   const pt=pkgType(pkg);
-  let baseEnd;
   if(pt==='monthly'){
-    const w=extractWeeks(pkg)||4;
-    baseEnd = addDays(start,(w*7)-1); // monthly: always 28 days (4 weeks × 7)
+    return addDays(start,27);
   } else if(pt==='weekly'){
     const w=extractWeeks(pkg)||1;
-    // For weekly plans use days-per-week × number-of-weeks
-    // e.g. "Weekly plan: 6 days" = 6 days, "Weekly plan: 5 days, 4 Weeks" = 20 days
-    const daysPerWeek = extractDays2(pkg) || 7;
-    baseEnd = addDays(start,(w * daysPerWeek)-1);
-  } else {
-    return start;
+    const daysPerWeek=extractDays2(pkg)||7;
+    return addDays(start,(w*daysPerWeek)-1);
   }
-  // Extend end date for ALL override types
-  if(cgKey){
-    const ovCount = Object.values(overrides).filter(function(o){
-      return o.caregiver===cgKey && ['sick','off','holiday','unpaid','cancelled','removed','absent'].includes(o.type);
-    }).length;
-    if(ovCount>0) baseEnd = addDays(baseEnd, ovCount);
-  }
-  return baseEnd;
+  return start;
 }
 function calcTimeEnd(timeStr,pkg){
   const h=extractHours(pkg);if(!h||!timeStr)return'';
@@ -1322,14 +1391,22 @@ function calcTimeEnd(timeStr,pkg){
 
 // ── Expand recurring orders into daily rows ──────────────────────
 function expandOrders(orders){
+  // Build lookup of real Metabase orders for Customer Order > Week Off priority
+  var realDutyLookup={};
+  orders.forEach(function(o){
+    if(!o.date||!o.caregiver) return;
+    var k=o.caregiver+'|'+o.date;
+    if(!realDutyLookup[k]) realDutyLookup[k]=0;
+    if((o.status||'').toLowerCase()!=='cancelled') realDutyLookup[k]++;
+  });
+
   const res=[];
   orders.forEach(o=>{
-    // If child_package exists, this is already a single pre-defined session — don't expand
+    // Pre-defined session (hourly) — don't expand
     if(o.child_package && o.child_package.trim()!==''){res.push(o);return;}
     const pt=pkgType(o.package_type);
     const isRec=pt==='monthly'||pt==='weekly';
     if(!isRec){res.push(o);return;}
-    // Use child_order_id first, fallback to order_id
     const cfgKey=o.child_order_id||o.order_id||o.caregiver;
     const offDays=weekOffCfg[cfgKey]||[];
     let cur=new Date(o.date+'T12:00:00');
@@ -1338,18 +1415,17 @@ function expandOrders(orders){
       const ds=cur.getFullYear()+'-'+pad(cur.getMonth()+1)+'-'+pad(cur.getDate());
       const dayName=DAYS[cur.getDay()];
       const rec={...o,date:ds};
-      if(offDays.includes(dayName)){rec.status='Week Off';rec.time_start='';rec.time_end='';}
-      // Override from localStorage takes priority
-      const ovKey = (o.caregiver||'') + '|' + ds;
-      if(overrides[ovKey]){
-        const ov = overrides[ovKey];
-        if(ov.type==='sick')      {rec.status='Sick';rec.time_start='';rec.time_end='';}
-        else if(ov.type==='off')  {rec.status='Week Off';rec.time_start='';rec.time_end='';}
-        else if(ov.type==='holiday'){rec.status='Holiday';rec.time_start='';rec.time_end='';}
-        else if(ov.type==='unpaid'){rec.status='Unpaid';rec.time_start='';rec.time_end='';}
-        else if(ov.type==='cancelled'){rec.status='Cancelled';rec.time_start='';rec.time_end='';}
-        else if(ov.type==='removed'){rec.status='Removed';rec.time_start='';rec.time_end='';}
+      // Week off: only if no OTHER real order exists for this CG+date (Customer Order wins)
+      if(offDays.includes(dayName)){
+        const otherOrders = (realDutyLookup[o.caregiver+'|'+ds]||0);
+        // If only 1 real order (this one) → apply week off. If >1 → a new portal order exists, skip week off.
+        if(otherOrders <= 1) {
+          rec.status='Week Off'; rec.time_start=''; rec.time_end='';
+        }
       }
+      // NOTE: overrides are NOT applied here.
+      // applyOverrides() handles them with correct priority AFTER dedup.
+      // This prevents: removed day extending the package, double-application, and shifting.
       res.push(rec);
       cur.setDate(cur.getDate()+1);
     }
@@ -1422,7 +1498,7 @@ async function loadData(force=false){
       if(excludedHC.some(e=>hcRaw.toLowerCase()===e.toLowerCase()))return null;
       const pkg=String(r['Parent_Package']||r['Package']||'');
       const nurseKey=String(r['Nurse_Assigned']||'').trim();
-      const endDate=calcEndDate(datePart,pkg,nurseKey);
+      const endDate=calcEndDate(datePart,pkg);
       // Clean booked slot time — handle "10:00-11:00" or "8:00-20 AM" formats
       const cleanTime = timePart ? timePart.split('-')[0].trim() : '';
       const t1 = cleanTime ? fmtTime(cleanTime) : '';
@@ -1452,17 +1528,22 @@ async function loadData(force=false){
     // Deduplicate expanded data — keep one record per caregiver per date
     // If same caregiver has 2 orders same day, keep the one with more info
     const expandedRaw = expandOrders(rawData);
+    // Priority dedup — Customer Order (Duty) always wins
+    function _statusPri(s){
+      var st=(s||'').toLowerCase().replace(/\s+/g,'');
+      if(st==='duty'||st==='labconfirmed'||st==='confirmed') return 3;
+      if(st==='cancelled') return 1;
+      if(st==='weekoff'||st==='removed') return 0;
+      return 2; // sick/holiday/unpaid etc
+    }
     const dedupMap = {};
     expandedRaw.forEach(r => {
       const key = (r.caregiver||'') + '|' + (r.date||'');
-      if(!dedupMap[key]) {
-        dedupMap[key] = r;
-      } else {
-        // Keep the one with more package info or non-duty status
-        const existing = dedupMap[key];
-        const newHasMore = (r.package_type||'').length > (existing.package_type||'').length;
-        const newIsOff = (r.status||'').toLowerCase().includes('off') || (r.status||'').toLowerCase()==='sick';
-        if(newHasMore || newIsOff) dedupMap[key] = r;
+      if(!dedupMap[key]) { dedupMap[key] = r; }
+      else {
+        const np=_statusPri(r.status), op=_statusPri(dedupMap[key].status);
+        if(np > op) dedupMap[key] = r;
+        else if(np===op && (r.package_type||'').length>(dedupMap[key].package_type||'').length) dedupMap[key] = r;
       }
     });
     allData = Object.values(dedupMap);
@@ -1769,6 +1850,8 @@ function renderCalendar(){
         lbl=ev.client_name?ev.client_name.split(' ')[0]:'';
         if(ev.time_start&&ev.time_end)lbl+=(lbl?' · ':'')+ev.time_start+'–'+ev.time_end;
         else if(ev.time_start)lbl+=(lbl?' · ':'')+ev.time_start;
+        var _chipOid=ev.child_order_id||ev.order_id||'';
+        if(_chipOid)lbl+=(lbl?' ':'')+'#'+_chipOid.slice(-4); // show last 4 digits
         if(!lbl)lbl='Duty';
       }
       var dragAttrs2=ov?'draggable="true" ondragstart="onOvDragStart(event,\''+activeCG+'\',\''+ds+'\')" ondragend="onOvDragEnd(event)"':'';
@@ -1798,11 +1881,12 @@ function openEvModal(safe){
       <div class="modal-field"><div class="modal-label">Time</div><div class="modal-value">${ev.time_start&&ev.time_end?ev.time_start+' – '+ev.time_end:ev.time_start||'—'}</div></div>
       <div class="modal-divider"></div>
       <div class="modal-field"><div class="modal-label">Client</div><div class="modal-value">${ev.client_name||'—'}</div></div>
-      <div class="modal-field"><div class="modal-label">Order ID</div><div class="modal-value" style="font-family:monospace;font-size:12px">${ev.order_id||'—'}</div></div>
+      <div class="modal-field"><div class="modal-label">Order ID</div><div class="modal-value" style="font-family:monospace;font-size:12px">${ev.child_order_id||ev.order_id||'—'}</div></div>
+      <div class="modal-field"><div class="modal-label">Booking range</div><div class="modal-value" style="font-size:11px">${ev.date||'—'} → ${ev.end_date||ev.date||'—'}</div></div>
       <div class="modal-field"><div class="modal-label">Package</div><div class="modal-value">${ev.package_type||'—'}</div></div>
       <div class="modal-field"><div class="modal-label">Location</div><div class="modal-value">${ev.location||'—'}</div></div>
       <div class="modal-field"><div class="modal-label">Homecare</div><div class="modal-value">${ev.homecare||'—'}</div></div>
-      <div class="modal-field"><div class="modal-label">Booking range</div><div class="modal-value">${ev.date||'—'} → ${ev.end_date||ev.date||'—'}</div></div>`;
+      `;
     document.getElementById('ev-modal').classList.add('show');
   }catch(e){}
 }
@@ -2118,7 +2202,7 @@ function switchTab(tab){
   if(tab==='planner')renderPlanner();
   if(tab==='leads'){if(_session&&_session.role!=='master'){alert('Master access only');return;}loadLeads();}
   if(tab==='supply'){if(_session&&_session.role!=='master'){alert('Master access only');return;}loadSupply();}
-  if(tab==='fclead') loadFCLeads();
+  if(tab==='penalty'){if(_session&&_session.role!=='master'){alert('Master access only');return;}loadPenalties();}
 }
 
 // ── Theme toggle ─────────────────────────────────────────────────
@@ -2837,52 +2921,45 @@ async function loadOverrides(){
 }
 
 function applyOverrides(){
-  // When sick overrides exist, recalculate end dates and re-expand
-  // First apply status overrides
+  // Priority: Customer Order > Override > Week Off
+  // Rule: if a real Duty order exists for CG+date, overrides cannot change its status.
+  // Removed/cancelled days do NOT extend or shift the package — they are simply gone.
   allData.forEach(function(r){
     const key = r.caregiver+'|'+r.date;
     const ov = overrides[key];
-    if(ov){
-      if(ov.type==='sick')       r.status='Sick';
-      else if(ov.type==='off')   r.status='Week Off';
-      else if(ov.type==='holiday') r.status='Holiday';
-      else if(ov.type==='unpaid')  r.status='Unpaid';
-      else if(ov.type==='cancelled') r.status='Cancelled';
-      else if(ov.type==='removed')   r.status='Removed';
-    }
+    if(!ov) return;
+    // Customer Order wins — real duty days are protected from override removal
+    var isRealDuty = (r.status||'').toLowerCase()==='duty' && !r._manual;
+    if(isRealDuty) return; // portal order takes priority, skip override
+    // Apply override (only to non-duty or manual records)
+    if(ov.type==='sick')          { r.status='Sick';      r.time_start=''; r.time_end=''; }
+    else if(ov.type==='off')      { r.status='Week Off';  r.time_start=''; r.time_end=''; }
+    else if(ov.type==='holiday')  { r.status='Holiday';   r.time_start=''; r.time_end=''; }
+    else if(ov.type==='unpaid')   { r.status='Unpaid';    r.time_start=''; r.time_end=''; }
+    else if(ov.type==='cancelled'){ r.status='Cancelled'; r.time_start=''; r.time_end=''; }
+    else if(ov.type==='removed')  { r.status='Removed';   r.time_start=''; r.time_end=''; }
+    // No end-date extension for any override type
   });
-  // Sick/override end-date extension removed
-  // ── Inject manual overrides into allData ─────────────────────
-  // Manual bookings added via override modal must appear in allData
-  // so all tabs (idle CGs, daily orders, roster etc.) see them
+
+  // Inject manual bookings — only if no real Duty order exists that day
   Object.values(overrides).forEach(function(ov){
     if(ov.type !== 'manual') return;
     if(!ov.caregiver || !ov.date) return;
-    var key = ov.caregiver + '|' + ov.date;
-    // Check if allData already has a record for this CG+date
-    var exists = allData.some(function(r){
-      return r.caregiver === ov.caregiver && r.date === ov.date;
+    var hasRealDuty = allData.some(function(r){
+      return r.caregiver===ov.caregiver && r.date===ov.date
+        && (r.status||'').toLowerCase()==='duty' && !r._manual;
     });
-    if(!exists){
-      // Create a virtual allData record from the manual override
+    var alreadyInjected = allData.some(function(r){
+      return r.caregiver===ov.caregiver && r.date===ov.date && r._manual;
+    });
+    if(!hasRealDuty && !alreadyInjected){
       allData.push({
-        caregiver: ov.caregiver,
-        date: ov.date,
-        status: 'Manual',
-        client_name: ov.client_name || '',
-        time_start: ov.time_start || '',
-        time_end: ov.time_end || '',
-        homecare: (function(){
-          var r = rawData.find(function(r2){ return r2.caregiver === ov.caregiver; });
-          return r ? r.homecare : '';
-        })(),
-        order_id: '',
-        child_order_id: '',
-        package_type: 'Manual',
-        end_date: ov.date,
-        _manual: true
+        caregiver: ov.caregiver, date: ov.date, status: 'Manual',
+        client_name: ov.client_name||'', time_start: ov.time_start||'', time_end: ov.time_end||'',
+        homecare:(function(){ var r=rawData.find(function(r2){return r2.caregiver===ov.caregiver;}); return r?r.homecare:''; })(),
+        order_id:'', child_order_id:'', package_type:'Manual', end_date:ov.date, _manual:true
       });
-    } // manual on existing record: render via getManualBookings
+    }
   });
 }
 
@@ -3465,60 +3542,6 @@ tr.week-sep:hover td{background:#f7f8fa}
 </div>
 </div>
 <div class="footer">Generated by Valeo Health &nbsp;·&nbsp; ${clientName}</div>
-
-<div class="page" id="page-fclead">
-<div style="padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-  <div style="font-size:15px;font-weight:700">💬 FC Lead Tracker</div>
-  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-    <span id="fcl-last-sync" style="font-size:11px;color:var(--text3)"></span>
-    <button onclick="loadFCLeads(true)" style="padding:6px 14px;background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">🔄 Refresh</button>
-    <button onclick="exportFCLeadsCSV()" style="padding:6px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">📥 Export CSV</button>
-  </div>
-</div>
-<div id="fcl-kpi-row" style="padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap"></div>
-<div style="padding:10px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;gap:8px">
-  <input id="fcl-search" type="text" placeholder="🔍 Search name / phone..." oninput="renderFCLeads()"
-    style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:Inter,sans-serif;font-size:12px;padding:6px 10px;border-radius:6px;outline:none;width:200px">
-  <select id="fcl-filter-stage" onchange="renderFCLeads()"
-    style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
-    <option value="">All Stages</option>
-    <option value="New Enquiry">🆕 New Enquiry</option>
-    <option value="Call Done">📞 Call Done</option>
-    <option value="Proposal Sent">📋 Proposal Sent</option>
-    <option value="Follow Up">⏳ Follow Up</option>
-    <option value="Converted">✅ Converted</option>
-    <option value="Lost — Price">💸 Lost — Price</option>
-    <option value="Lost — No Reply">👻 Lost — No Reply</option>
-    <option value="Lost — Not Interested">❌ Lost — Not Interested</option>
-  </select>
-  <select id="fcl-filter-agent" onchange="renderFCLeads()"
-    style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
-    <option value="">All Agents</option>
-  </select>
-  <select id="fcl-filter-month" onchange="renderFCLeads()"
-    style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
-    <option value="">All Months</option>
-  </select>
-  <button onclick="clearFCLFilters()"
-    style="padding:6px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:11px;cursor:pointer;font-family:Inter,sans-serif">Clear</button>
-</div>
-<div style="overflow:auto;max-height:calc(100vh - 250px);padding:0 20px 20px">
-  <div id="fcl-table-wrap" style="margin-top:14px">
-    <div style="padding:40px;text-align:center;color:var(--text2)">Click Refresh to load FC leads</div>
-  </div>
-</div>
-<div id="fcl-modal" onclick="if(event.target===this)closeFCLModal()"
-  style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:600;align-items:center;justify-content:center">
-  <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:22px;width:420px;max-width:95vw;max-height:90vh;overflow-y:auto">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <div style="font-size:14px;font-weight:600" id="fcl-modal-title">Lead</div>
-      <button onclick="closeFCLModal()" style="background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer">✕</button>
-    </div>
-    <div id="fcl-modal-body"></div>
-  </div>
-</div>
-</div>
-
 </body>
 </html>`;
 }
@@ -4842,197 +4865,210 @@ function clearSupplyFilters(){['supply-search','supply-filter-stage','supply-fil
 
 
 
-// ── FC Lead Tracker ───────────────────────────────────────────────
-const FCL_WEBHOOK = 'https://nishi25.app.n8n.cloud/webhook/fc-leads';
+// ── Penalty Tracker ───────────────────────────────────────────────
+var _penalties = [];
+var _editPenaltyId = null;
 
-var _fclLeads = [];
-var _fclOverrides = {};
-var _fclLoaded = false;
+var PENALTY_REASONS = [
+  {label:'SP late 30-60 min',            amount:250},
+  {label:'SP late >60 min (No show)',     amount:null},
+  {label:'False show',                    amount:null},
+  {label:'Customer unhappy with quality', amount:null},
+  {label:'Same-day absenteeism',          amount:300},
+  {label:'Absence on critical workday',   amount:200},
+  {label:'Customer property damage',      amount:null},
+  {label:'Disintermediation',             amount:5000},
+  {label:'Non-compliance with uniform',   amount:100},
+  {label:'Missed mandatory training',     amount:250},
+  {label:'Unapproved SP replacement',     amount:10000},
+  {label:'Terminates without notice',     amount:250},
+  {label:'Customer poaching',             amount:null},
+  {label:'Other',                         amount:null}
+];
 
-const FCL_STAGES = ['New Enquiry','Call Done','Proposal Sent','Follow Up','Converted','Lost — Price','Lost — No Reply','Lost — Not Interested'];
-
-const FCL_STAGE_STYLE = {
-  'New Enquiry':           {bg:'rgba(47,129,247,.15)',  color:'#2f81f7',  icon:'🆕'},
-  'Call Done':             {bg:'rgba(210,153,34,.15)',  color:'#d29922',  icon:'📞'},
-  'Proposal Sent':         {bg:'rgba(139,92,246,.15)', color:'#8b5cf6',  icon:'📋'},
-  'Follow Up':             {bg:'rgba(245,158,11,.15)', color:'#f59e0b',  icon:'⏳'},
-  'Converted':             {bg:'rgba(63,185,80,.15)',  color:'#3fb950',  icon:'✅'},
-  'Lost — Price':          {bg:'rgba(248,81,73,.12)',  color:'#f85149',  icon:'💸'},
-  'Lost — No Reply':       {bg:'rgba(110,118,129,.15)',color:'#8b949e',  icon:'👻'},
-  'Lost — Not Interested': {bg:'rgba(248,81,73,.12)',  color:'#f85149',  icon:'❌'},
-};
-
-async function loadFCLeads(force) {
-  if (_fclLoaded && !force) return;
-  var wrap = document.getElementById('fcl-table-wrap');
-  if (wrap) wrap.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text2)">Loading FC leads...</div>';
-  try {
-    await loadFCLOverrides();
-    var res = await fetch(FCL_WEBHOOK);
-    if (!res.ok) throw new Error('HTTP ' + res.status + ' — check n8n webhook URL');
-    var data = await res.json();
-    _fclLeads = data.leads || [];
-    _fclLoaded = true;
-    var el = document.getElementById('fcl-last-sync');
-    if (el) el.textContent = 'Synced ' + new Date().toLocaleTimeString();
-    populateFCLFilters();
-    renderFCLKPIs();
-    renderFCLeads();
-  } catch(e) {
-    if (wrap) wrap.innerHTML = '<div style="padding:40px;text-align:center;color:var(--absent)">'
-      + '<div style="font-size:14px;margin-bottom:8px">Failed to load FC leads</div>'
-      + '<div style="font-size:12px;color:var(--text2);margin-bottom:12px">' + e.message + '</div>'
-      + '<button onclick="loadFCLeads(true)" style="padding:8px 20px;background:var(--accent);border:none;border-radius:6px;color:#fff;cursor:pointer;font-size:12px;font-family:Inter,sans-serif">Retry</button></div>';
-  }
+function toggleSLA(){
+  var b=document.getElementById('sla-body');
+  var a=document.getElementById('sla-arrow');
+  var open=b.style.display!=='none';
+  b.style.display=open?'none':'block';
+  if(a)a.textContent=open?'\u25BC':'\u25B2';
 }
 
-async function loadFCLOverrides() {
-  if (!_db) return;
-  try {
-    var snap = await _db.collection('fc_lead_stages').get();
-    _fclOverrides = {};
-    snap.forEach(function(doc) { _fclOverrides[doc.id] = doc.data(); });
-  } catch(e) {}
+async function loadPenalties(){
+  if(!_db)await initFirebase();
+  try{
+    var snap=await _db.collection('valeo_penalties').get();
+    _penalties=[];
+    snap.forEach(function(doc){var d=doc.data();d._id=doc.id;_penalties.push(d);});
+    _penalties.sort(function(a,b){return(b.date||'').localeCompare(a.date||'');});
+  }catch(e){console.warn('[penalty]',e);}
+  populatePenaltyFilters();renderPenaltyKPIs();renderPenaltyTable();
 }
 
-function fclGetStage(lead) {
-  var ov = _fclOverrides[lead.phone_normalized];
-  return (ov && ov.stage) ? ov.stage : (lead.stage || 'New Enquiry');
-}
-function fclGetNotes(lead) {
-  var ov = _fclOverrides[lead.phone_normalized];
-  return ov ? (ov.notes || '') : '';
-}
-
-function populateFCLFilters() {
-  var agents = [...new Set(_fclLeads.map(function(l){return l.agent||'';}).filter(Boolean))].sort();
-  var asel = document.getElementById('fcl-filter-agent');
-  if (asel) { asel.innerHTML = '<option value="">All Agents</option>'; agents.forEach(function(a){asel.innerHTML+='<option>'+a+'</option>';}); }
-  var months = [...new Set(_fclLeads.map(function(l){return l.month||'';}).filter(Boolean))].sort().reverse();
-  var msel = document.getElementById('fcl-filter-month');
-  if (msel) { msel.innerHTML = '<option value="">All Months</option>'; months.forEach(function(m){msel.innerHTML+='<option>'+m+'</option>';}); }
+function populatePenaltyFilters(){
+  var hcs=[...new Set(_penalties.map(function(p){return p.hc||'';}).filter(Boolean))].sort();
+  var hcEl=document.getElementById('penalty-filter-hc');
+  if(hcEl){hcEl.innerHTML='<option value="">All HC</option>';hcs.forEach(function(h){hcEl.innerHTML+='<option>'+h+'</option>';});}
+  var reasons=[...new Set(_penalties.map(function(p){return p.reason||'';}).filter(Boolean))].sort();
+  var rEl=document.getElementById('penalty-filter-reason');
+  if(rEl){rEl.innerHTML='<option value="">All Reasons</option>';reasons.forEach(function(r){rEl.innerHTML+='<option>'+r+'</option>';});}
+  var months=[...new Set(_penalties.map(function(p){return(p.date||'').slice(0,7);}).filter(Boolean))].sort().reverse();
+  var mEl=document.getElementById('penalty-filter-month');
+  if(mEl){mEl.innerHTML='<option value="">All Months</option>';months.forEach(function(m){var d=new Date(m+'-01');mEl.innerHTML+='<option value="'+m+'">'+d.toLocaleString('default',{month:'long',year:'numeric'})+'</option>';});}
 }
 
-function getFilteredFCLeads() {
-  var q = (document.getElementById('fcl-search')||{}).value||'';
-  var fS = (document.getElementById('fcl-filter-stage')||{}).value||'';
-  var fA = (document.getElementById('fcl-filter-agent')||{}).value||'';
-  var fM = (document.getElementById('fcl-filter-month')||{}).value||'';
-  return _fclLeads.filter(function(l) {
-    if (q) { var sq=q.toLowerCase(); if (!(l.name||'').toLowerCase().includes(sq) && !(l.phone||'').includes(q)) return false; }
-    if (fS && fclGetStage(l) !== fS) return false;
-    if (fA && (l.agent||'') !== fA) return false;
-    if (fM && (l.month||'') !== fM) return false;
+function getFilteredPenalties(){
+  var q=(document.getElementById('penalty-search')||{}).value||'';
+  var fHC=(document.getElementById('penalty-filter-hc')||{}).value||'';
+  var fR=(document.getElementById('penalty-filter-reason')||{}).value||'';
+  var fM=(document.getElementById('penalty-filter-month')||{}).value||'';
+  var fS=(document.getElementById('penalty-filter-status')||{}).value||'';
+  return _penalties.filter(function(p){
+    if(q&&!(p.cg||'').toLowerCase().includes(q.toLowerCase())&&!(p.order_id||'').includes(q))return false;
+    if(fHC&&(p.hc||'')!==fHC)return false;
+    if(fR&&(p.reason||'')!==fR)return false;
+    if(fM&&!(p.date||'').startsWith(fM))return false;
+    if(fS&&(p.status||'pending')!==fS)return false;
     return true;
   });
 }
 
-function renderFCLKPIs() {
-  var el = document.getElementById('fcl-kpi-row'); if (!el) return;
-  var counts = {}; FCL_STAGES.forEach(function(s){counts[s]=0;});
-  _fclLeads.forEach(function(l){ var s=fclGetStage(l); if(counts[s]!==undefined)counts[s]++; });
-  function card(v,l,c){return'<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:80px"><div style="font-size:20px;font-weight:700;color:'+c+'">'+v+'</div><div style="font-size:10px;color:var(--text2);margin-top:2px">'+l+'</div></div>';}
-  var lostTotal = counts['Lost — Price']+counts['Lost — No Reply']+counts['Lost — Not Interested'];
-  el.innerHTML = card(_fclLeads.length,'Total','var(--text)')
-    +card(counts['New Enquiry'],'🆕 New Enquiry','#2f81f7')
-    +card(counts['Call Done'],'📞 Call Done','#d29922')
-    +card(counts['Proposal Sent'],'📋 Proposal Sent','#8b5cf6')
-    +card(counts['Follow Up'],'⏳ Follow Up','#f59e0b')
-    +card(counts['Converted'],'✅ Converted','var(--duty)')
-    +card(lostTotal,'❌ Lost','var(--absent)');
+function renderPenaltyKPIs(){
+  var el=document.getElementById('penalty-kpi-row');if(!el)return;
+  var total=_penalties.reduce(function(s,p){return s+(parseFloat(p.amount)||0);},0);
+  var pending=_penalties.filter(function(p){return(p.status||'pending')==='pending';}).reduce(function(s,p){return s+(parseFloat(p.amount)||0);},0);
+  var paid=_penalties.filter(function(p){return p.status==='paid';}).reduce(function(s,p){return s+(parseFloat(p.amount)||0);},0);
+  var byHC={};_penalties.forEach(function(p){var h=p.hc||'?';byHC[h]=(byHC[h]||0)+(parseFloat(p.amount)||0);});
+  var topHC=Object.entries(byHC).sort(function(a,b){return b[1]-a[1];})[0];
+  var badge=document.getElementById('penalty-total-badge');
+  if(badge)badge.textContent='Total Deductible: AED '+total.toLocaleString();
+  function kcard(v,l,c){return'<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:100px"><div style="font-size:16px;font-weight:700;color:'+c+'">'+v+'</div><div style="font-size:10px;color:var(--text2);margin-top:2px">'+l+'</div></div>';}
+  el.innerHTML=kcard(_penalties.length,'Total Entries','var(--text)')
+    +kcard('AED '+total.toLocaleString(),'Total Penalties','var(--absent)')
+    +kcard('AED '+pending.toLocaleString(),'Pending','var(--sick)')
+    +kcard('AED '+paid.toLocaleString(),'Recovered','var(--duty)')
+    +(topHC?kcard((topHC[0]||'').split(' ')[0],'Highest HC','#8b5cf6'):'')
+    +kcard([...new Set(_penalties.map(function(p){return p.cg||'';}).filter(Boolean))].length,'Unique CGs','var(--accent)');
 }
 
-function renderFCLeads() {
-  var filtered = getFilteredFCLeads();
-  var wrap = document.getElementById('fcl-table-wrap'); if (!wrap) return;
-  if (!filtered.length) { wrap.innerHTML='<div style="padding:40px;text-align:center;color:var(--text2)">No leads match filters</div>'; return; }
-  var html = '<div style="font-size:11px;color:var(--text2);margin-bottom:8px">Showing '+filtered.length+' of '+_fclLeads.length+' leads</div>';
-  html += '<table style="width:100%;border-collapse:collapse;font-size:12px">';
-  html += '<thead><tr style="background:var(--bg3)">';
-  ['Name','Phone','Agent','Stage','First Contact','Convos','Notes'].forEach(function(h){
-    html += '<th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text2);border-bottom:2px solid var(--border)">'+h+'</th>';
-  });
-  html += '</tr></thead><tbody>';
-  filtered.forEach(function(l) {
-    var stage = fclGetStage(l);
-    var ss = FCL_STAGE_STYLE[stage] || {bg:'var(--bg3)',color:'var(--text2)',icon:'•'};
-    var notes = fclGetNotes(l);
-    var date = (l.first_contact||'').slice(0,10)||'—';
-    html += '<tr onclick="openFCLModal(\''+l.phone_normalized+'\')" style="cursor:pointer;border-bottom:1px solid var(--border)" onmouseover="this.style.background=\'var(--bg3)\'" onmouseout="this.style.background=\'\'">'
-      +'<td style="padding:9px 12px;font-weight:500">'+(l.name||'—')+'</td>'
-      +'<td style="padding:9px 12px;font-family:monospace;font-size:11px;color:var(--text2)">'+(l.phone||'—')+'</td>'
-      +'<td style="padding:9px 12px;font-size:11px;color:var(--text2)">'+(l.agent||'—')+'</td>'
-      +'<td style="padding:9px 12px"><span style="padding:3px 9px;border-radius:20px;font-size:10px;font-weight:600;background:'+ss.bg+';color:'+ss.color+'">'+ss.icon+' '+stage+'</span></td>'
-      +'<td style="padding:9px 12px;font-size:11px;color:var(--text2);font-family:monospace">'+date+'</td>'
-      +'<td style="padding:9px 12px;text-align:center;font-size:11px;color:var(--text2)">'+(l.conversation_count||1)+'</td>'
-      +'<td style="padding:9px 12px;font-size:11px;color:var(--text2);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(notes||'—')+'</td>'
+function renderPenaltyTable(){
+  var filtered=getFilteredPenalties();
+  var wrap=document.getElementById('penalty-table-wrap');if(!wrap)return;
+  if(!filtered.length){wrap.innerHTML='<div style="padding:40px;text-align:center;color:var(--text2)">No penalties'+(_penalties.length?' match filters.':'. Click + Add Penalty to start.')+'</div>';return;}
+  var totalAmt=filtered.reduce(function(s,p){return s+(parseFloat(p.amount)||0);},0);
+  var html='<div style="font-size:11px;color:var(--text2);margin-bottom:8px">'+filtered.length+' of '+_penalties.length+' &middot; Total: <b style="color:var(--absent)">AED '+totalAmt.toLocaleString()+'</b></div>';
+  html+='<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="background:var(--bg3)">';
+  ['Order ID','Date','HC','Caregiver','Amount (AED)','Reason','Status','Notes'].forEach(function(h){html+='<th style="padding:8px 12px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text2);border-bottom:2px solid var(--border);white-space:nowrap">'+h+'</th>';});
+  html+='</tr></thead><tbody>';
+  filtered.forEach(function(p){
+    var amt=parseFloat(p.amount)||0;
+    var st=p.status||'pending';
+    var stStyle=st==='paid'?'color:var(--duty);font-weight:600':st==='waived'?'color:var(--text2)':'color:var(--absent);font-weight:600';
+    var stLabel=st==='paid'?'Paid':st==='waived'?'Waived':'Pending';
+    html+='<tr onclick="openEditPenaltyModal(\''+p._id+'\')" style="border-bottom:1px solid var(--border);cursor:pointer" onmouseover="this.style.background=\'var(--bg3)\'" onmouseout="this.style.background=\'\'">'
+      +'<td style="padding:9px 12px;font-family:monospace;font-size:11px;color:var(--accent)">'+(p.order_id||'—')+'</td>'
+      +'<td style="padding:9px 12px;font-size:11px;color:var(--text2);white-space:nowrap">'+(p.date||'—')+'</td>'
+      +'<td style="padding:9px 12px;font-size:11px;color:var(--text2)">'+(p.hc||'—')+'</td>'
+      +'<td style="padding:9px 12px;font-weight:500">'+(p.cg||'—')+'</td>'
+      +'<td style="padding:9px 12px;font-weight:700;color:var(--absent);font-family:monospace">'+(amt?'AED '+amt.toLocaleString():'—')+'</td>'
+      +'<td style="padding:9px 12px;font-size:11px;max-width:160px">'+(p.reason||'—')+'</td>'
+      +'<td style="padding:9px 12px;font-size:11px;'+stStyle+'">'+stLabel+'</td>'
+      +'<td style="padding:9px 12px;font-size:11px;color:var(--text2);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(p.notes||'')+'">'+(p.notes||'—')+'</td>'
       +'</tr>';
   });
-  html += '</tbody></table>';
-  wrap.innerHTML = html;
+  html+='</tbody></table>';
+  wrap.innerHTML=html;
 }
 
-function openFCLModal(phoneNorm) {
-  var lead = _fclLeads.find(function(l){return l.phone_normalized===phoneNorm;});
-  if (!lead) return;
-  var stage = fclGetStage(lead);
-  var notes = fclGetNotes(lead);
-  document.getElementById('fcl-modal-title').textContent = lead.name || lead.phone;
-  var stageOpts = FCL_STAGES.map(function(s){
-    var ss = FCL_STAGE_STYLE[s]||{icon:''};
-    return '<option value="'+s+'"'+(stage===s?' selected':'')+'>'+ss.icon+' '+s+'</option>';
-  }).join('');
-  var histHtml = (lead.label_history||[]).map(function(lh){
-    return '<span style="font-size:10px;padding:2px 8px;border-radius:10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);margin:2px;display:inline-block">'+lh+'</span>';
-  }).join('');
-  document.getElementById('fcl-modal-body').innerHTML =
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;font-size:12px">'
-    +'<div><div style="font-size:10px;color:var(--text2);margin-bottom:3px">PHONE</div><div style="font-family:monospace">'+(lead.phone||'—')+'</div></div>'
-    +'<div><div style="font-size:10px;color:var(--text2);margin-bottom:3px">AGENT</div><div>'+(lead.agent||'—')+'</div></div>'
-    +'<div><div style="font-size:10px;color:var(--text2);margin-bottom:3px">FIRST CONTACT</div><div style="font-family:monospace">'+(lead.first_contact||'').slice(0,10)+'</div></div>'
-    +'<div><div style="font-size:10px;color:var(--text2);margin-bottom:3px">LAST CONTACT</div><div style="font-family:monospace">'+(lead.last_contact||'').slice(0,10)+'</div></div>'
-    +'<div><div style="font-size:10px;color:var(--text2);margin-bottom:3px">CONVERSATIONS</div><div>'+(lead.conversation_count||1)+'</div></div>'
-    +'<div><div style="font-size:10px;color:var(--text2);margin-bottom:3px">MONTH</div><div>'+(lead.month||'—')+'</div></div>'
-    +'</div>'
-    +'<div style="height:1px;background:var(--border);margin-bottom:14px"></div>'
-    +'<div style="margin-bottom:12px"><div style="font-size:10px;font-weight:600;color:var(--text2);margin-bottom:6px;text-transform:uppercase">FC Label History</div><div>'+histHtml+'</div></div>'
-    +'<div style="margin-bottom:12px"><div style="font-size:10px;font-weight:600;color:var(--text2);margin-bottom:6px;text-transform:uppercase">Stage</div>'
-    +'<select id="fcl-modal-stage" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:13px;padding:8px 10px;border-radius:7px;outline:none">'+stageOpts+'</select></div>'
-    +'<div style="margin-bottom:14px"><div style="font-size:10px;font-weight:600;color:var(--text2);margin-bottom:6px;text-transform:uppercase">Notes</div>'
-    +'<textarea id="fcl-modal-notes" rows="3" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:Inter,sans-serif;font-size:12px;padding:8px;border-radius:6px;outline:none;resize:vertical">'+notes+'</textarea></div>'
-    +'<div style="display:flex;gap:8px">'
-    +'<button onclick="saveFCLStage(\''+phoneNorm+'\')" style="flex:1;padding:9px;background:var(--accent);border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">Save</button>'
-    +'<button onclick="closeFCLModal()" style="padding:9px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text2);font-size:12px;cursor:pointer;font-family:Inter,sans-serif">Cancel</button>'
-    +'</div>';
-  document.getElementById('fcl-modal').style.display = 'flex';
+function buildPenaltyForm(p){
+  p=p||{};
+  var inp='width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:Inter,sans-serif;font-size:12px;padding:8px 10px;border-radius:7px;outline:none;box-sizing:border-box';
+  var lbl='font-size:10px;color:var(--text2);font-weight:600;text-transform:uppercase;display:block;margin-bottom:4px';
+  var hcs=[...new Set(rawData.map(function(r){return r.homecare||'';}).filter(Boolean))].sort();
+  var hcOpts=hcs.map(function(h){return'<option value="'+h+'"'+(p.hc===h?' selected':'')+'>'+h+'</option>';}).join('');
+  var reasonOpts=PENALTY_REASONS.map(function(r){return'<option value="'+r.label+'"'+(p.reason===r.label?' selected':'')+'>'+r.label+(r.amount?' (AED '+r.amount+')':'')+'</option>';}).join('');
+  var statusOpts=['pending','paid','waived'].map(function(s){return'<option value="'+s+'"'+(((p.status||'pending'))===s?' selected':'')+'>'+{pending:'Pending',paid:'Paid',waived:'Waived'}[s]+'</option>';}).join('');
+  return '<div><label style="'+lbl+'">Order ID</label><input id="pf-order" style="'+inp+'" type="text" value="'+(p.order_id||'')+'" placeholder="e.g. 12345"></div>'
+    +'<div><label style="'+lbl+'">Date *</label><input id="pf-date" style="'+inp+'" type="date" value="'+(p.date||new Date().toISOString().slice(0,10))+'"></div>'
+    +'<div><label style="'+lbl+'">Homecare *</label><select id="pf-hc" style="'+inp+'" onchange="pfAutoFillCG()"><option value="">Select HC</option>'+hcOpts+'</select></div>'
+    +'<div><label style="'+lbl+'">Caregiver *</label><select id="pf-cg" style="'+inp+'"><option value="">Select CG</option>'+(p.cg?'<option value="'+p.cg+'" selected>'+p.cg+'</option>':'')+'</select></div>'
+    +'<div style="grid-column:1/-1"><label style="'+lbl+'">Reason *</label><select id="pf-reason" style="'+inp+'" onchange="pfAutoFillAmount()"><option value="">Select Reason</option>'+reasonOpts+'</select></div>'
+    +'<div><label style="'+lbl+'">Amount (AED) *</label><input id="pf-amount" style="'+inp+'" type="number" min="0" step="0.01" value="'+(p.amount||'')+'" placeholder="e.g. 300"></div>'
+    +'<div><label style="'+lbl+'">Status</label><select id="pf-status" style="'+inp+'">'+statusOpts+'</select></div>'
+    +'<div style="grid-column:1/-1"><label style="'+lbl+'">Notes</label><textarea id="pf-notes" rows="2" style="'+inp+';resize:vertical">'+(p.notes||'')+'</textarea></div>';
 }
 
-async function saveFCLStage(phoneNorm) {
-  var stage = (document.getElementById('fcl-modal-stage')||{}).value||'';
-  var notes = (document.getElementById('fcl-modal-notes')||{}).value||'';
-  _fclOverrides[phoneNorm] = {stage:stage, notes:notes, updated_at:new Date().toISOString()};
-  try { if (_db) await _db.collection('fc_lead_stages').doc(phoneNorm).set(_fclOverrides[phoneNorm]); } catch(e) {}
-  closeFCLModal();
-  renderFCLKPIs();
-  renderFCLeads();
+function pfAutoFillCG(){
+  var hc=document.getElementById('pf-hc').value;
+  var sel=document.getElementById('pf-cg');if(!sel)return;
+  var cgs=[...new Set(rawData.filter(function(r){return r.homecare===hc;}).map(function(r){return r.caregiver||'';}).filter(Boolean))].sort();
+  sel.innerHTML='<option value="">Select CG</option>'+cgs.map(function(c){return'<option value="'+c+'">'+c+'</option>';}).join('');
 }
-function closeFCLModal() { document.getElementById('fcl-modal').style.display='none'; }
-function clearFCLFilters() {
-  ['fcl-search','fcl-filter-stage','fcl-filter-agent','fcl-filter-month'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
-  renderFCLeads();
+
+function pfAutoFillAmount(){
+  var reason=document.getElementById('pf-reason').value;
+  var match=PENALTY_REASONS.find(function(r){return r.label===reason;});
+  if(match&&match.amount){var a=document.getElementById('pf-amount');if(a&&!a.value)a.value=match.amount;}
 }
-function exportFCLeadsCSV() {
-  var filtered = getFilteredFCLeads();
-  if (!filtered.length) { alert('No leads to export'); return; }
-  var lines = ['Name,Phone,Agent,Stage,First Contact,Last Contact,Conversations,Month,Notes'];
-  filtered.forEach(function(l) {
+
+function getPenaltyForm(){
+  function v(id){var el=document.getElementById(id);return el?(el.value||'').trim():'';}
+  return{order_id:v('pf-order'),date:v('pf-date'),hc:v('pf-hc'),cg:v('pf-cg'),reason:v('pf-reason'),amount:parseFloat(v('pf-amount'))||0,status:v('pf-status')||'pending',notes:v('pf-notes')};
+}
+
+function openAddPenaltyModal(){
+  _editPenaltyId=null;
+  document.getElementById('penalty-modal-title').textContent='Add Penalty';
+  document.getElementById('penalty-modal-body').innerHTML=buildPenaltyForm();
+  document.getElementById('penalty-delete-btn').style.display='none';
+  document.getElementById('penalty-modal').style.display='flex';
+}
+
+function openEditPenaltyModal(id){
+  var p=_penalties.find(function(x){return x._id===id;});if(!p)return;
+  _editPenaltyId=id;
+  document.getElementById('penalty-modal-title').textContent='Edit Penalty';
+  document.getElementById('penalty-modal-body').innerHTML=buildPenaltyForm(p);
+  if(p.hc){pfAutoFillCG();setTimeout(function(){var s=document.getElementById('pf-cg');if(s&&p.cg){var o=s.querySelector('option[value="'+p.cg+'"]');if(o)o.selected=true;else s.innerHTML+='<option value="'+p.cg+'" selected>'+p.cg+'</option>';}},80);}
+  document.getElementById('penalty-delete-btn').style.display='block';
+  document.getElementById('penalty-modal').style.display='flex';
+}
+
+async function savePenalty(){
+  var form=getPenaltyForm();
+  if(!form.date||!form.hc||!form.cg||!form.reason||!form.amount){alert('Please fill all required fields (*)');return;}
+  if(!_db){await initFirebase();if(!_db){alert('Firebase not connected');return;}}
+  form.updated_at=new Date().toISOString();
+  try{
+    if(_editPenaltyId){await _db.collection('valeo_penalties').doc(_editPenaltyId).set(form,{merge:true});}
+    else{await _db.collection('valeo_penalties').add(form);}
+    closePenaltyModal();await loadPenalties();
+  }catch(e){alert('Save failed: '+e.message);}
+}
+
+async function deletePenalty(){
+  if(!_editPenaltyId||!confirm('Delete this penalty record?'))return;
+  try{await _db.collection('valeo_penalties').doc(_editPenaltyId).delete();closePenaltyModal();await loadPenalties();}
+  catch(e){alert('Delete failed: '+e.message);}
+}
+
+function closePenaltyModal(){document.getElementById('penalty-modal').style.display='none';_editPenaltyId=null;}
+
+function clearPenaltyFilters(){
+  ['penalty-search','penalty-filter-hc','penalty-filter-reason','penalty-filter-month','penalty-filter-status'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  renderPenaltyTable();
+}
+
+function exportPenaltiesCSV(){
+  var filtered=getFilteredPenalties();if(!filtered.length){alert('No penalties to export');return;}
+  var lines=['Order ID,Date,HC,Caregiver,Amount (AED),Reason,Status,Notes'];
+  filtered.forEach(function(p){
     function esc(v){var s=String(v||'').trim();return(s.includes(',')||s.includes('"'))?'"'+s.replace(/"/g,'""')+'"':s;}
-    var phoneCell = l.phone ? '="'+l.phone+'"' : '';
-    lines.push([esc(l.name),phoneCell,esc(l.agent),esc(fclGetStage(l)),esc((l.first_contact||'').slice(0,10)),esc((l.last_contact||'').slice(0,10)),esc(l.conversation_count||1),esc(l.month||''),esc(fclGetNotes(l))].join(','));
+    lines.push([esc(p.order_id),esc(p.date),esc(p.hc),esc(p.cg),esc(p.amount),esc(p.reason),esc(p.status||'pending'),esc(p.notes)].join(','));
   });
   var a=document.createElement('a');
   a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(lines.join('\r\n'));
-  a.download='fc_leads_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.download='valeo_penalties_'+new Date().toISOString().slice(0,10)+'.csv';
   document.body.appendChild(a);a.click();document.body.removeChild(a);
 }
 
