@@ -1789,6 +1789,7 @@ function renderHCGrid(){
         </div>
         ${renderCGCardExtra(cg, hc)}
         <button class="cg-remove-btn" onclick="event.stopPropagation();removeCGByKey(this)">✕</button>
+        <button class="cg-excl-btn" onclick="event.stopPropagation();toggleExclusive('${cg}','${hc}')" title="${isExclusiveCG(cg,hc)?'Remove exclusive':'Mark as exclusive'}" style="position:absolute;top:8px;right:32px;background:${isExclusiveCG(cg,hc)?'rgba(245,158,11,.25)':'rgba(110,118,129,.15)'};border:1px solid ${isExclusiveCG(cg,hc)?'#f59e0b':'var(--border)'};border-radius:4px;padding:2px 6px;font-size:9px;font-weight:700;color:${isExclusiveCG(cg,hc)?'#f59e0b':'var(--text2)'};cursor:pointer;font-family:Inter,sans-serif">${isExclusiveCG(cg,hc)?'&#x1F451; EX':'EX?'}</button>
         <div class="cg-view-btn">View Calendar →</div>
       </div>`;
     });
@@ -2151,14 +2152,47 @@ function getAnalyticsData(){
 }
 
 // ── Exclusive CG Registry ────────────────────────────────────────
+// Default exclusive CGs — editable from CG card toggle
 var EXCLUSIVE_NAMES = new Set(['alysa','christine','maribel','soe']);
 var EXCLUSIVE_HC    = new Set(['shifa']);
+// Load user-customised exclusives from localStorage
+(function(){
+  try{
+    var saved = JSON.parse(localStorage.getItem('valeo_exclusive_cgs')||'null');
+    if(saved && saved.names) EXCLUSIVE_NAMES = new Set(saved.names);
+    if(saved && saved.hcs)   EXCLUSIVE_HC    = new Set(saved.hcs);
+  }catch(e){}
+})();
+
+function saveExclusiveList(){
+  localStorage.setItem('valeo_exclusive_cgs', JSON.stringify({
+    names:[...EXCLUSIVE_NAMES], hcs:[...EXCLUSIVE_HC]
+  }));
+}
+
 function isExclusiveCG(cg, hc){
   if(!cg) return false;
   var cgl=(cg||'').toLowerCase().trim().split(' ')[0];
   var hcl=(hc||'').toLowerCase().trim().split(' ')[0];
   if(EXCLUSIVE_HC.has(hcl)) return true;
   return EXCLUSIVE_NAMES.has(cgl);
+}
+
+function toggleExclusive(cg, hc){
+  var cgl = (cg||'').toLowerCase().trim().split(' ')[0];
+  var hcl = (hc||'').toLowerCase().trim().split(' ')[0];
+  var wasExcl = isExclusiveCG(cg, hc);
+  if(wasExcl){
+    EXCLUSIVE_NAMES.delete(cgl);
+    // Don't touch EXCLUSIVE_HC — affects all CGs in that HC
+  } else {
+    EXCLUSIVE_NAMES.add(cgl);
+  }
+  saveExclusiveList();
+  renderHCGrid();
+  // Re-render analytics if on that tab
+  var anaPage = document.getElementById('page-analytics');
+  if(anaPage && anaPage.classList.contains('active')) renderAnalyticsData();
 }
 
 function renderAnalyticsData(){
