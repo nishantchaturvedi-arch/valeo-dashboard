@@ -2138,6 +2138,17 @@ function getAnalyticsData(){
   });
 }
 
+// ── Exclusive CG Registry ────────────────────────────────────────
+var EXCLUSIVE_NAMES = new Set(['alysa','christine','maribel','soe']);
+var EXCLUSIVE_HC    = new Set(['shifa']);
+function isExclusiveCG(cg, hc){
+  if(!cg) return false;
+  var cgl=(cg||'').toLowerCase().trim().split(' ')[0];
+  var hcl=(hc||'').toLowerCase().trim().split(' ')[0];
+  if(EXCLUSIVE_HC.has(hcl)) return true;
+  return EXCLUSIVE_NAMES.has(cgl);
+}
+
 function renderAnalyticsData(){
   const data = getAnalyticsData();
   const periodLabel = anaWk==='all' ? MONTHS[anaMo]+' '+anaYr : `${MONTHS[anaMo]} W — ${anaWkStart} to ${anaWkEnd}`;
@@ -2149,6 +2160,11 @@ function renderAnalyticsData(){
 
   // Unique clients
   const clients = new Set(data.filter(r=>r.client_name).map(r=>r.client_name)).size;
+
+  // Exclusive vs Non-exclusive
+  var _exclData    = data.filter(function(r){return isExclusiveCG(r.caregiver,r.homecare);});
+  var _nonExclData = data.filter(function(r){return !isExclusiveCG(r.caregiver,r.homecare);});
+
 
   document.getElementById('kpi-grid').innerHTML = `
     <div class="kpi k1"><div class="kpi-val" style="color:var(--accent)">${duty}</div><div class="kpi-label">Duty Shifts</div></div>
@@ -2183,6 +2199,7 @@ function renderAnalyticsData(){
   });
   const MAX_MONTH_HRS = 288; // 6 days × 4 weeks × 12h = 100% utilization
   const cgS = Object.entries(cgMap).map(function(e){ return [e[0], Math.min(e[1], MAX_MONTH_HRS)]; }).sort((a,b)=>b[1]-a[1]);
+  window._cgS_full = cgS;
   const maxCG = MAX_MONTH_HRS;
 
   // New vs Repeat — unique clients by type
@@ -2215,6 +2232,21 @@ function renderAnalyticsData(){
           </div>
           <div class="bar-val" style="font-size:11px">${v} <span style="color:var(--text3)">shifts</span></div>
         </div>`).join('') : '<div style="color:var(--text2);font-size:12px;padding:10px">No data for this period</div>'}
+    </div>
+
+    <!-- ── Exclusive vs Non-Exclusive ── -->
+    <div class="a-card" style="grid-column:1/-1">
+      <div class="a-title"><div class="a-title-bar" style="background:#f59e0b"></div>&#x1F451; Exclusive vs Non-Exclusive Utilization</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:12px">
+        <div>
+          <div id="excl-cg-label" style="font-size:11px;font-weight:600;color:#f59e0b;margin-bottom:10px">EXCLUSIVE CGs</div>
+          <div id="excl-cg-bars" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:4px 16px"></div>
+        </div>
+        <div>
+          <div id="non-excl-cg-label" style="font-size:11px;font-weight:600;color:#8b5cf6;margin-bottom:10px">NON-EXCLUSIVE CGs</div>
+          <div id="non-excl-cg-bars" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:4px 16px"></div>
+        </div>
+      </div>
     </div>
 
     <!-- ── Chart 2: New vs Repeat ── -->
@@ -2261,13 +2293,19 @@ function renderAnalyticsData(){
         🔴 <b>Red (below 40%)</b> = too many free days — needs a new booking assigned.<br>
         <span style="color:var(--accent)">Use the red bars as your priority list for new order assignment.</span>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:4px 20px">
+      <div style="display:flex;gap:6px;margin-bottom:8px">
+        <button onclick="setCGFilter('all')" id="cgf-all" style="padding:4px 10px;font-size:10px;font-weight:600;border-radius:4px;cursor:pointer;font-family:Inter,sans-serif;background:var(--accent);color:#fff;border:1px solid var(--accent)">All</button>
+        <button onclick="setCGFilter('exclusive')" id="cgf-exclusive" style="padding:4px 10px;font-size:10px;font-weight:600;border-radius:4px;cursor:pointer;font-family:Inter,sans-serif;background:var(--bg3);color:#f59e0b;border:1px solid var(--border)">&#x1F451; Exclusive</button>
+        <button onclick="setCGFilter('non-exclusive')" id="cgf-non-exclusive" style="padding:4px 10px;font-size:10px;font-weight:600;border-radius:4px;cursor:pointer;font-family:Inter,sans-serif;background:var(--bg3);color:#8b5cf6;border:1px solid var(--border)">&#x1F465; Non-Exclusive</button>
+      </div>
+      <div id="cg-util-bars" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:4px 20px">
       ${cgS.length ? cgS.map(([k,v])=>{
         const pct = Math.round(v/maxCG*100);
         const col = v>=maxCG*0.7?'var(--duty)':v>=maxCG*0.4?'var(--accent)':'var(--sick)';
         const emoji = pct>=70?'🟢':pct>=40?'🔵':'🔴';
+        var _exTag = isExclusiveCG(k,(rawData.find(function(r){return r.caregiver===k;})||{}).homecare||'') ? ' <span style="font-size:8px;padding:1px 3px;border-radius:3px;background:rgba(245,158,11,.25);color:#f59e0b">EX</span>' : '';
         return `<div class="bar-row" style="margin-bottom:4px">
-          <div class="bar-label" title="${k}" style="width:90px;min-width:90px;font-size:11px;overflow:hidden;text-overflow:ellipsis">${emoji} ${k.split(' ')[0]}</div>
+          <div class="bar-label" title="${k}" style="width:100px;min-width:100px;font-size:11px;overflow:hidden;text-overflow:ellipsis">${emoji} ${k.split(' ')[0]}${_exTag}</div>
           <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${col};border-radius:4px"></div></div>
           <div class="bar-val" style="font-size:11px">${v}h <span style="color:var(--text3);font-size:9px">${pct}%</span></div>
         </div>`;
@@ -5530,6 +5568,41 @@ function exportFCLeadsCSV() {
   a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(lines.join('\r\n'));
   a.download = 'fc_leads_' + new Date().toISOString().slice(0,10) + '.csv';
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+var _cgFilter = 'all';
+function setCGFilter(f){
+  _cgFilter = f;
+  ['all','exclusive','non-exclusive'].forEach(function(v){
+    var btn = document.getElementById('cgf-'+v);
+    if(!btn) return;
+    var active = v===f;
+    var activeColor = v==='exclusive'?'#f59e0b':v==='non-exclusive'?'#8b5cf6':'var(--accent)';
+    btn.style.background = active ? activeColor : 'var(--bg3)';
+    btn.style.color = active ? '#fff' : activeColor;
+    btn.style.borderColor = active ? activeColor : 'var(--border)';
+  });
+  var el = document.getElementById('cg-util-bars');
+  if(!el || !window._cgS_full) return;
+  var filtered = window._cgS_full.filter(function(e){
+    if(f==='all') return true;
+    var hc=(rawData.find(function(r){return r.caregiver===e[0];})||{}).homecare||'';
+    return f==='exclusive' ? isExclusiveCG(e[0],hc) : !isExclusiveCG(e[0],hc);
+  });
+  var maxCG = 288;
+  el.innerHTML = filtered.length ? filtered.map(function(e){
+    var k=e[0],v=e[1];
+    var pct=Math.round(v/maxCG*100);
+    var col=v>=maxCG*0.7?'var(--duty)':v>=maxCG*0.4?'var(--accent)':'var(--sick)';
+    var emoji=pct>=70?'&#x1F7E2;':pct>=40?'&#x1F535;':'&#x1F534;';
+    var hc=(rawData.find(function(r){return r.caregiver===k;})||{}).homecare||'';
+    var exTag=isExclusiveCG(k,hc)?'<span style="font-size:8px;padding:1px 3px;border-radius:3px;background:rgba(245,158,11,.25);color:#f59e0b;margin-left:2px">EX</span>':'';
+    return '<div class="bar-row" style="margin-bottom:4px">'
+      +'<div class="bar-label" title="'+k+'" style="width:100px;min-width:100px;font-size:11px;overflow:hidden;text-overflow:ellipsis">'+emoji+' '+k.split(' ')[0]+exTag+'</div>'
+      +'<div class="bar-track"><div class="bar-fill" style="width:'+pct+'%;background:'+col+';min-width:'+(pct>0?'3px':'0')+'"></div></div>'
+      +'<div class="bar-val" style="font-size:11px">'+v+'h <span style="color:var(--text3);font-size:9px">'+pct+'%</span></div>'
+      +'</div>';
+  }).join('') : '<div style="color:var(--text2);font-size:11px;padding:8px">No CGs match filter</div>';
 }
 
 // ── Init ─────────────────────────────────────────────────────────
