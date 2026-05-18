@@ -1563,6 +1563,7 @@ async function loadData(force=false){
       const hcRaw=String(r['Homecare']||'').trim();
       const excludedHC=['Carezone Home Healthcare LLC','Dummy HomeCare','Helpful Agency','Nifas HC','babysitting KSA','Pyramid Home Health care'];
       if(excludedHC.some(e=>hcRaw.toLowerCase()===e.toLowerCase()))return null;
+
       const pkg=String(r['Parent_Package']||r['Package']||'');
       const nurseKey=String(r['Nurse_Assigned']||'').trim();
       const endDate=calcEndDate(datePart,pkg);
@@ -1625,8 +1626,19 @@ async function loadData(force=false){
       }
     });
     allData = Object.values(dedupMap);
-    // Load overrides from n8n
+    // Load overrides (also calls loadLocalCache which populates hiddenCGs)
     await loadOverrides();
+    // Filter permanently hidden CGs AFTER loadOverrides so hiddenCGs is populated
+    if(hiddenCGs.size>0){
+      allData = allData.filter(function(r){
+        if(!r.caregiver) return true;
+        return ![...hiddenCGs].some(function(hk){return hk.startsWith(r.caregiver+'|');});
+      });
+      rawData = rawData.filter(function(r){
+        if(!r.caregiver) return true;
+        return ![...hiddenCGs].some(function(hk){return hk.startsWith(r.caregiver+'|');});
+      });
+    }
     applyOverrides();
     // ── Debug helper — call debugCG('name') in browser console ──
     window.debugCG=function(frag){
