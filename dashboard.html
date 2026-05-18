@@ -4496,28 +4496,40 @@ function getLeadKey(lead){return String(lead['phone number']||lead['phone']||'')
 function getLeadOv(lead){return _leadsOverrides[getLeadKey(lead)]||{};}
 function autoHeat(lead){
   var ov=getLeadOv(lead);if(ov.heat)return ov.heat;
-  var st=String(lead['status']||'').toLowerCase();
-  var cur=String(lead['current status']||lead['current_status']||'').toLowerCase();
-  var notes=String(lead['notes']||'').toLowerCase();
+  var st=String(lead['status']||'').toLowerCase().trim();
+  var cur=String(lead['current status']||lead['current_status']||'').toLowerCase().trim();
+  // Check notes field — try multiple possible column names
+  var notes=String(lead['notes']||lead['Notes']||lead['note']||lead['Note']||lead['remark']||lead['remarks']||'').toLowerCase().trim();
   var combined=cur+' '+notes+' '+st;
-  // ── Dead leads ────────────────────────────────────────────────
-  if(combined.includes('not interested')) return'dead';
-  if(combined.includes('high price'))     return'dead';
-  if(combined.includes('looking for job'))return'dead';
-  if(combined.includes('dead lead'))      return'dead';
-  if(combined.includes('dead'))           return'dead';
-  if(combined.includes('not relevant'))   return'dead';
-  if(combined.includes('wrong number'))   return'dead';
-  if(combined.includes('already have'))   return'dead';
-  // ── Converted / Hot ──────────────────────────────────────────
+
+  // ── Dead — checked FIRST, most specific phrases first ────────
+  if(combined.includes('not interested'))  return'dead';
+  if(combined.includes('not relevant'))    return'dead';
+  if(combined.includes('high price'))      return'dead';
+  if(combined.includes('looking for job')) return'dead';
+  if(combined.includes('already have'))    return'dead';
+  if(combined.includes('wrong number'))    return'dead';
+  if(combined.includes('dead lead'))       return'dead';
+  if(combined.includes('not looking'))     return'dead';
+  if(combined.includes('no need'))         return'dead';
+  if(combined.includes('have nanny'))      return'dead';
+  if(combined.includes('have babysitter')) return'dead';
+  if(/dead/.test(combined))            return'dead'; // 'dead' as whole word only
+  // Status field exact dead values
+  if(st==='dead'||st==='not interested'||st==='looking for job') return'dead';
+
+  // ── Hot ──────────────────────────────────────────────────────
   if(st==='converted'||combined.includes('booked')||combined.includes('convert')) return'hot';
+
   // ── Warm ─────────────────────────────────────────────────────
   if(st==='on fc'||st==='connected') return'warm';
-  if(combined.includes('interested'))    return'warm';
-  if(combined.includes('call back'))     return'warm';
-  if(combined.includes('follow up'))     return'warm';
-  if(combined.includes('thinking'))      return'warm';
-  if(combined.includes('will confirm'))  return'warm';
+  if(combined.includes('interested')&&!combined.includes('not interested')) return'warm';
+  if(combined.includes('call back'))   return'warm';
+  if(combined.includes('follow up'))   return'warm';
+  if(combined.includes('thinking'))    return'warm';
+  if(combined.includes('will confirm'))return'warm';
+  if(combined.includes('will check'))  return'warm';
+
   // ── Cold ─────────────────────────────────────────────────────
   if(st==='no answer'||st==='hung up') return'cold';
   return'cold';
