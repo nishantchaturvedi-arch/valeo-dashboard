@@ -1790,7 +1790,9 @@ function renderHCGrid(){
         ${renderCGCardExtra(cg, hc)}
         <button class="cg-remove-btn" onclick="event.stopPropagation();removeCGByKey(this)">✕</button>
         <button class="cg-excl-btn" onclick="event.stopPropagation();toggleExclusive('${cg}','${hc}')" title="${isExclusiveCG(cg,hc)?'Remove exclusive':'Mark as exclusive'}" style="position:absolute;top:8px;right:32px;background:${isExclusiveCG(cg,hc)?'rgba(245,158,11,.25)':'rgba(110,118,129,.15)'};border:1px solid ${isExclusiveCG(cg,hc)?'#f59e0b':'var(--border)'};border-radius:4px;padding:2px 6px;font-size:9px;font-weight:700;color:${isExclusiveCG(cg,hc)?'#f59e0b':'var(--text2)'};cursor:pointer;font-family:Inter,sans-serif">${isExclusiveCG(cg,hc)?'&#x1F451; EX':'EX?'}</button>
+        <button onclick="event.stopPropagation();toggleOnLeave('${cg}','${hc}')" title="Toggle on leave" style="position:absolute;top:8px;right:64px;background:${isCGOnLeave(cg,hc)?'rgba(248,81,73,.2)':'rgba(110,118,129,.1)'};border:1px solid ${isCGOnLeave(cg,hc)?'var(--absent)':'var(--border)'};border-radius:4px;padding:2px 6px;font-size:9px;font-weight:700;color:${isCGOnLeave(cg,hc)?'var(--absent)':'var(--text2)'};cursor:pointer;font-family:Inter,sans-serif">${isCGOnLeave(cg,hc)?'&#x1F6CC; '+(getCGSetting(cg,hc).leave_start||'').slice(5)+'&rarr;'+(getCGSetting(cg,hc).leave_end||'').slice(5):'LEAVE?'}</button>
         <div class="cg-view-btn">View Calendar →</div>
+        <button onclick="event.stopPropagation();openStartDateModal('${cg}','${hc}')" style="position:absolute;bottom:8px;right:8px;background:rgba(47,129,247,.1);border:1px solid rgba(47,129,247,.3);border-radius:4px;padding:2px 6px;font-size:9px;color:var(--accent);cursor:pointer;font-family:Inter,sans-serif">&#x1F4C5; ${getCGSetting(cg,hc).start_date||'Start: 1st'}</button>
       </div>`;
     });
     html+='</div></div>';
@@ -2243,8 +2245,15 @@ function renderAnalyticsData(){
     var bookings=[];if(ov.type==='manual')bookings=[ov];else if(ov.type==='manual_list'&&ov.bookings)bookings=ov.bookings;
     bookings.forEach(function(b){var hrs=calcBookingHrs(b),cg=b.caregiver||ov.caregiver;if(!cgMap[cg])cgMap[cg]=0;cgMap[cg]+=hrs;var hc=b.homecare||ov.homecare||(rawData.find(function(r){return r.caregiver===cg;})||{}).homecare||'';if(hc)hcMap[hc]=(hcMap[hc]||0)+1;});
   });
-  const MAX_MONTH_HRS = 288; // 6 days × 4 weeks × 12h = 100% utilization
-  const cgS = Object.entries(cgMap).map(function(e){ return [e[0], Math.min(e[1], MAX_MONTH_HRS)]; }).sort((a,b)=>b[1]-a[1]);
+  const MAX_MONTH_HRS = 288;
+  // Build weighted cgS: each CG gets max hours based on their start date in this period
+  const cgS = Object.entries(cgMap).map(function(e){
+    var cg=e[0], hrs=e[1];
+    var hc=(rawData.find(function(r){return r.caregiver===cg;})||{}).homecare||'';
+    var maxHrs = getCGMaxHrs(cg, hc);
+    var pct = Math.min(Math.round((hrs/maxHrs)*100), 100);
+    return [cg, hrs, maxHrs, pct, hc]; // [name, hrs, maxHrs, pct, hc]
+  }).sort(function(a,b){return b[3]-a[3];}); // sort by pct desc
   window._cgS_full = cgS;
   const maxCG = MAX_MONTH_HRS;
 
@@ -2339,17 +2348,21 @@ function renderAnalyticsData(){
         🔴 <b>Red (below 40%)</b> = too many free days — needs a new booking assigned.<br>
         <span style="color:var(--accent)">Use the red bars as your priority list for new order assignment.</span>
       </div>
-      <div style="display:flex;gap:6px;margin-bottom:8px">
-        <button onclick="setCGFilter('all')" id="cgf-all" style="padding:4px 10px;font-size:10px;font-weight:600;border-radius:4px;cursor:pointer;font-family:Inter,sans-serif;background:var(--accent);color:#fff;border:1px solid var(--accent)">All</button>
-        <button onclick="setCGFilter('exclusive')" id="cgf-exclusive" style="padding:4px 10px;font-size:10px;font-weight:600;border-radius:4px;cursor:pointer;font-family:Inter,sans-serif;background:var(--bg3);color:#f59e0b;border:1px solid var(--border)">&#x1F451; Exclusive</button>
-        <button onclick="setCGFilter('non-exclusive')" id="cgf-non-exclusive" style="padding:4px 10px;font-size:10px;font-weight:600;border-radius:4px;cursor:pointer;font-family:Inter,sans-serif;background:var(--bg3);color:#8b5cf6;border:1px solid var(--border)">&#x1F465; Non-Exclusive</button>
+      <div id="excl-comparison-table" style="margin-bottom:14px;border:1px solid var(--border);border-radius:8px;overflow:hidden"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+        <div style="display:flex;gap:6px">
+          <button onclick="setCGFilter('all')" id="cgf-all" style="padding:4px 10px;font-size:10px;font-weight:600;border-radius:4px;cursor:pointer;font-family:Inter,sans-serif;background:var(--accent);color:#fff;border:1px solid var(--accent)">All</button>
+          <button onclick="setCGFilter('exclusive')" id="cgf-exclusive" style="padding:4px 10px;font-size:10px;font-weight:600;border-radius:4px;cursor:pointer;font-family:Inter,sans-serif;background:var(--bg3);color:#f59e0b;border:1px solid var(--border)">&#x1F451; Exclusive</button>
+          <button onclick="setCGFilter('non-exclusive')" id="cgf-non-exclusive" style="padding:4px 10px;font-size:10px;font-weight:600;border-radius:4px;cursor:pointer;font-family:Inter,sans-serif;background:var(--bg3);color:#8b5cf6;border:1px solid var(--border)">&#x1F465; Non-Exclusive</button>
+        </div>
+        <div id="excl-avg-util" style="display:flex;gap:12px;font-size:11px"></div>
       </div>
       <div id="cg-util-bars" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:4px 20px">
-      ${cgS.length ? cgS.map(([k,v])=>{
-        const pct = Math.round(v/maxCG*100);
-        const col = v>=maxCG*0.7?'var(--duty)':v>=maxCG*0.4?'var(--accent)':'var(--sick)';
+      ${cgS.length ? cgS.filter(function(e){return !isCGOnLeave(e[0],e[4]);}).map(function(e){
+        var k=e[0],v=e[1],maxHrs=e[2],pct=e[3];
+        const col = pct>=70?'var(--duty)':pct>=40?'var(--accent)':'var(--sick)';
         const emoji = pct>=70?'🟢':pct>=40?'🔵':'🔴';
-        var _exTag = isExclusiveCG(k,(rawData.find(function(r){return r.caregiver===k;})||{}).homecare||'') ? ' <span style="font-size:8px;padding:1px 3px;border-radius:3px;background:rgba(245,158,11,.25);color:#f59e0b">EX</span>' : '';
+        var _exTag = isExclusiveCG(k,e[4]) ? ' <span style="font-size:8px;padding:1px 3px;border-radius:3px;background:rgba(245,158,11,.25);color:#f59e0b">EX</span>' : '';
         return `<div class="bar-row" style="margin-bottom:4px">
           <div class="bar-label" title="${k}" style="width:100px;min-width:100px;font-size:11px;overflow:hidden;text-overflow:ellipsis">${emoji} ${k.split(' ')[0]}${_exTag}</div>
           <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${col};border-radius:4px"></div></div>
@@ -2357,7 +2370,49 @@ function renderAnalyticsData(){
         </div>`;
       }).join('') : '<div style="color:var(--text2);font-size:12px;padding:10px">No data</div>'}
       </div>
-    </div>`;
+    </div>
+`;
+  // ── Post-render: avg badges + comparison table ──
+  (function(){
+    var eP=[],nP=[],eH=[],nH=[],eM=[],nM=[];
+    (window._cgS_full||[]).forEach(function(e){
+      if(isCGOnLeave(e[0],e[4])) return;
+      if(isExclusiveCG(e[0],e[4])){ eP.push(e[3]);eH.push(e[1]);eM.push(e[2]); }
+      else{ nP.push(e[3]);nH.push(e[1]);nM.push(e[2]); }
+    });
+    var sm=function(a){return a.reduce(function(s,x){return s+x;},0);};
+    var av=function(a){return a.length?Math.round(sm(a)/a.length):0;};
+    var aEP=av(eP),aNP=av(nP),tEH=sm(eH),tNH=sm(nH),aEH=av(eH),aNH=av(nH);
+    var oE=sm(eM)?Math.round(tEH/sm(eM)*100):0,oN=sm(nM)?Math.round(tNH/sm(nM)*100):0;
+    var el=document.getElementById('excl-avg-util');
+    if(el) el.innerHTML=
+      '<div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:6px;padding:4px 10px">'
+      +'<span style="color:#f59e0b;font-weight:700">&#x1F451; Excl avg: '+aEP+'%</span>'
+      +'<span style="color:var(--text3);margin-left:6px;font-size:10px">'+tEH+'h &middot; '+eH.length+' CGs</span></div>'
+      +'<div style="background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.3);border-radius:6px;padding:4px 10px">'
+      +'<span style="color:#8b5cf6;font-weight:700">&#x1F465; Non-excl avg: '+aNP+'%</span>'
+      +'<span style="color:var(--text3);margin-left:6px;font-size:10px">'+tNH+'h &middot; '+nH.length+' CGs</span></div>';
+    var tbl=document.getElementById('excl-comparison-table');
+    if(!tbl) return;
+    function uc(p){return p>=70?'var(--duty)':p>=40?'var(--accent)':'var(--sick)';}
+    function arw(a,b,u){if(a===b)return '';var d=a-b,c=d>0?'var(--duty)':'var(--absent)';return ' <span style="font-size:10px;color:'+c+'">'+(d>0?'&uarr;':'&darr;')+Math.abs(d)+u+'</span>';}
+    function row(l,eV,nV,h){
+      return '<tr style="border-bottom:1px solid var(--border)"><td style="padding:9px 14px;color:var(--text2);font-size:12px">'+l+'</td>'
+      +'<td style="padding:9px 14px;text-align:center;font-weight:700;font-family:monospace"><span style="color:'+(h?'#f59e0b':uc(eV))+'">'+eV+(h?'h':'%')+'</span>'+arw(eV,nV,h?'h':'%')+'</td>'
+      +'<td style="padding:9px 14px;text-align:center;font-weight:700;font-family:monospace"><span style="color:'+(h?'#8b5cf6':uc(nV))+'">'+nV+(h?'h':'%')+'</span></td></tr>';
+    }
+    tbl.innerHTML='<table style="width:100%;border-collapse:collapse">'
+      +'<thead><tr style="background:var(--bg3)">'
+      +'<th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;color:var(--text2);border-bottom:2px solid var(--border)">Metric</th>'
+      +'<th style="padding:9px 14px;text-align:center;font-size:11px;font-weight:700;color:#f59e0b;border-bottom:2px solid var(--border)">&#x1F451; Exclusive ('+eH.length+' CGs)</th>'
+      +'<th style="padding:9px 14px;text-align:center;font-size:11px;font-weight:700;color:#8b5cf6;border-bottom:2px solid var(--border)">&#x1F465; Non-Exclusive ('+nH.length+' CGs)</th>'
+      +'</tr></thead><tbody>'
+      +row('Total Hours Worked',tEH,tNH,true)
+      +row('Avg Hours per CG',aEH,aNH,true)
+      +row('Avg Utilization %',aEP,aNP,false)
+      +row('Overall Utilization %',oE,oN,false)
+      +'</tbody></table>';
+  })();
 }
 
 // ── Tab switching ────────────────────────────────────────────────
@@ -3056,6 +3111,7 @@ function reRenderAll(){
 function loadLocalCache(){
   try{
     overrides=JSON.parse(localStorage.getItem('valeo_overrides')||'{}');
+    cgSettings=JSON.parse(localStorage.getItem('valeo_cg_settings')||'{}');
     splitAssignments=JSON.parse(localStorage.getItem('valeo_splits')||'{}');
     manualCGs=JSON.parse(localStorage.getItem('valeo_manual_cgs')||'{}');
     hiddenCGs=new Set(JSON.parse(localStorage.getItem('valeo_hidden_cgs')||'[]'));
@@ -5630,25 +5686,104 @@ function setCGFilter(f){
   });
   var el = document.getElementById('cg-util-bars');
   if(!el || !window._cgS_full) return;
-  var filtered = window._cgS_full.filter(function(e){
+  var filtered = (window._cgS_full||[]).filter(function(e){
+    if(isCGOnLeave(e[0],e[4])) return false; // always hide on-leave
     if(f==='all') return true;
-    var hc=(rawData.find(function(r){return r.caregiver===e[0];})||{}).homecare||'';
-    return f==='exclusive' ? isExclusiveCG(e[0],hc) : !isExclusiveCG(e[0],hc);
+    return f==='exclusive' ? isExclusiveCG(e[0],e[4]) : !isExclusiveCG(e[0],e[4]);
   });
-  var maxCG = 288;
   el.innerHTML = filtered.length ? filtered.map(function(e){
-    var k=e[0],v=e[1];
-    var pct=Math.round(v/maxCG*100);
-    var col=v>=maxCG*0.7?'var(--duty)':v>=maxCG*0.4?'var(--accent)':'var(--sick)';
+    var k=e[0],v=e[1],pct=e[3];
+    var col=pct>=70?'var(--duty)':pct>=40?'var(--accent)':'var(--sick)';
     var emoji=pct>=70?'&#x1F7E2;':pct>=40?'&#x1F535;':'&#x1F534;';
-    var hc=(rawData.find(function(r){return r.caregiver===k;})||{}).homecare||'';
-    var exTag=isExclusiveCG(k,hc)?'<span style="font-size:8px;padding:1px 3px;border-radius:3px;background:rgba(245,158,11,.25);color:#f59e0b;margin-left:2px">EX</span>':'';
+    var exTag=isExclusiveCG(k,e[4])?'<span style="font-size:8px;padding:1px 3px;border-radius:3px;background:rgba(245,158,11,.25);color:#f59e0b;margin-left:2px">EX</span>':'';
     return '<div class="bar-row" style="margin-bottom:4px">'
       +'<div class="bar-label" title="'+k+'" style="width:100px;min-width:100px;font-size:11px;overflow:hidden;text-overflow:ellipsis">'+emoji+' '+k.split(' ')[0]+exTag+'</div>'
       +'<div class="bar-track"><div class="bar-fill" style="width:'+pct+'%;background:'+col+';min-width:'+(pct>0?'3px':'0')+'"></div></div>'
       +'<div class="bar-val" style="font-size:11px">'+v+'h <span style="color:var(--text3);font-size:9px">'+pct+'%</span></div>'
       +'</div>';
   }).join('') : '<div style="color:var(--text2);font-size:11px;padding:8px">No CGs match filter</div>';
+}
+
+// ── CG Settings (start date, on-leave flag) ────────────────────────
+var cgSettings = {}; // key: "cg|hc", value: {start_date, on_leave}
+
+function loadCGSettings(){
+  try{ cgSettings=JSON.parse(localStorage.getItem('valeo_cg_settings')||'{}'); }catch(e){ cgSettings={}; }
+}
+function saveCGSettings(){
+  localStorage.setItem('valeo_cg_settings', JSON.stringify(cgSettings));
+}
+function getCGSetting(cg, hc){
+  var key = cg+'|'+hc;
+  if(!cgSettings[key]) cgSettings[key] = {};
+  return cgSettings[key];
+}
+
+
+
+function isCGOnLeave(cg, hc){
+  return !!(getCGSetting(cg,hc).on_leave);
+}
+
+function toggleOnLeave(cg, hc){
+  var s=getCGSetting(cg,hc);
+  if(s.on_leave){
+    delete s.on_leave; delete s.leave_start; delete s.leave_end;
+    saveCGSettings(); renderHCGrid();
+    var ap=document.getElementById('page-analytics');
+    if(ap&&ap.classList.contains('active')) renderAnalyticsData();
+    return;
+  }
+  var mo=anaMo+1, defS=anaYr+'-'+String(mo).padStart(2,'0')+'-01';
+  var defE=anaYr+'-'+String(mo).padStart(2,'0')+'-'+String(new Date(anaYr,anaMo+1,0).getDate()).padStart(2,'0');
+  var r=prompt('Leave dates for '+cg+' (YYYY-MM-DD to YYYY-MM-DD):',defS+' to '+defE);
+  if(!r) return;
+  var pts=r.split(' to ');
+  if(pts.length!==2){alert('Use: YYYY-MM-DD to YYYY-MM-DD');return;}
+  s.on_leave=true; s.leave_start=pts[0].trim(); s.leave_end=pts[1].trim();
+  saveCGSettings(); renderHCGrid();
+  var ap=document.getElementById('page-analytics');
+  if(ap&&ap.classList.contains('active')) renderAnalyticsData();
+}
+
+
+
+// Weighted max hours based on start date in the analytics period
+function getCGStartDate(cg, hc){
+  // anaMo is 0-indexed globally; build default as 1st of current analytics month
+  var moDisplay = anaMo + 1;
+  var defaultDate = anaYr+'-'+String(moDisplay).padStart(2,'0')+'-01';
+  return getCGSetting(cg,hc).start_date || defaultDate;
+}
+
+function getCGMaxHrs(cg, hc){
+  var MAX_DAILY=12,DAYS_PER_WEEK=6;
+  var start=new Date(getCGStartDate(cg,hc)+'T12:00:00');
+  var lastDay=new Date(anaYr,anaMo+1,0);
+  var days=Math.min(Math.max(0,Math.floor((lastDay-start)/86400000)+1),28);
+  var s=getCGSetting(cg,hc);
+  if(s.on_leave&&s.leave_start&&s.leave_end){
+    var ls=new Date(s.leave_start+'T12:00:00'),le=new Date(s.leave_end+'T12:00:00');
+    var cs=ls>start?ls:start, ce=le<lastDay?le:lastDay;
+    if(ce>=cs) days=Math.max(0,days-(Math.floor((ce-cs)/86400000)+1));
+  }
+  return Math.max(Math.round(days*DAYS_PER_WEEK/7)*MAX_DAILY,1);
+}
+
+function openStartDateModal(cg, hc){
+  var s = getCGSetting(cg, hc);
+  var moDisplay = anaMo + 1;
+  var defaultStr = anaYr+'-'+String(moDisplay).padStart(2,'0')+'-01';
+  var current = s.start_date || defaultStr;
+  var entered = prompt('Start date for '+cg+' (YYYY-MM-DD) — leave blank to reset to default ('+defaultStr+')', current);
+  if(entered===null) return;
+  if(entered.trim()==='') { delete s.start_date; }
+  else if(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(entered.trim())) { s.start_date=entered.trim(); }
+  else { alert('Use YYYY-MM-DD format e.g. 2026-05-15'); return; }
+  saveCGSettings();
+  renderHCGrid();
+  var ap=document.getElementById('page-analytics');
+  if(ap&&ap.classList.contains('active')) renderAnalyticsData();
 }
 
 // ── Init ─────────────────────────────────────────────────────────
