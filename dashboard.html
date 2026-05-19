@@ -951,6 +951,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
   <div id="sb-pre-form" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:18px">
    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:14px">
     <div class="planner-field"><span class="planner-label">Client Name</span><input class="planner-input" id="sb-client" type="text" placeholder="e.g. Noor Al Mansouri"></div>
+    <div class="planner-field"><span class="planner-label">Order ID</span><input class="planner-input" id="sb-order-id" type="text" placeholder="e.g. 12345"></div>
     <div class="planner-field"><span class="planner-label">Package</span><select class="planner-select" id="sb-pkg-type"><option value="monthly">Monthly</option><option value="weekly">Weekly</option></select></div>
     <div class="planner-field"><span class="planner-label">Days/Week</span><select class="planner-select" id="sb-days-per-week"><option value="5">5 days</option><option value="6">6 days</option><option value="7">7 days</option></select></div>
     <div class="planner-field"><span class="planner-label">Weeks</span><select class="planner-select" id="sb-weeks"><option value="4">4 weeks</option><option value="1">1 week</option><option value="2">2 weeks</option><option value="3">3 weeks</option></select></div>
@@ -3638,11 +3639,13 @@ function buildClientScheduleHTML(){
 
   // Summary cards
   var cgShiftCounts = {};
+  var _nonWorkingStatuses = ['Off','Week Off','Sick','Cancelled','Removed','Holiday','Unpaid'];
   plannerData.forEach(function(r){
-    var cg = r.status === 'Off' ? null : toTitleCase(r.babysitter||'');
-    if(!cg) return;
+    if(_nonWorkingStatuses.indexOf(r.status) !== -1) return;
+    var cg = toTitleCase(r.babysitter||'');
+    if(!cg || cg === '—') return;
     cgShiftCounts[cg] = (cgShiftCounts[cg]||0) + 1;
-    var _nightCgRow=r['Night Shift CG']&&r['Night Shift CG']!=='—'?toTitleCase(r['Night Shift CG']):null;if(_nightCgRow&&r.status!=='Off')cgShiftCounts[_nightCgRow]=(cgShiftCounts[_nightCgRow]||0)+1;
+    var _nightCgRow=r['Night Shift CG']&&r['Night Shift CG']!=='—'?toTitleCase(r['Night Shift CG']):null;if(_nightCgRow)cgShiftCounts[_nightCgRow]=(cgShiftCounts[_nightCgRow]||0)+1;
   });
   var summaryCardsHTML = '';
   cgList.forEach(function(cg, i){
@@ -4557,7 +4560,7 @@ function sbGenerate(){
     var d=new Date(start+'T12:00:00');d.setDate(d.getDate()+i);
     var ds=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()),dayName=DAYS[d.getDay()];
     var off1=wo1.includes(dayName),off2=splitOn&&wo2.includes(dayName);
-    var row={num:i+1,date:ds,day:dayName,timeSlot:!off1&&t1s&&t1e?t1s+' - '+t1e:(off1?'—':t1s||'—'),babysitter:off1?'—':cg1,homecare:off1?'—':hc1,status:off1?'Off':'Duty',_orderId:'—',_clientName:client,_package:pkgLabel};
+    var row={num:i+1,date:ds,day:dayName,timeSlot:!off1&&t1s&&t1e?t1s+' - '+t1e:(off1?'—':t1s||'—'),babysitter:off1?'—':cg1,homecare:off1?'—':hc1,status:off1?'Off':'Duty',_orderId:(document.getElementById('sb-order-id')&&document.getElementById('sb-order-id').value.trim())||'—',_clientName:client,_package:pkgLabel};
     if(splitOn){row['Night Shift CG']=off2?'—':(cg2||'—');row['Night Shift Time']=!off2&&t2s&&t2e?t2s+' - '+t2e:(off2?'—':t2s||'—');}
     plannerData.push(row);
   }
