@@ -5698,7 +5698,8 @@ function exportFCLeadsCSV() {
   var lines = ['Name,Phone,Agent,Stage,First Contact,Last Contact,Conversations,Month,Notes'];
   filtered.forEach(function(l) {
     function esc(v){var s=String(v||'').trim();return(s.includes(',')||s.includes('"'))?'"'+s.replace(/"/g,'""')+'"':s;}
-    lines.push([esc(l.name),esc(l.phone),esc(l.agent),esc(fclGetStage(l)),esc((l.first_contact||'').slice(0,10)),esc((l.last_contact||'').slice(0,10)),esc(l.conversation_count||1),esc(l.month||''),esc(fclGetNotes(l))].join(','));
+    var fclPhone=String(l.phone||''). trim();var fclPhoneCell=fclPhone?'="'+fclPhone+'"':'';
+    lines.push([esc(l.name),fclPhoneCell,esc(l.agent),esc(fclGetStage(l)),esc((l.first_contact||'').slice(0,10)),esc((l.last_contact||'').slice(0,10)),esc(l.conversation_count||1),esc(l.month||''),esc(fclGetNotes(l))].join(','));
   });
   var a = document.createElement('a');
   a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(lines.join('\r\n'));
