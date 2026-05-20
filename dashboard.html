@@ -1597,6 +1597,8 @@ async function loadData(force=false){
     // Deduplicate expanded data — keep one record per caregiver per date
     // If same caregiver has 2 orders same day, keep the one with more info
     const expandedRaw = expandOrders(rawData);
+    // Load localStorage cache BEFORE dedup so overrides are available for tie-breaking
+    loadLocalCache();
     // Priority dedup — Customer Order (Duty) always wins
     function _statusPri(s){
       var st=(s||'').toLowerCase().replace(/\s+/g,'');
@@ -1608,23 +1610,22 @@ async function loadData(force=false){
     const dedupMap = {};
     expandedRaw.forEach(r => {
       const key = (r.caregiver||'') + '|' + (r.date||'');
-      if(!dedupMap[key]) { dedupMap[key] = r; }
-      else {
-        const np=_statusPri(r.status), op=_statusPri(dedupMap[key].status);
-        if(np > op) { dedupMap[key] = r; }
-        else if(np===op) {
-          // Prefer record whose order is NOT specifically targeted by a removed/cancelled override
-          var _ovKey=(r.caregiver||'')+'|'+(r.date||'');
-          var _ov=overrides[_ovKey];
-          var _existOid=(dedupMap[key].child_order_id||dedupMap[key].order_id||'');
-          var _newOid=(r.child_order_id||r.order_id||'');
-          var _existOverridden=_ov&&['removed','cancelled'].includes(_ov.type)&&_ov.child_order_id===_existOid;
-          var _newOverridden=_ov&&['removed','cancelled'].includes(_ov.type)&&_ov.child_order_id===_newOid;
-          // New order wins if existing is specifically overridden/removed and new is not
-          if(_existOverridden && !_newOverridden) dedupMap[key] = r;
-          else if(!_existOverridden && !_newOverridden && (r.package_type||'').length>(dedupMap[key].package_type||'').length) dedupMap[key] = r;
-        }
+      const np = _statusPri(r.status);
+      if(!dedupMap[key]) { dedupMap[key] = r; return; }
+      const op = _statusPri(dedupMap[key].status);
+      // Higher status always wins (Duty > Sick > Cancelled > WeekOff)
+      if(np > op) { dedupMap[key] = r; return; }
+      if(np < op) return; // existing wins
+      // Same status (both Duty) — check if one is specifically overridden/removed
+      var _ov = overrides[key];
+      if(_ov && _ov.child_order_id && ['removed','cancelled'].includes(_ov.type)) {
+        var _existOid = dedupMap[key].child_order_id || dedupMap[key].order_id || '';
+        var _newOid   = r.child_order_id || r.order_id || '';
+        // Keep whichever order is NOT the overridden one
+        if(_existOid === _ov.child_order_id) dedupMap[key] = r; // existing is overridden, swap to new
+        // else: existing is the new one (already in map), keep it
       }
+      // No override or no child_order_id: keep existing (already in map)
     });
     allData = Object.values(dedupMap);
     // Load overrides (also calls loadLocalCache which populates hiddenCGs)
@@ -3156,6 +3157,7 @@ function applyOverrides(){
     const key = r.caregiver+'|'+r.date;
     const ov = overrides[key];
     if(!ov) return;
+
     // If override was tied to a specific order_id, only apply to that order
     // This allows a NEW order on the same day to bypass the override
     if(ov.child_order_id) {
@@ -3163,10 +3165,10 @@ function applyOverrides(){
       if(recOid && recOid !== ov.child_order_id) return; // different order — skip override
     }
     // Customer Order wins — real duty days are protected from override removal
-    // UNLESS the override was specifically targeted at this order's child_order_id
     var isRealDuty = (r.status||'').toLowerCase()==='duty' && !r._manual;
-    var ovTargetsThisOrder = ov.child_order_id && (ov.child_order_id===(r.child_order_id||r.order_id||''));
-    if(isRealDuty && !ovTargetsThisOrder) return; // new/different order — portal wins
+    var recOid = r.child_order_id||r.order_id||'';
+    var ovTargetsThisOrder = ov.child_order_id && (ov.child_order_id===recOid);
+    if(isRealDuty && !ovTargetsThisOrder) return; // different/new order — portal wins
     // Apply override
     if(ov.type==='sick')          { r.status='Sick';      r.time_start=''; r.time_end=''; }
     else if(ov.type==='off')      { r.status='Week Off';  r.time_start=''; r.time_end=''; }
@@ -3201,6 +3203,14 @@ function applyOverrides(){
 
 function openOvModal(cg,date,orderId){
   ovCG=cg;ovDate=date;ovType='';
+  // Auto-detect order_id from allData if not explicitly passed
+  if(!orderId){
+    var _existing=allData.find(function(r){
+      return r.caregiver===cg && r.date===date
+        && (r.status||'').toLowerCase()==='duty' && !r._manual;
+    });
+    orderId = _existing ? (_existing.child_order_id||_existing.order_id||null) : null;
+  }
   window._ovOrderId=orderId||null; // track which specific order is being overridden
   document.getElementById('ov-note').value='';document.getElementById('ov-manual-fields').style.display='none';
   document.getElementById('ov-client').value='';document.getElementById('ov-time-start').value='';document.getElementById('ov-time-end').value='';
