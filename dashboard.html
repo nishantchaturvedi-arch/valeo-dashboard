@@ -1900,8 +1900,9 @@ function renderCalendar(){
       var _ov=overrides[activeCG+'|'+dateStr];
       if(_ov){
         if(_ov.type!=='manual'&&_ov.type!=='manual_list'){
-          var _cls={sick:'sick',off:'off-day',holiday:'holiday',unpaid:'unpaid',cancelled:'cancelled',removed:'override-removed'}[_ov.type]||'absent';
-          var _lbl={sick:'Sick',off:'Day Off',holiday:'Holiday',unpaid:'Unpaid',cancelled:'Cancelled',removed:'Removed'}[_ov.type]||_ov.type;
+          if(_ov.type==='removed') return; // don't show removed — just blank
+          var _cls={sick:'sick',off:'off-day',holiday:'holiday',unpaid:'unpaid',cancelled:'cancelled'}[_ov.type]||'absent';
+          var _lbl={sick:'Sick',off:'Day Off',holiday:'Holiday',unpaid:'Unpaid',cancelled:'Cancelled'}[_ov.type]||_ov.type;
           var _safe=encodeURIComponent(JSON.stringify({caregiver:activeCG,date:dateStr,status:_ov.type,override:_ov}));
           var _d1=document.createElement('div');_d1.className='cal-ev '+_cls;_d1.textContent=_lbl;_d1.onclick=(function(s){return function(){openEvModal(s);};})(_safe);evHtml+=_d1.outerHTML;
         }
@@ -1932,7 +1933,9 @@ function renderCalendar(){
                   ov.type==='removed'?'🗑 Removed':'Override';
         }
       }
-      const cls2 = ov&&ov.type!=='manual'&&ov.type!=='manual_list' ? (ov.type==='removed'?'override-removed':ov.type==='sick'?'sick':ov.type==='off'?'off-day':ov.type==='holiday'?'holiday':ov.type==='unpaid'?'unpaid':'cancelled') :
+      // Skip rendering removed entries — just show blank day
+      if(ov && ov.type==='removed') { evHtml+=''; return; }
+      const cls2 = ov&&ov.type!=='manual'&&ov.type!=='manual_list' ? (ov.type==='sick'?'sick':ov.type==='off'?'off-day':ov.type==='holiday'?'holiday':ov.type==='unpaid'?'unpaid':'cancelled') :
                    st==='duty'?'duty':st==='weekoff'?'weekoff':st==='sick'?'sick':st==='cancelled'?'cancelled':'absent';
       const safe=encodeURIComponent(JSON.stringify({...ev, override: ov}));
       let lbl='';
@@ -3164,11 +3167,9 @@ function applyOverrides(){
       var recOid = r.child_order_id || r.order_id || '';
       if(recOid && recOid !== ov.child_order_id) return; // different order — skip override
     }
-    // Customer Order wins — real duty days are protected from override removal
+    // Real Metabase Duty order always wins — overrides/manual never block it
     var isRealDuty = (r.status||'').toLowerCase()==='duty' && !r._manual;
-    var recOid = r.child_order_id||r.order_id||'';
-    var ovTargetsThisOrder = ov.child_order_id && (ov.child_order_id===recOid);
-    if(isRealDuty && !ovTargetsThisOrder) return; // different/new order — portal wins
+    if(isRealDuty) return; // real order shows regardless of any override
     // Apply override
     if(ov.type==='sick')          { r.status='Sick';      r.time_start=''; r.time_end=''; }
     else if(ov.type==='off')      { r.status='Week Off';  r.time_start=''; r.time_end=''; }
@@ -3184,8 +3185,7 @@ function applyOverrides(){
     if(ov.type !== 'manual') return;
     if(!ov.caregiver || !ov.date) return;
     var hasRealDuty = allData.some(function(r){
-      return r.caregiver===ov.caregiver && r.date===ov.date
-        && (r.status||'').toLowerCase()==='duty' && !r._manual;
+      return r.caregiver===ov.caregiver && r.date===ov.date && !r._manual;
     });
     var alreadyInjected = allData.some(function(r){
       return r.caregiver===ov.caregiver && r.date===ov.date && r._manual;
