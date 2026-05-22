@@ -1554,13 +1554,13 @@ async function loadData(force=false){
           type_of_user:String(r['type_of_user']||'').trim()
         };
       }
-      const slot=String(r['Confirmed_DateTime']||r['Booked_Slot']||'');
+      const slot=String(r['Confirmed_DateTime']||r['Booked_Slot']||r['Order_Date']||'');
       // Normalise ISO format (2026-04-15T09:00:00) → space-separated (2026-04-15 09:00:00)
       const slotNorm=slot.replace('T',' ');
       const datePart=slotNorm.slice(0,10)||'';
       const rawTime=slotNorm.length>10?slotNorm.slice(11).replace(/Z$/,'').split('+')[0].split('.')[0]:'';
       const timePart=rawTime.split('-')[0]||''; // strip any trailing timezone offset
-      if(!datePart||datePart<'2026-03-01')return null;
+      if(!datePart||datePart<'2026-01-01')return null;
       const hcRaw=String(r['Homecare']||'').trim();
       const excludedHC=['Carezone Home Healthcare LLC','Dummy HomeCare','Helpful Agency','Nifas HC','babysitting KSA','Pyramid Home Health care'];
       if(excludedHC.some(e=>hcRaw.toLowerCase()===e.toLowerCase()))return null;
@@ -1634,11 +1634,13 @@ async function loadData(force=false){
     if(hiddenCGs.size>0){
       allData = allData.filter(function(r){
         if(!r.caregiver) return true;
-        return ![...hiddenCGs].some(function(hk){return hk.startsWith(r.caregiver+'|');});
+        var cgL=r.caregiver.toLowerCase();
+        return ![...hiddenCGs].some(function(hk){return hk.toLowerCase().startsWith(cgL+'|');});
       });
       rawData = rawData.filter(function(r){
         if(!r.caregiver) return true;
-        return ![...hiddenCGs].some(function(hk){return hk.startsWith(r.caregiver+'|');});
+        var cgL=r.caregiver.toLowerCase();
+        return ![...hiddenCGs].some(function(hk){return hk.toLowerCase().startsWith(cgL+'|');});
       });
     }
     applyOverrides();
@@ -1684,7 +1686,9 @@ function setSyncState(state,text){
 function renderHCGrid(){
   const now=new Date();const yr=now.getFullYear(),mo=now.getMonth();
   // Build hcs from actual rawData strings (guaranteed exact match for cgs lookup)
-  var _allHcs=[...new Set(rawData.map(r=>r.homecare))].filter(Boolean).sort();
+  // Include HCs from hiddenCGs so their CG cards are rendered (needed for restore)
+  var _hiddenHCs=[...hiddenCGs].map(function(k){var p=k.split('|');return p[1]||'';}).filter(Boolean);
+  var _allHcs=[...new Set([...rawData.map(r=>r.homecare),..._hiddenHCs])].filter(Boolean).sort();
   var hcs;
   if(_session&&_session.role==='hc'&&_session.homecare){
     var _shcStrip=_session.homecare.toLowerCase().replace(/[\s\u00a0]+/g,'');
@@ -1699,7 +1703,13 @@ function renderHCGrid(){
 
   hcs.forEach(hc=>{
     const col=hcColor(hc);
-    const cgs=[...new Set(rawData.filter(r=>r.homecare===hc).map(r=>r.caregiver))].filter(Boolean).sort();
+    // Include hidden CGs so they can be restored via show-hidden mode
+    const _hiddenForHC=[...hiddenCGs].filter(function(k){return k.endsWith('|'+hc);}).map(function(k){return k.split('|')[0];});
+    const cgs=[...new Set([
+      ...rawData.filter(r=>r.homecare===hc).map(r=>r.caregiver),
+      ...allData.filter(r=>r.homecare===hc).map(r=>r.caregiver),
+      ..._hiddenForHC
+    ])].filter(Boolean).sort();
     // Also include manually added caregivers for this HC
     Object.values(manualCGs).filter(function(c){return c.homecare===hc;}).forEach(function(c){if(!cgs.includes(c.name))cgs.push(c.name);});
     html+=`<div class="hc-section">
@@ -3981,7 +3991,7 @@ function applyHiddenFilter(){
     var cg=card.dataset.cg, hc=card.dataset.hc;
     if(!cg||!hc) return;
     var key=cg+'|'+hc;
-    var isHidden=hiddenCGs.has(key);
+    var isHidden=[...hiddenCGs].some(function(k){return k.toLowerCase()===(cg+'|'+hc).toLowerCase();});
     if(showHiddenMode){
       card.style.display='';
       if(isHidden){
