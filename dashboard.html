@@ -712,20 +712,6 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <!-- Charts -->
  <div class="analytics-grid" id="analytics-grid"></div>
 
- <!-- Revenue Projection -->
- <div style="margin-top:28px">
-  <div style="font-size:14px;font-weight:700;color:var(--text1);margin-bottom:4px">📈 Revenue Projection — Next 4 Weeks</div>
-  <div style="font-size:11px;color:var(--text3);margin-bottom:14px;line-height:1.7">
-   📌 <b style="color:var(--text2)">What this shows:</b> Your last 12 weeks of booking revenue (solid line) and a 4-week forecast (dashed line).<br>
-   The model finds the trend in your data and projects it forward — like a simple weather forecast for revenue.<br>
-   🔵 <b>Solid line</b> = actual revenue. &nbsp; 🟡 <b>Dashed line</b> = forecast. &nbsp; 🟢 <b>Thin line</b> = overall trend direction.<br>
-   <b>R² score</b> = how reliable the forecast is. Above 70% = trustworthy. Below 40% = data is too irregular to predict well.
-  </div>
-  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;overflow-x:auto">
-   <canvas id="revenue-projection-chart" height="220"></canvas>
-  </div>
-  <div id="revenue-projection-stats" style="display:flex;gap:16px;flex-wrap:wrap;margin-top:12px"></div>
- </div>
  </div>
 </div>
 
@@ -2116,7 +2102,6 @@ function renderAnalytics(){
   renderMonthTabs();
   renderWeekTabs();
   renderAnalyticsData();
-  setTimeout(renderRevenueProjection, 200); // slight delay to let charts render first
 }
 
 function renderMonthTabs(){
@@ -2158,12 +2143,24 @@ function setAnaWk(wk, end){
 }
 
 function getAnalyticsData(){
-  return allData.filter(r => {
-    const d = parseD(r.date);
+  // Mirror EXACTLY what roster shows:
+  // - Exclude hidden CGs
+  // - Override status takes priority over allData status
+  // - Only return records that would show as active on the roster
+  return allData.filter(function(r){
+    var d = parseD(r.date);
     if(!d || d.y !== anaYr || d.m !== anaMo) return false;
     if(anaWk !== 'all' && anaWkStart && anaWkEnd){
-      return r.date >= anaWkStart && r.date <= anaWkEnd;
+      if(r.date < anaWkStart || r.date > anaWkEnd) return false;
     }
+    // Exclude hidden CGs (not visible on roster)
+    if(r.caregiver){
+      var cgL = r.caregiver.toLowerCase();
+      if([...hiddenCGs].some(function(hk){return hk.toLowerCase().startsWith(cgL+'|');})) return false;
+    }
+    // Exclude HCs that are excluded from roster
+    var excludedHC=['Carezone Home Healthcare LLC','Dummy HomeCare','Helpful Agency','Nifas HC','babysitting KSA','Pyramid Home Health care'];
+    if(r.homecare && excludedHC.some(function(e){return (r.homecare||'').toLowerCase()===e.toLowerCase();})) return false;
     return true;
   });
 }
@@ -2241,25 +2238,34 @@ function renderAnalyticsData(){
   const hcS=Object.entries(hcMap).sort((a,b)=>b[1]-a[1]);
   const maxHC=hcS[0]?hcS[0][1]:1;
 
-  // All caregivers performance by hours
-  // Formula: hours_per_day × actual duty days in selected period
+  // ── Hours from ROSTER (allData) only — strictly what's visible on the roster ──
   const cgMap={};
   // Include all caregivers in period (even 0 hours)
-  data.forEach(r=>{ if(r.caregiver && !cgMap[r.caregiver]) cgMap[r.caregiver]=0; });
-  // For each duty day, add hours_per_day
-  data.filter(isActiveShift).forEach(r=>{
+  data.forEach(function(r){ if(r.caregiver && !cgMap[r.caregiver]) cgMap[r.caregiver]=0; });
+
+  function calcBookingHrs(b){
+    if(!b.time_start||!b.time_end)return 0; // skip if no time
+    try{
+      var toH=function(t){var isPM=/PM/i.test(t);t=t.replace(/\s*(AM|PM)/i,'').trim();var p=t.split(':'),h=parseInt(p[0])||0,m=parseInt(p[1])||0;if(isPM&&h<12)h+=12;if(!isPM&&h===12)h=0;return h+m/60;};
+      var diff=toH(b.time_end)-toH(b.time_start);return diff>0?diff:24+diff;
+    }catch(e){return 0;}
+  }
+
+  // For each roster record in this period, add hours
+  data.forEach(function(r){
     if(!r.caregiver) return;
-    const pkg = r.package_type||r.package_raw||'';
-    const hrsPerDay = extractHours(pkg)||0;
-    cgMap[r.caregiver] = (cgMap[r.caregiver]||0) + hrsPerDay;
-  });
-  function calcBookingHrs(b){if(!b.time_start||!b.time_end)return 0; // skip manual bookings with no time
-try{var toH=function(t){var isPM=/PM/i.test(t);t=t.replace(/\s*(AM|PM)/i,'').trim();var p=t.split(':'),h=parseInt(p[0])||0,m=parseInt(p[1])||0;if(isPM&&h<12)h+=12;if(!isPM&&h===12)h=0;return h+m/60;};var diff=toH(b.time_end)-toH(b.time_start);return diff>0?diff:24+diff;}catch(e){return 1;}}
-  Object.values(overrides).forEach(function(ov){
-    if(!ov.caregiver)return;var d=parseD(ov.date);if(!d||d.y!==anaYr||d.m!==anaMo)return;
-    if(anaWk!=='all'&&anaWkStart&&anaWkEnd){if(ov.date<anaWkStart||ov.date>anaWkEnd)return;}
-    var bookings=[];if(ov.type==='manual')bookings=[ov];else if(ov.type==='manual_list'&&ov.bookings)bookings=ov.bookings;
-    bookings.forEach(function(b){var hrs=calcBookingHrs(b),cg=b.caregiver||ov.caregiver;if(!cgMap[cg])cgMap[cg]=0;cgMap[cg]+=hrs;var hc=b.homecare||ov.homecare||(rawData.find(function(r){return r.caregiver===cg;})||{}).homecare||'';if(hc)hcMap[hc]=(hcMap[hc]||0)+1;});
+    var st=(r.status||'').toLowerCase().replace(/\s+/g,'');
+    if(!isActiveShift(r)) return; // skip Sick/Off/Holiday/Unpaid/Cancelled/Removed/WeekOff
+    var hrs=0;
+    if(st==='manual'||r._manual){
+      // Manual booking — use actual time range
+      hrs = calcBookingHrs(r);
+    } else {
+      // Duty from Metabase — use hours from package
+      var pkg = r.package_type||r.package_raw||'';
+      hrs = extractHours(pkg)||0;
+    }
+    if(hrs>0) cgMap[r.caregiver]=(cgMap[r.caregiver]||0)+hrs;
   });
   const MAX_MONTH_HRS = 288;
   // Build weighted cgS: each CG gets max hours based on their start date in this period
@@ -2741,29 +2747,6 @@ function predictLogistic(model, features){
 }
 
 // ── Revenue Projection ────────────────────────────────────────────
-var _revenueChart = null;
-
-function renderRevenueProjection(){
-  if(!rawData||!rawData.length)return;
-  var monthMap={};
-  rawData.forEach(function(r){if(!r.date||(r.status||'').toLowerCase()==='cancelled')return;if(!r.final_price||r.final_price<=0)return;var mo=r.date.slice(0,7);if(!monthMap[mo])monthMap[mo]=0;monthMap[mo]+=r.final_price;});
-  var months=Object.keys(monthMap).sort();
-  if(months.length<2){document.getElementById('revenue-projection-stats').innerHTML='<div style="color:var(--text3);font-size:12px">Not enough monthly data</div>';return;}
-  var xH=months.map(function(_,i){return i;}),yH=months.map(function(m){return monthMap[m];});
-  var model=linearRegression(xH,yH),lastMo=months[months.length-1],fm=[];
-  for(var i=1;i<=3;i++){var d=new Date(lastMo+'-01');d.setMonth(d.getMonth()+i);fm.push(d.toISOString().slice(0,7));}
-  var xF=fm.map(function(_,i){return months.length+i;});
-  var yF=xF.map(function(x){return Math.max(0,predictLR(model,x));});
-  var labels=months.concat(fm).map(function(m){return new Date(m+'-01').toLocaleString('default',{month:'short',year:'2-digit'});});
-  var hd=yH.concat(new Array(3).fill(null));
-  var fd=new Array(months.length-1).fill(null).concat([yH[yH.length-1]]).concat(yF);
-  if(_revenueChart)_revenueChart.destroy();
-  var canvas=document.getElementById('revenue-projection-chart');if(!canvas)return;
-  _revenueChart=new Chart(canvas.getContext('2d'),{type:'bar',data:{labels:labels,datasets:[{label:'Actual (AED)',data:hd,backgroundColor:'rgba(47,129,247,.65)',borderColor:'#2f81f7',borderWidth:1,borderRadius:4},{label:'Forecast (AED)',data:fd,backgroundColor:'rgba(245,158,11,.45)',borderColor:'#f59e0b',borderWidth:1,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',font:{size:11}}},tooltip:{callbacks:{label:function(ctx){return ctx.dataset.label+': AED '+Math.round(ctx.parsed.y||0).toLocaleString();}}}},scales:{x:{ticks:{color:'#64748b',font:{size:10}},grid:{color:'rgba(255,255,255,.05)'}},y:{ticks:{color:'#64748b',font:{size:10},callback:function(v){return 'AED '+Math.round(v).toLocaleString();}},grid:{color:'rgba(255,255,255,.05)'}}}}});
-  var total=yH.reduce(function(a,b){return a+b;},0),fTotal=yF.reduce(function(a,b){return a+b;},0),tc=model.slope>0?'#10b981':'#ef4444';
-  document.getElementById('revenue-projection-stats').innerHTML='<div class="daily-kpi"><div class="daily-kpi-val" style="color:#2f81f7">AED '+Math.round(total).toLocaleString()+'</div><div class="daily-kpi-lbl">Total actual</div></div><div class="daily-kpi"><div class="daily-kpi-val">AED '+Math.round(total/yH.length).toLocaleString()+'</div><div class="daily-kpi-lbl">Avg/month</div></div><div class="daily-kpi"><div class="daily-kpi-val" style="color:#f59e0b">AED '+Math.round(fTotal).toLocaleString()+'</div><div class="daily-kpi-lbl">Forecast 3m</div></div><div class="daily-kpi"><div class="daily-kpi-val" style="color:'+tc+'">'+(model.slope>0?'Trending Up':'Trending Down')+'</div><div class="daily-kpi-lbl">AED '+Math.round(Math.abs(model.slope)).toLocaleString()+'/mo</div></div>';
-}
-
 // ── Churn Risk (Logistic Regression) ─────────────────────────────
 function renderChurnRisk(){
   if(!rawData||!rawData.length) return;
@@ -3178,9 +3161,10 @@ function applyOverrides(){
       var recOid = r.child_order_id || r.order_id || '';
       if(recOid && recOid !== ov.child_order_id) return; // different order — skip override
     }
-    // Real Metabase Duty order always wins — overrides/manual never block it
+    // For 'removed' override: real Duty order wins (new assignment shows through)
+    // For ALL other overrides (off/sick/holiday/unpaid/cancelled): apply even to real Duty
     var isRealDuty = (r.status||'').toLowerCase()==='duty' && !r._manual;
-    if(isRealDuty) return; // real order shows regardless of any override
+    if(isRealDuty && ov.type==='removed') return; // only 'removed' is skipped for real Duty
     // Apply override
     if(ov.type==='sick')          { r.status='Sick';      r.time_start=''; r.time_end=''; }
     else if(ov.type==='off')      { r.status='Week Off';  r.time_start=''; r.time_end=''; }
