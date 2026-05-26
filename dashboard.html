@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
@@ -964,7 +965,8 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
     </div>
     <div style="margin-top:8px"><span class="planner-label">Week Off (CG2)</span><div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px" id="sb-wo2"><div class="day-chip-pl" data-day="Sunday" onclick="this.classList.toggle('on')">Sun</div><div class="day-chip-pl" data-day="Monday" onclick="this.classList.toggle('on')">Mon</div><div class="day-chip-pl" data-day="Tuesday" onclick="this.classList.toggle('on')">Tue</div><div class="day-chip-pl" data-day="Wednesday" onclick="this.classList.toggle('on')">Wed</div><div class="day-chip-pl" data-day="Thursday" onclick="this.classList.toggle('on')">Thu</div><div class="day-chip-pl" data-day="Friday" onclick="this.classList.toggle('on')">Fri</div><div class="day-chip-pl" data-day="Saturday" onclick="this.classList.toggle('on')">Sat</div></div></div>
    </div>
-   <button class="planner-btn" onclick="sbGenerate()" style="width:100%">Generate Schedule</button>
+   <button <button class="planner-btn" onclick="sbGenerate()" style="flex:1;margin:0">Generate Schedule</button>
+    <button class="planner-btn" onclick="openSavedPlanners()" style="flex:1;margin:0;background:var(--bg3);color:var(--text);border:1px solid var(--border)">📂 Load Saved</button>
   </div>
 
  </div>
@@ -4098,6 +4100,9 @@ async function loadSavedPlannerDoc(docId){
     document.getElementById('pl-working-days').textContent=w;
     document.getElementById('pl-off-days').textContent=off;
     document.getElementById('pl-sick-days').textContent=sick;
+    document.getElementById('pl-toolbar').style.display='flex';
+    document.getElementById('pl-share-bar').style.display='flex';
+    updateShareLink();
     renderPlannerTable();
     alert('Loaded: '+(d.caregiver||''));
   }catch(e){alert('Load failed: '+e.message);}
@@ -4628,6 +4633,24 @@ async function loadLeads(force){
     if(wrap)wrap.innerHTML='<div style="padding:40px;text-align:center;color:var(--absent)"><div style="font-size:15px;margin-bottom:10px">Could not load leads</div><div style="font-size:12px;color:var(--text2);margin-bottom:12px">'+e.message+'</div><button onclick="loadLeads(true)" style="padding:8px 20px;background:var(--accent);border:none;border-radius:6px;color:#fff;cursor:pointer;font-size:12px">Retry</button><br><br><div style="font-size:11px;color:var(--text3)">Or use Upload CSV</div></div>';
   }
 }
+function autoHeat(l){
+  var notes=((l['notes']||'')+'|'+(l['additional_notes']||'')).toLowerCase();
+  var status=String(l['status']||'').toLowerCase();
+  var deadKeywords=['looking for job','high price','not interested','already hired',
+    'hired someone','found someone','no answer','not responding','price issue',
+    'too expensive','budget issue','not available','cancelled','not reachable',
+    'unreachable','no response','rejected'];
+  for(var i=0;i<deadKeywords.length;i++){
+    if(notes.includes(deadKeywords[i])||status.includes(deadKeywords[i]))return 'dead';
+  }
+  if(status==='lost'||status==='dead'||status==='closed')return 'dead';
+  var hotKeywords=['urgent','asap','confirmed','ready','deposit','payment','very interested'];
+  for(var i=0;i<hotKeywords.length;i++){if(notes.includes(hotKeywords[i]))return 'hot';}
+  var warmKeywords=['interested','follow up','callback','call back','thinking','considering'];
+  for(var i=0;i<warmKeywords.length;i++){if(notes.includes(warmKeywords[i]))return 'warm';}
+  return 'cold';
+}
+
 function parseLeadsJSON(rows){
   var leads=[];
   rows.forEach(function(row){
@@ -5601,6 +5624,24 @@ function toggleFCLMonth(header){
   if(arrow)arrow.textContent=isOpen?'\u25bc':'\u25b2';
 }
 
+
+function getFilteredFCLeads(){
+  var q=(document.getElementById('fcl-search')||{}).value||'';
+  var fStage=(document.getElementById('fcl-filter-stage')||{}).value||'';
+  var fAgent=(document.getElementById('fcl-filter-agent')||{}).value||'';
+  var fMonth=(document.getElementById('fcl-filter-month')||{}).value||'';
+  var fWeek=(document.getElementById('fcl-filter-week')||{}).value||'';
+  return _fclLeads.filter(function(l){
+    var phone=String(l.phone||l.phone_normalized||'').replace(/[\s\+\-]/g,'');
+    if(!phone.startsWith('96'))return false;
+    if(q&&!(l.name||'').toLowerCase().includes(q.toLowerCase())&&!phone.includes(q))return false;
+    if(fStage&&fclGetStage(l)!==fStage)return false;
+    if(fAgent&&(l.agent||'')!==fAgent)return false;
+    if(fMonth&&(l.month||'')!==fMonth)return false;
+    if(fWeek&&(l.week||'')!==fWeek)return false;
+    return true;
+  });
+}
 
 function renderFCLeads() {
   renderFCLKPIs();
