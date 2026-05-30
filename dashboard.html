@@ -2293,6 +2293,47 @@ function renderAnalyticsData(){
   const newPct = totalC ? Math.round(newC/totalC*100) : 0;
   const repPct = totalC ? Math.round(repC/totalC*100) : 0;
 
+
+  // ── Revenue per Hour ──────────────────────────────────────────
+  // Build revenue map: sum final_price from rawData orders for CGs active in this period
+  var revMap = {};
+  var seenOrders = new Set();
+  rawData.forEach(function(r){
+    if(!r.caregiver || !r.final_price) return;
+    // Only include orders that overlap with the analytics period
+    var startOk = r.date && r.date <= (anaWk!=='all'&&anaWkEnd ? anaWkEnd : anaYr+'-'+String(anaMo+2).padStart(2,'0')+'-00');
+    var endOk   = (r.end_date||r.date) >= (anaWk!=='all'&&anaWkStart ? anaWkStart : anaYr+'-'+String(anaMo+1).padStart(2,'0')+'-01');
+    if(!startOk||!endOk) return;
+    // Deduplicate by order_id
+    var oid = r.child_order_id||r.order_id||'';
+    var deKey = r.caregiver+'|'+oid;
+    if(oid && seenOrders.has(deKey)) return;
+    if(oid) seenOrders.add(deKey);
+    revMap[r.caregiver] = (revMap[r.caregiver]||0) + (parseFloat(r.final_price)||0);
+  });
+
+  // Build rev-per-hour list using cgS (which has hours)
+  var rphData = (window._cgS_full||[]).filter(function(e){ return e[1]>0 && !isCGOnLeave(e[0],e[4]); }).map(function(e){
+    var cg=e[0], hrs=e[1], hc=e[4];
+    var rev = revMap[cg]||0;
+    var rph = hrs>0 ? Math.round(rev/hrs) : 0;
+    return [cg, hrs, rev, rph, hc];
+  }).sort(function(a,b){return b[3]-a[3];});
+
+  var maxRph = rphData.length ? rphData[0][3] : 1;
+  var _revPerHrHTML = rphData.length ? rphData.map(function(e){
+    var cg=e[0], hrs=e[1], rev=e[2], rph=e[3], hc=e[4];
+    var pct = maxRph ? Math.round(rph/maxRph*100) : 0;
+    var col = rph>=200?'var(--duty)':rph>=100?'var(--accent)':'var(--sick)';
+    var emoji = rph>=200?'&#x1F7E2;':rph>=100?'&#x1F535;':'&#x1F534;';
+    var exTag = isExclusiveCG(cg,hc)?'<span style="font-size:8px;padding:1px 3px;border-radius:3px;background:rgba(245,158,11,.25);color:#f59e0b;margin-left:2px">EX</span>':'';
+    return '<div class="bar-row" style="margin-bottom:4px">'
+      +'<div class="bar-label" title="'+cg+'" style="width:110px;min-width:110px;font-size:11px;overflow:hidden;text-overflow:ellipsis">'+emoji+' '+cg.split(' ')[0]+exTag+'</div>'
+      +'<div class="bar-track"><div class="bar-fill" style="width:'+pct+'%;background:'+col+';border-radius:4px;min-width:'+(rph>0?'3px':'0')+'"></div></div>'
+      +'<div style="font-size:11px;font-family:monospace;white-space:nowrap;min-width:110px;text-align:right"><span style="color:'+col+';font-weight:600">AED '+rph+'/h</span> <span style="color:var(--text3);font-size:9px">'+hrs+'h · AED '+(rev?rev.toLocaleString():'0')+'</span></div>'
+      +'</div>';
+  }).join('') : '<div style="color:var(--text2);font-size:12px;padding:10px">No revenue data for this period</div>';
+
   document.getElementById('analytics-grid').innerHTML = `
 
     <!-- ── Chart 1: HC Performance ── -->
@@ -2395,6 +2436,19 @@ function renderAnalyticsData(){
       }).join('') : '<div style="color:var(--text2);font-size:12px;padding:10px">No data</div>'}
       </div>
     </div>
+
+    <!-- ── Revenue per Hour ── -->
+    <div class="a-card" style="grid-column:1/-1">
+      <div class="a-title"><div class="a-title-bar" style="background:#e879f9"></div>&#x1F4B0; Revenue per Hour — by Caregiver</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.6">
+        &#x1F4CC; <b style="color:var(--text2)">What this shows:</b> How much revenue each caregiver generates per hour worked, based on order value ÷ hours in period.<br>
+        <span style="color:var(--accent)">Higher = more revenue-dense bookings. Use this to identify top-earning caregivers and optimise assignment.</span>
+      </div>
+      <div id="rev-per-hr-bars" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:4px 20px">
+        ${_revPerHrHTML}
+      </div>
+    </div>
+
 `;
   // ── Post-render: avg badges + comparison table ──
   (function(){
