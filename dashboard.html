@@ -897,6 +897,11 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
   <select class="roster-hc-filter" id="roster-hc-filter" onchange="renderRoster()">
    <option value="">All Homecare</option>
   </select>
+  <select class="roster-hc-filter" id="roster-city-filter" onchange="renderRoster()">
+   <option value="">All Cities</option>
+   <option value="Dubai">🏙 Dubai</option>
+   <option value="AUH">🕌 Abu Dhabi</option>
+  </select>
   <span class="roster-legend">
    <span class="rl-dot" style="background:#f59e0b"></span>Duty
    <span class="rl-dot" style="background:#a855f7"></span>Manual
@@ -4219,6 +4224,14 @@ function switchToRoster(){
     var hcs=[...new Set(rawData.map(function(r){return r.homecare;}))].filter(Boolean).sort();
     sel.innerHTML='<option value="">All Homecare</option>';
     hcs.forEach(function(hc){sel.innerHTML+='<option value="'+hc+'"'+(hc===cur?' selected':'')+'>'+hc+'</option>';});
+    // Populate city filter
+    var citysel=document.getElementById('roster-city-filter');
+    if(citysel){
+      var curcity=citysel.value;
+      var cities=[...new Set(rawData.map(function(r){return(r.location||'').trim();}).filter(Boolean))].sort();
+      citysel.innerHTML='<option value="">All Cities</option>';
+      cities.forEach(function(c){citysel.innerHTML+='<option value="'+c+'"'+(c===curcity?' selected':'')+'>'+c+'</option>';});
+    }
     // Lock dropdown for HC role users
     if(_session&&_session.role==='hc'&&_session.homecare){
       var _rshcStrip=_session.homecare.toLowerCase().replace(/[\s\u00a0]+/g,'');
@@ -4246,6 +4259,16 @@ function renderRoster(){
   var dates=[];
   for(var d=1;d<=dim;d++) dates.push(year+'-'+String(month+1).padStart(2,'0')+'-'+String(d).padStart(2,'0'));
   var filterHC=document.getElementById('roster-hc-filter').value;
+  var filterCity=(document.getElementById('roster-city-filter')||{}).value||'';
+  // Build per-CG city lookup from rawData (most recent order location)
+  var cgCityMap={};
+  rawData.forEach(function(r){
+    if(!r.caregiver||!r.location) return;
+    // Always keep the most recent (latest date) location per CG
+    if(!cgCityMap[r.caregiver]||r.date>cgCityMap[r.caregiver].date){
+      cgCityMap[r.caregiver]={city:(r.location||'').trim(),date:r.date||''};
+    }
+  });
   // Restrict roster to session HC for HC role users
   var _rosterHC = (_session&&_session.role==='hc'&&_session.homecare) ? _session.homecare : null;
   if(_rosterHC){
@@ -4261,11 +4284,13 @@ function renderRoster(){
   rawData.forEach(function(r){
     if(!r.caregiver) return;
     if(filterHC&&r.homecare!==filterHC) return;
+    if(filterCity){var cgCity=(cgCityMap[r.caregiver]||{}).city||'';if(cgCity!==filterCity)return;}
     if(!cgMap[r.caregiver]) cgMap[r.caregiver]={name:r.caregiver,homecare:r.homecare||''};
   });
   Object.entries(manualCGs).forEach(function(e){
     var v=e[1];
     if(filterHC&&v.homecare!==filterHC) return;
+    if(filterCity){var mCity=(cgCityMap[v.name]||{}).city||'';if(mCity&&mCity!==filterCity)return;}
     if(!cgMap[v.name]) cgMap[v.name]={name:v.name,homecare:v.homecare||''};
   });
   [...hiddenCGs].forEach(function(hk){
