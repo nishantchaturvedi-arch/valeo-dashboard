@@ -433,7 +433,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .rd-manual{background:#a855f7;color:#fff;}
 .rd-wo{background:#1a1a1a;color:#555;}
 .rd-sick{background:#ef4444;color:#fff;}
-.rd-off{background:#eab308;color:#000;}
+.rd-off{background:#475569;color:#fff;}
+.rd-shady{background:#f472b6;color:#fff;}
 .rd-empty{background:transparent;}
 .rd-today{outline:2px solid var(--accent)!important;outline-offset:-2px;}
 .col-weekend{opacity:.7;}
@@ -609,7 +610,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <button class="main-tab" onclick="switchTab('leads')">🎯 SM Lead Tracker</button>
  <button class="main-tab" onclick="switchTab('fclead')">💬 FC Lead Tracker</button>
  <button class="main-tab" onclick="switchTab('supply')">👥 Supply Tracker</button>
- <button class="main-tab" onclick="switchTab('penalty')">&#x26A0;&#xFE0F; Penalty Tracker</button>
+ <button class="main-tab" onclick="switchTab('penalty')">⚠️ Penalty Tracker</button>
 </div>
 
 <!-- ── Availability bar (calendar only) ── -->
@@ -619,7 +620,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <span style="font-size:11px;color:var(--text2)">→</span>
  <input class="avail-input" type="date" id="avail-to">
  <input class="avail-input" type="time" id="avail-time" title="Shift start time" style="width:110px">
- <span style="font-size:10px;color:var(--text3)" title="Min 12h rest">&#x23F1; 12h rest</span>
+ <span style="font-size:10px;color:var(--text3)" title="Min 12h rest">⏱ 12h rest</span>
  <button class="avail-btn" onclick="checkAvail()">Check</button>
  <button class="avail-clear" onclick="clearAvail()">Clear</button>
  <span class="avail-result" id="avail-result"></span>
@@ -704,10 +705,10 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <!-- KPI explanation -->
  <div style="font-size:11px;color:var(--text3);padding:8px 4px;margin-bottom:4px;line-height:1.7">
   <b style="color:var(--text2)">How to read the numbers below:</b>
-  &nbsp; <b>Duty Shifts</b> = confirmed caregiver working days.
-  &nbsp; <b>Active CGs</b> = caregivers with at least one booking.
-  &nbsp; <b>Clients</b> = unique clients served.
-  &nbsp; <b>Utilisation</b> = % of shifts that were actual duty (vs cancelled/off).
+    <b>Duty Shifts</b> = confirmed caregiver working days.
+    <b>Active CGs</b> = caregivers with at least one booking.
+    <b>Clients</b> = unique clients served.
+    <b>Utilisation</b> = % of shifts that were actual duty (vs cancelled/off).
  </div>
  <!-- KPIs -->
  <div class="kpi-grid" id="kpi-grid"></div>
@@ -882,7 +883,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;width:520px;max-width:95vw;max-height:80vh;overflow-y:auto">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
    <span style="font-size:14px;font-weight:700;color:var(--text1)">Saved Schedules</span>
-   <button onclick="document.getElementById('saved-planners-overlay').style.display='none'" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer">&#x2715;</button>
+   <button onclick="document.getElementById('saved-planners-overlay').style.display='none'" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer">✕</button>
   </div>
   <div id="saved-planners-list">Loading...</div>
  </div>
@@ -890,9 +891,9 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 <!-- ── PACKAGE PLANNER PAGE ── -->
 <div class="page" id="page-roster">
  <div class="roster-toolbar">
-  <button class="roster-nav-btn" onclick="rosterPrevMonth()">&#8249;</button>
+  <button class="roster-nav-btn" onclick="rosterPrevMonth()">‹</button>
   <span class="roster-month-label" id="roster-month-label"></span>
-  <button class="roster-nav-btn" onclick="rosterNextMonth()">&#8250;</button>
+  <button class="roster-nav-btn" onclick="rosterNextMonth()">›</button>
   <select class="roster-hc-filter" id="roster-hc-filter" onchange="renderRoster()">
    <option value="">All Homecare</option>
   </select>
@@ -901,7 +902,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
    <span class="rl-dot" style="background:#a855f7"></span>Manual
    <span class="rl-dot" style="background:#1a1a1a"></span>Week Off
    <span class="rl-dot" style="background:#ef4444"></span>Sick
-   <span class="rl-dot" style="background:#eab308"></span>Off/Holiday
+   <span class="rl-dot" style="background:#475569"></span>Off/Holiday
   </span>
  </div>
  <div class="roster-wrap" id="roster-wrap"></div>
@@ -912,8 +913,8 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
    <label style="font-size:12px;font-weight:600;color:var(--text2)">Date</label>
    <input type="date" id="daily-date" class="avail-input" style="width:160px" onchange="renderDailyOrders()">
    <button class="avail-btn" onclick="setDailyToday()">Today</button>
-   <button class="roster-nav-btn" onclick="shiftDailyDate(-1)" style="width:28px;height:28px;font-size:16px">&#8249;</button>
-   <button class="roster-nav-btn" onclick="shiftDailyDate(1)" style="width:28px;height:28px;font-size:16px">&#8250;</button>
+   <button class="roster-nav-btn" onclick="shiftDailyDate(-1)" style="width:28px;height:28px;font-size:16px">‹</button>
+   <button class="roster-nav-btn" onclick="shiftDailyDate(1)" style="width:28px;height:28px;font-size:16px">›</button>
   </div>
   <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px">
    <select id="daily-hc-filter" class="roster-hc-filter" onchange="renderDailyOrders()">
@@ -994,8 +995,8 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <span style="font-size:11px;font-weight:600;color:var(--text);white-space:nowrap">🔗 Client Link:</span>
  <input class="pl-share-url" id="pl-share-url" readonly>
  <button class="pl-copy-btn" onclick="copyPlannerLink()">Copy Link</button>
- <button class="pl-copy-btn" style="background:var(--duty)" onclick="savePlannerToPortal()">&#x1F4BE; Save</button>
- <button class="pl-copy-btn" style="background:var(--bg3);color:var(--text2)" onclick="openSavedPlanners()">&#x1F4C2; Load</button>
+ <button class="pl-copy-btn" style="background:var(--duty)" onclick="savePlannerToPortal()">💾 Save</button>
+ <button class="pl-copy-btn" style="background:var(--bg3);color:var(--text2)" onclick="openSavedPlanners()">📂 Load</button>
  </div>
 
  <!-- Table -->
@@ -1188,11 +1189,11 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 
 <div class="page" id="page-fclead">
 <div style="padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-  <div style="font-size:15px;font-weight:700">&#x1F4AC; FC Lead Tracker</div>
+  <div style="font-size:15px;font-weight:700">💬 FC Lead Tracker</div>
   <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
     <span id="fcl-last-sync" style="font-size:11px;color:var(--text3)"></span>
-    <button onclick="loadFCLeads(true)" style="padding:6px 14px;background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">&#x1F504; Refresh</button>
-    <button onclick="exportFCLeadsCSV()" style="padding:6px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">&#x1F4E5; Export CSV</button>
+    <button onclick="loadFCLeads(true)" style="padding:6px 14px;background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">🔄 Refresh</button>
+    <button onclick="exportFCLeadsCSV()" style="padding:6px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">📥 Export CSV</button>
   </div>
 </div>
 <div id="fcl-kpi-row" style="padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap"></div>
@@ -1200,14 +1201,14 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
   <input id="fcl-search" type="text" placeholder="Search name / phone..." oninput="renderFCLeads()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:Inter,sans-serif;font-size:12px;padding:6px 10px;border-radius:6px;outline:none;width:200px">
   <select id="fcl-filter-stage" onchange="renderFCLeads()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
     <option value="">All Stages</option>
-    <option value="New Enquiry">&#x1F195; New Enquiry</option>
-    <option value="Call Done">&#x1F4DE; Call Done</option>
-    <option value="Proposal Sent">&#x1F4CB; Proposal Sent</option>
-    <option value="Follow Up">&#x23F3; Follow Up</option>
-    <option value="Converted">&#x2705; Converted</option>
-    <option value="Lost — Price">&#x1F4B8; Lost — Price</option>
-    <option value="Lost — No Reply">&#x1F47B; Lost — No Reply</option>
-    <option value="Lost — Not Interested">&#x274C; Lost — Not Interested</option>
+    <option value="New Enquiry">🆕 New Enquiry</option>
+    <option value="Call Done">📞 Call Done</option>
+    <option value="Proposal Sent">📋 Proposal Sent</option>
+    <option value="Follow Up">⏳ Follow Up</option>
+    <option value="Converted">✅ Converted</option>
+    <option value="Lost — Price">💸 Lost — Price</option>
+    <option value="Lost — No Reply">👻 Lost — No Reply</option>
+    <option value="Lost — Not Interested">❌ Lost — Not Interested</option>
   </select>
   <select id="fcl-filter-agent" onchange="renderFCLeads()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
     <option value="">All Agents</option>
@@ -1233,7 +1234,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
   <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:22px;width:420px;max-width:95vw;max-height:90vh;overflow-y:auto">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
       <div style="font-size:14px;font-weight:600" id="fcl-modal-title">Lead</div>
-      <button onclick="closeFCLModal()" style="background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer">&#x2715;</button>
+      <button onclick="closeFCLModal()" style="background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer">✕</button>
     </div>
     <div id="fcl-modal-body"></div>
   </div>
@@ -1243,12 +1244,12 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 <div class="page" id="page-penalty">
 <div id="sla-panel" style="background:var(--bg2);border-bottom:1px solid var(--border)">
   <div onclick="toggleSLA()" style="padding:10px 20px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none">
-    <span style="font-size:12px;font-weight:600;color:var(--accent)">&#x1F4CB; Valeo SLA &amp; Penalty Reference &#x2014; Applicable to All Homecare Partners &#x2014; click to expand</span>
-    <span id="sla-arrow" style="color:var(--text2);font-size:13px">&#x25BC;</span>
+    <span style="font-size:12px;font-weight:600;color:var(--accent)">📋 Valeo SLA &amp; Penalty Reference — Applicable to All Homecare Partners — click to expand</span>
+    <span id="sla-arrow" style="color:var(--text2);font-size:13px">▼</span>
   </div>
   <div id="sla-body" style="display:none;padding:0 20px 16px">
     <div style="padding:8px 0 12px;font-size:11px;color:var(--text2);line-height:1.6">
-      &#x2139;&#xFE0F; These SLA terms and penalty rates apply uniformly to <b style="color:var(--text)">all homecare partners</b> under the Valeo Health agreement.
+      ℹ️ These SLA terms and penalty rates apply uniformly to <b style="color:var(--text)">all homecare partners</b> under the Valeo Health agreement.
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div style="background:var(--bg3);border-radius:8px;overflow:hidden;border:1px solid var(--border)">
@@ -1260,7 +1261,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
           </tr></thead>
           <tbody>
             <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">SP late &lt;30 min</td><td style="padding:6px 10px;color:var(--text2)">AED 0</td></tr>
-            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">SP late 30&#x2013;60 min</td><td style="padding:6px 10px;color:var(--sick)">100% Net Booking or AED 250 (min of two)</td></tr>
+            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">SP late 30–60 min</td><td style="padding:6px 10px;color:var(--sick)">100% Net Booking or AED 250 (min of two)</td></tr>
             <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">SP late &gt;60 min / No show</td><td style="padding:6px 10px;color:var(--absent)">100% Net Booking Amount</td></tr>
             <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">False show (marks started, not present)</td><td style="padding:6px 10px;color:var(--absent)">100% Net Booking Amount</td></tr>
             <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Customer unhappy with quality</td><td style="padding:6px 10px;color:var(--sick)">50% Net Booking Amount</td></tr>
@@ -1280,7 +1281,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
           </tr></thead>
           <tbody>
             <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Customer property damage/loss</td><td style="padding:6px 10px;color:var(--absent)">100% item value, max AED 10,000</td></tr>
-            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Disintermediation &#x2013; 1st offence</td><td style="padding:6px 10px;color:var(--absent)">AED 5,000/customer (Liquidated)</td></tr>
+            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Disintermediation – 1st offence</td><td style="padding:6px 10px;color:var(--absent)">AED 5,000/customer (Liquidated)</td></tr>
             <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Continuing to serve after termination</td><td style="padding:6px 10px;color:var(--absent)">Per contract + AED 100/day</td></tr>
             <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">HC terminates without notice</td><td style="padding:6px 10px;color:var(--sick)">AED 250/SP</td></tr>
             <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Unapproved SP replacement</td><td style="padding:6px 10px;color:var(--absent)">AED 10,000/SP/day</td></tr>
@@ -1290,16 +1291,16 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
       </div>
     </div>
     <div style="margin-top:10px;padding:8px 12px;background:rgba(47,129,247,.08);border:1px solid rgba(47,129,247,.2);border-radius:6px;font-size:11px;color:var(--text2);line-height:1.6">
-      &#x26A0;&#xFE0F; <b style="color:var(--text)">Note:</b> Penalty amounts marked as percentage (%) are calculated on the <b>net booking amount</b> of the affected order. Fixed AED amounts apply per incident unless stated otherwise. All deductions require Valeo approval before processing.
+      ⚠️ <b style="color:var(--text)">Note:</b> Penalty amounts marked as percentage (%) are calculated on the <b>net booking amount</b> of the affected order. Fixed AED amounts apply per incident unless stated otherwise. All deductions require Valeo approval before processing.
     </div>
   </div>
 </div>
 <div style="padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-  <div style="font-size:15px;font-weight:700">&#x26A0;&#xFE0F; Penalty Tracker</div>
+  <div style="font-size:15px;font-weight:700">⚠️ Penalty Tracker</div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
     <span id="penalty-total-badge" style="font-size:12px;font-weight:600;padding:5px 12px;background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);border-radius:6px;color:var(--absent)"></span>
     <button onclick="openAddPenaltyModal()" style="padding:6px 14px;background:var(--absent);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">+ Add Penalty</button>
-    <button onclick="exportPenaltiesCSV()" style="padding:6px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">&#x1F4E5; Export CSV</button>
+    <button onclick="exportPenaltiesCSV()" style="padding:6px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">📥 Export CSV</button>
   </div>
 </div>
 <div id="penalty-kpi-row" style="padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap"></div>
@@ -1320,12 +1321,12 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
   <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:22px;width:500px;max-width:95vw;max-height:90vh;overflow-y:auto">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
       <div style="font-size:14px;font-weight:600" id="penalty-modal-title">Add Penalty</div>
-      <button onclick="closePenaltyModal()" style="background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer">&#x2715;</button>
+      <button onclick="closePenaltyModal()" style="background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer">✕</button>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px" id="penalty-modal-body"></div>
     <div style="display:flex;gap:8px;margin-top:16px">
       <button onclick="savePenalty()" style="flex:1;padding:9px;background:var(--absent);border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">Save Penalty</button>
-      <button id="penalty-delete-btn" onclick="deletePenalty()" style="display:none;padding:9px 14px;background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);border-radius:7px;color:var(--absent);font-size:12px;cursor:pointer;font-family:Inter,sans-serif">&#x1F5D1; Delete</button>
+      <button id="penalty-delete-btn" onclick="deletePenalty()" style="display:none;padding:9px 14px;background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);border-radius:7px;color:var(--absent);font-size:12px;cursor:pointer;font-family:Inter,sans-serif">🗑 Delete</button>
       <button onclick="closePenaltyModal()" style="padding:9px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text2);font-size:12px;cursor:pointer;font-family:Inter,sans-serif">Cancel</button>
     </div>
   </div>
@@ -1790,10 +1791,10 @@ function renderHCGrid(){
         </div>
         ${renderCGCardExtra(cg, hc)}
         <button class="cg-remove-btn" onclick="event.stopPropagation();removeCGByKey(this)">✕</button>
-        <button class="cg-excl-btn" onclick="event.stopPropagation();toggleExclusive('${cg}','${hc}')" title="${isExclusiveCG(cg,hc)?'Remove exclusive':'Mark as exclusive'}" style="position:absolute;top:8px;right:32px;background:${isExclusiveCG(cg,hc)?'rgba(245,158,11,.25)':'rgba(110,118,129,.15)'};border:1px solid ${isExclusiveCG(cg,hc)?'#f59e0b':'var(--border)'};border-radius:4px;padding:2px 6px;font-size:9px;font-weight:700;color:${isExclusiveCG(cg,hc)?'#f59e0b':'var(--text2)'};cursor:pointer;font-family:Inter,sans-serif">${isExclusiveCG(cg,hc)?'&#x1F451; EX':'EX?'}</button>
-        <button onclick="event.stopPropagation();toggleOnLeave('${cg}','${hc}')" title="Toggle on leave" style="position:absolute;top:8px;right:64px;background:${isCGOnLeave(cg,hc)?'rgba(248,81,73,.2)':'rgba(110,118,129,.1)'};border:1px solid ${isCGOnLeave(cg,hc)?'var(--absent)':'var(--border)'};border-radius:4px;padding:2px 6px;font-size:9px;font-weight:700;color:${isCGOnLeave(cg,hc)?'var(--absent)':'var(--text2)'};cursor:pointer;font-family:Inter,sans-serif">${isCGOnLeave(cg,hc)?'&#x1F6CC; '+(getCGSetting(cg,hc).leave_start||'').slice(5)+'&rarr;'+(getCGSetting(cg,hc).leave_end||'').slice(5):'LEAVE?'}</button>
+        <button class="cg-excl-btn" onclick="event.stopPropagation();toggleExclusive('${cg}','${hc}')" title="${isExclusiveCG(cg,hc)?'Remove exclusive':'Mark as exclusive'}" style="position:absolute;top:8px;right:32px;background:${isExclusiveCG(cg,hc)?'rgba(245,158,11,.25)':'rgba(110,118,129,.15)'};border:1px solid ${isExclusiveCG(cg,hc)?'#f59e0b':'var(--border)'};border-radius:4px;padding:2px 6px;font-size:9px;font-weight:700;color:${isExclusiveCG(cg,hc)?'#f59e0b':'var(--text2)'};cursor:pointer;font-family:Inter,sans-serif">${isExclusiveCG(cg,hc)?'👑 EX':'EX?'}</button>
+        <button onclick="event.stopPropagation();toggleOnLeave('${cg}','${hc}')" title="Toggle on leave" style="position:absolute;top:8px;right:64px;background:${isCGOnLeave(cg,hc)?'rgba(248,81,73,.2)':'rgba(110,118,129,.1)'};border:1px solid ${isCGOnLeave(cg,hc)?'var(--absent)':'var(--border)'};border-radius:4px;padding:2px 6px;font-size:9px;font-weight:700;color:${isCGOnLeave(cg,hc)?'var(--absent)':'var(--text2)'};cursor:pointer;font-family:Inter,sans-serif">${isCGOnLeave(cg,hc)?'🛌 '+(getCGSetting(cg,hc).leave_start||'').slice(5)+'&rarr;'+(getCGSetting(cg,hc).leave_end||'').slice(5):'LEAVE?'}</button>
         <div class="cg-view-btn">View Calendar →</div>
-        <button onclick="event.stopPropagation();openStartDateModal('${cg}','${hc}')" style="position:absolute;bottom:8px;right:8px;background:rgba(47,129,247,.1);border:1px solid rgba(47,129,247,.3);border-radius:4px;padding:2px 6px;font-size:9px;color:var(--accent);cursor:pointer;font-family:Inter,sans-serif">&#x1F4C5; ${getCGSetting(cg,hc).start_date||'Start: 1st'}</button>
+        <button onclick="event.stopPropagation();openStartDateModal('${cg}','${hc}')" style="position:absolute;bottom:8px;right:8px;background:rgba(47,129,247,.1);border:1px solid rgba(47,129,247,.3);border-radius:4px;padding:2px 6px;font-size:9px;color:var(--accent);cursor:pointer;font-family:Inter,sans-serif">📅 ${getCGSetting(cg,hc).start_date||'Start: 1st'}</button>
       </div>`;
     });
     html+='</div></div>';
@@ -1812,11 +1813,11 @@ function renderHCGrid(){
       +'</div><div class="cg-grid">';
     mCGs.forEach(function(m){
       const cg=m.name,cardId2='cgc-'+cg.replace(/[^a-zA-Z0-9]/g,'_');
-      html+='<div class="cg-card" data-cg="'+cg.replace(/"/g,'&quot;')+'" data-hc="'+hc.replace(/"/g,'&quot;')+'" id="'+cardId2+'" onclick="openCGCalFromDataset(this)" style="--card-col:'+col+'">'
+      html+='<div class="cg-card" data-cg="'+cg.replace(/"/g,'"')+'" data-hc="'+hc.replace(/"/g,'"')+'" id="'+cardId2+'" onclick="openCGCalFromDataset(this)" style="--card-col:'+col+'">'
         +'<style>#'+cardId2+'::before{background:'+col+'}</style>'
         +'<button class="cg-remove-btn" onclick="event.stopPropagation();removeCGByKey(this)">✕</button>'
-        +'<div class="cg-avail-tag">&#x2713; Available</div>'
-        +'<div class="cg-unavail-tag">&#x2717; Unavailable</div>'
+        +'<div class="cg-avail-tag">✓ Available</div>'
+        +'<div class="cg-unavail-tag">✗ Unavailable</div>'
         +'<div class="cg-top"><div class="cg-avatar" style="background:'+col+'">'+initials(cg)+'</div>'
         +'<div><div class="cg-name">'+cg+'<span class="manual-badge">manual</span></div>'
         +'<div class="cg-hc-label">'+hc+'</div></div></div>'
@@ -1831,7 +1832,7 @@ function renderHCGrid(){
         +'<div class="cg-stat"><div class="stat-n off">0</div><div class="stat-l">Off</div></div>'
         +'<div class="cg-stat"><div class="stat-n sick">0</div><div class="stat-l">Sick</div></div>'
         +'</div>'
-        +'<div class="cg-view-btn">View Calendar &#x2192;</div>'
+        +'<div class="cg-view-btn">View Calendar →</div>'
         +'</div>';
     });
     html+='</div></div>';
@@ -1952,7 +1953,7 @@ function renderCalendar(){
         if(!lbl)lbl='Duty';
       }
       var dragAttrs2=ov?'draggable="true" ondragstart="onOvDragStart(event,\''+activeCG+'\',\''+ds+'\')" ondragend="onOvDragEnd(event)"':'';
-      var dragHandle2=ov?' <span class="drag-handle">&#8942;</span>':'';
+      var dragHandle2=ov?' <span class="drag-handle">⋮</span>':'';
       evHtml+='<div class="cal-ev '+cls2+'" '+dragAttrs2+' onclick="openEvModal(\''+safe+'\')">' +lbl+dragHandle2+'</div>';
     });
     if(!other&&evs.length>0&&dateStr){getManualBookings(activeCG,dateStr).forEach(function(b){var _t=b.time_start?(b.time_end?' '+b.time_start+'-'+b.time_end:' '+b.time_start):'';var _d3=document.createElement('div');_d3.className='cal-ev duty';_d3.textContent=(b.client_name||'Manual')+_t;_d3.onclick=(function(cg,dt){return function(){openOvModal(cg,dt);};})(activeCG,dateStr);evHtml+=_d3.outerHTML;});}
@@ -2326,7 +2327,7 @@ function renderAnalyticsData(){
     var cg=e[0], hrs=e[1], rev=e[2], rph=e[3], hc=e[4];
     var pct = maxRph ? Math.round(rph/maxRph*100) : 0;
     var col = rph>=200?'var(--duty)':rph>=100?'var(--accent)':'var(--sick)';
-    var emoji = rph>=200?'&#x1F7E2;':rph>=100?'&#x1F535;':'&#x1F534;';
+    var emoji = rph>=200?'🟢':rph>=100?'🔵':'🔴';
     var exTag = isExclusiveCG(cg,hc)?'<span style="font-size:8px;padding:1px 3px;border-radius:3px;background:rgba(245,158,11,.25);color:#f59e0b;margin-left:2px">EX</span>':'';
     return '<div class="bar-row" style="margin-bottom:4px">'
       +'<div class="bar-label" title="'+cg+'" style="width:110px;min-width:110px;font-size:11px;overflow:hidden;text-overflow:ellipsis">'+emoji+' '+cg.split(' ')[0]+exTag+'</div>'
@@ -2357,7 +2358,7 @@ function renderAnalyticsData(){
 
     <!-- ── Exclusive vs Non-Exclusive ── -->
     <div class="a-card" style="grid-column:1/-1">
-      <div class="a-title"><div class="a-title-bar" style="background:#f59e0b"></div>&#x1F451; Exclusive vs Non-Exclusive Utilization</div>
+      <div class="a-title"><div class="a-title-bar" style="background:#f59e0b"></div>👑 Exclusive vs Non-Exclusive Utilization</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:12px">
         <div>
           <div id="excl-cg-label" style="font-size:11px;font-weight:600;color:#f59e0b;margin-bottom:10px">EXCLUSIVE CGs</div>
@@ -2409,8 +2410,8 @@ function renderAnalyticsData(){
       <div class="a-title"><div class="a-title-bar" style="background:var(--duty)"></div>Caregiver Utilisation — Hours Worked</div>
       <div style="font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.6">
         📌 <b style="color:var(--text2)">What this shows:</b> How busy each caregiver was. Max possible = <b>${MAX_MONTH_HRS} hours/month</b> (fully booked every day).<br>
-        🟢 <b>Green (70%+)</b> = well utilised, good. &nbsp;
-        🔵 <b>Blue (40–70%)</b> = moderate, room to fill. &nbsp;
+        🟢 <b>Green (70%+)</b> = well utilised, good.  
+        🔵 <b>Blue (40–70%)</b> = moderate, room to fill.  
         🔴 <b>Red (below 40%)</b> = too many free days — needs a new booking assigned.<br>
         <span style="color:var(--accent)">Use the red bars as your priority list for new order assignment.</span>
       </div>
@@ -2418,8 +2419,8 @@ function renderAnalyticsData(){
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
         <div style="display:flex;gap:6px">
           <button onclick="setCGFilter('all')" id="cgf-all" style="padding:4px 10px;font-size:10px;font-weight:600;border-radius:4px;cursor:pointer;font-family:Inter,sans-serif;background:var(--accent);color:#fff;border:1px solid var(--accent)">All</button>
-          <button onclick="setCGFilter('exclusive')" id="cgf-exclusive" style="padding:4px 10px;font-size:10px;font-weight:600;border-radius:4px;cursor:pointer;font-family:Inter,sans-serif;background:var(--bg3);color:#f59e0b;border:1px solid var(--border)">&#x1F451; Exclusive</button>
-          <button onclick="setCGFilter('non-exclusive')" id="cgf-non-exclusive" style="padding:4px 10px;font-size:10px;font-weight:600;border-radius:4px;cursor:pointer;font-family:Inter,sans-serif;background:var(--bg3);color:#8b5cf6;border:1px solid var(--border)">&#x1F465; Non-Exclusive</button>
+          <button onclick="setCGFilter('exclusive')" id="cgf-exclusive" style="padding:4px 10px;font-size:10px;font-weight:600;border-radius:4px;cursor:pointer;font-family:Inter,sans-serif;background:var(--bg3);color:#f59e0b;border:1px solid var(--border)">👑 Exclusive</button>
+          <button onclick="setCGFilter('non-exclusive')" id="cgf-non-exclusive" style="padding:4px 10px;font-size:10px;font-weight:600;border-radius:4px;cursor:pointer;font-family:Inter,sans-serif;background:var(--bg3);color:#8b5cf6;border:1px solid var(--border)">👥 Non-Exclusive</button>
         </div>
         <div id="excl-avg-util" style="display:flex;gap:12px;font-size:11px"></div>
       </div>
@@ -2440,9 +2441,9 @@ function renderAnalyticsData(){
 
     <!-- ── Revenue per Hour ── -->
     <div class="a-card" style="grid-column:1/-1">
-      <div class="a-title"><div class="a-title-bar" style="background:#e879f9"></div>&#x1F4B0; Revenue per Hour — by Caregiver</div>
+      <div class="a-title"><div class="a-title-bar" style="background:#e879f9"></div>💰 Revenue per Hour — by Caregiver</div>
       <div style="font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.6">
-        &#x1F4CC; <b style="color:var(--text2)">What this shows:</b> How much revenue each caregiver generates per hour worked, based on order value ÷ hours in period.<br>
+        📌 <b style="color:var(--text2)">What this shows:</b> How much revenue each caregiver generates per hour worked, based on order value ÷ hours in period.<br>
         <span style="color:var(--accent)">Higher = more revenue-dense bookings. Use this to identify top-earning caregivers and optimise assignment.</span>
       </div>
       <div id="rev-per-hr-bars" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:4px 20px">
@@ -2466,10 +2467,10 @@ function renderAnalyticsData(){
     var el=document.getElementById('excl-avg-util');
     if(el) el.innerHTML=
       '<div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:6px;padding:4px 10px">'
-      +'<span style="color:#f59e0b;font-weight:700">&#x1F451; Excl avg: '+aEP+'%</span>'
+      +'<span style="color:#f59e0b;font-weight:700">👑 Excl avg: '+aEP+'%</span>'
       +'<span style="color:var(--text3);margin-left:6px;font-size:10px">'+tEH+'h &middot; '+eH.length+' CGs</span></div>'
       +'<div style="background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.3);border-radius:6px;padding:4px 10px">'
-      +'<span style="color:#8b5cf6;font-weight:700">&#x1F465; Non-excl avg: '+aNP+'%</span>'
+      +'<span style="color:#8b5cf6;font-weight:700">👥 Non-excl avg: '+aNP+'%</span>'
       +'<span style="color:var(--text3);margin-left:6px;font-size:10px">'+tNH+'h &middot; '+nH.length+' CGs</span></div>';
     var tbl=document.getElementById('excl-comparison-table');
     if(!tbl) return;
@@ -2483,8 +2484,8 @@ function renderAnalyticsData(){
     tbl.innerHTML='<table style="width:100%;border-collapse:collapse">'
       +'<thead><tr style="background:var(--bg3)">'
       +'<th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;color:var(--text2);border-bottom:2px solid var(--border)">Metric</th>'
-      +'<th style="padding:9px 14px;text-align:center;font-size:11px;font-weight:700;color:#f59e0b;border-bottom:2px solid var(--border)">&#x1F451; Exclusive ('+eH.length+' CGs)</th>'
-      +'<th style="padding:9px 14px;text-align:center;font-size:11px;font-weight:700;color:#8b5cf6;border-bottom:2px solid var(--border)">&#x1F465; Non-Exclusive ('+nH.length+' CGs)</th>'
+      +'<th style="padding:9px 14px;text-align:center;font-size:11px;font-weight:700;color:#f59e0b;border-bottom:2px solid var(--border)">👑 Exclusive ('+eH.length+' CGs)</th>'
+      +'<th style="padding:9px 14px;text-align:center;font-size:11px;font-weight:700;color:#8b5cf6;border-bottom:2px solid var(--border)">👥 Non-Exclusive ('+nH.length+' CGs)</th>'
       +'</tr></thead><tbody>'
       +row('Total Hours Worked',tEH,tNH,true)
       +row('Avg Hours per CG',aEH,aNH,true)
@@ -3296,7 +3297,7 @@ function renderExistingBookings(cg,date){
   var el=document.getElementById('ov-existing-list');if(!el)return;
   var bks=getManualBookings(cg,date);if(!bks.length){el.innerHTML='';return;}
   var h='<div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:6px">Existing bookings:</div>';
-  bks.forEach(function(b,i){var t=b.time_start?(b.time_end?' ('+b.time_start+' - '+b.time_end+')':' ('+b.time_start+')'):'';h+='<div style="display:flex;align-items:center;background:var(--bg3);border-radius:6px;padding:5px 8px;margin-bottom:4px;font-size:12px;gap:8px"><span style="flex:1;color:var(--duty)">&#9679; '+(b.client_name||'Manual')+t+'</span><button data-cg="'+cg.replace(/"/g,"&quot;")+'" data-date="'+date+'" data-i="'+i+'" onclick="rmBooking(this)" style="background:rgba(248,81,73,.15);border:1px solid rgba(248,81,73,.35);border-radius:4px;color:#f85149;font-size:10px;padding:2px 8px;cursor:pointer">Remove</button></div>';});
+  bks.forEach(function(b,i){var t=b.time_start?(b.time_end?' ('+b.time_start+' - '+b.time_end+')':' ('+b.time_start+')'):'';h+='<div style="display:flex;align-items:center;background:var(--bg3);border-radius:6px;padding:5px 8px;margin-bottom:4px;font-size:12px;gap:8px"><span style="flex:1;color:var(--duty)">● '+(b.client_name||'Manual')+t+'</span><button data-cg="'+cg.replace(/"/g,'&quot;')+'" data-date="'+date+'" data-i="'+i+'" onclick="rmBooking(this)" style="background:rgba(248,81,73,.15);border:1px solid rgba(248,81,73,.35);border-radius:4px;color:#f85149;font-size:10px;padding:2px 8px;cursor:pointer">Remove</button></div>';});
   el.innerHTML=h;
 }
 function rmBooking(btn){var cg=btn.dataset.cg,date=btn.dataset.date,i=+btn.dataset.i;var bks=getManualBookings(cg,date);bks.splice(i,1);setManualBookings(cg,date,bks);saveLocalCache();var key=cg+'|'+date;if(overrides[key])persistWrite('override',key,JSON.parse(JSON.stringify(overrides[key])));else persistDelete('override',key);reRenderAll();renderExistingBookings(cg,date);}
@@ -3520,7 +3521,7 @@ function renderPlannerTable(){
       if(key==='num'){
         html += '<td style="color:var(--text2);font-size:11px">'+r.num+'</td>';
       } else if(key==='status'){
-        html += '<td><select class="planner-status-sel" onchange="updatePlannerCell('+ri+',&quot;status&quot;,this.value);renderPlannerTable()" >';
+        html += '<td><select class="planner-status-sel" onchange="updatePlannerCell('+ri+',"status",this.value);renderPlannerTable()" >';
         statusOpts.forEach(function(s){ html += '<option value="'+s+'"'+(r.status===s?' selected':'')+'>'+s+'</option>'; });
         html += '</select></td>';
       } else if(key==='date'||key==='day'){
@@ -3864,7 +3865,7 @@ tr.week-sep:hover td{background:#f7f8fa}
   <span class="legend-item"><span class="legend-dot" style="background:#eff6ff;border:1px solid #bfdbfe"></span>Holiday</span>
   <span class="legend-item"><span class="legend-dot" style="background:#fdf4ff;border:1px solid #e9d5ff"></span>Cancelled</span>
 </div>
-<div class="footer">Generated by Valeo Health &nbsp;·&nbsp; ${clientName}</div>
+<div class="footer">Generated by Valeo Health  ·  ${clientName}</div>
 </body>
 </html>`;
 }
@@ -4331,8 +4332,9 @@ function renderRoster(){
           else if(st==='sick'){cls+=' rd-sick';inner='<div class="rd-in"><div class="rd-cl">Sick</div></div>';}
           else if(st==='cancelled'||st==='absent'){cls+=' rd-off';inner='<div class="rd-in"><div class="rd-cl">'+st+'</div></div>';}
           else{
-            cls+=' rd-duty';
             var cl2=(ev.client_name||'').split(' ')[0];
+            if((ev.client_name||'').toLowerCase().includes('shady'))cls+=' rd-shady';
+            else cls+=' rd-duty';
             var t3=ev.time_start&&ev.time_end?ev.time_start+'-'+ev.time_end:(ev.time_start||'');
             var oid=ev.child_order_id||ev.order_id||'';
             inner='<div class="rd-in">'+(cl2?'<div class="rd-cl">'+cl2+'</div>':'')+(t3?'<div class="rd-tm">'+t3+'</div>':'')+(oid?'<div class="rd-od">#'+oid+'</div>':'')+'</div>';
@@ -4342,7 +4344,7 @@ function renderRoster(){
           var isWO=woDays2.some(function(wd){return wd&&wd.startsWith(DFULL[dow].slice(0,3));});
           if(isWO){cls+=' rd-wo';inner='<div class="rd-in"><div class="rd-cl">Week Off</div></div>';}
         }
-        var safeN=cgName.replace(/'/g,'&#39;').replace(/"/g,'&quot;');
+        var safeN=cgName.replace(/'/g,"&#39;").replace(/"/g,'&quot;');
         html+='<td class="'+cls+'" title="'+safeN+' | '+ds+'" data-cg="'+safeN+'" data-ds="'+ds+'" onclick="openOvModal(this.dataset.cg,this.dataset.ds)">'+inner+'</td>';
       });
       html+='</tr>';
@@ -4597,7 +4599,7 @@ function applySessionUI(){
   if(header){
     var badge=document.createElement('div');
     badge.style.cssText='display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text2);margin-right:8px';
-    badge.innerHTML=(_session.role==='master'?'&#x1F451;':'&#x1F3E5;')+' <b style="color:var(--text)">'+_session.username+'</b> <button onclick="doLogout()" style="background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);border-radius:5px;color:var(--absent);font-size:10px;padding:2px 8px;cursor:pointer;font-family:Inter,sans-serif">Sign out</button>';
+    badge.innerHTML=(_session.role==='master'?'👑':'🏥')+' <b style="color:var(--text)">'+_session.username+'</b> <button onclick="doLogout()" style="background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);border-radius:5px;color:var(--absent);font-size:10px;padding:2px 8px;cursor:pointer;font-family:Inter,sans-serif">Sign out</button>';
     header.insertBefore(badge,header.firstChild);
   }
   if(_session.role==='hc'){
@@ -5618,11 +5620,11 @@ function renderFCLKPIs(){
   // KPI cards — exact same style as SM Lead Tracker
   html+='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px">';
   html+=kpiCard(total,'Total','var(--accent)');
-  html+=kpiCard(stageTotals['New Enquiry']||0,'&#x1F195; New Enquiry','#2f81f7');
-  html+=kpiCard(followTotal,'&#x23F3; Follow Up','#f59e0b');
-  html+=kpiCard(stageTotals['Proposal Sent']||0,'&#x1F4CB; Proposal Sent','#8b5cf6');
-  html+=kpiCard(converted,'&#x2705; Converted','var(--duty)');
-  html+=kpiCard(lostTotal,'&#x274C; Lost','var(--absent)');
+  html+=kpiCard(stageTotals['New Enquiry']||0,'🆕 New Enquiry','#2f81f7');
+  html+=kpiCard(followTotal,'⏳ Follow Up','#f59e0b');
+  html+=kpiCard(stageTotals['Proposal Sent']||0,'📋 Proposal Sent','#8b5cf6');
+  html+=kpiCard(converted,'✅ Converted','var(--duty)');
+  html+=kpiCard(lostTotal,'❌ Lost','var(--absent)');
   html+='</div>';
 
   // Monthly breakdown accordion — exact same structure as SM Lead Tracker
@@ -5639,17 +5641,17 @@ function renderFCLKPIs(){
       html+='<div style="display:flex;align-items:center;gap:16px">';
       html+='<span style="font-size:12px;font-weight:600">'+moLabel+'</span>';
       html+='<span style="font-size:11px;color:var(--text2)">'+m.total+' leads</span>';
-      html+='<span style="font-size:11px;color:#2f81f7">&#x1F195; '+(m.new_e||0)+'</span>';
-      html+='<span style="font-size:11px;color:#f59e0b">&#x23F3; '+(m.follow||0)+'</span>';
-      html+='<span style="font-size:11px;color:#8b5cf6">&#x1F4CB; '+(m.prop||0)+'</span>';
-      html+='<span style="font-size:11px;color:var(--duty)">&#x2705; '+(m.converted||0)+' converted</span>';
-      html+='<span style="font-size:11px;color:var(--absent)">&#x274C; '+(m.lost||0)+' lost</span>';
+      html+='<span style="font-size:11px;color:#2f81f7">🆕 '+(m.new_e||0)+'</span>';
+      html+='<span style="font-size:11px;color:#f59e0b">⏳ '+(m.follow||0)+'</span>';
+      html+='<span style="font-size:11px;color:#8b5cf6">📋 '+(m.prop||0)+'</span>';
+      html+='<span style="font-size:11px;color:var(--duty)">✅ '+(m.converted||0)+' converted</span>';
+      html+='<span style="font-size:11px;color:var(--absent)">❌ '+(m.lost||0)+' lost</span>';
       html+='</div>';
       html+='<span style="font-size:14px;color:var(--text2);transition:transform .2s" class="fcl-mo-arrow">'+(isOpen?'\u25b2':'\u25bc')+'</span>';
       html+='</div>';
       html+='<div class="fcl-mo-weeks" style="display:'+(isOpen?'block':'none')+';padding:10px 14px;background:var(--bg2)">';
       html+='<table style="border-collapse:collapse;font-size:11px;width:100%"><thead><tr>';
-      ['Week','Leads','&#x1F195;','&#x23F3;','&#x1F4CB;','&#x2705; Converted','&#x274C; Lost'].forEach(function(h){
+      ['Week','Leads','🆕','⏳','📋','✅ Converted','❌ Lost'].forEach(function(h){
         html+='<th style="padding:5px 10px;text-align:'+(h==='Week'?'left':'center')+';color:var(--text2);font-weight:600;border-bottom:1px solid var(--border)">'+h+'</th>';
       });
       html+='</tr></thead><tbody>';
@@ -5806,7 +5808,7 @@ function setCGFilter(f){
   el.innerHTML = filtered.length ? filtered.map(function(e){
     var k=e[0],v=e[1],pct=e[3];
     var col=pct>=70?'var(--duty)':pct>=40?'var(--accent)':'var(--sick)';
-    var emoji=pct>=70?'&#x1F7E2;':pct>=40?'&#x1F535;':'&#x1F534;';
+    var emoji=pct>=70?'🟢':pct>=40?'🔵':'🔴';
     var exTag=isExclusiveCG(k,e[4])?'<span style="font-size:8px;padding:1px 3px;border-radius:3px;background:rgba(245,158,11,.25);color:#f59e0b;margin-left:2px">EX</span>':'';
     return '<div class="bar-row" style="margin-bottom:4px">'
       +'<div class="bar-label" title="'+k+'" style="width:100px;min-width:100px;font-size:11px;overflow:hidden;text-overflow:ellipsis">'+emoji+' '+k.split(' ')[0]+exTag+'</div>'
