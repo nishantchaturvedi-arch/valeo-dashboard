@@ -1344,9 +1344,9 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 
 <script>
 // ── CONFIG ──────────────────────────────────────────────────────
-const N8N_DATA_URL      = 'https://nishi25.app.n8n.cloud/webhook/d0f62c8a-6d05-4834-885e-6ca9bb589d9a';
-const N8N_OVERRIDE_READ  = 'https://nishi25.app.n8n.cloud/webhook/overrides-read';
-const N8N_OVERRIDE_WRITE = 'https://nishi25.app.n8n.cloud/webhook/overrides-write';
+const N8N_DATA_URL      = 'https://feelvaleo.app.n8n.cloud/webhook/d0f62c8a-6d05-4834-885e-6ca9bb589d9a';
+const N8N_OVERRIDE_READ  = 'https://feelvaleo.app.n8n.cloud/webhook/overrides-read';
+const N8N_OVERRIDE_WRITE = 'https://feelvaleo.app.n8n.cloud/webhook/overrides-write';
 // ────────────────────────────────────────────────────────────────
 
 const HC_COLORS = {
@@ -2560,7 +2560,7 @@ async function sendChat(){
   chatHistory.push({role:'user',content:msg});
 
   try{
-    const res=await fetch('https://nishi25.app.n8n.cloud/webhook/claude',{
+    const res=await fetch('https://feelvaleo.app.n8n.cloud/webhook/claude',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
@@ -4722,7 +4722,7 @@ async function loadLeads(force){
   var wrap=document.getElementById('leads-table-wrap');
   if(wrap)wrap.innerHTML='<div style="padding:40px;text-align:center;color:var(--text2)">Loading leads...</div>';
   try{
-    var res=await fetch('https://nishi25.app.n8n.cloud/webhook/valeo-leads');
+    var res=await fetch('https://feelvaleo.app.n8n.cloud/webhook/valeo-leads');
     if(!res.ok)throw new Error('HTTP '+res.status);
     var json=await res.json();
     _leads=parseLeadsJSON(json);
@@ -5492,7 +5492,7 @@ function exportPenaltiesCSV(){
 
 
 // ── FC Lead Tracker ───────────────────────────────────────────────
-var FCL_WEBHOOK = 'https://nishi25.app.n8n.cloud/webhook/fc-leads';
+var FCL_WEBHOOK = 'https://feelvaleo.app.n8n.cloud/webhook/fc-leads';
 var _fclLeads = [];
 var _fclOverrides = {};
 var _fclLoaded = false;
