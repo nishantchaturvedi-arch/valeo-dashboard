@@ -427,6 +427,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .r-photo{width:50px;height:50px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;margin:auto;}
 .r-name{font-weight:700;font-size:11px;color:var(--text1);margin-bottom:2px;}
 .r-hc{font-size:10px;color:var(--text2);}
+.r-city{display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;cursor:pointer;margin-top:3px;letter-spacing:.03em;border:1px solid transparent;}
+.r-city.dubai{background:rgba(47,129,247,.18);color:#2f81f7;border-color:rgba(47,129,247,.35);}
+.r-city.auh{background:rgba(16,185,129,.18);color:#10b981;border-color:rgba(16,185,129,.35);}
+.r-city.unset{background:var(--bg3);color:var(--text3);border-color:var(--border);}
 .rd{width:36px;min-width:36px;height:56px;vertical-align:top;padding:2px;font-size:9px;cursor:pointer;transition:opacity .15s;}
 .rd:hover{opacity:.8;}
 .rd-duty{background:#f59e0b;color:#000;}
@@ -4260,14 +4264,12 @@ function renderRoster(){
   for(var d=1;d<=dim;d++) dates.push(year+'-'+String(month+1).padStart(2,'0')+'-'+String(d).padStart(2,'0'));
   var filterHC=document.getElementById('roster-hc-filter').value;
   var filterCity=(document.getElementById('roster-city-filter')||{}).value||'';
-  // Build per-CG city lookup from rawData (most recent order location)
+  // City filter uses manually-set cgSettings city (not order location)
+  // cgCityMap kept for backward compat but now reads from settings
   var cgCityMap={};
-  rawData.forEach(function(r){
-    if(!r.caregiver||!r.location) return;
-    // Always keep the most recent (latest date) location per CG
-    if(!cgCityMap[r.caregiver]||r.date>cgCityMap[r.caregiver].date){
-      cgCityMap[r.caregiver]={city:(r.location||'').trim(),date:r.date||''};
-    }
+  Object.entries(cgSettings).forEach(function(e){
+    var key=e[0],val=e[1];
+    if(val.city) cgCityMap[key.split('|')[0]]={city:val.city};
   });
   // Restrict roster to session HC for HC role users
   var _rosterHC = (_session&&_session.role==='hc'&&_session.homecare) ? _session.homecare : null;
@@ -4333,7 +4335,20 @@ function renderRoster(){
       var ini=((parts[0]||'')[0]||'')+((parts[1]||'')[0]||'');
       var hcVal=cgMap[cgName]?cgMap[cgName].homecare:'';
       html+='<tr><td class="col-photo"><div class="r-photo">'+ini.toUpperCase()+'</div></td>';
-      html+='<td class="col-info"><div class="r-name">'+cgName+'</div><div class="r-hc">'+hcVal+'</div></td>';
+      html+='<td class="col-info"><div class="r-name">'+cgName+'</div><div class="r-hc">'+hcVal+'</div>'
+        +(function(){
+          var city=getCGCity(cgName,hcVal);
+          var cls=city==='Dubai'?'dubai':city==='AUH'?'auh':'unset';
+          var lbl=city||'+ City';
+          var safeC=cgName.replace(/'/g,"&#39;").replace(/"/g,'&quot;');
+          var safeH=hcVal.replace(/'/g,"&#39;").replace(/"/g,'&quot;');
+          return '<div><select class="r-city '+cls+'" onchange="setCGCity(\''+safeC+'\',\''+safeH+'\',this.value);this.className=\'r-city \'+{Dubai:\'dubai\',AUH:\'auh\',\'\':\'unset\'}[this.value]" onclick="event.stopPropagation()" title="Set location">'
+            +'<option value="" '+(city?'':'selected')+'>+ City</option>'
+            +'<option value="Dubai" '+(city==='Dubai'?'selected':'')+'>🏙 Dubai</option>'
+            +'<option value="AUH" '+(city==='AUH'?'selected':'')+'>🕌 AUH</option>'
+            +'</select></div>';
+        })()
+        +'</td>';
       dates.forEach(function(ds){
         var dow=new Date(ds+'T12:00:00').getDay();
         var isWE=dow===0||dow===6,isT=ds===todayStr;
@@ -5856,6 +5871,15 @@ function getCGSetting(cg, hc){
   var key = cg+'|'+hc;
   if(!cgSettings[key]) cgSettings[key] = {};
   return cgSettings[key];
+}
+function getCGCity(cg, hc){ return getCGSetting(cg,hc).city||''; }
+function setCGCity(cg, hc, city){
+  getCGSetting(cg,hc).city=city;
+  saveCGSettings();
+  // Persist to Firebase
+  persistWrite('cg_setting', cg+'|'+hc, getCGSetting(cg,hc));
+  // Re-render roster with updated filter
+  renderRoster();
 }
 
 
