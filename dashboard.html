@@ -1345,8 +1345,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 <script>
 // ── CONFIG ──────────────────────────────────────────────────────
 const N8N_DATA_URL      = 'https://feelvaleo.app.n8n.cloud/webhook/d0f62c8a-6d05-4834-885e-6ca9bb589d9a';
-const N8N_OVERRIDE_READ  = 'https://feelvaleo.app.n8n.cloud/webhook/overrides-read';
-const N8N_OVERRIDE_WRITE = 'https://feelvaleo.app.n8n.cloud/webhook/overrides-write';
+// Overrides stored directly in Firebase Firestore (overrides-read/write not used)
 // ────────────────────────────────────────────────────────────────
 
 const HC_COLORS = {
@@ -3228,10 +3227,10 @@ function applyOverrides(){
       var recOid = r.child_order_id || r.order_id || '';
       if(recOid && recOid !== ov.child_order_id) return; // different order — skip override
     }
-    // For 'removed' override: real Duty order wins (new assignment shows through)
-    // For ALL other overrides (off/sick/holiday/unpaid/cancelled): apply even to real Duty
+    // Real Duty order always wins over ANY override (new assignment clears off/sick/etc)
+    // Exception: manual bookings can still be overridden
     var isRealDuty = (r.status||'').toLowerCase()==='duty' && !r._manual;
-    if(isRealDuty && ov.type==='removed') return; // only 'removed' is skipped for real Duty
+    if(isRealDuty) return; // new order assigned → override is ignored, duty shows through
     // Apply override
     if(ov.type==='sick')          { r.status='Sick';      r.time_start=''; r.time_end=''; }
     else if(ov.type==='off')      { r.status='Week Off';  r.time_start=''; r.time_end=''; }
