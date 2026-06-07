@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
@@ -425,13 +424,19 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .r-photo{width:50px;height:50px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;margin:auto;}
 .r-name{font-weight:700;font-size:11px;color:var(--text1);margin-bottom:2px;}
 .r-hc{font-size:10px;color:var(--text2);}
+.r-city{display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;cursor:pointer;margin-top:3px;letter-spacing:.03em;border:1px solid transparent;}
+.r-city.dubai{background:rgba(47,129,247,.18);color:#2f81f7;border-color:rgba(47,129,247,.35);}
+.r-city.auh{background:rgba(16,185,129,.18);color:#10b981;border-color:rgba(16,185,129,.35);}
+.r-city.rak{background:rgba(239,68,68,.18);color:#ef4444;border-color:rgba(239,68,68,.35);}
+.r-city.unset{background:var(--bg3);color:var(--text3);border-color:var(--border);}
 .rd{width:36px;min-width:36px;height:56px;vertical-align:top;padding:2px;font-size:9px;cursor:pointer;transition:opacity .15s;}
 .rd:hover{opacity:.8;}
 .rd-duty{background:#f59e0b;color:#000;}
 .rd-manual{background:#a855f7;color:#fff;}
 .rd-wo{background:#1a1a1a;color:#555;}
 .rd-sick{background:#ef4444;color:#fff;}
-.rd-off{background:#eab308;color:#000;}
+.rd-off{background:#475569;color:#fff;}
+.rd-shady{background:#f472b6;color:#fff;}
 .rd-empty{background:transparent;}
 .rd-today{outline:2px solid var(--accent)!important;outline-offset:-2px;}
 .col-weekend{opacity:.7;}
@@ -607,7 +612,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <button class="main-tab" onclick="switchTab('leads')">🎯 SM Lead Tracker</button>
  <button class="main-tab" onclick="switchTab('fclead')">💬 FC Lead Tracker</button>
  <button class="main-tab" onclick="switchTab('supply')">👥 Supply Tracker</button>
- <button class="main-tab" onclick="switchTab('penalty')">&#x26A0;&#xFE0F; Penalty Tracker</button>
+ <button class="main-tab" onclick="switchTab('penalty')">⚠️ Penalty Tracker</button>
 </div>
 
 <!-- ── Availability bar (calendar only) ── -->
@@ -617,7 +622,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <span style="font-size:11px;color:var(--text2)">→</span>
  <input class="avail-input" type="date" id="avail-to">
  <input class="avail-input" type="time" id="avail-time" title="Shift start time" style="width:110px">
- <span style="font-size:10px;color:var(--text3)" title="Min 12h rest">&#x23F1; 12h rest</span>
+ <span style="font-size:10px;color:var(--text3)" title="Min 12h rest">⏱ 12h rest</span>
  <button class="avail-btn" onclick="checkAvail()">Check</button>
  <button class="avail-clear" onclick="clearAvail()">Clear</button>
  <span class="avail-result" id="avail-result"></span>
@@ -880,7 +885,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;width:520px;max-width:95vw;max-height:80vh;overflow-y:auto">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
    <span style="font-size:14px;font-weight:700;color:var(--text1)">Saved Schedules</span>
-   <button onclick="document.getElementById('saved-planners-overlay').style.display='none'" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer">&#x2715;</button>
+   <button onclick="document.getElementById('saved-planners-overlay').style.display='none'" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer">✕</button>
   </div>
   <div id="saved-planners-list">Loading...</div>
  </div>
@@ -894,12 +899,18 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
   <select class="roster-hc-filter" id="roster-hc-filter" onchange="renderRoster()">
    <option value="">All Homecare</option>
   </select>
+  <select class="roster-hc-filter" id="roster-city-filter" onchange="renderRoster()">
+   <option value="">All Cities</option>
+   <option value="Dubai">🏙 Dubai</option>
+   <option value="AUH">🕌 Abu Dhabi</option>
+   <option value="RAK">🏔 RAK</option>
+  </select>
   <span class="roster-legend">
    <span class="rl-dot" style="background:#f59e0b"></span>Duty
    <span class="rl-dot" style="background:#a855f7"></span>Manual
    <span class="rl-dot" style="background:#1a1a1a"></span>Week Off
    <span class="rl-dot" style="background:#ef4444"></span>Sick
-   <span class="rl-dot" style="background:#eab308"></span>Off/Holiday
+   <span class="rl-dot" style="background:#475569"></span>Off/Holiday
   </span>
  </div>
  <div class="roster-wrap" id="roster-wrap"></div>
@@ -992,8 +1003,8 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <span style="font-size:11px;font-weight:600;color:var(--text);white-space:nowrap">🔗 Client Link:</span>
  <input class="pl-share-url" id="pl-share-url" readonly>
  <button class="pl-copy-btn" onclick="copyPlannerLink()">Copy Link</button>
- <button class="pl-copy-btn" style="background:var(--duty)" onclick="savePlannerToPortal()">&#x1F4BE; Save</button>
- <button class="pl-copy-btn" style="background:var(--bg3);color:var(--text2)" onclick="openSavedPlanners()">&#x1F4C2; Load</button>
+ <button class="pl-copy-btn" style="background:var(--duty)" onclick="savePlannerToPortal()">💾 Save</button>
+ <button class="pl-copy-btn" style="background:var(--bg3);color:var(--text2)" onclick="openSavedPlanners()">📂 Load</button>
  </div>
 
  <!-- Table -->
@@ -1037,8 +1048,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 <div id="leads-kpi-row" style="padding:14px 20px;background:var(--bg2);border-bottom:1px solid var(--border)"></div>
 <div style="padding:10px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;gap:8px">
   <input id="lead-search" type="text" placeholder="🔍 Search name / phone..." style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:Inter,sans-serif;font-size:12px;padding:6px 10px;border-radius:6px;outline:none;width:200px" oninput="renderLeadsTable()">
-  <select id="lead-filter-status" onchange="renderLeadsTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Call 1 Status</option><option value="connected">Connected</option><option value="no answer">No Answer</option><option value="hung up">Hung Up</option><option value="on fc">On FC</option><option value="converted">Converted</option></select>
-  <select id="lead-filter-final" onchange="renderLeadsTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Final Status</option><option value="converted">✅ Converted</option><option value="not_converted">❌ Not Converted</option><option value="ongoing">⏳ Ongoing</option></select>
+  <select id="lead-filter-status" onchange="renderLeadsTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Status</option><option value="connected">Connected</option><option value="no answer">No Answer</option><option value="hung up">Hung Up</option><option value="on fc">On FC</option><option value="converted">Converted</option></select>
   <select id="lead-filter-heat" onchange="renderLeadsTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Classifications</option><option value="hot">🔥 Hot</option><option value="warm">🌤 Warm</option><option value="cold">❄️ Cold</option><option value="dead">💀 Dead</option></select>
   <select id="lead-filter-city" onchange="renderLeadsTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Cities</option></select>
   <select id="lead-filter-month" onchange="renderLeadsTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Months</option></select>
@@ -1187,11 +1197,11 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 
 <div class="page" id="page-fclead">
 <div style="padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-  <div style="font-size:15px;font-weight:700">&#x1F4AC; FC Lead Tracker</div>
+  <div style="font-size:15px;font-weight:700">💬 FC Lead Tracker</div>
   <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
     <span id="fcl-last-sync" style="font-size:11px;color:var(--text3)"></span>
-    <button onclick="loadFCLeads(true)" style="padding:6px 14px;background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">&#x1F504; Refresh</button>
-    <button onclick="exportFCLeadsCSV()" style="padding:6px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">&#x1F4E5; Export CSV</button>
+    <button onclick="loadFCLeads(true)" style="padding:6px 14px;background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">🔄 Refresh</button>
+    <button onclick="exportFCLeadsCSV()" style="padding:6px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">📥 Export CSV</button>
   </div>
 </div>
 <div id="fcl-kpi-row" style="padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap"></div>
@@ -1199,14 +1209,14 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
   <input id="fcl-search" type="text" placeholder="Search name / phone..." oninput="renderFCLeads()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:Inter,sans-serif;font-size:12px;padding:6px 10px;border-radius:6px;outline:none;width:200px">
   <select id="fcl-filter-stage" onchange="renderFCLeads()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
     <option value="">All Stages</option>
-    <option value="New Enquiry">&#x1F195; New Enquiry</option>
-    <option value="Call Done">&#x1F4DE; Call Done</option>
-    <option value="Proposal Sent">&#x1F4CB; Proposal Sent</option>
-    <option value="Follow Up">&#x23F3; Follow Up</option>
-    <option value="Converted">&#x2705; Converted</option>
-    <option value="Lost — Price">&#x1F4B8; Lost — Price</option>
-    <option value="Lost — No Reply">&#x1F47B; Lost — No Reply</option>
-    <option value="Lost — Not Interested">&#x274C; Lost — Not Interested</option>
+    <option value="New Enquiry">🆕 New Enquiry</option>
+    <option value="Call Done">📞 Call Done</option>
+    <option value="Proposal Sent">📋 Proposal Sent</option>
+    <option value="Follow Up">⏳ Follow Up</option>
+    <option value="Converted">✅ Converted</option>
+    <option value="Lost — Price">💸 Lost — Price</option>
+    <option value="Lost — No Reply">👻 Lost — No Reply</option>
+    <option value="Lost — Not Interested">❌ Lost — Not Interested</option>
   </select>
   <select id="fcl-filter-agent" onchange="renderFCLeads()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
     <option value="">All Agents</option>
@@ -1232,7 +1242,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
   <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:22px;width:420px;max-width:95vw;max-height:90vh;overflow-y:auto">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
       <div style="font-size:14px;font-weight:600" id="fcl-modal-title">Lead</div>
-      <button onclick="closeFCLModal()" style="background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer">&#x2715;</button>
+      <button onclick="closeFCLModal()" style="background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer">✕</button>
     </div>
     <div id="fcl-modal-body"></div>
   </div>
@@ -1242,12 +1252,12 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 <div class="page" id="page-penalty">
 <div id="sla-panel" style="background:var(--bg2);border-bottom:1px solid var(--border)">
   <div onclick="toggleSLA()" style="padding:10px 20px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none">
-    <span style="font-size:12px;font-weight:600;color:var(--accent)">&#x1F4CB; Valeo SLA &amp; Penalty Reference &#x2014; Applicable to All Homecare Partners &#x2014; click to expand</span>
-    <span id="sla-arrow" style="color:var(--text2);font-size:13px">&#x25BC;</span>
+    <span style="font-size:12px;font-weight:600;color:var(--accent)">📋 Valeo SLA &amp; Penalty Reference — Applicable to All Homecare Partners — click to expand</span>
+    <span id="sla-arrow" style="color:var(--text2);font-size:13px">▼</span>
   </div>
   <div id="sla-body" style="display:none;padding:0 20px 16px">
     <div style="padding:8px 0 12px;font-size:11px;color:var(--text2);line-height:1.6">
-      &#x2139;&#xFE0F; These SLA terms and penalty rates apply uniformly to <b style="color:var(--text)">all homecare partners</b> under the Valeo Health agreement.
+      ℹ️ These SLA terms and penalty rates apply uniformly to <b style="color:var(--text)">all homecare partners</b> under the Valeo Health agreement.
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div style="background:var(--bg3);border-radius:8px;overflow:hidden;border:1px solid var(--border)">
@@ -1259,7 +1269,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
           </tr></thead>
           <tbody>
             <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">SP late &lt;30 min</td><td style="padding:6px 10px;color:var(--text2)">AED 0</td></tr>
-            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">SP late 30&#x2013;60 min</td><td style="padding:6px 10px;color:var(--sick)">100% Net Booking or AED 250 (min of two)</td></tr>
+            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">SP late 30–60 min</td><td style="padding:6px 10px;color:var(--sick)">100% Net Booking or AED 250 (min of two)</td></tr>
             <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">SP late &gt;60 min / No show</td><td style="padding:6px 10px;color:var(--absent)">100% Net Booking Amount</td></tr>
             <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">False show (marks started, not present)</td><td style="padding:6px 10px;color:var(--absent)">100% Net Booking Amount</td></tr>
             <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Customer unhappy with quality</td><td style="padding:6px 10px;color:var(--sick)">50% Net Booking Amount</td></tr>
@@ -1279,7 +1289,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
           </tr></thead>
           <tbody>
             <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Customer property damage/loss</td><td style="padding:6px 10px;color:var(--absent)">100% item value, max AED 10,000</td></tr>
-            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Disintermediation &#x2013; 1st offence</td><td style="padding:6px 10px;color:var(--absent)">AED 5,000/customer (Liquidated)</td></tr>
+            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Disintermediation – 1st offence</td><td style="padding:6px 10px;color:var(--absent)">AED 5,000/customer (Liquidated)</td></tr>
             <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Continuing to serve after termination</td><td style="padding:6px 10px;color:var(--absent)">Per contract + AED 100/day</td></tr>
             <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">HC terminates without notice</td><td style="padding:6px 10px;color:var(--sick)">AED 250/SP</td></tr>
             <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Unapproved SP replacement</td><td style="padding:6px 10px;color:var(--absent)">AED 10,000/SP/day</td></tr>
@@ -1289,16 +1299,16 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
       </div>
     </div>
     <div style="margin-top:10px;padding:8px 12px;background:rgba(47,129,247,.08);border:1px solid rgba(47,129,247,.2);border-radius:6px;font-size:11px;color:var(--text2);line-height:1.6">
-      &#x26A0;&#xFE0F; <b style="color:var(--text)">Note:</b> Penalty amounts marked as percentage (%) are calculated on the <b>net booking amount</b> of the affected order. Fixed AED amounts apply per incident unless stated otherwise. All deductions require Valeo approval before processing.
+      ⚠️ <b style="color:var(--text)">Note:</b> Penalty amounts marked as percentage (%) are calculated on the <b>net booking amount</b> of the affected order. Fixed AED amounts apply per incident unless stated otherwise. All deductions require Valeo approval before processing.
     </div>
   </div>
 </div>
 <div style="padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-  <div style="font-size:15px;font-weight:700">&#x26A0;&#xFE0F; Penalty Tracker</div>
+  <div style="font-size:15px;font-weight:700">⚠️ Penalty Tracker</div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
     <span id="penalty-total-badge" style="font-size:12px;font-weight:600;padding:5px 12px;background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);border-radius:6px;color:var(--absent)"></span>
     <button onclick="openAddPenaltyModal()" style="padding:6px 14px;background:var(--absent);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">+ Add Penalty</button>
-    <button onclick="exportPenaltiesCSV()" style="padding:6px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">&#x1F4E5; Export CSV</button>
+    <button onclick="exportPenaltiesCSV()" style="padding:6px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">📥 Export CSV</button>
   </div>
 </div>
 <div id="penalty-kpi-row" style="padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap"></div>
@@ -1319,12 +1329,12 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
   <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:22px;width:500px;max-width:95vw;max-height:90vh;overflow-y:auto">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
       <div style="font-size:14px;font-weight:600" id="penalty-modal-title">Add Penalty</div>
-      <button onclick="closePenaltyModal()" style="background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer">&#x2715;</button>
+      <button onclick="closePenaltyModal()" style="background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer">✕</button>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px" id="penalty-modal-body"></div>
     <div style="display:flex;gap:8px;margin-top:16px">
       <button onclick="savePenalty()" style="flex:1;padding:9px;background:var(--absent);border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">Save Penalty</button>
-      <button id="penalty-delete-btn" onclick="deletePenalty()" style="display:none;padding:9px 14px;background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);border-radius:7px;color:var(--absent);font-size:12px;cursor:pointer;font-family:Inter,sans-serif">&#x1F5D1; Delete</button>
+      <button id="penalty-delete-btn" onclick="deletePenalty()" style="display:none;padding:9px 14px;background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);border-radius:7px;color:var(--absent);font-size:12px;cursor:pointer;font-family:Inter,sans-serif">🗑 Delete</button>
       <button onclick="closePenaltyModal()" style="padding:9px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text2);font-size:12px;cursor:pointer;font-family:Inter,sans-serif">Cancel</button>
     </div>
   </div>
@@ -1333,9 +1343,8 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 
 <script>
 // ── CONFIG ──────────────────────────────────────────────────────
-const N8N_DATA_URL      = 'https://feelvaleo.app.n8n.cloud/webhook/babysitting-orders';
-const N8N_OVERRIDE_READ  = 'https://feelvaleo.app.n8n.cloud/webhook/overrides-read';
-const N8N_OVERRIDE_WRITE = 'https://feelvaleo.app.n8n.cloud/webhook/overrides-write';
+const N8N_DATA_URL      = 'https://feelvaleo.app.n8n.cloud/webhook/d0f62c8a-6d05-4834-885e-6ca9bb589d9a';
+// Overrides stored directly in Firebase Firestore (overrides-read/write not used)
 // ────────────────────────────────────────────────────────────────
 
 const HC_COLORS = {
@@ -1789,10 +1798,10 @@ function renderHCGrid(){
         </div>
         ${renderCGCardExtra(cg, hc)}
         <button class="cg-remove-btn" onclick="event.stopPropagation();removeCGByKey(this)">✕</button>
-        <button class="cg-excl-btn" onclick="event.stopPropagation();toggleExclusive('${cg}','${hc}')" title="${isExclusiveCG(cg,hc)?'Remove exclusive':'Mark as exclusive'}" style="position:absolute;top:8px;right:32px;background:${isExclusiveCG(cg,hc)?'rgba(245,158,11,.25)':'rgba(110,118,129,.15)'};border:1px solid ${isExclusiveCG(cg,hc)?'#f59e0b':'var(--border)'};border-radius:4px;padding:2px 6px;font-size:9px;font-weight:700;color:${isExclusiveCG(cg,hc)?'#f59e0b':'var(--text2)'};cursor:pointer;font-family:Inter,sans-serif">${isExclusiveCG(cg,hc)?'&#x1F451; EX':'EX?'}</button>
-        <button onclick="event.stopPropagation();toggleOnLeave('${cg}','${hc}')" title="Toggle on leave" style="position:absolute;top:8px;right:64px;background:${isCGOnLeave(cg,hc)?'rgba(248,81,73,.2)':'rgba(110,118,129,.1)'};border:1px solid ${isCGOnLeave(cg,hc)?'var(--absent)':'var(--border)'};border-radius:4px;padding:2px 6px;font-size:9px;font-weight:700;color:${isCGOnLeave(cg,hc)?'var(--absent)':'var(--text2)'};cursor:pointer;font-family:Inter,sans-serif">${isCGOnLeave(cg,hc)?'&#x1F6CC; '+(getCGSetting(cg,hc).leave_start||'').slice(5)+'&rarr;'+(getCGSetting(cg,hc).leave_end||'').slice(5):'LEAVE?'}</button>
+        <button class="cg-excl-btn" onclick="event.stopPropagation();toggleExclusive('${cg}','${hc}')" title="${isExclusiveCG(cg,hc)?'Remove exclusive':'Mark as exclusive'}" style="position:absolute;top:8px;right:32px;background:${isExclusiveCG(cg,hc)?'rgba(245,158,11,.25)':'rgba(110,118,129,.15)'};border:1px solid ${isExclusiveCG(cg,hc)?'#f59e0b':'var(--border)'};border-radius:4px;padding:2px 6px;font-size:9px;font-weight:700;color:${isExclusiveCG(cg,hc)?'#f59e0b':'var(--text2)'};cursor:pointer;font-family:Inter,sans-serif">${isExclusiveCG(cg,hc)?'👑 EX':'EX?'}</button>
+        <button onclick="event.stopPropagation();toggleOnLeave('${cg}','${hc}')" title="Toggle on leave" style="position:absolute;top:8px;right:64px;background:${isCGOnLeave(cg,hc)?'rgba(248,81,73,.2)':'rgba(110,118,129,.1)'};border:1px solid ${isCGOnLeave(cg,hc)?'var(--absent)':'var(--border)'};border-radius:4px;padding:2px 6px;font-size:9px;font-weight:700;color:${isCGOnLeave(cg,hc)?'var(--absent)':'var(--text2)'};cursor:pointer;font-family:Inter,sans-serif">${isCGOnLeave(cg,hc)?'🛌 '+(getCGSetting(cg,hc).leave_start||'').slice(5)+'&rarr;'+(getCGSetting(cg,hc).leave_end||'').slice(5):'LEAVE?'}</button>
         <div class="cg-view-btn">View Calendar →</div>
-        <button onclick="event.stopPropagation();openStartDateModal('${cg}','${hc}')" style="position:absolute;bottom:8px;right:8px;background:rgba(47,129,247,.1);border:1px solid rgba(47,129,247,.3);border-radius:4px;padding:2px 6px;font-size:9px;color:var(--accent);cursor:pointer;font-family:Inter,sans-serif">&#x1F4C5; ${getCGSetting(cg,hc).start_date||'Start: 1st'}</button>
+        <button onclick="event.stopPropagation();openStartDateModal('${cg}','${hc}')" style="position:absolute;bottom:8px;right:8px;background:rgba(47,129,247,.1);border:1px solid rgba(47,129,247,.3);border-radius:4px;padding:2px 6px;font-size:9px;color:var(--accent);cursor:pointer;font-family:Inter,sans-serif">📅 ${getCGSetting(cg,hc).start_date||'Start: 1st'}</button>
       </div>`;
     });
     html+='</div></div>';
@@ -1814,8 +1823,8 @@ function renderHCGrid(){
       html+='<div class="cg-card" data-cg="'+cg.replace(/"/g,'"')+'" data-hc="'+hc.replace(/"/g,'"')+'" id="'+cardId2+'" onclick="openCGCalFromDataset(this)" style="--card-col:'+col+'">'
         +'<style>#'+cardId2+'::before{background:'+col+'}</style>'
         +'<button class="cg-remove-btn" onclick="event.stopPropagation();removeCGByKey(this)">✕</button>'
-        +'<div class="cg-avail-tag">&#x2713; Available</div>'
-        +'<div class="cg-unavail-tag">&#x2717; Unavailable</div>'
+        +'<div class="cg-avail-tag">✓ Available</div>'
+        +'<div class="cg-unavail-tag">✗ Unavailable</div>'
         +'<div class="cg-top"><div class="cg-avatar" style="background:'+col+'">'+initials(cg)+'</div>'
         +'<div><div class="cg-name">'+cg+'<span class="manual-badge">manual</span></div>'
         +'<div class="cg-hc-label">'+hc+'</div></div></div>'
@@ -1830,7 +1839,7 @@ function renderHCGrid(){
         +'<div class="cg-stat"><div class="stat-n off">0</div><div class="stat-l">Off</div></div>'
         +'<div class="cg-stat"><div class="stat-n sick">0</div><div class="stat-l">Sick</div></div>'
         +'</div>'
-        +'<div class="cg-view-btn">View Calendar &#x2192;</div>'
+        +'<div class="cg-view-btn">View Calendar →</div>'
         +'</div>';
     });
     html+='</div></div>';
@@ -2325,7 +2334,7 @@ function renderAnalyticsData(){
     var cg=e[0], hrs=e[1], rev=e[2], rph=e[3], hc=e[4];
     var pct = maxRph ? Math.round(rph/maxRph*100) : 0;
     var col = rph>=200?'var(--duty)':rph>=100?'var(--accent)':'var(--sick)';
-    var emoji = rph>=200?'&#x1F7E2;':rph>=100?'&#x1F535;':'&#x1F534;';
+    var emoji = rph>=200?'🟢':rph>=100?'🔵':'🔴';
     var exTag = isExclusiveCG(cg,hc)?'<span style="font-size:8px;padding:1px 3px;border-radius:3px;background:rgba(245,158,11,.25);color:#f59e0b;margin-left:2px">EX</span>':'';
     return '<div class="bar-row" style="margin-bottom:4px">'
       +'<div class="bar-label" title="'+cg+'" style="width:110px;min-width:110px;font-size:11px;overflow:hidden;text-overflow:ellipsis">'+emoji+' '+cg.split(' ')[0]+exTag+'</div>'
@@ -2356,7 +2365,7 @@ function renderAnalyticsData(){
 
     <!-- ── Exclusive vs Non-Exclusive ── -->
     <div class="a-card" style="grid-column:1/-1">
-      <div class="a-title"><div class="a-title-bar" style="background:#f59e0b"></div>&#x1F451; Exclusive vs Non-Exclusive Utilization</div>
+      <div class="a-title"><div class="a-title-bar" style="background:#f59e0b"></div>👑 Exclusive vs Non-Exclusive Utilization</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:12px">
         <div>
           <div id="excl-cg-label" style="font-size:11px;font-weight:600;color:#f59e0b;margin-bottom:10px">EXCLUSIVE CGs</div>
@@ -2417,8 +2426,8 @@ function renderAnalyticsData(){
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
         <div style="display:flex;gap:6px">
           <button onclick="setCGFilter('all')" id="cgf-all" style="padding:4px 10px;font-size:10px;font-weight:600;border-radius:4px;cursor:pointer;font-family:Inter,sans-serif;background:var(--accent);color:#fff;border:1px solid var(--accent)">All</button>
-          <button onclick="setCGFilter('exclusive')" id="cgf-exclusive" style="padding:4px 10px;font-size:10px;font-weight:600;border-radius:4px;cursor:pointer;font-family:Inter,sans-serif;background:var(--bg3);color:#f59e0b;border:1px solid var(--border)">&#x1F451; Exclusive</button>
-          <button onclick="setCGFilter('non-exclusive')" id="cgf-non-exclusive" style="padding:4px 10px;font-size:10px;font-weight:600;border-radius:4px;cursor:pointer;font-family:Inter,sans-serif;background:var(--bg3);color:#8b5cf6;border:1px solid var(--border)">&#x1F465; Non-Exclusive</button>
+          <button onclick="setCGFilter('exclusive')" id="cgf-exclusive" style="padding:4px 10px;font-size:10px;font-weight:600;border-radius:4px;cursor:pointer;font-family:Inter,sans-serif;background:var(--bg3);color:#f59e0b;border:1px solid var(--border)">👑 Exclusive</button>
+          <button onclick="setCGFilter('non-exclusive')" id="cgf-non-exclusive" style="padding:4px 10px;font-size:10px;font-weight:600;border-radius:4px;cursor:pointer;font-family:Inter,sans-serif;background:var(--bg3);color:#8b5cf6;border:1px solid var(--border)">👥 Non-Exclusive</button>
         </div>
         <div id="excl-avg-util" style="display:flex;gap:12px;font-size:11px"></div>
       </div>
@@ -2439,9 +2448,9 @@ function renderAnalyticsData(){
 
     <!-- ── Revenue per Hour ── -->
     <div class="a-card" style="grid-column:1/-1">
-      <div class="a-title"><div class="a-title-bar" style="background:#e879f9"></div>&#x1F4B0; Revenue per Hour — by Caregiver</div>
+      <div class="a-title"><div class="a-title-bar" style="background:#e879f9"></div>💰 Revenue per Hour — by Caregiver</div>
       <div style="font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.6">
-        &#x1F4CC; <b style="color:var(--text2)">What this shows:</b> How much revenue each caregiver generates per hour worked, based on order value ÷ hours in period.<br>
+        📌 <b style="color:var(--text2)">What this shows:</b> How much revenue each caregiver generates per hour worked, based on order value ÷ hours in period.<br>
         <span style="color:var(--accent)">Higher = more revenue-dense bookings. Use this to identify top-earning caregivers and optimise assignment.</span>
       </div>
       <div id="rev-per-hr-bars" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:4px 20px">
@@ -2465,10 +2474,10 @@ function renderAnalyticsData(){
     var el=document.getElementById('excl-avg-util');
     if(el) el.innerHTML=
       '<div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:6px;padding:4px 10px">'
-      +'<span style="color:#f59e0b;font-weight:700">&#x1F451; Excl avg: '+aEP+'%</span>'
+      +'<span style="color:#f59e0b;font-weight:700">👑 Excl avg: '+aEP+'%</span>'
       +'<span style="color:var(--text3);margin-left:6px;font-size:10px">'+tEH+'h &middot; '+eH.length+' CGs</span></div>'
       +'<div style="background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.3);border-radius:6px;padding:4px 10px">'
-      +'<span style="color:#8b5cf6;font-weight:700">&#x1F465; Non-excl avg: '+aNP+'%</span>'
+      +'<span style="color:#8b5cf6;font-weight:700">👥 Non-excl avg: '+aNP+'%</span>'
       +'<span style="color:var(--text3);margin-left:6px;font-size:10px">'+tNH+'h &middot; '+nH.length+' CGs</span></div>';
     var tbl=document.getElementById('excl-comparison-table');
     if(!tbl) return;
@@ -2482,8 +2491,8 @@ function renderAnalyticsData(){
     tbl.innerHTML='<table style="width:100%;border-collapse:collapse">'
       +'<thead><tr style="background:var(--bg3)">'
       +'<th style="padding:9px 14px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;color:var(--text2);border-bottom:2px solid var(--border)">Metric</th>'
-      +'<th style="padding:9px 14px;text-align:center;font-size:11px;font-weight:700;color:#f59e0b;border-bottom:2px solid var(--border)">&#x1F451; Exclusive ('+eH.length+' CGs)</th>'
-      +'<th style="padding:9px 14px;text-align:center;font-size:11px;font-weight:700;color:#8b5cf6;border-bottom:2px solid var(--border)">&#x1F465; Non-Exclusive ('+nH.length+' CGs)</th>'
+      +'<th style="padding:9px 14px;text-align:center;font-size:11px;font-weight:700;color:#f59e0b;border-bottom:2px solid var(--border)">👑 Exclusive ('+eH.length+' CGs)</th>'
+      +'<th style="padding:9px 14px;text-align:center;font-size:11px;font-weight:700;color:#8b5cf6;border-bottom:2px solid var(--border)">👥 Non-Exclusive ('+nH.length+' CGs)</th>'
       +'</tr></thead><tbody>'
       +row('Total Hours Worked',tEH,tNH,true)
       +row('Avg Hours per CG',aEH,aNH,true)
@@ -3217,10 +3226,10 @@ function applyOverrides(){
       var recOid = r.child_order_id || r.order_id || '';
       if(recOid && recOid !== ov.child_order_id) return; // different order — skip override
     }
-    // For 'removed' override: real Duty order wins (new assignment shows through)
-    // For ALL other overrides (off/sick/holiday/unpaid/cancelled): apply even to real Duty
+    // Real Duty order always wins over ANY override (new assignment clears off/sick/etc)
+    // Exception: manual bookings can still be overridden
     var isRealDuty = (r.status||'').toLowerCase()==='duty' && !r._manual;
-    if(isRealDuty && ov.type==='removed') return; // only 'removed' is skipped for real Duty
+    if(isRealDuty) return; // new order assigned → override is ignored, duty shows through
     // Apply override
     if(ov.type==='sick')          { r.status='Sick';      r.time_start=''; r.time_end=''; }
     else if(ov.type==='off')      { r.status='Week Off';  r.time_start=''; r.time_end=''; }
@@ -4217,6 +4226,14 @@ function switchToRoster(){
     var hcs=[...new Set(rawData.map(function(r){return r.homecare;}))].filter(Boolean).sort();
     sel.innerHTML='<option value="">All Homecare</option>';
     hcs.forEach(function(hc){sel.innerHTML+='<option value="'+hc+'"'+(hc===cur?' selected':'')+'>'+hc+'</option>';});
+    // Populate city filter
+    var citysel=document.getElementById('roster-city-filter');
+    if(citysel){
+      var curcity=citysel.value;
+      var cities=[...new Set(rawData.map(function(r){return(r.location||'').trim();}).filter(Boolean))].sort();
+      citysel.innerHTML='<option value="">All Cities</option>';
+      cities.forEach(function(c){citysel.innerHTML+='<option value="'+c+'"'+(c===curcity?' selected':'')+'>'+c+'</option>';});
+    }
     // Lock dropdown for HC role users
     if(_session&&_session.role==='hc'&&_session.homecare){
       var _rshcStrip=_session.homecare.toLowerCase().replace(/[\s\u00a0]+/g,'');
@@ -4244,6 +4261,14 @@ function renderRoster(){
   var dates=[];
   for(var d=1;d<=dim;d++) dates.push(year+'-'+String(month+1).padStart(2,'0')+'-'+String(d).padStart(2,'0'));
   var filterHC=document.getElementById('roster-hc-filter').value;
+  var filterCity=(document.getElementById('roster-city-filter')||{}).value||'';
+  // City filter uses manually-set cgSettings city (not order location)
+  // cgCityMap kept for backward compat but now reads from settings
+  var cgCityMap={};
+  Object.entries(cgSettings).forEach(function(e){
+    var key=e[0],val=e[1];
+    if(val.city) cgCityMap[key.split('|')[0]]={city:val.city};
+  });
   // Restrict roster to session HC for HC role users
   var _rosterHC = (_session&&_session.role==='hc'&&_session.homecare) ? _session.homecare : null;
   if(_rosterHC){
@@ -4259,11 +4284,13 @@ function renderRoster(){
   rawData.forEach(function(r){
     if(!r.caregiver) return;
     if(filterHC&&r.homecare!==filterHC) return;
+    if(filterCity){var cgCity=(cgCityMap[r.caregiver]||{}).city||'';if(cgCity!==filterCity)return;}
     if(!cgMap[r.caregiver]) cgMap[r.caregiver]={name:r.caregiver,homecare:r.homecare||''};
   });
   Object.entries(manualCGs).forEach(function(e){
     var v=e[1];
     if(filterHC&&v.homecare!==filterHC) return;
+    if(filterCity){var mCity=(cgCityMap[v.name]||{}).city||'';if(mCity&&mCity!==filterCity)return;}
     if(!cgMap[v.name]) cgMap[v.name]={name:v.name,homecare:v.homecare||''};
   });
   [...hiddenCGs].forEach(function(hk){
@@ -4306,7 +4333,21 @@ function renderRoster(){
       var ini=((parts[0]||'')[0]||'')+((parts[1]||'')[0]||'');
       var hcVal=cgMap[cgName]?cgMap[cgName].homecare:'';
       html+='<tr><td class="col-photo"><div class="r-photo">'+ini.toUpperCase()+'</div></td>';
-      html+='<td class="col-info"><div class="r-name">'+cgName+'</div><div class="r-hc">'+hcVal+'</div></td>';
+      html+='<td class="col-info"><div class="r-name">'+cgName+'</div><div class="r-hc">'+hcVal+'</div>'
+        +(function(){
+          var city=getCGCity(cgName,hcVal);
+          var cls=city==='Dubai'?'dubai':city==='AUH'?'auh':'unset';
+          var lbl=city||'+ City';
+          var safeC=cgName.replace(/'/g,"&#39;").replace(/"/g,'&quot;');
+          var safeH=hcVal.replace(/'/g,"&#39;").replace(/"/g,'&quot;');
+          return '<div><select class="r-city '+cls+'" onchange="setCGCity(\''+safeC+'\',\''+safeH+'\',this.value);this.className=\'r-city \'+{Dubai:\'dubai\',AUH:\'auh\',RAK:\'rak\',\'\':\'unset\'}[this.value]" onclick="event.stopPropagation()" title="Set location">'
+            +'<option value="" '+(city?'':'selected')+'>+ City</option>'
+            +'<option value="Dubai" '+(city==='Dubai'?'selected':'')+'>🏙 Dubai</option>'
+            +'<option value="AUH" '+(city==='AUH'?'selected':'')+'>🕌 AUH</option>'
+            +'<option value="RAK" '+(city==='RAK'?'selected':'')+'>🏔 RAK</option>'
+            +'</select></div>';
+        })()
+        +'</td>';
       dates.forEach(function(ds){
         var dow=new Date(ds+'T12:00:00').getDay();
         var isWE=dow===0||dow===6,isT=ds===todayStr;
@@ -4330,8 +4371,9 @@ function renderRoster(){
           else if(st==='sick'){cls+=' rd-sick';inner='<div class="rd-in"><div class="rd-cl">Sick</div></div>';}
           else if(st==='cancelled'||st==='absent'){cls+=' rd-off';inner='<div class="rd-in"><div class="rd-cl">'+st+'</div></div>';}
           else{
-            cls+=' rd-duty';
             var cl2=(ev.client_name||'').split(' ')[0];
+            if((ev.client_name||'').toLowerCase().includes('shady'))cls+=' rd-shady';
+            else cls+=' rd-duty';
             var t3=ev.time_start&&ev.time_end?ev.time_start+'-'+ev.time_end:(ev.time_start||'');
             var oid=ev.child_order_id||ev.order_id||'';
             inner='<div class="rd-in">'+(cl2?'<div class="rd-cl">'+cl2+'</div>':'')+(t3?'<div class="rd-tm">'+t3+'</div>':'')+(oid?'<div class="rd-od">#'+oid+'</div>':'')+'</div>';
@@ -4596,7 +4638,7 @@ function applySessionUI(){
   if(header){
     var badge=document.createElement('div');
     badge.style.cssText='display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text2);margin-right:8px';
-    badge.innerHTML=(_session.role==='master'?'&#x1F451;':'&#x1F3E5;')+' <b style="color:var(--text)">'+_session.username+'</b> <button onclick="doLogout()" style="background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);border-radius:5px;color:var(--absent);font-size:10px;padding:2px 8px;cursor:pointer;font-family:Inter,sans-serif">Sign out</button>';
+    badge.innerHTML=(_session.role==='master'?'👑':'🏥')+' <b style="color:var(--text)">'+_session.username+'</b> <button onclick="doLogout()" style="background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);border-radius:5px;color:var(--absent);font-size:10px;padding:2px 8px;cursor:pointer;font-family:Inter,sans-serif">Sign out</button>';
     header.insertBefore(badge,header.firstChild);
   }
   if(_session.role==='hc'){
@@ -4742,9 +4784,6 @@ function getLeadKey(lead){return String(lead['phone number']||lead['phone']||'')
 function getLeadOv(lead){return _leadsOverrides[getLeadKey(lead)]||{};}
 function autoHeat(lead){
   var ov=getLeadOv(lead);if(ov.heat)return ov.heat;
-  if(ov.call1||ov.call2||ov.call3){
-    return autoHeatFromCallStatus(ov.call1||lead['status']||'—',ov.call2||'—',ov.call3||'—',ov.notes||lead['notes']||'');
-  }
   var st=String(lead['status']||'').toLowerCase().trim();
   var cur=String(lead['current status']||lead['current_status']||'').toLowerCase().trim();
   // Check notes field — try multiple possible column names
@@ -4912,171 +4951,73 @@ function getFilteredLeads(){
   var fCity=(document.getElementById('lead-filter-city')||{}).value||'';
   var fMonth=(document.getElementById('lead-filter-month')||{}).value||'';
   var fWeek=(document.getElementById('lead-filter-week')||{}).value||'';
-  var fFinal=(document.getElementById('lead-filter-final')||{}).value||'';
   return _leads.filter(function(l){
     var ov=getLeadOv(l);
     if(q&&!(l['full name']||l['name']||'').toLowerCase().includes(q.toLowerCase())&&!(l['phone number']||l['phone']||'').includes(q))return false;
-    if(fStatus&&(ov.call1||String(l['status']||'')).toLowerCase()!==fStatus)return false;
+    if(fStatus&&String(l['status']||'').toLowerCase()!==fStatus)return false;
     if(fHeat&&(ov.heat||autoHeat(l))!==fHeat)return false;
     if(fCity&&(l['city']||'').trim()!==fCity)return false;
     if(fMonth&&l._date&&l._date.toLocaleString('default',{month:'long',year:'numeric'})!==fMonth)return false;
     if(fWeek&&l._date){var day=l._date.getDate(),wk=day<=7?'1':day<=14?'2':day<=21?'3':'4';if(wk!==fWeek)return false;}
-    if(fFinal){
-      var isFinalConv=ov.converted||String(l['status']||'').toLowerCase()==='converted'||ov.call2==='converted'||ov.call3==='converted';
-      var isFinalNotConv=ov.final_status==='not_converted';
-      if(fFinal==='converted'&&!isFinalConv)return false;
-      if(fFinal==='not_converted'&&!isFinalNotConv)return false;
-      if(fFinal==='ongoing'&&(isFinalConv||isFinalNotConv))return false;
-    }
     return true;
   });
-}
-function callStatusStyle(st){
-  var s=(st||'').toLowerCase().trim();
-  if(!s||s==='—')return'color:var(--text3)';
-  if(s==='connected'||s==='on fc')return'color:var(--duty);font-weight:600';
-  if(s==='converted')return'color:#10b981;font-weight:700';
-  if(s==='no answer')return'color:var(--sick)';
-  if(s==='hung up')return'color:var(--absent)';
-  if(s==='not interested')return'color:var(--text3)';
-  return'color:var(--text2)';
-}
-function callStatusEmoji(st){
-  var s=(st||'').toLowerCase().trim();
-  if(s==='connected')return'📞 ';
-  if(s==='on fc')return'🤝 ';
-  if(s==='converted')return'✅ ';
-  if(s==='no answer')return'📵 ';
-  if(s==='hung up')return'📴 ';
-  if(s==='not interested')return'🚫 ';
-  return'';
-}
-function autoHeatFromCallStatus(c1,c2,c3,notes){
-  var latest=c3&&c3!=='—'?c3:c2&&c2!=='—'?c2:c1;
-  var s=(latest||'').toLowerCase().trim();
-  var n=(notes||'').toLowerCase();
-  if(s==='converted') return'hot';
-  if(s==='not interested'||n.includes('not interested')||n.includes('high price')||n.includes('looking for job')||n.includes('wrong number')||n.includes('have nanny')) return'dead';
-  if(s==='on fc'||n.includes('urgent')||n.includes('confirmed')||n.includes('booked')) return'hot';
-  if(s==='connected'||s==='callback'||n.includes('interested')||n.includes('follow up')||n.includes('call back')) return'warm';
-  if(s==='no answer'||s==='hung up') return'cold';
-  return'cold';
 }
 function renderLeadsTable(){
   var filtered=getFilteredLeads(),wrap=document.getElementById('leads-table-wrap');if(!wrap)return;
   if(!filtered.length){wrap.innerHTML='<div style="padding:40px;text-align:center;color:var(--text2)">No leads match filters</div>';return;}
   var html='<div style="font-size:11px;color:var(--text2);margin-bottom:8px">Showing '+filtered.length+' of '+_leads.length+' leads</div>';
-  html+='<table class="lead-table"><thead><tr>'
-    +'<th>Date</th><th>Name</th><th>Phone</th>'
-    +'<th>Call 1</th><th>Call 2</th><th>Call 3</th>'
-    +'<th>Classification</th><th>Notes</th><th>Final Status</th>'
-    +'</tr></thead><tbody>';
+  html+='<table class="lead-table"><thead><tr><th>Date</th><th>Name</th><th>Phone</th><th>Package</th><th>City</th><th>Status</th><th>Classification</th><th>Calls</th><th>Last Contact</th><th>Notes</th><th>Converted</th></tr></thead><tbody>';
   filtered.forEach(function(l){
     var ov=getLeadOv(l),heat=ov.heat||autoHeat(l);
     var heatBadge='<span class="heat-'+heat+'">'+(heat==='hot'?'🔥 Hot':heat==='warm'?'🌤 Warm':heat==='cold'?'❄️ Cold':'💀 Dead')+'</span>';
-    var call1=ov.call1||l['status']||'—';
-    var call2=ov.call2||'—';
-    var call3=ov.call3||'—';
-    var notes=(ov.notes||l['notes']||'').substring(0,40)||'—';
-    var isFinalConv=ov.converted||String(l['status']||'').toLowerCase()==='converted'||ov.call2==='converted'||ov.call3==='converted';
-    var isFinalNotConv=ov.final_status==='not_converted';
-    var finalStatus=isFinalConv
-      ?'<span style="background:rgba(63,185,80,.15);color:var(--duty);padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700">✅ Converted</span>'
-      :isFinalNotConv
-      ?'<span style="background:rgba(248,81,73,.1);color:var(--absent);padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700">❌ Not Converted</span>'
-      :'<span style="background:var(--bg3);color:var(--text2);padding:2px 8px;border-radius:10px;font-size:10px">⏳ Ongoing</span>';
-    html+='<tr onclick="openLeadModal('+l._idx+')" style="'+(isFinalConv?'opacity:.65':'')+'">'
+    var _lc=ov.last_contacted?new Date(ov.last_contacted+'T12:00:00'):l._date;
+    var days=_lc?daysSince(_lc):null,dayCls=days===null?'':days<=3?'days-ok':days<=7?'days-warn':'days-late';
+    var calls=ov.calls!==undefined?ov.calls:(parseInt(l['call count'])||0);
+    var isConv=ov.converted||String(l['status']||'').toLowerCase()==='converted';
+    html+='<tr onclick="openLeadModal('+l._idx+')" '+(isConv?'style="opacity:.6"':'')+'>'
       +'<td style="font-size:11px;color:var(--text2);white-space:nowrap">'+(l._date?leadDateStr(l._date):'—')+'</td>'
-      +'<td style="font-weight:600">'+(l['full name']||l['name']||'—')+'</td>'
+      +'<td style="font-weight:500">'+(l['full name']||l['name']||'—')+'</td>'
       +'<td style="font-family:monospace;font-size:11px">'+(l['phone number']||l['phone']||'—')+'</td>'
-      +'<td style="font-size:11px;'+callStatusStyle(call1)+'">'+callStatusEmoji(call1)+call1+'</td>'
-      +'<td style="font-size:11px;'+callStatusStyle(call2)+'">'+callStatusEmoji(call2)+(call2==='—'?'<span style="color:var(--text3)">—</span>':call2)+'</td>'
-      +'<td style="font-size:11px;'+callStatusStyle(call3)+'">'+callStatusEmoji(call3)+(call3==='—'?'<span style="color:var(--text3)">—</span>':call3)+'</td>'
+      +'<td style="font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(l['package']||'')+'">'+(((l['package']||'').split('_').pop())||'—')+'</td>'
+      +'<td style="font-size:11px">'+(l['city']||'—')+'</td>'
+      +'<td style="font-size:11px">'+(l['status']||'—')+'</td>'
       +'<td>'+heatBadge+'</td>'
-      +'<td style="font-size:11px;color:var(--text2);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(ov.notes||l['notes']||'')+'">'+notes+'</td>'
-      +'<td>'+finalStatus+'</td>'
+      +'<td style="text-align:center;font-weight:600">'+calls+'</td>'
+      +'<td><span class="days-counter '+dayCls+'">'+(days!==null?days+'d ago':'—')+'</span></td>'
+      +'<td style="font-size:11px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(ov.notes||l['notes']||'')+'">'+(((ov.notes||l['notes']||'').substring(0,35))||'—')+'</td>'
+      +'<td style="text-align:center">'+(isConv?'<span style="color:var(--duty)">✅</span>':'')+'</td>'
       +'</tr>';
   });
   html+='</tbody></table>';wrap.innerHTML=html;
 }
 function openLeadModal(idx){
-  _editLeadIdx=idx;
-  var l=_leads[idx],ov=getLeadOv(l),heat=ov.heat||autoHeat(l);
-  var isFinalConv=ov.converted||String(l['status']||'').toLowerCase()==='converted'||ov.call2==='converted'||ov.call3==='converted';
+  _editLeadIdx=idx;var l=_leads[idx],ov=getLeadOv(l),heat=ov.heat||autoHeat(l);
+  var isConv=ov.converted||String(l['status']||'').toLowerCase()==='converted';
   document.getElementById('lead-modal-title').textContent=l['full name']||l['name']||'—';
-  var CALL_OPTS=['—','connected','no answer','hung up','on fc','converted','not interested','callback'];
-  function callSel(id,val){
-    var s='width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:Inter,sans-serif;font-size:12px;padding:8px 10px;border-radius:7px;outline:none;';
-    var opts=CALL_OPTS.map(function(o){return'<option value="'+o+'"'+(val===o?' selected':'')+'>'+o+'</option>';}).join('');
-    return'<select id="'+id+'" style="'+s+'">'+opts+'</select>';
-  }
-  var call1=ov.call1||l['status']||'—';
-  var call2=ov.call2||'—';
-  var call3=ov.call3||'—';
-  var html='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;font-size:12px">';
+  var html='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;font-size:12px">';
   html+='<div><div style="font-size:10px;color:var(--text2);margin-bottom:3px">DATE</div><div>'+(l._date?leadDateStr(l._date):'—')+'</div></div>';
   html+='<div><div style="font-size:10px;color:var(--text2);margin-bottom:3px">PHONE</div><div style="font-family:monospace">'+(l['phone number']||l['phone']||'—')+'</div></div>';
+  html+='<div><div style="font-size:10px;color:var(--text2);margin-bottom:3px">CITY</div><div>'+(l['city']||'—')+'</div></div>';
+  html+='<div><div style="font-size:10px;color:var(--text2);margin-bottom:3px">STATUS</div><div>'+(l['status']||'—')+'</div></div>';
+  html+='<div style="grid-column:1/-1"><div style="font-size:10px;color:var(--text2);margin-bottom:3px">PACKAGE</div><div style="font-size:11px;color:var(--text2)">'+(l['package']||'—')+'</div></div>';
   html+='</div><div style="height:1px;background:var(--border);margin-bottom:14px"></div>';
-  html+='<div style="margin-bottom:14px"><div style="font-size:10px;font-weight:600;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">📞 Call Statuses</div>';
-  html+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">';
-  html+='<div><div style="font-size:10px;color:var(--text2);margin-bottom:4px">Call 1</div>'+callSel('modal-call1',call1)+'</div>';
-  html+='<div><div style="font-size:10px;color:var(--text2);margin-bottom:4px">Call 2</div>'+callSel('modal-call2',call2)+'</div>';
-  html+='<div><div style="font-size:10px;color:var(--text2);margin-bottom:4px">Call 3</div>'+callSel('modal-call3',call3)+'</div>';
-  html+='</div></div>';
-  html+='<div style="margin-bottom:14px"><div style="font-size:10px;font-weight:600;color:var(--text2);margin-bottom:6px;text-transform:uppercase">Classification</div>';
-  html+='<div style="display:flex;gap:6px" id="heat-row"></div></div>';
-  html+='<div style="margin-bottom:14px"><div style="font-size:10px;font-weight:600;color:var(--text2);margin-bottom:6px;text-transform:uppercase">Notes</div>';
-  html+='<textarea id="lead-modal-notes" rows="3" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:Inter,sans-serif;font-size:12px;padding:8px;border-radius:7px;outline:none;resize:vertical;box-sizing:border-box">'+(ov.notes||l['notes']||'')+'</textarea></div>';
-  html+='<div style="margin-bottom:6px"><div style="font-size:10px;font-weight:600;color:var(--text2);margin-bottom:8px;text-transform:uppercase">Final Status</div>';
-  html+='<div style="display:flex;gap:8px">';
-  html+='<button id="final-conv-btn" onclick="setFinalStatus(&quot;converted&quot;)" style="flex:1;padding:9px;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;font-family:Inter,sans-serif;border:2px solid '+(isFinalConv?'transparent':'var(--border)')+';background:'+(isFinalConv?'var(--duty)':'var(--bg3)')+';color:'+(isFinalConv?'#fff':'var(--text2)')+'">✅ Converted</button>';
-  html+='<button id="final-notconv-btn" onclick="setFinalStatus(&quot;not_converted&quot;)" style="flex:1;padding:9px;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;font-family:Inter,sans-serif;border:2px solid '+(ov.final_status==='not_converted'&&!isFinalConv?'transparent':'var(--border)')+';background:'+(ov.final_status==='not_converted'&&!isFinalConv?'var(--absent)':'var(--bg3)')+';color:'+(ov.final_status==='not_converted'&&!isFinalConv?'#fff':'var(--text2)')+'">❌ Not Converted</button>';
-  html+='</div></div>';
+  html+='<div style="margin-bottom:12px"><div style="font-size:10px;font-weight:600;color:var(--text2);margin-bottom:6px;text-transform:uppercase">Classification</div><div style="display:flex;gap:6px" id="heat-row"></div></div>';
+  html+='<div style="margin-bottom:12px"><div style="font-size:10px;font-weight:600;color:var(--text2);margin-bottom:6px;text-transform:uppercase">Call Attempts</div><div style="display:flex;align-items:center;gap:8px"><button onclick="adjustCalls(-1)" style="width:30px;height:30px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:16px;cursor:pointer">−</button><span id="lead-modal-calls" style="font-size:20px;font-weight:700;font-family:monospace;min-width:32px;text-align:center">'+(ov.calls!==undefined?ov.calls:(parseInt(l['call count'])||0))+'</span><button onclick="adjustCalls(1)" style="width:30px;height:30px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:16px;cursor:pointer">+</button></div></div>';
+  html+='<div><div style="font-size:10px;font-weight:600;color:var(--text2);margin-bottom:6px;text-transform:uppercase">Notes (from sheet)</div><div style="font-size:12px;color:var(--text2);background:var(--bg3);border-radius:6px;padding:8px;margin-bottom:8px">'+(l['notes']||'—')+'</div><div style="font-size:10px;font-weight:600;color:var(--text2);margin-bottom:4px;text-transform:uppercase">Additional Notes</div><textarea id="lead-modal-notes" rows="3" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:Inter,sans-serif;font-size:12px;padding:8px;border-radius:6px;outline:none;resize:vertical">'+(ov.notes||'')+'</textarea></div>';
   document.getElementById('lead-modal-body').innerHTML=html;
-  document.getElementById('lead-convert-btn').style.display='none';
-  function refreshHeat(){
-    var c1=(document.getElementById('modal-call1')||{}).value||call1;
-    var c2=(document.getElementById('modal-call2')||{}).value||'';
-    var c3=(document.getElementById('modal-call3')||{}).value||'';
-    var newHeat=autoHeatFromCallStatus(c1,c2,c3,ov.notes||l['notes']||'');
-    ['hot','warm','cold','dead'].forEach(function(h){
-      var btn=document.getElementById('heat-btn-'+h);if(!btn)return;
-      var sel=h===newHeat;
-      btn.style.background=sel?'var(--accent)':'var(--bg3)';
-      btn.style.color=sel?'#fff':'var(--text2)';
-      btn.style.borderColor=sel?'transparent':'var(--border)';
-    });
-    window._pendingHeat=newHeat;
-  }
+  document.getElementById('lead-convert-btn').style.display=isConv?'none':'block';
   setTimeout(function(){
-    ['modal-call1','modal-call2','modal-call3'].forEach(function(id){
-      var el=document.getElementById(id);if(el)el.addEventListener('change',refreshHeat);
-    });
     var row=document.getElementById('heat-row');if(!row)return;
     ['hot','warm','cold','dead'].forEach(function(h){
       var labels={hot:'🔥 Hot',warm:'🌤 Warm',cold:'❄️ Cold',dead:'💀 Dead'};
       var btn=document.createElement('button');btn.id='heat-btn-'+h;btn.dataset.heat=h;btn.textContent=labels[h];
       btn.onclick=function(){setLeadHeat(this.dataset.heat);};
-      var sel=heat===h;
-      btn.style.cssText='flex:1;padding:6px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600;border:2px solid '+(sel?'transparent':'var(--border)')+';background:'+(sel?'var(--accent)':'var(--bg3)')+';color:'+(sel?'#fff':'var(--text2)');
+      var sel=heat===h;btn.style.cssText='flex:1;padding:6px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600;border:2px solid '+(sel?'transparent':'var(--border)')+';background:'+(sel?'var(--accent)':'var(--bg3)')+';color:'+(sel?'#fff':'var(--text2)');
       row.appendChild(btn);
     });
-    window._pendingHeat=heat;
-    window._pendingFinalStatus=ov.final_status||null;
   },10);
   document.getElementById('lead-modal').style.display='flex';
 }
-
-function setFinalStatus(val){
-  window._pendingFinalStatus=val;
-  var isConv=val==='converted';
-  var cb=document.getElementById('final-conv-btn');
-  var nb=document.getElementById('final-notconv-btn');
-  if(cb){cb.style.background=isConv?'var(--duty)':'var(--bg3)';cb.style.color=isConv?'#fff':'var(--text2)';cb.style.borderColor=isConv?'transparent':'var(--border)';}
-  if(nb){nb.style.background=!isConv?'var(--absent)':'var(--bg3)';nb.style.color=!isConv?'#fff':'var(--text2)';nb.style.borderColor=!isConv?'transparent':'var(--border)';}
-}
-
-
 function setLeadHeat(heat){
   ['hot','warm','cold','dead'].forEach(function(h){var btn=document.getElementById('heat-btn-'+h);if(!btn)return;var sel=h===heat;btn.style.background=sel?'var(--accent)':'var(--bg3)';btn.style.color=sel?'#fff':'var(--text2)';btn.style.borderColor=sel?'transparent':'var(--border)';});
   window._pendingHeat=heat;
@@ -5086,16 +5027,13 @@ function closeLeadModal(){document.getElementById('lead-modal').style.display='n
 async function saveLeadEdit(){
   if(_editLeadIdx<0)return;
   var l=_leads[_editLeadIdx],ov=getLeadOv(l);
-  var call1=(document.getElementById('modal-call1')||{}).value||ov.call1||l['status']||'—';
-  var call2=(document.getElementById('modal-call2')||{}).value||'—';
-  var call3=(document.getElementById('modal-call3')||{}).value||'—';
+  var calls=+(document.getElementById('lead-modal-calls')||{}).textContent||0;
   var notes=(document.getElementById('lead-modal-notes')||{}).value||'';
-  var heat=window._pendingHeat||autoHeatFromCallStatus(call1,call2,call3,notes);
-  var finalStatus=window._pendingFinalStatus||ov.final_status||null;
-  var isConv=finalStatus==='converted'||call1==='converted'||call2==='converted'||call3==='converted';
-  var update={heat:heat,call1:call1,call2:call2,call3:call3,notes:notes,final_status:finalStatus};
-  if(isConv&&!ov.converted){update.converted=true;update.converted_at=new Date().toISOString();}
-  update.last_contacted=new Date().toISOString().slice(0,10);
+  var heat=window._pendingHeat||(ov.heat||autoHeat(l));
+  var prevCalls=ov.calls!==undefined?ov.calls:(parseInt(l['call count'])||0);
+  // If call count changed → reset last_contacted to today
+  var update={heat:heat,calls:calls,notes:notes};
+  if(calls!==prevCalls) update.last_contacted=new Date().toISOString().slice(0,10);
   await saveLeadOverride(getLeadKey(l),update);
   closeLeadModal();renderLeadsKPIs();renderLeadsTable();
 }
@@ -5124,7 +5062,7 @@ function exportLeadsCSV(){
   a.download='valeo_leads_'+new Date().toISOString().slice(0,10)+'.csv';
   document.body.appendChild(a);a.click();document.body.removeChild(a);
 }
-function clearLeadFilters(){['lead-search','lead-filter-status','lead-filter-heat','lead-filter-city','lead-filter-month','lead-filter-week','lead-filter-final'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});renderLeadsTable();}
+function clearLeadFilters(){['lead-search','lead-filter-status','lead-filter-heat','lead-filter-city','lead-filter-month','lead-filter-week'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});renderLeadsTable();}
 function openAddLeadModal(){['nl-name','nl-phone','nl-email','nl-city','nl-pkg','nl-notes'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});document.getElementById('add-lead-modal').style.display='flex';}
 async function saveNewLead(){
   var name=document.getElementById('nl-name').value.trim(),phone=document.getElementById('nl-phone').value.trim();
@@ -5721,11 +5659,11 @@ function renderFCLKPIs(){
   // KPI cards — exact same style as SM Lead Tracker
   html+='<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px">';
   html+=kpiCard(total,'Total','var(--accent)');
-  html+=kpiCard(stageTotals['New Enquiry']||0,'&#x1F195; New Enquiry','#2f81f7');
-  html+=kpiCard(followTotal,'&#x23F3; Follow Up','#f59e0b');
-  html+=kpiCard(stageTotals['Proposal Sent']||0,'&#x1F4CB; Proposal Sent','#8b5cf6');
-  html+=kpiCard(converted,'&#x2705; Converted','var(--duty)');
-  html+=kpiCard(lostTotal,'&#x274C; Lost','var(--absent)');
+  html+=kpiCard(stageTotals['New Enquiry']||0,'🆕 New Enquiry','#2f81f7');
+  html+=kpiCard(followTotal,'⏳ Follow Up','#f59e0b');
+  html+=kpiCard(stageTotals['Proposal Sent']||0,'📋 Proposal Sent','#8b5cf6');
+  html+=kpiCard(converted,'✅ Converted','var(--duty)');
+  html+=kpiCard(lostTotal,'❌ Lost','var(--absent)');
   html+='</div>';
 
   // Monthly breakdown accordion — exact same structure as SM Lead Tracker
@@ -5742,17 +5680,17 @@ function renderFCLKPIs(){
       html+='<div style="display:flex;align-items:center;gap:16px">';
       html+='<span style="font-size:12px;font-weight:600">'+moLabel+'</span>';
       html+='<span style="font-size:11px;color:var(--text2)">'+m.total+' leads</span>';
-      html+='<span style="font-size:11px;color:#2f81f7">&#x1F195; '+(m.new_e||0)+'</span>';
-      html+='<span style="font-size:11px;color:#f59e0b">&#x23F3; '+(m.follow||0)+'</span>';
-      html+='<span style="font-size:11px;color:#8b5cf6">&#x1F4CB; '+(m.prop||0)+'</span>';
-      html+='<span style="font-size:11px;color:var(--duty)">&#x2705; '+(m.converted||0)+' converted</span>';
-      html+='<span style="font-size:11px;color:var(--absent)">&#x274C; '+(m.lost||0)+' lost</span>';
+      html+='<span style="font-size:11px;color:#2f81f7">🆕 '+(m.new_e||0)+'</span>';
+      html+='<span style="font-size:11px;color:#f59e0b">⏳ '+(m.follow||0)+'</span>';
+      html+='<span style="font-size:11px;color:#8b5cf6">📋 '+(m.prop||0)+'</span>';
+      html+='<span style="font-size:11px;color:var(--duty)">✅ '+(m.converted||0)+' converted</span>';
+      html+='<span style="font-size:11px;color:var(--absent)">❌ '+(m.lost||0)+' lost</span>';
       html+='</div>';
       html+='<span style="font-size:14px;color:var(--text2);transition:transform .2s" class="fcl-mo-arrow">'+(isOpen?'\u25b2':'\u25bc')+'</span>';
       html+='</div>';
       html+='<div class="fcl-mo-weeks" style="display:'+(isOpen?'block':'none')+';padding:10px 14px;background:var(--bg2)">';
       html+='<table style="border-collapse:collapse;font-size:11px;width:100%"><thead><tr>';
-      ['Week','Leads','&#x1F195;','&#x23F3;','&#x1F4CB;','&#x2705; Converted','&#x274C; Lost'].forEach(function(h){
+      ['Week','Leads','🆕','⏳','📋','✅ Converted','❌ Lost'].forEach(function(h){
         html+='<th style="padding:5px 10px;text-align:'+(h==='Week'?'left':'center')+';color:var(--text2);font-weight:600;border-bottom:1px solid var(--border)">'+h+'</th>';
       });
       html+='</tr></thead><tbody>';
@@ -5909,7 +5847,7 @@ function setCGFilter(f){
   el.innerHTML = filtered.length ? filtered.map(function(e){
     var k=e[0],v=e[1],pct=e[3];
     var col=pct>=70?'var(--duty)':pct>=40?'var(--accent)':'var(--sick)';
-    var emoji=pct>=70?'&#x1F7E2;':pct>=40?'&#x1F535;':'&#x1F534;';
+    var emoji=pct>=70?'🟢':pct>=40?'🔵':'🔴';
     var exTag=isExclusiveCG(k,e[4])?'<span style="font-size:8px;padding:1px 3px;border-radius:3px;background:rgba(245,158,11,.25);color:#f59e0b;margin-left:2px">EX</span>':'';
     return '<div class="bar-row" style="margin-bottom:4px">'
       +'<div class="bar-label" title="'+k+'" style="width:100px;min-width:100px;font-size:11px;overflow:hidden;text-overflow:ellipsis">'+emoji+' '+k.split(' ')[0]+exTag+'</div>'
@@ -5932,6 +5870,15 @@ function getCGSetting(cg, hc){
   var key = cg+'|'+hc;
   if(!cgSettings[key]) cgSettings[key] = {};
   return cgSettings[key];
+}
+function getCGCity(cg, hc){ return getCGSetting(cg,hc).city||''; }
+function setCGCity(cg, hc, city){
+  getCGSetting(cg,hc).city=city;
+  saveCGSettings();
+  // Persist to Firebase
+  persistWrite('cg_setting', cg+'|'+hc, getCGSetting(cg,hc));
+  // Re-render roster with updated filter
+  renderRoster();
 }
 
 
@@ -6010,3 +5957,10 @@ if(checkExistingSession()){
 </script>
 </body>
 </html>
+
+
+
+
+
+
+
