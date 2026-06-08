@@ -615,6 +615,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <button class="main-tab" onclick="switchTab('leads')">🎯 SM Lead Tracker</button>
  <button class="main-tab" onclick="switchTab('fclead')">💬 FC Lead Tracker</button>
  <button class="main-tab" onclick="switchTab('supply')">👥 Supply Tracker</button>
+ <button class="main-tab" onclick="switchTab('customleads')">📌 Lead Tracker</button>
  <button class="main-tab" onclick="switchTab('penalty')">⚠️ Penalty Tracker</button>
 </div>
 
@@ -1339,6 +1340,64 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
       <button onclick="savePenalty()" style="flex:1;padding:9px;background:var(--absent);border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">Save Penalty</button>
       <button id="penalty-delete-btn" onclick="deletePenalty()" style="display:none;padding:9px 14px;background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);border-radius:7px;color:var(--absent);font-size:12px;cursor:pointer;font-family:Inter,sans-serif">🗑 Delete</button>
       <button onclick="closePenaltyModal()" style="padding:9px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text2);font-size:12px;cursor:pointer;font-family:Inter,sans-serif">Cancel</button>
+    </div>
+  </div>
+</div>
+</div>
+
+
+
+<div class="page" id="page-customleads">
+<div style="padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+  <div style="font-size:15px;font-weight:700">&#128204; Lead Tracker</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+    <input id="cl-search" type="text" placeholder="Search name / phone..." oninput="clRender()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:Inter,sans-serif;font-size:12px;padding:6px 10px;border-radius:6px;outline:none;width:190px">
+    <select id="cl-filter-fs" onchange="clRender()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
+      <option value="">All Final Status</option><option>Converted</option><option>Ongoing</option><option>Lost</option>
+    </select>
+    <select id="cl-filter-heat" onchange="clRender()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
+      <option value="">All Classification</option>
+      <option value="hot">Hot</option><option value="warm">Warm</option><option value="cold">Cold</option><option value="dead">Dead</option>
+    </select>
+    <select id="cl-filter-channel" onchange="clRender()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
+      <option value="">All Channels</option>
+      <option>FC</option><option>Referral</option><option>Other</option>
+    </select>
+    <button onclick="clExportCSV()" style="padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-weight:600;cursor:pointer">Export CSV</button>
+    <button onclick="clOpenModal()" style="padding:6px 14px;background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;cursor:pointer">+ Add Lead</button>
+  </div>
+</div>
+<div id="cl-kpi-row" style="padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap"></div>
+<div id="cl-channel-strip" style="padding:8px 20px 12px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+  <span style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em">Channel Attribution: </span>
+  <span style="font-size:11px;color:var(--text2)">Loading...</span>
+</div>
+<div style="overflow:auto;max-height:calc(100vh - 250px);padding:0 20px 20px">
+  <div id="cl-table-wrap" style="margin-top:12px"></div>
+</div>
+<!-- Add/Edit Modal -->
+<div id="cl-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9000;align-items:center;justify-content:center">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:24px;width:640px;max-width:97vw;max-height:92vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+      <div style="font-size:15px;font-weight:700" id="cl-modal-title">Add Lead</div>
+      <button onclick="clCloseModal()" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer;line-height:1">&#x2715;</button>
+    </div>
+    <div id="cl-modal-body" style="display:grid;grid-template-columns:1fr 1fr;gap:12px"></div>
+    <div style="margin-top:18px;display:flex;gap:10px;justify-content:flex-end">
+      <button onclick="clCloseModal()" style="padding:9px 18px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text2);font-size:12px;cursor:pointer;font-family:Inter,sans-serif">Cancel</button>
+      <button onclick="clSaveLead()" style="padding:9px 24px;background:var(--accent);border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">Save Lead</button>
+    </div>
+  </div>
+</div>
+<!-- Delete Modal -->
+<div id="cl-del-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9100;align-items:center;justify-content:center">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;width:340px;max-width:94vw;text-align:center">
+    <div style="font-size:28px;margin-bottom:8px">&#x1F5D1;</div>
+    <div style="font-size:14px;font-weight:700;margin-bottom:6px">Delete Lead?</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:20px" id="cl-del-name"></div>
+    <div style="display:flex;gap:10px;justify-content:center">
+      <button onclick="document.getElementById('cl-del-modal').style.display='none'" style="padding:8px 18px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text2);font-size:12px;cursor:pointer;font-family:Inter,sans-serif">Cancel</button>
+      <button onclick="clConfirmDelete()" style="padding:8px 20px;background:#f85149;border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">Delete</button>
     </div>
   </div>
 </div>
@@ -2517,10 +2576,212 @@ function switchTab(tab){
   if(tab==='ops')renderOps();
   if(tab==='planner')renderPlanner();
   if(tab==='leads'){if(_session&&_session.role!=='master'){alert('Master access only');return;}loadLeads();}
+  if(tab==='customleads'){initCustomLeads();}
   if(tab==='supply'){if(_session&&_session.role!=='master'){alert('Master access only');return;}loadSupply();}
   if(tab==='penalty'){if(_session&&_session.role!=='master'){alert('Master access only');return;}loadPenalties();}
 }
 
+
+// ══════════════════════════════════════════════════════════════════
+// CUSTOM LEAD TRACKER v2
+var _clLeads=[],_clEditId=null,_clDeleteId=null,_CL_COLL='valeo_custom_leads';
+var CL_CALL_OPTS=['','No Answer','Connected','Hung Up','Disconnected While Ringing','Unreachable','On FC','International Number','Busy','Voice Mail','INVALID','Switched Off','Not In Use','Call Back','Incorrect No','Not Available','Duplicate','Cancelled','Out Of Service','Test Account','Others','Converted'];
+var CL_FIELDS=[
+  {id:'date',label:'Lead Date',type:'date',req:false,span:1,ph:''},
+  {id:'name',label:'Full Name',type:'text',req:true,span:1,ph:'e.g. Sara Al Mansoori'},
+  {id:'phone',label:'Phone Number',type:'tel',req:true,span:1,ph:'+971501234567'},
+  {id:'city',label:'City',type:'select',req:false,span:1,opts:['','Dubai','Abu Dhabi','Sharjah','Ajman','Al Ain','RAK','Fujairah','Other']},
+  {id:'inbound_channel',label:'Inbound Channel',type:'select',req:false,span:1,
+   opts:['','FC','Referral','Other'],
+   hint:'Which channel brought this lead in?'},
+  {id:'first_msg',label:'First Message / Inquiry',type:'textarea',req:false,span:2,
+   ph:'Paste first message or describe inquiry (helps identify best-performing ad creatives)',
+   hint:'What the lead said first. Useful to track which campaign creative drives conversions.'},
+  {id:'package',label:'Package Interest',type:'text',req:false,span:1,ph:'e.g. Monthly Babysitting'},
+  {id:'call1',label:'Call 1 Status',type:'select',req:false,span:1,opts:null},
+  {id:'call2',label:'Call 2 Status',type:'select',req:false,span:1,opts:null},
+  {id:'call3',label:'Call 3 Status',type:'select',req:false,span:1,opts:null},
+  {id:'final_status',label:'Final Status',type:'select',req:false,span:1,opts:['','Converted','Ongoing','Lost']},
+  {id:'heat',label:'Classification (auto)',type:'select',req:false,span:1,opts:['','Hot','Warm','Cold','Dead']},
+  {id:'notes',label:'Notes',type:'textarea',req:false,span:2,ph:'Follow-up notes, objections, next steps...'},
+];
+CL_FIELDS.filter(function(f){return f.id==='call1'||f.id==='call2'||f.id==='call3';}).forEach(function(f){f.opts=CL_CALL_OPTS;});
+function clCallColor(v){
+  if(!v)return'color:var(--text2)';
+  if(v==='Converted'||v==='On FC')return'background:rgba(63,185,80,.2);color:#3fb950';
+  if(v==='Connected')return'background:rgba(63,185,80,.12);color:#3fb950';
+  if(v==='Call Back')return'background:rgba(47,129,247,.15);color:#2f81f7';
+  if(v==='No Answer'||v==='Busy'||v==='Voice Mail'||v==='International Number')return'background:rgba(210,153,34,.15);color:#d29922';
+  if(v==='Hung Up'||v==='Disconnected While Ringing'||v==='Unreachable'||v==='Switched Off'||v==='Not Available'||v==='Out Of Service')return'background:rgba(248,81,73,.15);color:#f85149';
+  return'background:var(--bg3);color:var(--text2)';
+}
+function clAutoHeat(d){
+  if(d.heat&&d.heat!=='')return d.heat;
+  var fs=(d.final_status||'').toLowerCase();
+  if(fs==='converted')return'Hot';
+  if(fs==='lost')return'Dead';
+  var latest=[d.call3,d.call2,d.call1].find(function(c){return c&&c!=='';});
+  if(!latest)return'Cold';
+  var l=latest.toLowerCase();
+  if(l==='converted')return'Hot';
+  if(l==='on fc'||l==='connected'||l==='call back')return'Warm';
+  if(l==='duplicate'||l==='test account'||l==='cancelled')return'Dead';
+  return'Cold';
+}
+function clHeatBadge(h){
+  var styles={Hot:'background:rgba(220,38,38,.15);color:#dc2626;border:1px solid rgba(220,38,38,.3)',Warm:'background:rgba(217,119,6,.15);color:#d97706;border:1px solid rgba(217,119,6,.3)',Cold:'background:rgba(37,99,235,.15);color:#2563eb;border:1px solid rgba(37,99,235,.3)',Dead:'background:rgba(100,116,139,.15);color:#8b949e;border:1px solid rgba(100,116,139,.3)'};
+  var icons={Hot:'🔥',Warm:'🌤',Cold:'❄️',Dead:'💀'};
+  var s=styles[h]||'background:var(--bg3);color:var(--text2);border:1px solid var(--border)';
+  return'<span style="'+s+';padding:3px 9px;border-radius:6px;font-size:11px;font-weight:600;white-space:nowrap">'+(icons[h]||'')+(h?(' '+h):'—')+'</span>';
+}
+function clFsBadge(fs){
+  var styles={Converted:'background:rgba(63,185,80,.18);color:#3fb950;border:1px solid rgba(63,185,80,.4)',Ongoing:'background:rgba(47,129,247,.18);color:#2f81f7;border:1px solid rgba(47,129,247,.4)',Lost:'background:rgba(248,81,73,.18);color:#f85149;border:1px solid rgba(248,81,73,.4)'};
+  var s=styles[fs]||'background:var(--bg3);color:var(--text2);border:1px solid var(--border)';
+  return'<span style="'+s+';padding:3px 9px;border-radius:6px;font-size:11px;font-weight:600">'+(fs||'—')+'</span>';
+}
+async function initCustomLeads(){
+  if(_clLeads.length){clRenderKPIs();clRenderChannelStrip();clRender();return;}
+  if(!_db){clRenderKPIs();clRenderChannelStrip();clRender();return;}
+  try{var snap=await _db.collection(_CL_COLL).orderBy('created_at','desc').get();_clLeads=[];snap.forEach(function(doc){_clLeads.push(Object.assign({_id:doc.id},doc.data()));});}catch(e){console.warn('initCustomLeads',e);}
+  clRenderKPIs();clRenderChannelStrip();clRender();
+}
+function clRenderKPIs(){
+  var el=document.getElementById('cl-kpi-row');if(!el)return;
+  var total=_clLeads.length,hot=0,warm=0,cold=0,dead=0,conv=0,ongoing=0,lost=0;
+  _clLeads.forEach(function(d){
+    var h=clAutoHeat(d);
+    if(h==='Hot')hot++;else if(h==='Warm')warm++;else if(h==='Cold')cold++;else dead++;
+    var isConv=d.final_status==='Converted'||d.call1==='Converted'||d.call2==='Converted'||d.call3==='Converted';
+    if(isConv)conv++;else if(d.final_status==='Ongoing')ongoing++;else if(d.final_status==='Lost')lost++;
+  });
+  function card(v,l,c){return'<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 16px;min-width:80px;text-align:center"><div style="font-size:22px;font-weight:700;color:'+c+'">'+v+'</div><div style="font-size:10px;color:var(--text2);margin-top:2px">'+l+'</div></div>';}
+  el.innerHTML=card(total,'Total','var(--accent)')+card(hot,'🔥 Hot','#dc2626')+card(warm,'🌤 Warm','#d97706')+card(cold,'❄️ Cold','#2563eb')+card(dead,'💀 Dead','var(--text2)')+card(conv,'✅ Converted','#3fb950')+card(ongoing,'🔄 Ongoing','#2f81f7')+card(lost,'❌ Lost','#f85149');
+}
+function clRenderChannelStrip(){
+  var el=document.getElementById('cl-channel-strip');if(!el)return;
+  var counts={};
+  _clLeads.forEach(function(d){var ch=d.inbound_channel||'Unknown';counts[ch]=(counts[ch]||0)+1;});
+  var sorted=Object.keys(counts).sort(function(a,b){return counts[b]-counts[a];});
+  var html='<span style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-right:6px">📡 Channel Attribution:</span>';
+  if(!sorted.length){html+='<span style="font-size:11px;color:var(--text2)">No data yet</span>';}
+  var colors=['#3fb950','#2f81f7','#d29922','#bc8cff','#f85149','#06b6d4','#f97316','#84cc16'];
+  sorted.forEach(function(ch,i){var c=colors[i%colors.length];html+='<span style="background:'+c+'22;border:1px solid '+c+'55;color:'+c+';padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600">'+ch+' <b>'+counts[ch]+'</b></span>';});
+  el.innerHTML=html;
+}
+function clGetFiltered(){
+  var q=((document.getElementById('cl-search')||{}).value||'').toLowerCase();
+  var ffs=(document.getElementById('cl-filter-fs')||{}).value||'';
+  var fh=(document.getElementById('cl-filter-heat')||{}).value||'';
+  var fch=(document.getElementById('cl-filter-channel')||{}).value||'';
+  return _clLeads.filter(function(d){
+    if(q&&!(d.name||'').toLowerCase().includes(q)&&!(d.phone||'').includes(q))return false;
+    if(ffs){var isConv=d.final_status==='Converted'||d.call1==='Converted'||d.call2==='Converted'||d.call3==='Converted';if(ffs==='Converted'&&!isConv)return false;if(ffs==='Ongoing'&&d.final_status!=='Ongoing')return false;if(ffs==='Lost'&&d.final_status!=='Lost')return false;}
+    if(fh&&clAutoHeat(d).toLowerCase()!==fh)return false;
+    if(fch&&(d.inbound_channel||'')!==fch)return false;
+    return true;
+  });
+}
+function clRender(){
+  var wrap=document.getElementById('cl-table-wrap');if(!wrap)return;
+  var data=clGetFiltered();
+  if(!data.length){wrap.innerHTML='<div style="padding:60px;text-align:center;color:var(--text2)"><div style="font-size:32px;margin-bottom:12px">📋</div><div style="font-size:14px;font-weight:600;margin-bottom:8px">No leads yet</div><div style="font-size:12px">Click <b>+ Add Lead</b> to create your first lead</div></div>';return;}
+  var html='<div style="font-size:11px;color:var(--text2);margin-bottom:8px">Showing '+data.length+' of '+_clLeads.length+' leads</div>';
+  html+='<table class="lead-table"><thead><tr>'
+    +'<th>Date</th><th>Name</th><th>Phone</th><th>City</th>'
+    +'<th>Inbound Channel</th><th style="min-width:160px">First Message / Inquiry</th>'
+    +'<th style="min-width:120px">Call 1</th><th style="min-width:120px">Call 2</th><th style="min-width:120px">Call 3</th>'
+    +'<th>Classification</th><th>Final Status</th>'
+    +'<th style="min-width:150px">Notes</th><th>Actions</th>'
+    +'</tr></thead><tbody>';
+  data.forEach(function(d){
+    var heat=clAutoHeat(d);
+    var isConv=d.final_status==='Converted'||d.call1==='Converted'||d.call2==='Converted'||d.call3==='Converted';
+    var dateDisp=d.date?new Date(d.date+'T12:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'2-digit'}):'--';
+    function cb(v){if(!v)return'<span style="color:var(--text2);font-size:10px">--</span>';return'<span style="'+clCallColor(v)+';padding:2px 8px;border-radius:5px;font-size:10px;font-weight:600;white-space:nowrap">'+v+'</span>';}
+    var safeId=d._id.replace(/['"]/g,'');
+    var safeName=(d.name||'').replace(/'/g,"\x27");
+    html+='<tr style="'+(d.final_status==='Lost'?'opacity:.5;':'')+(isConv?'background:rgba(63,185,80,.04)':'')+'">'
+      +'<td style="font-size:11px;color:var(--text2);white-space:nowrap">'+dateDisp+'</td>'
+      +'<td style="font-weight:600">'+(d.name||'--')+'</td>'
+      +'<td style="font-family:monospace;font-size:11px">'+(d.phone||'--')+'</td>'
+      +'<td style="font-size:11px">'+(d.city||'--')+'</td>'
+      +'<td><span style="font-size:10px;background:var(--bg3);border:1px solid var(--border);padding:2px 8px;border-radius:5px;white-space:nowrap">'+(d.inbound_channel||'--')+'</span></td>'
+      +'<td style="font-size:11px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2)" title="'+(d.first_msg||'')+'">'+((d.first_msg||'--').substring(0,40))+'</td>'
+      +'<td>'+cb(d.call1)+'</td><td>'+cb(d.call2)+'</td><td>'+cb(d.call3)+'</td>'
+      +'<td>'+clHeatBadge(heat)+'</td>'
+      +'<td>'+clFsBadge(d.final_status)+'</td>'
+      +'<td style="font-size:11px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2)" title="'+(d.notes||'')+'">'+((d.notes||'--').substring(0,38))+'</td>'
+      +'<td style="white-space:nowrap">'
+        +'<button onclick="clOpenModal(\'' +safeId+ '\')" style="padding:3px 9px;background:var(--bg3);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:11px;cursor:pointer;margin-right:4px">Edit</button>'
+        +'<button onclick="clAskDelete(\'' +safeId+ '\',\'' +safeName+ '\')" style="padding:3px 9px;background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.3);border-radius:5px;color:#f85149;font-size:11px;cursor:pointer">Del</button>'
+      +'</td></tr>';
+  });
+  html+='</tbody></table>';wrap.innerHTML=html;
+}
+function clOpenModal(id){
+  _clEditId=id||null;
+  var data=id?(_clLeads.find(function(d){return d._id===id;})||{}):{};
+  document.getElementById('cl-modal-title').textContent=id?'Edit Lead':'Add Lead';
+  var iS='width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:Inter,sans-serif;font-size:12px;padding:7px 10px;border-radius:7px;outline:none;box-sizing:border-box';
+  var body='';
+  CL_FIELDS.forEach(function(f){
+    var val=data[f.id]||'';
+    body+='<div style="'+(f.span===2?'grid-column:1/-1':'')+'">';
+    body+='<div style="font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">'+f.label+(f.req?' <span style="color:#f85149">*</span>':'')+'</div>';
+    if(f.hint)body+='<div style="font-size:10px;color:var(--text2);margin-bottom:4px;font-style:italic">'+f.hint+'</div>';
+    if(f.type==='select'){
+      var opts=f.opts||CL_CALL_OPTS;
+      body+='<select id="clf-'+f.id+'" style="'+iS+';cursor:pointer">';
+      opts.forEach(function(o){body+='<option value="'+o+'"'+(o===val?' selected':'')+'>'+( o||'Select...')+'</option>';});
+      body+='</select>';
+    }else if(f.type==='textarea'){
+      body+='<textarea id="clf-'+f.id+'" rows="3" placeholder="'+(f.ph||'')+'" style="'+iS+';resize:vertical">'+val+'</textarea>';
+    }else{
+      body+='<input id="clf-'+f.id+'" type="'+f.type+'" value="'+String(val).replace(/"/g,'&quot;')+'" placeholder="'+(f.ph||f.label)+'" style="'+iS+'">';
+    }
+    body+='</div>';
+  });
+  document.getElementById('cl-modal-body').innerHTML=body;
+  document.getElementById('cl-modal').style.display='flex';
+  setTimeout(function(){var el=document.getElementById('clf-name');if(el)el.focus();},80);
+}
+function clCloseModal(){document.getElementById('cl-modal').style.display='none';_clEditId=null;}
+async function clSaveLead(){
+  var data={},ok=true;
+  CL_FIELDS.forEach(function(f){var el=document.getElementById('clf-'+f.id);if(!el)return;var v=el.value.trim();if(f.req&&!v){el.style.borderColor='#f85149';ok=false;}else el.style.borderColor='var(--border)';data[f.id]=v;});
+  if(!ok)return;
+  if(!data.heat)data.heat=clAutoHeat(data);
+  var now=new Date().toISOString();
+  if(_clEditId){
+    data.updated_at=now;
+    var idx=_clLeads.findIndex(function(d){return d._id===_clEditId;});
+    if(idx>=0)_clLeads[idx]=Object.assign(_clLeads[idx],data);
+    if(_db){try{await _db.collection(_CL_COLL).doc(_clEditId).set(data,{merge:true});}catch(e){console.warn(e);}}
+  }else{
+    data.created_at=now;data.updated_at=now;var nid='cl_'+Date.now();data._id=nid;
+    _clLeads.unshift(data);
+    if(_db){try{await _db.collection(_CL_COLL).doc(nid).set(data);}catch(e){console.warn(e);}}
+  }
+  clCloseModal();clRenderKPIs();clRenderChannelStrip();clRender();
+}
+function clAskDelete(id,name){_clDeleteId=id;document.getElementById('cl-del-name').textContent='Delete "'+name+'"? This cannot be undone.';document.getElementById('cl-del-modal').style.display='flex';}
+async function clConfirmDelete(){
+  if(!_clDeleteId)return;
+  _clLeads=_clLeads.filter(function(d){return d._id!==_clDeleteId;});
+  if(_db){try{await _db.collection(_CL_COLL).doc(_clDeleteId).delete();}catch(e){console.warn(e);}}
+  _clDeleteId=null;document.getElementById('cl-del-modal').style.display='none';
+  clRenderKPIs();clRenderChannelStrip();clRender();
+}
+function clExportCSV(){
+  if(!_clLeads.length){alert('No leads to export.');return;}
+  var cols=['date','name','phone','city','inbound_channel','first_msg','package','call1','call2','call3','final_status','heat','notes','created_at'];
+  var hdrs=['Date','Name','Phone','City','Inbound Channel','First Message','Package','Call 1','Call 2','Call 3','Final Status','Classification','Notes','Created At'];
+  var rows=[hdrs.join(',')];
+  _clLeads.forEach(function(d){rows.push(cols.map(function(c){return '"'+String(d[c]||'').replace(/"/g,'""')+'"';}).join(','));});
+  var blob=new Blob([rows.join('\n')],{type:'text/csv'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='leads_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+}
+// END CUSTOM LEAD TRACKER v2
 // ── Theme toggle ─────────────────────────────────────────────────
 function toggleTheme(){
   const html=document.documentElement;
