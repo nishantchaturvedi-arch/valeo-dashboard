@@ -1051,7 +1051,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 <div id="leads-kpi-row" style="padding:14px 20px;background:var(--bg2);border-bottom:1px solid var(--border)"></div>
 <div style="padding:10px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;gap:8px">
   <input id="lead-search" type="text" placeholder="🔍 Search name / phone..." style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:Inter,sans-serif;font-size:12px;padding:6px 10px;border-radius:6px;outline:none;width:200px" oninput="renderLeadsTable()">
-  <select id="lead-filter-status" onchange="renderLeadsTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Status</option><option value="connected">Connected</option><option value="no answer">No Answer</option><option value="hung up">Hung Up</option><option value="on fc">On FC</option><option value="converted">Converted</option></select>
+  <select id="lead-filter-status" onchange="renderLeadsTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Status</option><option value="no answer">No Answer</option><option value="connected">Connected</option><option value="hung up">Hung Up</option><option value="disconnected while ringing">Disconnected While Ringing</option><option value="unreachable">Unreachable</option><option value="on fc">On FC</option><option value="international number">International Number</option><option value="busy">Busy</option><option value="voice mail">Voice Mail</option><option value="invalid">INVALID</option><option value="switched off">Switched Off</option><option value="not in use">Not In Use</option><option value="call back">Call Back</option><option value="incorrect no">Incorrect No</option><option value="not available">Not Available</option><option value="duplicate">Duplicate</option><option value="cancelled">Cancelled</option><option value="out of service">Out Of Service</option><option value="test account">Test Account</option><option value="others">Others</option><option value="converted">Converted</option><option value="ongoing">Ongoing</option><option value="lost">Lost</option></select>
   <select id="lead-filter-heat" onchange="renderLeadsTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Classifications</option><option value="hot">🔥 Hot</option><option value="warm">🌤 Warm</option><option value="cold">❄️ Cold</option><option value="dead">💀 Dead</option></select>
   <select id="lead-filter-city" onchange="renderLeadsTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Cities</option></select>
   <select id="lead-filter-month" onchange="renderLeadsTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Months</option></select>
@@ -4732,23 +4732,89 @@ async function loadLeads(force){
     if(wrap)wrap.innerHTML='<div style="padding:40px;text-align:center;color:var(--absent)"><div style="font-size:15px;margin-bottom:10px">Could not load leads</div><div style="font-size:12px;color:var(--text2);margin-bottom:12px">'+e.message+'</div><button onclick="loadLeads(true)" style="padding:8px 20px;background:var(--accent);border:none;border-radius:6px;color:#fff;cursor:pointer;font-size:12px">Retry</button><br><br><div style="font-size:11px;color:var(--text3)">Or use Upload CSV</div></div>';
   }
 }
-function autoHeat(l){
-  var notes=((l['notes']||'')+'|'+(l['additional_notes']||'')).toLowerCase();
-  var status=String(l['status']||'').toLowerCase();
-  var deadKeywords=['looking for job','high price','not interested','already hired',
-    'hired someone','found someone','no answer','not responding','price issue',
-    'too expensive','budget issue','not available','cancelled','not reachable',
-    'unreachable','no response','rejected'];
-  for(var i=0;i<deadKeywords.length;i++){
-    if(notes.includes(deadKeywords[i])||status.includes(deadKeywords[i]))return 'dead';
-  }
-  if(status==='lost'||status==='dead'||status==='closed')return 'dead';
-  var hotKeywords=['urgent','asap','confirmed','ready','deposit','payment','very interested'];
-  for(var i=0;i<hotKeywords.length;i++){if(notes.includes(hotKeywords[i]))return 'hot';}
-  var warmKeywords=['interested','follow up','callback','call back','thinking','considering'];
-  for(var i=0;i<warmKeywords.length;i++){if(notes.includes(warmKeywords[i]))return 'warm';}
-  return 'cold';
+// Map source sheet status → Call 1 dropdown value
+function mapSourceStatusToCall(st){
+  var s=String(st||'').toLowerCase().trim();
+  if(s==='connected')                          return'Connected';
+  if(s==='on fc')                              return'On FC';
+  if(s==='no answer'||s==='no_answer')         return'No Answer';
+  if(s==='hung up'||s==='hung_up')             return'Hung Up';
+  if(s==='disconnected while ringing'||s==='disconnected') return'Disconnected While Ringing';
+  if(s==='unreachable')                        return'Unreachable';
+  if(s==='international number')               return'International Number';
+  if(s==='busy')                               return'Busy';
+  if(s==='voice mail'||s==='voicemail')        return'Voice Mail';
+  if(s==='invalid'||s==='invalid number')      return'INVALID';
+  if(s==='switched off')                       return'Switched Off';
+  if(s==='not in use')                         return'Not In Use';
+  if(s==='call back'||s==='callback')          return'Call Back';
+  if(s==='incorrect no'||s==='incorrect number') return'Incorrect No';
+  if(s==='not available')                      return'Not Available';
+  if(s==='duplicate')                          return'Duplicate';
+  if(s==='cancelled')                          return'Cancelled';
+  if(s==='out of service')                     return'Out Of Service';
+  if(s==='test account')                       return'Test Account';
+  if(s==='others'||s==='other')                return'Others';
+  if(s==='converted'||s==='booked')            return'Converted';
+  if(s==='not interested'||s==='dead')         return'Hung Up';
+  return '';
 }
+// Derive heat from call statuses + final_status
+function heatFromCalls(c1,c2,c3,fs){
+  var fs2=(fs||'').toLowerCase();
+  if(fs2==='converted')return'hot';
+  if(fs2==='lost')     return'dead';
+  var latest=[c3,c2,c1].find(function(c){return c&&c!=='';});
+  if(!latest)return null;
+  var l=latest.toLowerCase();
+  if(l==='converted')                   return'hot';
+  if(l==='on fc'||l==='connected'||l==='call back') return'warm';
+  if(l==='duplicate'||l==='test account') return'dead';
+  if(l==='cancelled')                   return'dead';
+  if(l==='hung up'||l==='disconnected while ringing'||
+     l==='unreachable'||l==='switched off'||l==='not available'||
+     l==='out of service'||l==='incorrect no'||l==='not in use') return'cold';
+  if(l==='no answer'||l==='voice mail'||l==='busy'||
+     l==='international number'||l==='invalid'||l==='others') return'cold';
+  return null;
+}
+function autoHeat(lead){
+  var ov=getLeadOv(lead);
+  if(ov.heat)return ov.heat;
+  if(ov._derivedHeat)return ov._derivedHeat;
+  var c1=ov.call1!==undefined?ov.call1:mapSourceStatusToCall(lead['status']);
+  var c2=ov.call2||'',c3=ov.call3||'',fs=ov.final_status||'';
+  var callHeat=heatFromCalls(c1,c2,c3,fs);
+  if(callHeat)return callHeat;
+  var st=String(lead['status']||'').toLowerCase().trim();
+  var cur=String(lead['current status']||lead['current_status']||'').toLowerCase().trim();
+  var notes=String(lead['notes']||lead['Notes']||lead['note']||lead['Note']||lead['remark']||lead['remarks']||'').toLowerCase().trim();
+  var combined=cur+' '+notes+' '+st;
+  if(combined.includes('not interested'))  return'dead';
+  if(combined.includes('not relevant'))    return'dead';
+  if(combined.includes('high price'))      return'dead';
+  if(combined.includes('looking for job')) return'dead';
+  if(combined.includes('already have'))    return'dead';
+  if(combined.includes('wrong number'))    return'dead';
+  if(combined.includes('dead lead'))       return'dead';
+  if(combined.includes('not looking'))     return'dead';
+  if(combined.includes('no need'))         return'dead';
+  if(combined.includes('have nanny'))      return'dead';
+  if(combined.includes('have babysitter')) return'dead';
+  if(/\bdead\b/.test(combined))          return'dead';
+  if(st==='dead'||st==='not interested'||st==='looking for job'||st==='high price'||st==='duplicate'||st==='test account'||st==='cancelled') return'dead';
+  if(st==='converted'||combined.includes('booked')||combined.includes('convert')) return'hot';
+  if(st==='on fc'||st==='connected') return'warm';
+  if(combined.includes('interested')&&!combined.includes('not interested')) return'warm';
+  if(combined.includes('call back'))   return'warm';
+  if(combined.includes('follow up'))   return'warm';
+  if(combined.includes('thinking'))    return'warm';
+  if(combined.includes('will confirm'))return'warm';
+  if(combined.includes('will check'))  return'warm';
+  if(st==='no answer'||st==='hung up') return'cold';
+  return'cold';
+}
+
 
 function parseLeadsJSON(rows){
   var leads=[];
@@ -4785,46 +4851,6 @@ async function loadLeadsOverrides(){if(!_db)return;try{var snap=await _db.collec
 async function saveLeadOverride(key,data){_leadsOverrides[key]=Object.assign(_leadsOverrides[key]||{},data);if(_db)await _db.collection('valeo_leads').doc(key).set(_leadsOverrides[key],{merge:true});}
 function getLeadKey(lead){return String(lead['phone number']||lead['phone']||'').replace(/[^0-9+]/g,'')+'_'+String(lead['full name']||lead['name']||'').replace(/\s+/g,'_').toLowerCase().slice(0,20);}
 function getLeadOv(lead){return _leadsOverrides[getLeadKey(lead)]||{};}
-function autoHeat(lead){
-  var ov=getLeadOv(lead);if(ov.heat)return ov.heat;
-  var st=String(lead['status']||'').toLowerCase().trim();
-  var cur=String(lead['current status']||lead['current_status']||'').toLowerCase().trim();
-  // Check notes field — try multiple possible column names
-  var notes=String(lead['notes']||lead['Notes']||lead['note']||lead['Note']||lead['remark']||lead['remarks']||'').toLowerCase().trim();
-  var combined=cur+' '+notes+' '+st;
-
-  // ── Dead — checked FIRST, most specific phrases first ────────
-  if(combined.includes('not interested'))  return'dead';
-  if(combined.includes('not relevant'))    return'dead';
-  if(combined.includes('high price'))      return'dead';
-  if(combined.includes('looking for job')) return'dead';
-  if(combined.includes('already have'))    return'dead';
-  if(combined.includes('wrong number'))    return'dead';
-  if(combined.includes('dead lead'))       return'dead';
-  if(combined.includes('not looking'))     return'dead';
-  if(combined.includes('no need'))         return'dead';
-  if(combined.includes('have nanny'))      return'dead';
-  if(combined.includes('have babysitter')) return'dead';
-  if(/dead/.test(combined))            return'dead'; // 'dead' as whole word only
-  // Status field exact dead values
-  if(st==='dead'||st==='not interested'||st==='looking for job') return'dead';
-
-  // ── Hot ──────────────────────────────────────────────────────
-  if(st==='converted'||combined.includes('booked')||combined.includes('convert')) return'hot';
-
-  // ── Warm ─────────────────────────────────────────────────────
-  if(st==='on fc'||st==='connected') return'warm';
-  if(combined.includes('interested')&&!combined.includes('not interested')) return'warm';
-  if(combined.includes('call back'))   return'warm';
-  if(combined.includes('follow up'))   return'warm';
-  if(combined.includes('thinking'))    return'warm';
-  if(combined.includes('will confirm'))return'warm';
-  if(combined.includes('will check'))  return'warm';
-
-  // ── Cold ─────────────────────────────────────────────────────
-  if(st==='no answer'||st==='hung up') return'cold';
-  return'cold';
-}
 function kpiCard(val,lbl,col){return'<div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 16px;min-width:90px"><div style="font-size:22px;font-weight:700;color:'+col+'">'+val+'</div><div style="font-size:10px;color:var(--text2);margin-top:2px">'+lbl+'</div></div>';}
 function populateLeadFilters(){
   var cities=[...new Set(_leads.map(function(l){return(l['city']||'').trim();}).filter(Boolean))].sort();
@@ -4843,7 +4869,10 @@ function renderLeadsKPIs(){
 
   _leads.forEach(function(l){
     var ov=getLeadOv(l),heat=ov.heat||autoHeat(l),st=String(l['status']||'').toLowerCase();
-    var isConv=ov.converted||st==='converted';
+    var isConv=ov.converted
+      ||ov.final_status==='Converted'
+      ||ov.call1==='Converted'||ov.call2==='Converted'||ov.call3==='Converted'
+      ||st==='converted';
     if(isConv)converted++;
     if(heat==='hot')hot++;else if(heat==='warm')warm++;else if(heat==='cold')cold++;else if(heat==='dead')dead++;
 
@@ -4957,7 +4986,7 @@ function getFilteredLeads(){
   return _leads.filter(function(l){
     var ov=getLeadOv(l);
     if(q&&!(l['full name']||l['name']||'').toLowerCase().includes(q.toLowerCase())&&!(l['phone number']||l['phone']||'').includes(q))return false;
-    if(fStatus&&String(l['status']||'').toLowerCase()!==fStatus)return false;
+    if(fStatus){var ov2=getLeadOv(l);var fs2=(ov2.final_status||"").toLowerCase();var c1l=(ov2.call1||"").toLowerCase(),c2l=(ov2.call2||"").toLowerCase(),c3l=(ov2.call3||"").toLowerCase();var srcStatus=String(l["status"]||"").toLowerCase();var matchStatus=srcStatus===fStatus||fs2===fStatus||c1l===fStatus||c2l===fStatus||c3l===fStatus;if(!matchStatus)return false;}
     if(fHeat&&(ov.heat||autoHeat(l))!==fHeat)return false;
     if(fCity&&(l['city']||'').trim()!==fCity)return false;
     if(fMonth&&l._date&&l._date.toLocaleString('default',{month:'long',year:'numeric'})!==fMonth)return false;
@@ -4965,37 +4994,106 @@ function getFilteredLeads(){
     return true;
   });
 }
+var _callStatuses=['','No Answer','Connected','Hung Up','Disconnected While Ringing','Unreachable','On FC','International Number','Busy','Voice Mail','INVALID','Switched Off','Not In Use','Call Back','Incorrect No','Not Available','Duplicate','Cancelled','Out Of Service','Test Account','Others','Converted'];
+var _finalStatuses=['','Converted','Ongoing','Lost'];
+function callStatusColor(v){
+  if(!v)return'background:var(--bg3);color:var(--text2)';
+  // Hot
+  if(v==='Converted')return'background:rgba(63,185,80,.25);color:#3fb950;font-weight:700';
+  if(v==='On FC')    return'background:rgba(63,185,80,.18);color:#3fb950';
+  if(v==='Connected')return'background:rgba(63,185,80,.18);color:#3fb950';
+  // Warm
+  if(v==='Call Back')return'background:rgba(47,129,247,.18);color:#2f81f7';
+  // Unreachable / cold
+  if(v==='No Answer'||v==='Busy'||v==='Voice Mail'||v==='International Number')
+    return'background:rgba(210,153,34,.18);color:#d29922';
+  if(v==='Hung Up'||v==='Disconnected While Ringing'||v==='Unreachable'||
+     v==='Switched Off'||v==='Not Available'||v==='Out Of Service')
+    return'background:rgba(248,81,73,.18);color:#f85149';
+  if(v==='INVALID'||v==='Incorrect No'||v==='Not In Use')
+    return'background:rgba(139,148,158,.18);color:#8b949e';
+  if(v==='Duplicate'||v==='Test Account'||v==='Cancelled')
+    return'background:rgba(188,140,255,.18);color:#bc8cff';
+  return'background:var(--bg3);color:var(--text2)';
+}
+function finalStatusColor(v){
+  if(v==='Converted')return'background:rgba(63,185,80,.18);color:#3fb950;border:1px solid rgba(63,185,80,.4)';
+  if(v==='Ongoing')return'background:rgba(47,129,247,.18);color:#2f81f7;border:1px solid rgba(47,129,247,.4)';
+  if(v==='Lost')return'background:rgba(248,81,73,.18);color:#f85149;border:1px solid rgba(248,81,73,.4)';
+  return'background:var(--bg3);color:var(--text2);border:1px solid var(--border)';
+}
 function renderLeadsTable(){
   var filtered=getFilteredLeads(),wrap=document.getElementById('leads-table-wrap');if(!wrap)return;
   if(!filtered.length){wrap.innerHTML='<div style="padding:40px;text-align:center;color:var(--text2)">No leads match filters</div>';return;}
   var html='<div style="font-size:11px;color:var(--text2);margin-bottom:8px">Showing '+filtered.length+' of '+_leads.length+' leads</div>';
-  html+='<table class="lead-table"><thead><tr><th>Date</th><th>Name</th><th>Phone</th><th>Package</th><th>City</th><th>Status</th><th>Classification</th><th>Calls</th><th>Last Contact</th><th>Notes</th><th>Converted</th></tr></thead><tbody>';
+  html+='<table class="lead-table"><thead><tr>'
+    +'<th>Date</th><th>Name</th><th>Phone</th><th>Package</th><th>City</th>'
+    +'<th>Classification</th>'
+    +'<th style="min-width:130px">Call 1</th>'
+    +'<th style="min-width:130px">Call 2</th>'
+    +'<th style="min-width:130px">Call 3</th>'
+    +'<th style="min-width:110px">Final Status</th>'
+    +'<th style="min-width:160px">Notes</th>'
+    +'</tr></thead><tbody>';
   filtered.forEach(function(l){
     var ov=getLeadOv(l),heat=ov.heat||autoHeat(l);
     var heatBadge='<span class="heat-'+heat+'">'+(heat==='hot'?'🔥 Hot':heat==='warm'?'🌤 Warm':heat==='cold'?'❄️ Cold':'💀 Dead')+'</span>';
-    var _lc=ov.last_contacted?new Date(ov.last_contacted+'T12:00:00'):l._date;
-    var days=_lc?daysSince(_lc):null,dayCls=days===null?'':days<=3?'days-ok':days<=7?'days-warn':'days-late';
-    var calls=ov.calls!==undefined?ov.calls:(parseInt(l['call count'])||0);
-    var isConv=ov.converted||String(l['status']||'').toLowerCase()==='converted';
-    html+='<tr onclick="openLeadModal('+l._idx+')" '+(isConv?'style="opacity:.6"':'')+'>'
+    var key=getLeadKey(l);
+    var c1=ov.call1!==undefined?ov.call1:mapSourceStatusToCall(l['status']),c2=ov.call2||'',c3=ov.call3||'';
+    var fs=ov.final_status||'';
+    var notes=ov.notes||l['notes']||'';
+    function callSel(field,val){
+      var opts=_callStatuses.map(function(s){return'<option value="'+s+'"'+(s===val?' selected':'')+'>'+( s||'— Select —')+'</option>';}).join('');
+      return'<select onchange="saveLeadField(\''+key+'\',\''+field+'\',this.value)" onclick="event.stopPropagation()" style="width:120px;font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid var(--border);outline:none;cursor:pointer;'+callStatusColor(val)+'">'+opts+'</select>';
+    }
+    function fsSel(){
+      var opts=_finalStatuses.map(function(s){return'<option value="'+s+'"'+(s===fs?' selected':'')+'>'+( s||'— Select —')+'</option>';}).join('');
+      return'<select onchange="saveLeadField(\''+key+'\',\'final_status\',this.value)" onclick="event.stopPropagation()" style="width:105px;font-size:11px;padding:3px 6px;border-radius:6px;outline:none;cursor:pointer;'+finalStatusColor(fs)+'">'+opts+'</select>';
+    }
+    var notesCell='<input type="text" value="'+notes.replace(/"/g,'&quot;').replace(/'/g,'&#39;').substring(0,80)+'" placeholder="Add note…" onclick="event.stopPropagation()" onchange="saveLeadField(\''+key+'\',\'notes\',this.value)" style="width:150px;font-size:11px;padding:3px 7px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);outline:none;font-family:Inter,sans-serif">';
+    var rowOpacity=fs==='Lost'?'opacity:.55;':'';
+    html+='<tr onclick="openLeadModal('+l._idx+')" style="'+rowOpacity+'">'
       +'<td style="font-size:11px;color:var(--text2);white-space:nowrap">'+(l._date?leadDateStr(l._date):'—')+'</td>'
       +'<td style="font-weight:500">'+(l['full name']||l['name']||'—')+'</td>'
       +'<td style="font-family:monospace;font-size:11px">'+(l['phone number']||l['phone']||'—')+'</td>'
-      +'<td style="font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(l['package']||'')+'">'+(((l['package']||'').split('_').pop())||'—')+'</td>'
+      +'<td style="font-size:11px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(l['package']||'')+'">'+(((l['package']||'').split('_').pop())||'—')+'</td>'
       +'<td style="font-size:11px">'+(l['city']||'—')+'</td>'
-      +'<td style="font-size:11px">'+(l['status']||'—')+'</td>'
       +'<td>'+heatBadge+'</td>'
-      +'<td style="text-align:center;font-weight:600">'+calls+'</td>'
-      +'<td><span class="days-counter '+dayCls+'">'+(days!==null?days+'d ago':'—')+'</span></td>'
-      +'<td style="font-size:11px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(ov.notes||l['notes']||'')+'">'+(((ov.notes||l['notes']||'').substring(0,35))||'—')+'</td>'
-      +'<td style="text-align:center">'+(isConv?'<span style="color:var(--duty)">✅</span>':'')+'</td>'
+      +'<td>'+callSel('call1',c1)+'</td>'
+      +'<td>'+callSel('call2',c2)+'</td>'
+      +'<td>'+callSel('call3',c3)+'</td>'
+      +'<td>'+fsSel()+'</td>'
+      +'<td>'+notesCell+'</td>'
       +'</tr>';
   });
   html+='</tbody></table>';wrap.innerHTML=html;
 }
+async function saveLeadField(key,field,value){
+  if(!_leadsOverrides[key])_leadsOverrides[key]={};
+  _leadsOverrides[key][field]=value;
+  // Auto-update heat when call or final_status changes (only if no manual heat override)
+  if(['call1','call2','call3','final_status'].includes(field)&&!_leadsOverrides[key].heat){
+    var ov=_leadsOverrides[key];
+    // Find the lead to get source status fallback for call1
+    var lead=_leads.find(function(l){return getLeadKey(l)===key;})||{};
+    var c1=ov.call1!==undefined?ov.call1:mapSourceStatusToCall(lead['status']);
+    var derivedHeat=heatFromCalls(c1,ov.call2||'',ov.call3||'',ov.final_status||'');
+    if(derivedHeat){
+      // Store as derived (not manual) — we don't set ov.heat so manual override is still possible
+      _leadsOverrides[key]._derivedHeat=derivedHeat;
+    }
+  }
+  if(_db){
+    try{await _db.collection('valeo_leads').doc(key).set(_leadsOverrides[key],{merge:true});}catch(e){console.warn('saveLeadField error',e);}
+  }
+  renderLeadsKPIs();renderLeadsTable();
+}
 function openLeadModal(idx){
   _editLeadIdx=idx;var l=_leads[idx],ov=getLeadOv(l),heat=ov.heat||autoHeat(l);
-  var isConv=ov.converted||String(l['status']||'').toLowerCase()==='converted';
+  var isConv=ov.converted
+    ||ov.final_status==='Converted'
+    ||ov.call1==='Converted'||ov.call2==='Converted'||ov.call3==='Converted'
+    ||String(l['status']||'').toLowerCase()==='converted';
   document.getElementById('lead-modal-title').textContent=l['full name']||l['name']||'—';
   var html='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;font-size:12px">';
   html+='<div><div style="font-size:10px;color:var(--text2);margin-bottom:3px">DATE</div><div>'+(l._date?leadDateStr(l._date):'—')+'</div></div>';
