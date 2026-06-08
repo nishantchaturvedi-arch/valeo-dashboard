@@ -1363,6 +1363,14 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
       <option value="">All Channels</option>
       <option>FC</option><option>Referral</option><option>Other</option>
     </select>
+    <select id="cl-filter-month" onchange="clOnMonthFilter()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
+      <option value="">All Months</option>
+    </select>
+    <select id="cl-filter-week" onchange="clRender()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
+      <option value="">All Weeks</option>
+      <option value="W1">W1 (1–7)</option><option value="W2">W2 (8–14)</option>
+      <option value="W3">W3 (15–21)</option><option value="W4">W4 (22–31)</option>
+    </select>
     <button onclick="clExportCSV()" style="padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-weight:600;cursor:pointer">Export CSV</button>
     <button onclick="clOpenModal()" style="padding:6px 14px;background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;cursor:pointer">+ Add Lead</button>
   </div>
@@ -2643,7 +2651,7 @@ async function initCustomLeads(){
   if(_clLeads.length){clRenderKPIs();clRenderChannelStrip();clRender();return;}
   if(!_db){clRenderKPIs();clRenderChannelStrip();clRender();return;}
   try{var snap=await _db.collection(_CL_COLL).orderBy('created_at','desc').get();_clLeads=[];snap.forEach(function(doc){_clLeads.push(Object.assign({_id:doc.id},doc.data()));});}catch(e){console.warn('initCustomLeads',e);}
-  clRenderKPIs();clRenderChannelStrip();clRender();
+  clPopulateMonths();clRenderKPIs();clRenderChannelStrip();clRender();
 }
 function clRenderKPIs(){
   var el=document.getElementById('cl-kpi-row');if(!el)return;
@@ -2668,16 +2676,44 @@ function clRenderChannelStrip(){
   sorted.forEach(function(ch,i){var c=colors[i%colors.length];html+='<span style="background:'+c+'22;border:1px solid '+c+'55;color:'+c+';padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600">'+ch+' <b>'+counts[ch]+'</b></span>';});
   el.innerHTML=html;
 }
+function clPopulateMonths(){
+  var seen={},months=[];
+  _clLeads.forEach(function(d){
+    if(!d.date)return;
+    var dt=new Date(d.date+'T12:00:00');
+    var key=dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0');
+    var label=dt.toLocaleString('default',{month:'long',year:'numeric'});
+    if(!seen[key]){seen[key]=true;months.push({key:key,label:label});}
+  });
+  months.sort(function(a,b){return b.key.localeCompare(a.key);});
+  var sel=document.getElementById('cl-filter-month');if(!sel)return;
+  var cur=sel.value;
+  sel.innerHTML='<option value="">All Months</option>';
+  months.forEach(function(m){sel.innerHTML+='<option value="'+m.key+'"'+(m.key===cur?' selected':'')+'>'+m.label+'</option>';});
+}
+function clOnMonthFilter(){
+  // Reset week when month changes
+  var wsel=document.getElementById('cl-filter-week');if(wsel)wsel.value='';
+  clRender();
+}
 function clGetFiltered(){
   var q=((document.getElementById('cl-search')||{}).value||'').toLowerCase();
   var ffs=(document.getElementById('cl-filter-fs')||{}).value||'';
   var fh=(document.getElementById('cl-filter-heat')||{}).value||'';
   var fch=(document.getElementById('cl-filter-channel')||{}).value||'';
+  var fmo=(document.getElementById('cl-filter-month')||{}).value||'';
+  var fwk=(document.getElementById('cl-filter-week')||{}).value||'';
   return _clLeads.filter(function(d){
     if(q&&!(d.name||'').toLowerCase().includes(q)&&!(d.phone||'').includes(q))return false;
     if(ffs){var isConv=d.final_status==='Converted'||d.call1==='Converted'||d.call2==='Converted'||d.call3==='Converted';if(ffs==='Converted'&&!isConv)return false;if(ffs==='Ongoing'&&d.final_status!=='Ongoing')return false;if(ffs==='Lost'&&d.final_status!=='Lost')return false;}
     if(fh&&clAutoHeat(d).toLowerCase()!==fh)return false;
     if(fch&&(d.inbound_channel||'')!==fch)return false;
+    if(fmo||fwk){
+      if(!d.date)return false;
+      var dt=new Date(d.date+'T12:00:00');
+      if(fmo){var mo=dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0');if(mo!==fmo)return false;}
+      if(fwk){var day=dt.getDate();var wk=day<=7?'W1':day<=14?'W2':day<=21?'W3':'W4';if(wk!==fwk)return false;}
+    }
     return true;
   });
 }
@@ -2762,7 +2798,7 @@ async function clSaveLead(){
     _clLeads.unshift(data);
     if(_db){try{await _db.collection(_CL_COLL).doc(nid).set(data);}catch(e){console.warn(e);}}
   }
-  clCloseModal();clRenderKPIs();clRenderChannelStrip();clRender();
+  clCloseModal();clPopulateMonths();clRenderKPIs();clRenderChannelStrip();clRender();
 }
 function clAskDelete(id,name){_clDeleteId=id;document.getElementById('cl-del-name').textContent='Delete "'+name+'"? This cannot be undone.';document.getElementById('cl-del-modal').style.display='flex';}
 async function clConfirmDelete(){
