@@ -616,6 +616,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <button class="main-tab" onclick="switchTab('fclead')">💬 FC Lead Tracker</button>
  <button class="main-tab" onclick="switchTab('supply')">👥 Supply Tracker</button>
  <button class="main-tab" onclick="switchTab('customleads')">📌 Lead Tracker</button>
+ <button class="main-tab" onclick="switchTab('b2b')">🤝 B2B Tracker</button>
  <button class="main-tab" onclick="switchTab('penalty')">⚠️ Penalty Tracker</button>
 </div>
 
@@ -1408,6 +1409,74 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
       <button onclick="clConfirmDelete()" style="padding:8px 20px;background:#f85149;border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">Delete</button>
     </div>
   </div>
+
+<div class="page" id="page-b2b">
+<div style="padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+  <div style="font-size:15px;font-weight:700">🤝 B2B Partnership Tracker</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+    <input id="b2b-search" type="text" placeholder="Search company / contact..." oninput="b2bRender()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:Inter,sans-serif;font-size:12px;padding:6px 10px;border-radius:6px;outline:none;width:200px">
+    <select id="b2b-filter-type" onchange="b2bRender()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
+      <option value="">All Company Types</option>
+      <option>Nursery / Preschool</option><option>Hospital / Clinic</option><option>Pediatrician</option>
+      <option>Corporate HR</option><option>Real Estate</option><option>Hotel / Serviced Apartment</option>
+      <option>Relocation Agency</option><option>Mommy Community</option><option>School</option>
+      <option>Gym / Wellness</option><option>Nanny Agency</option><option>HC Provider</option>
+      <option>Baby / Maternity Store</option><option>Other</option>
+    </select>
+    <select id="b2b-filter-stage" onchange="b2bRender()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
+      <option value="">All Stages</option>
+      <option>Prospecting</option><option>Contacted</option><option>Meeting Scheduled</option>
+      <option>Meeting Done</option><option>Proposal Sent</option><option>Negotiating</option>
+      <option>Closed</option><option>Dead</option>
+    </select>
+    <select id="b2b-filter-city" onchange="b2bRender()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
+      <option value="">All Cities</option>
+      <option>Dubai</option><option>Abu Dhabi</option><option>Sharjah</option>
+      <option>Ajman</option><option>Al Ain</option><option>RAK</option><option>Fujairah</option>
+    </select>
+    <button onclick="b2bExportCSV()" style="padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-weight:600;cursor:pointer">Export CSV</button>
+    <button onclick="b2bOpenModal()" style="padding:6px 14px;background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;cursor:pointer">+ Add Company</button>
+  </div>
+</div>
+<!-- KPIs -->
+<div id="b2b-kpi-row" style="padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap"></div>
+<!-- Pipeline funnel strip -->
+<div id="b2b-funnel-strip" style="padding:8px 20px 12px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+  <span style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-right:4px">Pipeline:</span>
+</div>
+<!-- Table -->
+<div style="overflow:auto;max-height:calc(100vh - 250px);padding:0 20px 20px">
+  <div id="b2b-table-wrap" style="margin-top:12px"></div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div id="b2b-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9000;align-items:center;justify-content:center">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:24px;width:660px;max-width:97vw;max-height:92vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+      <div style="font-size:15px;font-weight:700" id="b2b-modal-title">Add Company</div>
+      <button onclick="b2bCloseModal()" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer;line-height:1">&#x2715;</button>
+    </div>
+    <div id="b2b-modal-body" style="display:grid;grid-template-columns:1fr 1fr;gap:12px"></div>
+    <div style="margin-top:18px;display:flex;gap:10px;justify-content:flex-end">
+      <button onclick="b2bCloseModal()" style="padding:9px 18px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text2);font-size:12px;cursor:pointer;font-family:Inter,sans-serif">Cancel</button>
+      <button onclick="b2bSave()" style="padding:9px 24px;background:var(--accent);border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Modal -->
+<div id="b2b-del-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9100;align-items:center;justify-content:center">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;width:340px;max-width:94vw;text-align:center">
+    <div style="font-size:28px;margin-bottom:8px">🗑️</div>
+    <div style="font-size:14px;font-weight:700;margin-bottom:6px">Remove Company?</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:20px" id="b2b-del-name"></div>
+    <div style="display:flex;gap:10px;justify-content:center">
+      <button onclick="document.getElementById('b2b-del-modal').style.display='none'" style="padding:8px 18px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text2);font-size:12px;cursor:pointer;font-family:Inter,sans-serif">Cancel</button>
+      <button onclick="b2bConfirmDelete()" style="padding:8px 20px;background:#f85149;border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">Remove</button>
+    </div>
+  </div>
+</div>
+</div>
 </div>
 </div>
 
@@ -2585,6 +2654,7 @@ function switchTab(tab){
   if(tab==='planner')renderPlanner();
   if(tab==='leads'){if(_session&&_session.role!=='master'){alert('Master access only');return;}loadLeads();}
   if(tab==='customleads'){initCustomLeads();}
+  if(tab==='b2b'){initB2B();}
   if(tab==='supply'){if(_session&&_session.role!=='master'){alert('Master access only');return;}loadSupply();}
   if(tab==='penalty'){if(_session&&_session.role!=='master'){alert('Master access only');return;}loadPenalties();}
 }
@@ -2818,6 +2888,299 @@ function clExportCSV(){
   var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='leads_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
 }
 // END CUSTOM LEAD TRACKER v2
+
+// ══════════════════════════════════════════════════════════════════
+// 🤝 B2B PARTNERSHIP TRACKER
+// ══════════════════════════════════════════════════════════════════
+var _b2bData=[], _b2bEditId=null, _b2bDeleteId=null, _B2B_COLL='valeo_b2b_partners';
+
+var B2B_CALL_OPTS=['','No Answer','Connected','Hung Up','Disconnected While Ringing',
+  'Unreachable','Busy','Voice Mail','Not Available','Switched Off','Gatekeeper',
+  'Call Back','Wrong Number','Converted'];
+
+var B2B_STAGES=['Prospecting','Contacted','Meeting Scheduled','Meeting Done',
+  'Proposal Sent','Negotiating','Closed','Dead'];
+
+var B2B_FIELDS=[
+  {id:'date',           label:'Date Added',           type:'date',     req:false, span:1, ph:''},
+  {id:'company',        label:'Company Name',          type:'text',     req:true,  span:1, ph:'e.g. Bright Minds Nursery'},
+  {id:'contact_name',   label:'Contact Person',        type:'text',     req:false, span:1, ph:'Decision maker name'},
+  {id:'designation',    label:'Designation',           type:'text',     req:false, span:1, ph:'e.g. CEO, HR Manager, Owner'},
+  {id:'phone',          label:'Phone / WhatsApp',      type:'tel',      req:false, span:1, ph:'+971501234567'},
+  {id:'email',          label:'Email',                 type:'email',    req:false, span:1, ph:'contact@company.com'},
+  {id:'company_type',   label:'Company Type',          type:'select',   req:true,  span:1,
+    opts:['','Nursery / Preschool','Hospital / Clinic','Pediatrician','Corporate HR',
+          'Real Estate','Hotel / Serviced Apartment','Relocation Agency','Mommy Community',
+          'School','Gym / Wellness','Nanny Agency','HC Provider','Baby / Maternity Store','Other']},
+  {id:'city',           label:'City',                  type:'select',   req:false, span:1,
+    opts:['','Dubai','Abu Dhabi','Sharjah','Ajman','Al Ain','RAK','Fujairah']},
+  {id:'decision_maker', label:'Reached Decision Maker?', type:'select', req:false, span:1,
+    opts:['','Yes','No — Gatekeeper','Unknown'],
+    hint:'Did you speak to someone who can actually say yes?'},
+  {id:'est_monthly_val',label:'Est. Monthly Value (AED)', type:'number', req:false, span:1, ph:'e.g. 5000',
+    hint:'Projected monthly bookings/revenue this partner could generate'},
+  {id:'call1',          label:'Call 1 Status',         type:'select',   req:false, span:1, opts:null},
+  {id:'call2',          label:'Call 2 Status',         type:'select',   req:false, span:1, opts:null},
+  {id:'call3',          label:'Call 3 Status',         type:'select',   req:false, span:1, opts:null},
+  {id:'meeting_date',   label:'Meeting Date',          type:'date',     req:false, span:1, ph:''},
+  {id:'proposal_sent',  label:'Proposal Sent?',        type:'select',   req:false, span:1,
+    opts:['','Yes','No']},
+  {id:'stage',          label:'Partnership Stage',     type:'select',   req:true,  span:1,
+    opts:[''].concat(B2B_STAGES)},
+  {id:'final_status',   label:'Final Status',          type:'select',   req:false, span:1,
+    opts:['','Active Partner','Ongoing Discussion','Lost']},
+  {id:'notes',          label:'Notes',                 type:'textarea', req:false, span:2,
+    ph:'Key discussion points, objections, next steps, follow-up date...'},
+];
+B2B_FIELDS.filter(function(f){return f.id==='call1'||f.id==='call2'||f.id==='call3';}).forEach(function(f){f.opts=B2B_CALL_OPTS;});
+
+var B2B_STAGE_COLORS={
+  'Prospecting':  {bg:'rgba(100,116,139,.15)', color:'#8b949e',   border:'rgba(100,116,139,.3)'},
+  'Contacted':    {bg:'rgba(210,153,34,.15)',  color:'#d29922',   border:'rgba(210,153,34,.3)'},
+  'Meeting Scheduled':{bg:'rgba(47,129,247,.15)', color:'#2f81f7', border:'rgba(47,129,247,.3)'},
+  'Meeting Done': {bg:'rgba(188,140,255,.15)', color:'#bc8cff',   border:'rgba(188,140,255,.3)'},
+  'Proposal Sent':{bg:'rgba(6,182,212,.15)',   color:'#06b6d4',   border:'rgba(6,182,212,.3)'},
+  'Negotiating':  {bg:'rgba(249,115,22,.15)',  color:'#f97316',   border:'rgba(249,115,22,.3)'},
+  'Closed':       {bg:'rgba(63,185,80,.18)',   color:'#3fb950',   border:'rgba(63,185,80,.4)'},
+  'Dead':         {bg:'rgba(248,81,73,.15)',   color:'#f85149',   border:'rgba(248,81,73,.3)'},
+};
+
+function b2bCallColor(v){
+  if(!v)return'color:var(--text2)';
+  if(v==='Converted'||v==='Connected')return'background:rgba(63,185,80,.15);color:#3fb950';
+  if(v==='Call Back')return'background:rgba(47,129,247,.15);color:#2f81f7';
+  if(v==='Gatekeeper')return'background:rgba(188,140,255,.15);color:#bc8cff';
+  if(v==='No Answer'||v==='Busy'||v==='Voice Mail')return'background:rgba(210,153,34,.15);color:#d29922';
+  if(v==='Hung Up'||v==='Unreachable'||v==='Switched Off'||v==='Not Available')return'background:rgba(248,81,73,.15);color:#f85149';
+  return'background:var(--bg3);color:var(--text2)';
+}
+
+function b2bStageBadge(stage){
+  var c=B2B_STAGE_COLORS[stage]||{bg:'var(--bg3)',color:'var(--text2)',border:'var(--border)'};
+  return'<span style="background:'+c.bg+';color:'+c.color+';border:1px solid '+c.border+';padding:3px 9px;border-radius:6px;font-size:11px;font-weight:600;white-space:nowrap">'+(stage||'—')+'</span>';
+}
+
+function b2bFsBadge(fs){
+  var map={
+    'Active Partner':'background:rgba(63,185,80,.18);color:#3fb950;border:1px solid rgba(63,185,80,.4)',
+    'Ongoing Discussion':'background:rgba(47,129,247,.18);color:#2f81f7;border:1px solid rgba(47,129,247,.4)',
+    'Lost':'background:rgba(248,81,73,.18);color:#f85149;border:1px solid rgba(248,81,73,.4)'
+  };
+  var s=map[fs]||'background:var(--bg3);color:var(--text2);border:1px solid var(--border)';
+  return'<span style="'+s+';padding:3px 9px;border-radius:6px;font-size:11px;font-weight:600">'+(fs||'—')+'</span>';
+}
+
+async function initB2B(){
+  if(_b2bData.length){b2bRenderKPIs();b2bRenderFunnel();b2bRender();return;}
+  if(!_db){b2bRenderKPIs();b2bRenderFunnel();b2bRender();return;}
+  try{
+    var snap=await _db.collection(_B2B_COLL).orderBy('created_at','desc').get();
+    _b2bData=[];
+    snap.forEach(function(doc){_b2bData.push(Object.assign({_id:doc.id},doc.data()));});
+  }catch(e){console.warn('initB2B',e);}
+  b2bRenderKPIs();b2bRenderFunnel();b2bRender();
+}
+
+function b2bRenderKPIs(){
+  var el=document.getElementById('b2b-kpi-row');if(!el)return;
+  var total=_b2bData.length,active=0,discussions=0,lost=0,closed=0,meetings=0,proposals=0;
+  var totalVal=0;
+  _b2bData.forEach(function(d){
+    if(d.final_status==='Active Partner')active++;
+    else if(d.final_status==='Ongoing Discussion')discussions++;
+    else if(d.final_status==='Lost')lost++;
+    if(d.stage==='Closed')closed++;
+    if(d.stage==='Meeting Scheduled'||d.stage==='Meeting Done')meetings++;
+    if(d.stage==='Proposal Sent'||d.stage==='Negotiating')proposals++;
+    if(d.est_monthly_val)totalVal+=parseFloat(d.est_monthly_val)||0;
+  });
+  function card(v,l,c){return'<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 16px;min-width:80px;text-align:center"><div style="font-size:20px;font-weight:700;color:'+c+'">'+v+'</div><div style="font-size:10px;color:var(--text2);margin-top:2px">'+l+'</div></div>';}
+  var valStr=totalVal>=1000?(totalVal/1000).toFixed(1)+'K':totalVal.toString();
+  el.innerHTML=
+    card(total,'Total','var(--accent)')+
+    card(active,'✅ Active','#3fb950')+
+    card(discussions,'🔄 Discussing','#2f81f7')+
+    card(meetings,'📅 Meetings','#bc8cff')+
+    card(proposals,'📄 Proposals','#06b6d4')+
+    card(closed,'🤝 Closed','#3fb950')+
+    card(lost,'❌ Lost','#f85149')+
+    card('AED '+valStr,'Pipeline Value','#d29922');
+}
+
+function b2bRenderFunnel(){
+  var el=document.getElementById('b2b-funnel-strip');if(!el)return;
+  var counts={};
+  B2B_STAGES.forEach(function(s){counts[s]=0;});
+  _b2bData.forEach(function(d){if(d.stage&&counts[d.stage]!==undefined)counts[d.stage]++;});
+  var html='<span style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-right:6px">Pipeline Funnel:</span>';
+  B2B_STAGES.forEach(function(s){
+    var c=B2B_STAGE_COLORS[s]||{bg:'var(--bg3)',color:'var(--text2)',border:'var(--border)'};
+    html+='<span style="background:'+c.bg+';border:1px solid '+c.border+';color:'+c.color+';padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer" onclick="document.getElementById(\'b2b-filter-stage\').value=\''+s+'\';b2bRender()">'+s+' <b>'+counts[s]+'</b></span>';
+    if(s!=='Dead')html+='<span style="color:var(--text2);font-size:12px">›</span>';
+  });
+  el.innerHTML=html;
+}
+
+function b2bGetFiltered(){
+  var q=((document.getElementById('b2b-search')||{}).value||'').toLowerCase();
+  var ft=(document.getElementById('b2b-filter-type')||{}).value||'';
+  var fs=(document.getElementById('b2b-filter-stage')||{}).value||'';
+  var fc=(document.getElementById('b2b-filter-city')||{}).value||'';
+  return _b2bData.filter(function(d){
+    if(q&&!(d.company||'').toLowerCase().includes(q)&&!(d.contact_name||'').toLowerCase().includes(q))return false;
+    if(ft&&(d.company_type||'')!==ft)return false;
+    if(fs&&(d.stage||'')!==fs)return false;
+    if(fc&&(d.city||'')!==fc)return false;
+    return true;
+  });
+}
+
+function b2bRender(){
+  var wrap=document.getElementById('b2b-table-wrap');if(!wrap)return;
+  var data=b2bGetFiltered();
+  if(!data.length){
+    wrap.innerHTML='<div style="padding:60px;text-align:center;color:var(--text2)"><div style="font-size:32px;margin-bottom:12px">🤝</div><div style="font-size:14px;font-weight:600;margin-bottom:8px">No companies yet</div><div style="font-size:12px">Click <b>+ Add Company</b> to start tracking partnerships</div></div>';
+    return;
+  }
+  var html='<div style="font-size:11px;color:var(--text2);margin-bottom:8px">Showing '+data.length+' of '+_b2bData.length+' companies</div>';
+  html+='<table class="lead-table"><thead><tr>'
+    +'<th>Date</th>'
+    +'<th>Company</th>'
+    +'<th>Type</th>'
+    +'<th>Contact</th>'
+    +'<th>Designation</th>'
+    +'<th>Phone</th>'
+    +'<th>City</th>'
+    +'<th>DM?</th>'
+    +'<th style="min-width:110px">Call 1</th>'
+    +'<th style="min-width:110px">Call 2</th>'
+    +'<th style="min-width:110px">Call 3</th>'
+    +'<th>Meeting</th>'
+    +'<th>Proposal</th>'
+    +'<th>Est. Value</th>'
+    +'<th style="min-width:130px">Stage</th>'
+    +'<th style="min-width:110px">Final Status</th>'
+    +'<th style="min-width:150px">Notes</th>'
+    +'<th>Actions</th>'
+    +'</tr></thead><tbody>';
+
+  data.forEach(function(d){
+    var dateDisp=d.date?new Date(d.date+'T12:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'2-digit'}):'--';
+    var meetDisp=d.meeting_date?new Date(d.meeting_date+'T12:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short'}):'--';
+    function cb(v){if(!v)return'<span style="color:var(--text2);font-size:10px">--</span>';return'<span style="'+b2bCallColor(v)+';padding:2px 7px;border-radius:5px;font-size:10px;font-weight:600;white-space:nowrap">'+v+'</span>';}
+    var dmStyle=d.decision_maker==='Yes'?'color:#3fb950;font-weight:700':d.decision_maker==='No — Gatekeeper'?'color:#f85149':'color:var(--text2)';
+    var dmIcon=d.decision_maker==='Yes'?'✅':d.decision_maker==='No — Gatekeeper'?'🚧':'—';
+    var valDisp=d.est_monthly_val?'AED '+Number(d.est_monthly_val).toLocaleString():'—';
+    var rowOpacity=d.stage==='Dead'?'opacity:.5;':'';
+    var rowHighlight=d.stage==='Closed'?'background:rgba(63,185,80,.04)':'';
+    var safeId=d._id.replace(/['"]/g,'');
+    var safeName=(d.company||'').replace(/'/g,"\\x27");
+    html+='<tr style="'+rowOpacity+rowHighlight+'">'
+      +'<td style="font-size:11px;color:var(--text2);white-space:nowrap">'+dateDisp+'</td>'
+      +'<td style="font-weight:700;white-space:nowrap">'+(d.company||'--')+'</td>'
+      +'<td><span style="font-size:10px;background:var(--bg3);border:1px solid var(--border);padding:2px 7px;border-radius:5px;white-space:nowrap">'+(d.company_type||'--')+'</span></td>'
+      +'<td style="font-size:12px">'+(d.contact_name||'--')+'</td>'
+      +'<td style="font-size:11px;color:var(--text2)">'+(d.designation||'--')+'</td>'
+      +'<td style="font-family:monospace;font-size:11px">'+(d.phone||'--')+'</td>'
+      +'<td style="font-size:11px">'+(d.city||'--')+'</td>'
+      +'<td style="text-align:center;'+dmStyle+'" title="'+(d.decision_maker||'')+'">'+dmIcon+'</td>'
+      +'<td>'+cb(d.call1)+'</td>'
+      +'<td>'+cb(d.call2)+'</td>'
+      +'<td>'+cb(d.call3)+'</td>'
+      +'<td style="font-size:11px;white-space:nowrap;color:'+(d.meeting_date?'var(--text)':'var(--text2)')+'">'+meetDisp+'</td>'
+      +'<td style="text-align:center">'+(d.proposal_sent==='Yes'?'<span style="color:#3fb950;font-weight:700">✅ Sent</span>':'<span style="color:var(--text2);font-size:11px">—</span>')+'</td>'
+      +'<td style="font-size:11px;font-weight:600;color:#d29922;white-space:nowrap">'+valDisp+'</td>'
+      +'<td>'+b2bStageBadge(d.stage)+'</td>'
+      +'<td>'+b2bFsBadge(d.final_status)+'</td>'
+      +'<td style="font-size:11px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2)" title="'+(d.notes||'')+'">'+((d.notes||'--').substring(0,38))+'</td>'
+      +'<td style="white-space:nowrap">'
+        +'<button onclick="b2bOpenModal(\''+safeId+'\')" style="padding:3px 9px;background:var(--bg3);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:11px;cursor:pointer;margin-right:4px">Edit</button>'
+        +'<button onclick="b2bAskDelete(\''+safeId+'\',\''+safeName+'\')" style="padding:3px 9px;background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.3);border-radius:5px;color:#f85149;font-size:11px;cursor:pointer">Del</button>'
+      +'</td></tr>';
+  });
+  html+='</tbody></table>';
+  wrap.innerHTML=html;
+}
+
+function b2bOpenModal(id){
+  _b2bEditId=id||null;
+  var data=id?(_b2bData.find(function(d){return d._id===id;})||{}):{};
+  document.getElementById('b2b-modal-title').textContent=id?'Edit Company':'Add Company';
+  var iS='width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:Inter,sans-serif;font-size:12px;padding:7px 10px;border-radius:7px;outline:none;box-sizing:border-box';
+  var body='';
+  B2B_FIELDS.forEach(function(f){
+    var val=data[f.id]||'';
+    body+='<div style="'+(f.span===2?'grid-column:1/-1':'')+'">';
+    body+='<div style="font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">'+f.label+(f.req?' <span style="color:#f85149">*</span>':'')+'</div>';
+    if(f.hint)body+='<div style="font-size:10px;color:var(--text2);margin-bottom:4px;font-style:italic">'+f.hint+'</div>';
+    if(f.type==='select'){
+      var opts=f.opts||B2B_CALL_OPTS;
+      body+='<select id="b2bf-'+f.id+'" style="'+iS+';cursor:pointer">';
+      opts.forEach(function(o){body+='<option value="'+o+'"'+(o===val?' selected':'')+'>'+( o||'Select...')+'</option>';});
+      body+='</select>';
+    }else if(f.type==='textarea'){
+      body+='<textarea id="b2bf-'+f.id+'" rows="3" placeholder="'+(f.ph||'')+'" style="'+iS+';resize:vertical">'+val+'</textarea>';
+    }else{
+      body+='<input id="b2bf-'+f.id+'" type="'+f.type+'" value="'+String(val).replace(/"/g,'&quot;')+'" placeholder="'+(f.ph||f.label)+'" style="'+iS+'">';
+    }
+    body+='</div>';
+  });
+  document.getElementById('b2b-modal-body').innerHTML=body;
+  document.getElementById('b2b-modal').style.display='flex';
+  setTimeout(function(){var el=document.getElementById('b2bf-company');if(el)el.focus();},80);
+}
+
+function b2bCloseModal(){document.getElementById('b2b-modal').style.display='none';_b2bEditId=null;}
+
+async function b2bSave(){
+  var data={},ok=true;
+  B2B_FIELDS.forEach(function(f){
+    var el=document.getElementById('b2bf-'+f.id);if(!el)return;
+    var v=el.value.trim();
+    if(f.req&&!v){el.style.borderColor='#f85149';ok=false;}else el.style.borderColor='var(--border)';
+    data[f.id]=v;
+  });
+  if(!ok)return;
+  var now=new Date().toISOString();
+  if(_b2bEditId){
+    data.updated_at=now;
+    var idx=_b2bData.findIndex(function(d){return d._id===_b2bEditId;});
+    if(idx>=0)_b2bData[idx]=Object.assign(_b2bData[idx],data);
+    if(_db){try{await _db.collection(_B2B_COLL).doc(_b2bEditId).set(data,{merge:true});}catch(e){console.warn(e);}}
+  }else{
+    data.created_at=now;data.updated_at=now;
+    var nid='b2b_'+Date.now();data._id=nid;
+    _b2bData.unshift(data);
+    if(_db){try{await _db.collection(_B2B_COLL).doc(nid).set(data);}catch(e){console.warn(e);}}
+  }
+  b2bCloseModal();b2bRenderKPIs();b2bRenderFunnel();b2bRender();
+}
+
+function b2bAskDelete(id,name){
+  _b2bDeleteId=id;
+  document.getElementById('b2b-del-name').textContent='Remove "'+name+'"? This cannot be undone.';
+  document.getElementById('b2b-del-modal').style.display='flex';
+}
+
+async function b2bConfirmDelete(){
+  if(!_b2bDeleteId)return;
+  _b2bData=_b2bData.filter(function(d){return d._id!==_b2bDeleteId;});
+  if(_db){try{await _db.collection(_B2B_COLL).doc(_b2bDeleteId).delete();}catch(e){console.warn(e);}}
+  _b2bDeleteId=null;
+  document.getElementById('b2b-del-modal').style.display='none';
+  b2bRenderKPIs();b2bRenderFunnel();b2bRender();
+}
+
+function b2bExportCSV(){
+  if(!_b2bData.length){alert('No data to export.');return;}
+  var cols=['date','company','company_type','contact_name','designation','phone','email','city','decision_maker','est_monthly_val','call1','call2','call3','meeting_date','proposal_sent','stage','final_status','notes','created_at'];
+  var hdrs=['Date','Company','Type','Contact','Designation','Phone','Email','City','DM Reached','Est Monthly Value','Call 1','Call 2','Call 3','Meeting Date','Proposal Sent','Stage','Final Status','Notes','Created At'];
+  var rows=[hdrs.join(',')];
+  _b2bData.forEach(function(d){rows.push(cols.map(function(c){return'"'+String(d[c]||'').replace(/"/g,'""')+'"';}).join(','));});
+  var blob=new Blob([rows.join('\n')],{type:'text/csv'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='b2b_partnerships_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+}
+// END B2B TRACKER
 // ── Theme toggle ─────────────────────────────────────────────────
 function toggleTheme(){
   const html=document.documentElement;
