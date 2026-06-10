@@ -1058,6 +1058,8 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
   <select id="lead-filter-city" onchange="renderLeadsTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Cities</option></select>
   <select id="lead-filter-month" onchange="renderLeadsTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Months</option></select>
   <select id="lead-filter-week" onchange="renderLeadsTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Weeks</option><option value="1">Week 1</option><option value="2">Week 2</option><option value="3">Week 3</option><option value="4">Week 4</option></select>
+  <select id="lead-filter-agent" onchange="renderLeadsTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Agents</option><option>Nishant</option><option>Muaaz</option><option>Priyanka</option></select>
+  <input id="lead-filter-date" type="date" onchange="renderLeadsTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:5px 8px;border-radius:6px;outline:none" title="Filter by specific date">
   <button onclick="clearLeadFilters()" style="padding:6px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:11px;cursor:pointer">Clear</button>
 </div>
 <div style="overflow:auto;max-height:calc(100vh - 260px);padding:0 20px 20px"><div id="leads-table-wrap" style="margin-top:14px"></div></div>
@@ -1372,6 +1374,10 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
       <option value="W1">W1 (1–7)</option><option value="W2">W2 (8–14)</option>
       <option value="W3">W3 (15–21)</option><option value="W4">W4 (22–31)</option>
     </select>
+    <select id="cl-filter-agent" onchange="clRender()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
+      <option value="">All Agents</option><option>Nishant</option><option>Muaaz</option><option>Priyanka</option>
+    </select>
+    <input id="cl-filter-date" type="date" onchange="clRender()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:5px 8px;border-radius:6px;outline:none" title="Filter by lead date">
     <button onclick="clExportCSV()" style="padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-weight:600;cursor:pointer">Export CSV</button>
     <button onclick="clOpenModal()" style="padding:6px 14px;background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;cursor:pointer">+ Add Lead</button>
   </div>
@@ -2679,11 +2685,17 @@ var CL_FIELDS=[
    hint:'What the lead said first. Useful to track which campaign creative drives conversions.'},
   {id:'package',label:'Package Interest',type:'text',req:false,span:1,ph:'e.g. Monthly Babysitting'},
   {id:'call1',label:'Call 1 Status',type:'select',req:false,span:1,opts:null},
+  {id:'agent1',label:'Call 1 Agent',type:'select',req:false,span:1,opts:['','Nishant','Muaaz','Priyanka']},
+  {id:'note1',label:'Call 1 Notes',type:'text',req:false,span:2,ph:'What happened on call 1?'},
   {id:'call2',label:'Call 2 Status',type:'select',req:false,span:1,opts:null},
+  {id:'agent2',label:'Call 2 Agent',type:'select',req:false,span:1,opts:['','Nishant','Muaaz','Priyanka']},
+  {id:'note2',label:'Call 2 Notes',type:'text',req:false,span:2,ph:'What happened on call 2?'},
   {id:'call3',label:'Call 3 Status',type:'select',req:false,span:1,opts:null},
+  {id:'agent3',label:'Call 3 Agent',type:'select',req:false,span:1,opts:['','Nishant','Muaaz','Priyanka']},
+  {id:'note3',label:'Call 3 Notes',type:'text',req:false,span:2,ph:'What happened on call 3?'},
   {id:'final_status',label:'Final Status',type:'select',req:false,span:1,opts:['','Converted','Ongoing','Lost']},
   {id:'heat',label:'Classification (auto)',type:'select',req:false,span:1,opts:['','Hot','Warm','Cold','Dead']},
-  {id:'notes',label:'Notes',type:'textarea',req:false,span:2,ph:'Follow-up notes, objections, next steps...'},
+  {id:'notes',label:'Final Notes',type:'textarea',req:false,span:2,ph:'Final summary, key outcome, next steps...'},
 ];
 CL_FIELDS.filter(function(f){return f.id==='call1'||f.id==='call2'||f.id==='call3';}).forEach(function(f){f.opts=CL_CALL_OPTS;});
 function clCallColor(v){
@@ -2786,8 +2798,31 @@ function clGetFiltered(){
       if(fmo){var mo=dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0');if(mo!==fmo)return false;}
       if(fwk){var day=dt.getDate();var wk=day<=7?'W1':day<=14?'W2':day<=21?'W3':'W4';if(wk!==fwk)return false;}
     }
+    var fa=(document.getElementById('cl-filter-agent')||{}).value||'';
+    var fd=(document.getElementById('cl-filter-date')||{}).value||'';
+    if(fa&&(d.agent1||'')!==fa&&(d.agent2||'')!==fa&&(d.agent3||'')!==fa)return false;
+    if(fd){if(!d.date||d.date!==fd)return false;}
     return true;
   });
+}
+function clCallBlock(status,agent,note){
+  if(!status&&!agent&&!note)return'<span style="color:var(--text2);font-size:10px">--</span>';
+  var html='<div style="display:flex;flex-direction:column;gap:2px">';
+  if(status)html+='<span style="'+clCallColor(status)+';padding:2px 8px;border-radius:5px;font-size:10px;font-weight:600;white-space:nowrap">'+status+'</span>';
+  if(agent)html+='<span style="font-size:10px;color:var(--accent);font-weight:600">👤 '+agent+'</span>';
+  if(note)html+='<span style="font-size:10px;color:var(--text2);font-style:italic" title="'+note+'">'+note.substring(0,28)+(note.length>28?'…':'')+'</span>';
+  html+='</div>';
+  return html;
+}
+function clInlineCall(id,sf,af,nf,sv,av,nv){
+  sv=sv||'';av=av||'';nv=nv||'';
+  var agOpts=['','Nishant','Muaaz','Priyanka'];
+  var statusSel='<select onchange="clSaveField(\''+id+'\',\''+sf+'\',this.value)" onclick="event.stopPropagation()" style="width:130px;font-size:11px;padding:3px 5px;border-radius:5px;border:1px solid var(--border);outline:none;cursor:pointer;display:block;margin-bottom:3px;'+clCallColor(sv)+'">'
+    +CL_CALL_OPTS.map(function(s){return'<option value="'+s+'"'+(s===sv?' selected':'')+'>'+( s||'— Status —')+'</option>';}).join('')+'</select>';
+  var agentSel='<select onchange="clSaveField(\''+id+'\',\''+af+'\',this.value)" onclick="event.stopPropagation()" style="width:130px;font-size:11px;padding:3px 5px;border-radius:5px;border:1px solid var(--border);outline:none;cursor:pointer;display:block;margin-bottom:3px;background:var(--bg3);color:var(--text2)">'
+    +agOpts.map(function(a){return'<option value="'+a+'"'+(a===av?' selected':'')+'>'+( a||'— Agent —')+'</option>';}).join('')+'</select>';
+  var noteInput='<input type="text" value="'+nv.replace(/"/g,'&quot;').replace(/\x27/g,'&#39;').substring(0,60)+'" placeholder="Call note\u2026" onclick="event.stopPropagation()" onchange="clSaveField(\''+id+'\',\''+nf+'\',this.value)" style="width:130px;font-size:11px;padding:3px 5px;border-radius:5px;border:1px solid var(--border);background:var(--bg3);color:var(--text);outline:none;font-family:Inter,sans-serif;display:block">';
+  return'<div style="display:flex;flex-direction:column;gap:2px">'+statusSel+agentSel+noteInput+'</div>';
 }
 function clRender(){
   var wrap=document.getElementById('cl-table-wrap');if(!wrap)return;
@@ -2797,9 +2832,9 @@ function clRender(){
   html+='<table class="lead-table"><thead><tr>'
     +'<th>Date</th><th>Name</th><th>Phone</th><th>City</th>'
     +'<th>Inbound Channel</th><th style="min-width:160px">First Message / Inquiry</th>'
-    +'<th style="min-width:120px">Call 1</th><th style="min-width:120px">Call 2</th><th style="min-width:120px">Call 3</th>'
+    +'<th style="min-width:220px">Call 1</th><th style="min-width:220px">Call 2</th><th style="min-width:220px">Call 3</th>'
     +'<th>Classification</th><th>Final Status</th>'
-    +'<th style="min-width:150px">Notes</th><th>Actions</th>'
+    +'<th style="min-width:160px">Final Notes</th><th>Actions</th>'
     +'</tr></thead><tbody>';
   data.forEach(function(d){
     var heat=clAutoHeat(d);
@@ -2815,7 +2850,7 @@ function clRender(){
       +'<td style="font-size:11px">'+(d.city||'--')+'</td>'
       +'<td><span style="font-size:10px;background:var(--bg3);border:1px solid var(--border);padding:2px 8px;border-radius:5px;white-space:nowrap">'+(d.inbound_channel||'--')+'</span></td>'
       +'<td style="font-size:11px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2)" title="'+(d.first_msg||'')+'">'+((d.first_msg||'--').substring(0,40))+'</td>'
-      +'<td>'+cb(d.call1)+'</td><td>'+cb(d.call2)+'</td><td>'+cb(d.call3)+'</td>'
+      +'<td>'+clInlineCall(safeId,'call1','agent1','note1',d.call1,d.agent1,d.note1)+'</td>'+'<td>'+clInlineCall(safeId,'call2','agent2','note2',d.call2,d.agent2,d.note2)+'</td>'+'<td>'+clInlineCall(safeId,'call3','agent3','note3',d.call3,d.agent3,d.note3)+'</td>'
       +'<td>'+clHeatBadge(heat)+'</td>'
       +'<td>'+clFsBadge(d.final_status)+'</td>'
       +'<td style="font-size:11px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2)" title="'+(d.notes||'')+'">'+((d.notes||'--').substring(0,38))+'</td>'
@@ -2854,6 +2889,18 @@ function clOpenModal(id){
   setTimeout(function(){var el=document.getElementById('clf-name');if(el)el.focus();},80);
 }
 function clCloseModal(){document.getElementById('cl-modal').style.display='none';_clEditId=null;}
+async function clSaveField(id,field,value){
+  var idx=_clLeads.findIndex(function(d){return d._id===id;});
+  if(idx<0)return;
+  _clLeads[idx][field]=value;
+  // Auto-update heat when call/final_status changes
+  if(['call1','call2','call3','final_status'].includes(field)){
+    var d=_clLeads[idx];
+    if(!d.heat||d.heat===''){d.heat=clAutoHeat(d);}
+  }
+  if(_db){try{var upd={};upd[field]=value;upd.updated_at=new Date().toISOString();await _db.collection(_CL_COLL).doc(id).set(upd,{merge:true});}catch(e){console.warn('clSaveField',e);}}
+  clRenderKPIs();clRenderChannelStrip();
+}
 async function clSaveLead(){
   var data={},ok=true;
   CL_FIELDS.forEach(function(f){var el=document.getElementById('clf-'+f.id);if(!el)return;var v=el.value.trim();if(f.req&&!v){el.style.borderColor='#f85149';ok=false;}else el.style.borderColor='var(--border)';data[f.id]=v;});
@@ -2882,8 +2929,8 @@ async function clConfirmDelete(){
 }
 function clExportCSV(){
   if(!_clLeads.length){alert('No leads to export.');return;}
-  var cols=['date','name','phone','city','inbound_channel','first_msg','package','call1','call2','call3','final_status','heat','notes','created_at'];
-  var hdrs=['Date','Name','Phone','City','Inbound Channel','First Message','Package','Call 1','Call 2','Call 3','Final Status','Classification','Notes','Created At'];
+  var cols=['date','name','phone','city','inbound_channel','first_msg','package','call1','agent1','note1','call2','agent2','note2','call3','agent3','note3','final_status','heat','notes','created_at'];
+  var hdrs=['Date','Name','Phone','City','Inbound Channel','First Message','Package','Call 1','Agent 1','Note 1','Call 2','Agent 2','Note 2','Call 3','Agent 3','Note 3','Final Status','Classification','Final Notes','Created At'];
   var rows=[hdrs.join(',')];
   _clLeads.forEach(function(d){rows.push(cols.map(function(c){return '"'+String(d[c]||'').replace(/"/g,'""')+'"';}).join(','));});
   var blob=new Blob([rows.join('\n')],{type:'text/csv'});
@@ -5518,9 +5565,15 @@ function populateLeadFilters(){
   var cities=[...new Set(_leads.map(function(l){return(l['city']||'').trim();}).filter(Boolean))].sort();
   var cityEl=document.getElementById('lead-filter-city');
   if(cityEl){cityEl.innerHTML='<option value="">All Cities</option>';cities.forEach(function(c){cityEl.innerHTML+='<option value="'+c+'">'+c+'</option>';});}
-  var months=[...new Set(_leads.map(function(l){return l._date?l._date.toLocaleString('default',{month:'long',year:'numeric'}):null;}).filter(Boolean))].reverse();
+  var months=[...new Set(_leads.map(function(l){
+    if(!l._date)return null;
+    return l._date.getFullYear()+'-'+String(l._date.getMonth()+1).padStart(2,'0');
+  }).filter(Boolean))].sort().reverse();
   var moEl=document.getElementById('lead-filter-month');
-  if(moEl){moEl.innerHTML='<option value="">All Months</option>';months.forEach(function(m){moEl.innerHTML+='<option value="'+m+'">'+m+'</option>';});}
+  if(moEl){moEl.innerHTML='<option value="">All Months</option>';months.forEach(function(m){
+    var parts=m.split('-');var label=new Date(parseInt(parts[0]),parseInt(parts[1])-1,1).toLocaleString('default',{month:'long',year:'numeric'});
+    moEl.innerHTML+='<option value="'+m+'">'+label+'</option>';
+  });}
 }
 function renderLeadsKPIs(){
   var total=_leads.length,hot=0,warm=0,cold=0,dead=0,converted=0;
@@ -5651,8 +5704,12 @@ function getFilteredLeads(){
     if(fStatus){var ov2=getLeadOv(l);var fs2=(ov2.final_status||"").toLowerCase();var c1l=(ov2.call1||"").toLowerCase(),c2l=(ov2.call2||"").toLowerCase(),c3l=(ov2.call3||"").toLowerCase();var srcStatus=String(l["status"]||"").toLowerCase();var matchStatus=srcStatus===fStatus||fs2===fStatus||c1l===fStatus||c2l===fStatus||c3l===fStatus;if(!matchStatus)return false;}
     if(fHeat&&(ov.heat||autoHeat(l))!==fHeat)return false;
     if(fCity&&(l['city']||'').trim()!==fCity)return false;
-    if(fMonth&&l._date&&l._date.toLocaleString('default',{month:'long',year:'numeric'})!==fMonth)return false;
+    if(fMonth&&l._date){var lm=l._date.getFullYear()+'-'+String(l._date.getMonth()+1).padStart(2,'0');if(lm!==fMonth)return false;}
     if(fWeek&&l._date){var day=l._date.getDate(),wk=day<=7?'1':day<=14?'2':day<=21?'3':'4';if(wk!==fWeek)return false;}
+    var fAgent=(document.getElementById('lead-filter-agent')||{}).value||'';
+    var fDate=(document.getElementById('lead-filter-date')||{}).value||'';
+    if(fAgent){var ov3=getLeadOv(l);if((ov3.agent1||'')!==fAgent&&(ov3.agent2||'')!==fAgent&&(ov3.agent3||'')!==fAgent)return false;}
+    if(fDate&&l._date){var ds=l._date.getFullYear()+'-'+String(l._date.getMonth()+1).padStart(2,'0')+'-'+String(l._date.getDate()).padStart(2,'0');if(ds!==fDate)return false;}
     return true;
   });
 }
@@ -5691,11 +5748,11 @@ function renderLeadsTable(){
   html+='<table class="lead-table"><thead><tr>'
     +'<th>Date</th><th>Name</th><th>Phone</th><th>Package</th><th>City</th>'
     +'<th>Classification</th>'
-    +'<th style="min-width:130px">Call 1</th>'
-    +'<th style="min-width:130px">Call 2</th>'
-    +'<th style="min-width:130px">Call 3</th>'
+    +'<th style="min-width:220px">Call 1</th>'
+    +'<th style="min-width:220px">Call 2</th>'
+    +'<th style="min-width:220px">Call 3</th>'
     +'<th style="min-width:110px">Final Status</th>'
-    +'<th style="min-width:160px">Notes</th>'
+    +'<th style="min-width:180px">Final Notes</th>'
     +'</tr></thead><tbody>';
   filtered.forEach(function(l){
     var ov=getLeadOv(l),heat=ov.heat||autoHeat(l);
@@ -5704,15 +5761,20 @@ function renderLeadsTable(){
     var c1=ov.call1!==undefined?ov.call1:mapSourceStatusToCall(l['status']),c2=ov.call2||'',c3=ov.call3||'';
     var fs=ov.final_status||'';
     var notes=ov.notes||l['notes']||'';
-    function callSel(field,val){
-      var opts=_callStatuses.map(function(s){return'<option value="'+s+'"'+(s===val?' selected':'')+'>'+( s||'— Select —')+'</option>';}).join('');
-      return'<select onchange="saveLeadField(\''+key+'\',\''+field+'\',this.value)" onclick="event.stopPropagation()" style="width:120px;font-size:11px;padding:3px 6px;border-radius:6px;border:1px solid var(--border);outline:none;cursor:pointer;'+callStatusColor(val)+'">'+opts+'</select>';
+    function callBlock(statusField,agentField,noteField,statusVal,agentVal,noteVal){
+      var agOpts=['','Nishant','Muaaz','Priyanka'];
+      var statusSel='<select onchange="saveLeadField(\''+key+'\',\''+statusField+'\',this.value)" onclick="event.stopPropagation()" style="width:130px;font-size:11px;padding:3px 5px;border-radius:5px;border:1px solid var(--border);outline:none;cursor:pointer;display:block;margin-bottom:3px;'+callStatusColor(statusVal)+'">'
+        +_callStatuses.map(function(s){return'<option value="'+s+'"'+(s===statusVal?' selected':'')+'>'+( s||'— Status —')+'</option>';}).join('')+'</select>';
+      var agentSel='<select onchange="saveLeadField(\''+key+'\',\''+agentField+'\',this.value)" onclick="event.stopPropagation()" style="width:130px;font-size:11px;padding:3px 5px;border-radius:5px;border:1px solid var(--border);outline:none;cursor:pointer;display:block;margin-bottom:3px;background:var(--bg3);color:var(--text2)">'
+        +agOpts.map(function(a){return'<option value="'+a+'"'+(a===agentVal?' selected':'')+'>'+( a||'— Agent —')+'</option>';}).join('')+'</select>';
+      var noteInput='<input type="text" value="'+noteVal.replace(/"/g,'&quot;').replace(/'/g,'&#39;').substring(0,60)+'" placeholder="Call note…" onclick="event.stopPropagation()" onchange="saveLeadField(\''+key+'\',\''+noteField+'\',this.value)" style="width:130px;font-size:11px;padding:3px 5px;border-radius:5px;border:1px solid var(--border);background:var(--bg3);color:var(--text);outline:none;font-family:Inter,sans-serif;display:block">';
+      return'<div style="display:flex;flex-direction:column;gap:2px">'+statusSel+agentSel+noteInput+'</div>';
     }
     function fsSel(){
       var opts=_finalStatuses.map(function(s){return'<option value="'+s+'"'+(s===fs?' selected':'')+'>'+( s||'— Select —')+'</option>';}).join('');
       return'<select onchange="saveLeadField(\''+key+'\',\'final_status\',this.value)" onclick="event.stopPropagation()" style="width:105px;font-size:11px;padding:3px 6px;border-radius:6px;outline:none;cursor:pointer;'+finalStatusColor(fs)+'">'+opts+'</select>';
     }
-    var notesCell='<input type="text" value="'+notes.replace(/"/g,'&quot;').replace(/'/g,'&#39;').substring(0,80)+'" placeholder="Add note…" onclick="event.stopPropagation()" onchange="saveLeadField(\''+key+'\',\'notes\',this.value)" style="width:150px;font-size:11px;padding:3px 7px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);outline:none;font-family:Inter,sans-serif">';
+    var notesCell='<input type="text" value="'+notes.replace(/"/g,'&quot;').replace(/'/g,'&#39;').substring(0,80)+'" placeholder="Final notes…" onclick="event.stopPropagation()" onchange="saveLeadField(\''+key+'\',\'notes\',this.value)" style="width:170px;font-size:11px;padding:3px 7px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);outline:none;font-family:Inter,sans-serif">';
     var rowOpacity=fs==='Lost'?'opacity:.55;':'';
     html+='<tr onclick="openLeadModal('+l._idx+')" style="'+rowOpacity+'">'
       +'<td style="font-size:11px;color:var(--text2);white-space:nowrap">'+(l._date?leadDateStr(l._date):'—')+'</td>'
@@ -5721,9 +5783,9 @@ function renderLeadsTable(){
       +'<td style="font-size:11px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(l['package']||'')+'">'+(((l['package']||'').split('_').pop())||'—')+'</td>'
       +'<td style="font-size:11px">'+(l['city']||'—')+'</td>'
       +'<td>'+heatBadge+'</td>'
-      +'<td>'+callSel('call1',c1)+'</td>'
-      +'<td>'+callSel('call2',c2)+'</td>'
-      +'<td>'+callSel('call3',c3)+'</td>'
+      +'<td>'+callBlock('call1','agent1','note1',c1,ov.agent1||'',ov.note1||'')+'</td>'
+      +'<td>'+callBlock('call2','agent2','note2',c2,ov.agent2||'',ov.note2||'')+'</td>'
+      +'<td>'+callBlock('call3','agent3','note3',c3,ov.agent3||'',ov.note3||'')+'</td>'
       +'<td>'+fsSel()+'</td>'
       +'<td>'+notesCell+'</td>'
       +'</tr>';
@@ -5734,7 +5796,7 @@ async function saveLeadField(key,field,value){
   if(!_leadsOverrides[key])_leadsOverrides[key]={};
   _leadsOverrides[key][field]=value;
   // Auto-update heat when call or final_status changes (only if no manual heat override)
-  if(['call1','call2','call3','final_status'].includes(field)&&!_leadsOverrides[key].heat){
+  if(['call1','call2','call3','final_status','agent1','agent2','agent3','note1','note2','note3'].includes(field)&&['call1','call2','call3','final_status'].includes(field)&&!_leadsOverrides[key].heat){
     var ov=_leadsOverrides[key];
     // Find the lead to get source status fallback for call1
     var lead=_leads.find(function(l){return getLeadKey(l)===key;})||{};
@@ -5825,7 +5887,7 @@ function exportLeadsCSV(){
   a.download='valeo_leads_'+new Date().toISOString().slice(0,10)+'.csv';
   document.body.appendChild(a);a.click();document.body.removeChild(a);
 }
-function clearLeadFilters(){['lead-search','lead-filter-status','lead-filter-heat','lead-filter-city','lead-filter-month','lead-filter-week'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});renderLeadsTable();}
+function clearLeadFilters(){['lead-search','lead-filter-status','lead-filter-heat','lead-filter-city','lead-filter-month','lead-filter-week','lead-filter-agent','lead-filter-date'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});renderLeadsTable();}
 function openAddLeadModal(){['nl-name','nl-phone','nl-email','nl-city','nl-pkg','nl-notes'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});document.getElementById('add-lead-modal').style.display='flex';}
 async function saveNewLead(){
   var name=document.getElementById('nl-name').value.trim(),phone=document.getElementById('nl-phone').value.trim();
