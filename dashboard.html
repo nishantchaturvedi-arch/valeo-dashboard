@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
@@ -618,6 +619,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <button class="main-tab" onclick="switchTab('customleads')">📌 Lead Tracker</button>
  <button class="main-tab" onclick="switchTab('b2b')">🤝 B2B Tracker</button>
  <button class="main-tab" onclick="switchTab('penalty')">⚠️ Penalty Tracker</button>
+ <button class="main-tab" onclick="switchTab('expecting')">🤰 Expecting Mothers</button>
 </div>
 
 <!-- ── Availability bar (calendar only) ── -->
@@ -1413,6 +1415,79 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
     <div style="display:flex;gap:10px;justify-content:center">
       <button onclick="document.getElementById('cl-del-modal').style.display='none'" style="padding:8px 18px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text2);font-size:12px;cursor:pointer;font-family:Inter,sans-serif">Cancel</button>
       <button onclick="clConfirmDelete()" style="padding:8px 20px;background:#f85149;border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">Delete</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="page" id="page-expecting">
+<div style="padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+  <div style="font-size:15px;font-weight:700">🤰 Expecting Mothers</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+    <input id="em-search" type="text" placeholder="Search name / phone..." oninput="emRender()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:Inter,sans-serif;font-size:12px;padding:6px 10px;border-radius:6px;outline:none;width:190px">
+    <select id="em-filter-status" onchange="emRender()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
+      <option value="">All Status</option>
+      <option>Expecting</option><option>Ready to Contact</option><option>Contacted</option><option>Converted</option><option>Lost</option>
+    </select>
+    <select id="em-filter-due" onchange="emRender()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
+      <option value="">All Due Months</option>
+    </select>
+    <select id="em-filter-city" onchange="emRender()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
+      <option value="">All Cities</option>
+      <option>Dubai</option><option>Abu Dhabi</option><option>Sharjah</option><option>Ajman</option><option>Al Ain</option><option>RAK</option><option>Fujairah</option>
+    </select>
+    <button onclick="emExportCSV()" style="padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-weight:600;cursor:pointer">Export CSV</button>
+    <button onclick="emOpenModal()" style="padding:6px 14px;background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;cursor:pointer">+ Add Mother</button>
+  </div>
+</div>
+<div id="em-kpi-row" style="padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap"></div>
+
+<!-- ── DASHBOARD ── -->
+<div id="em-dashboard" style="padding:16px 20px;background:var(--bg);border-bottom:1px solid var(--border)">
+  <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-bottom:16px">
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px">
+      <div style="font-size:12px;font-weight:600;margin-bottom:4px;display:flex;align-items:center;gap:8px"><span style="width:3px;height:14px;background:var(--accent);border-radius:2px"></span>Delivery Pipeline — mothers by due month</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:12px">Each bar = how many mothers are due that month. The next 2 months are your active call window.</div>
+      <div style="height:200px"><canvas id="em-chart-due"></canvas></div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px">
+      <div style="font-size:12px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px"><span style="width:3px;height:14px;background:var(--duty);border-radius:2px"></span>Status Breakdown</div>
+      <div style="height:200px"><canvas id="em-chart-status"></canvas></div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1.4fr;gap:16px">
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px">
+      <div style="font-size:12px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px"><span style="width:3px;height:14px;background:#e879f9;border-radius:2px"></span>Source Attribution</div>
+      <div id="em-source-bars"></div>
+      <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:11px;color:var(--text2)">Conversion Rate</span>
+        <span id="em-conv-rate" style="font-size:18px;font-weight:700;font-family:monospace;color:var(--duty)">—</span>
+      </div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px">
+      <div style="font-size:12px;font-weight:600;margin-bottom:4px;display:flex;align-items:center;gap:8px"><span style="width:3px;height:14px;background:#f97316;border-radius:2px"></span>🔔 Ready to Contact Now</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:12px">Mothers due this month or earlier, not yet converted/lost — call these first.</div>
+      <div id="em-action-list" style="display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto"></div>
+    </div>
+  </div>
+</div>
+
+<div style="overflow:auto;max-height:calc(100vh - 230px);padding:0 20px 20px">
+  <div id="em-table-wrap" style="margin-top:12px"></div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div id="em-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9000;align-items:center;justify-content:center">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:24px;width:620px;max-width:97vw;max-height:92vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+      <div style="font-size:15px;font-weight:700" id="em-modal-title">Add Mother</div>
+      <button onclick="emCloseModal()" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer;line-height:1">&#x2715;</button>
+    </div>
+    <div id="em-modal-body" style="display:grid;grid-template-columns:1fr 1fr;gap:12px"></div>
+    <div style="margin-top:18px;display:flex;gap:10px;justify-content:flex-end">
+      <button id="em-delete-btn" onclick="emAskDelete()" style="display:none;padding:9px 16px;background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);border-radius:7px;color:#f85149;font-size:12px;cursor:pointer;font-family:Inter,sans-serif;margin-right:auto">🗑 Delete</button>
+      <button onclick="emCloseModal()" style="padding:9px 18px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text2);font-size:12px;cursor:pointer;font-family:Inter,sans-serif">Cancel</button>
+      <button onclick="emSave()" style="padding:9px 24px;background:var(--accent);border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">Save</button>
     </div>
   </div>
 </div>
@@ -2663,6 +2738,7 @@ function switchTab(tab){
   if(tab==='leads'){if(_session&&_session.role!=='master'){alert('Master access only');return;}loadLeads();}
   if(tab==='customleads'){initCustomLeads();}
   if(tab==='b2b'){initB2B();}
+  if(tab==='expecting'){initExpecting();}
   if(tab==='supply'){if(_session&&_session.role!=='master'){alert('Master access only');return;}loadSupply();}
   if(tab==='penalty'){if(_session&&_session.role!=='master'){alert('Master access only');return;}loadPenalties();}
 }
@@ -6772,6 +6848,336 @@ function openStartDateModal(cg, hc){
   var ap=document.getElementById('page-analytics');
   if(ap&&ap.classList.contains('active')) renderAnalyticsData();
 }
+
+// ══════════════════════════════════════════════════════════════════
+// 🤰 EXPECTING MOTHERS TRACKER  (+ dashboard)
+// ══════════════════════════════════════════════════════════════════
+var _emData=[], _emEditId=null, _emDeleteId=null, _EM_COLL='valeo_expecting_mothers';
+var EM_STATUS=['Expecting','Ready to Contact','Contacted','Converted','Lost'];
+
+var EM_FIELDS=[
+  {id:'date',          label:'Date Added',        type:'date',     span:1},
+  {id:'name',          label:'Mother Name',       type:'text',     req:true, span:1, ph:'e.g. Sara Ahmed'},
+  {id:'phone',         label:'Phone / WhatsApp',  type:'tel',      req:true, span:1, ph:'+971501234567'},
+  {id:'due_month',     label:'Due Month',         type:'month',    req:true, span:1, hint:'When the baby is expected'},
+  {id:'expected_start',label:'Wants to Start',    type:'month',    span:1, hint:'When she wants care to begin (optional)'},
+  {id:'city',          label:'City',              type:'select',   span:1, opts:['','Dubai','Abu Dhabi','Sharjah','Ajman','Al Ain','RAK','Fujairah','Other']},
+  {id:'package',       label:'Package Interest',  type:'text',     span:1, ph:'e.g. Newborn Care Monthly'},
+  {id:'source',        label:'Source',            type:'select',   span:1, opts:['','FC','Referral','Instagram','Website','Walk-in','Other']},
+  {id:'status',        label:'Status',            type:'select',   span:1, opts:[''].concat(EM_STATUS)},
+  {id:'notes',         label:'Notes',             type:'textarea', span:2, ph:'Key details, preferred caregiver, follow-up plan...'},
+];
+
+function emFmtMonth(m){
+  if(!m) return '—';
+  var p=m.split('-'); if(p.length<2) return m;
+  var d=new Date(parseInt(p[0]), parseInt(p[1])-1, 1);
+  return d.toLocaleString('default',{month:'short',year:'numeric'});
+}
+function emMonthsUntil(m){
+  if(!m) return null;
+  var p=m.split('-'); if(p.length<2) return null;
+  var due=new Date(parseInt(p[0]), parseInt(p[1])-1, 1);
+  var now=new Date(); now=new Date(now.getFullYear(), now.getMonth(), 1);
+  return (due.getFullYear()-now.getFullYear())*12 + (due.getMonth()-now.getMonth());
+}
+function emStatusColor(v){
+  if(v==='Converted')        return'background:rgba(63,185,80,.18);color:#3fb950;border:1px solid rgba(63,185,80,.4)';
+  if(v==='Ready to Contact') return'background:rgba(249,115,22,.18);color:#f97316;border:1px solid rgba(249,115,22,.4)';
+  if(v==='Contacted')        return'background:rgba(139,92,246,.15);color:#8b5cf6;border:1px solid rgba(139,92,246,.3)';
+  if(v==='Expecting')        return'background:rgba(47,129,247,.15);color:#2f81f7;border:1px solid rgba(47,129,247,.3)';
+  if(v==='Lost')             return'background:rgba(248,81,73,.15);color:#f85149;border:1px solid rgba(248,81,73,.3)';
+  return'background:var(--bg3);color:var(--text2);border:1px solid var(--border)';
+}
+function emDueBadge(m, status){
+  var n=emMonthsUntil(m);
+  if(n===null) return'<span style="color:var(--text2);font-size:11px">—</span>';
+  if(status==='Converted'||status==='Lost')
+    return'<span style="font-size:11px;color:var(--text2)">'+emFmtMonth(m)+'</span>';
+  var s, lbl;
+  if(n<=0){ s='background:rgba(248,81,73,.18);color:#f85149;font-weight:700'; lbl=(n===0?'🔔 Due this month':'🔴 Overdue '+Math.abs(n)+'mo'); }
+  else if(n===1){ s='background:rgba(249,115,22,.18);color:#f97316;font-weight:600'; lbl='🟠 Next month'; }
+  else if(n===2){ s='background:rgba(210,153,34,.15);color:#d29922;font-weight:600'; lbl='🟡 In 2 months'; }
+  else { s='background:rgba(47,129,247,.12);color:#2f81f7'; lbl='In '+n+' months'; }
+  return'<span style="'+s+';padding:3px 9px;border-radius:20px;font-size:10px;white-space:nowrap">'+lbl+'</span>';
+}
+
+async function initExpecting(){
+  if(_emData.length){ emPopulateDueFilter(); emRender(); return; }
+  if(!_db){ emRender(); return; }
+  try{
+    var snap=await _db.collection(_EM_COLL).get();
+    _emData=[];
+    snap.forEach(function(doc){_emData.push(Object.assign({_id:doc.id},doc.data()));});
+  }catch(e){console.warn('initExpecting',e);}
+  emPopulateDueFilter(); emRender();
+}
+
+function emPopulateDueFilter(){
+  var sel=document.getElementById('em-filter-due'); if(!sel) return;
+  var cur=sel.value;
+  var months=[...new Set(_emData.map(function(d){return d.due_month||'';}).filter(Boolean))].sort();
+  sel.innerHTML='<option value="">All Due Months</option>';
+  months.forEach(function(m){sel.innerHTML+='<option value="'+m+'"'+(m===cur?' selected':'')+'>'+emFmtMonth(m)+'</option>';});
+}
+
+function emRenderKPIs(){
+  var el=document.getElementById('em-kpi-row'); if(!el) return;
+  var total=_emData.length, dueNow=0, dueNext=0, converted=0, lost=0;
+  _emData.forEach(function(d){
+    var st=d.status||'Expecting';
+    if(st==='Converted'){converted++; return;}
+    if(st==='Lost'){lost++; return;}
+    var n=emMonthsUntil(d.due_month);
+    if(n!==null){ if(n<=0)dueNow++; else if(n===1)dueNext++; }
+  });
+  el.innerHTML=
+    kpiCard(total,'Total','var(--accent)')+
+    kpiCard(dueNow,'🔔 Due Now','#f85149')+
+    kpiCard(dueNext,'🟠 Next Month','#f97316')+
+    kpiCard(converted,'✅ Converted','var(--duty)')+
+    kpiCard(lost,'❌ Lost','var(--text2)');
+}
+
+function emGetFiltered(){
+  var q=((document.getElementById('em-search')||{}).value||'').toLowerCase();
+  var fs=(document.getElementById('em-filter-status')||{}).value||'';
+  var fd=(document.getElementById('em-filter-due')||{}).value||'';
+  var fc=(document.getElementById('em-filter-city')||{}).value||'';
+  return _emData.filter(function(d){
+    if(q&&!(d.name||'').toLowerCase().includes(q)&&!(d.phone||'').includes(q))return false;
+    if(fs&&(d.status||'Expecting')!==fs)return false;
+    if(fd&&(d.due_month||'')!==fd)return false;
+    if(fc&&(d.city||'')!==fc)return false;
+    return true;
+  }).sort(function(a,b){return (a.due_month||'9999').localeCompare(b.due_month||'9999');});
+}
+
+function emInlineStatus(id,val){
+  val=val||'Expecting';
+  return'<select onchange="emSaveField(\''+id+'\',\'status\',this.value)" onclick="event.stopPropagation()" style="font-size:11px;padding:3px 7px;border-radius:6px;outline:none;cursor:pointer;'+emStatusColor(val)+'">'
+    +EM_STATUS.map(function(s){return'<option value="'+s+'"'+(s===val?' selected':'')+'>'+s+'</option>';}).join('')+'</select>';
+}
+
+function emRender(){
+  emRenderKPIs();
+  emRenderDashboard();
+  var wrap=document.getElementById('em-table-wrap'); if(!wrap) return;
+  var data=emGetFiltered();
+  if(!data.length){
+    wrap.innerHTML='<div style="padding:60px;text-align:center;color:var(--text2)"><div style="font-size:32px;margin-bottom:12px">🤰</div><div style="font-size:14px;font-weight:600;margin-bottom:8px">No expecting mothers yet</div><div style="font-size:12px">Click <b>+ Add Mother</b> to track a client who wants to start later</div></div>';
+    return;
+  }
+  var html='<div style="font-size:11px;color:var(--text2);margin-bottom:8px">Showing '+data.length+' of '+_emData.length+' &middot; sorted by soonest due</div>';
+  html+='<table class="lead-table"><thead><tr>'
+    +'<th>Added</th><th>Name</th><th>Phone</th><th>Due Month</th><th>Follow-Up</th>'
+    +'<th>Wants to Start</th><th>City</th><th>Package</th><th>Source</th>'
+    +'<th style="min-width:130px">Status</th><th style="min-width:150px">Notes</th><th>Actions</th>'
+    +'</tr></thead><tbody>';
+  data.forEach(function(d){
+    var st=d.status||'Expecting';
+    var dateDisp=d.date?new Date(d.date+'T12:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'2-digit'}):'—';
+    var rowDim=(st==='Lost')?'opacity:.5;':'';
+    var safeId=d._id.replace(/['"]/g,'');
+    var safeName=(d.name||'').replace(/'/g,"\\x27");
+    html+='<tr style="'+rowDim+'">'
+      +'<td style="font-size:11px;color:var(--text2);white-space:nowrap">'+dateDisp+'</td>'
+      +'<td style="font-weight:600">'+(d.name||'—')+'</td>'
+      +'<td style="font-family:monospace;font-size:11px">'+(d.phone||'—')+'</td>'
+      +'<td style="font-size:11px;font-weight:600;white-space:nowrap">'+emFmtMonth(d.due_month)+'</td>'
+      +'<td>'+emDueBadge(d.due_month,st)+'</td>'
+      +'<td style="font-size:11px;color:var(--text2);white-space:nowrap">'+(d.expected_start?emFmtMonth(d.expected_start):'—')+'</td>'
+      +'<td style="font-size:11px">'+(d.city||'—')+'</td>'
+      +'<td style="font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+(d.package||'')+'">'+(d.package||'—')+'</td>'
+      +'<td><span style="font-size:10px;background:var(--bg3);border:1px solid var(--border);padding:2px 8px;border-radius:5px;white-space:nowrap">'+(d.source||'—')+'</span></td>'
+      +'<td>'+emInlineStatus(safeId,st)+'</td>'
+      +'<td style="font-size:11px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2)" title="'+(d.notes||'')+'">'+((d.notes||'—').substring(0,38))+'</td>'
+      +'<td style="white-space:nowrap">'
+        +'<button onclick="emOpenModal(\''+safeId+'\')" style="padding:3px 9px;background:var(--bg3);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:11px;cursor:pointer;margin-right:4px">Edit</button>'
+        +'<button onclick="emAskDelete(\''+safeId+'\',\''+safeName+'\')" style="padding:3px 9px;background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.3);border-radius:5px;color:#f85149;font-size:11px;cursor:pointer">Del</button>'
+      +'</td></tr>';
+  });
+  html+='</tbody></table>';
+  wrap.innerHTML=html;
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────
+var _emChartDue=null, _emChartStatus=null;
+
+function emRenderDashboard(){
+  if(typeof Chart==='undefined') return;
+
+  var now=new Date(); now=new Date(now.getFullYear(),now.getMonth(),1);
+  var buckets=[], labels=[], colors=[];
+  var overdue=_emData.filter(function(d){
+    if(d.status==='Converted'||d.status==='Lost')return false;
+    var n=emMonthsUntil(d.due_month); return n!==null&&n<0;
+  }).length;
+  if(overdue>0){ labels.push('Overdue'); buckets.push(overdue); colors.push('#7f1d1d'); }
+  for(var i=0;i<6;i++){
+    var dt=new Date(now.getFullYear(),now.getMonth()+i,1);
+    var key=dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0');
+    var cnt=_emData.filter(function(d){
+      if(d.status==='Converted'||d.status==='Lost')return false;
+      return d.due_month===key;
+    }).length;
+    labels.push(dt.toLocaleString('default',{month:'short',year:'2-digit'}));
+    buckets.push(cnt);
+    colors.push(i===0?'#f85149':i===1?'#f97316':i===2?'#d29922':'#2f81f7');
+  }
+  var txtCol=getComputedStyle(document.documentElement).getPropertyValue('--text2')||'#8b949e';
+  var gridCol=getComputedStyle(document.documentElement).getPropertyValue('--border')||'#30363d';
+  if(_emChartDue)_emChartDue.destroy();
+  var ctxD=document.getElementById('em-chart-due');
+  if(ctxD)_emChartDue=new Chart(ctxD,{
+    type:'bar',
+    data:{labels:labels,datasets:[{data:buckets,backgroundColor:colors,borderRadius:6,maxBarThickness:48}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.parsed.y+' mother'+(c.parsed.y===1?'':'s');}}}},
+      scales:{y:{beginAtZero:true,ticks:{precision:0,color:txtCol},grid:{color:gridCol}},x:{ticks:{color:txtCol},grid:{display:false}}}}
+  });
+
+  var stCounts={}; EM_STATUS.forEach(function(s){stCounts[s]=0;});
+  _emData.forEach(function(d){var s=d.status||'Expecting';if(stCounts[s]!==undefined)stCounts[s]++;});
+  var stColors={'Expecting':'#2f81f7','Ready to Contact':'#f97316','Contacted':'#8b5cf6','Converted':'#3fb950','Lost':'#6e7681'};
+  var stLabels=EM_STATUS.filter(function(s){return stCounts[s]>0;});
+  if(_emChartStatus)_emChartStatus.destroy();
+  var ctxS=document.getElementById('em-chart-status');
+  if(ctxS)_emChartStatus=new Chart(ctxS,{
+    type:'doughnut',
+    data:{labels:stLabels,datasets:[{data:stLabels.map(function(s){return stCounts[s];}),backgroundColor:stLabels.map(function(s){return stColors[s];}),borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'right',labels:{color:txtCol,font:{size:11},boxWidth:12,padding:8}}}}
+  });
+
+  var srcCounts={};
+  _emData.forEach(function(d){var s=d.source||'Unknown';srcCounts[s]=(srcCounts[s]||0)+1;});
+  var srcSorted=Object.entries(srcCounts).sort(function(a,b){return b[1]-a[1];});
+  var maxSrc=srcSorted.length?srcSorted[0][1]:1;
+  var srcPalette=['#3fb950','#2f81f7','#d29922','#bc8cff','#f85149','#06b6d4','#f97316'];
+  var srcHtml=srcSorted.length?srcSorted.map(function(e,i){
+    var c=srcPalette[i%srcPalette.length];
+    var pct=Math.round(e[1]/maxSrc*100);
+    return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">'
+      +'<div style="width:80px;font-size:11px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+e[0]+'</div>'
+      +'<div style="flex:1;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden"><div style="width:'+pct+'%;height:100%;background:'+c+';border-radius:3px"></div></div>'
+      +'<div style="font-size:11px;font-family:monospace;color:var(--text2);width:24px;text-align:right">'+e[1]+'</div></div>';
+  }).join('') : '<div style="font-size:11px;color:var(--text2);padding:8px">No data yet</div>';
+  var sb=document.getElementById('em-source-bars'); if(sb)sb.innerHTML=srcHtml;
+
+  var conv=_emData.filter(function(d){return d.status==='Converted';}).length;
+  var lost=_emData.filter(function(d){return d.status==='Lost';}).length;
+  var closed=conv+lost;
+  var rate=closed?Math.round(conv/closed*100):0;
+  var crEl=document.getElementById('em-conv-rate');
+  if(crEl){crEl.textContent=closed?rate+'%':'—'; crEl.style.color=rate>=50?'var(--duty)':rate>=30?'var(--sick)':'var(--absent)';}
+
+  var actionable=_emData.filter(function(d){
+    if(d.status==='Converted'||d.status==='Lost')return false;
+    var n=emMonthsUntil(d.due_month); return n!==null&&n<=0;
+  }).sort(function(a,b){return (emMonthsUntil(a.due_month)||0)-(emMonthsUntil(b.due_month)||0);});
+  var al=document.getElementById('em-action-list');
+  if(al){
+    if(!actionable.length){
+      al.innerHTML='<div style="font-size:12px;color:var(--text2);padding:14px;text-align:center">✅ No one is due to be contacted right now</div>';
+    } else {
+      al.innerHTML=actionable.map(function(d){
+        var n=emMonthsUntil(d.due_month);
+        var tag=n<0?'🔴 Overdue '+Math.abs(n)+'mo':'🔔 Due now';
+        var tagCol=n<0?'#f85149':'#f97316';
+        var safeId=d._id.replace(/['"]/g,'');
+        return '<div onclick="emOpenModal(\''+safeId+'\')" style="display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:8px 12px;cursor:pointer" onmouseover="this.style.borderColor=\'var(--accent)\'" onmouseout="this.style.borderColor=\'var(--border)\'">'
+          +'<div><div style="font-size:12px;font-weight:600">'+(d.name||'—')+'</div>'
+          +'<div style="font-size:10px;color:var(--text2);font-family:monospace">'+(d.phone||'')+(d.city?' · '+d.city:'')+'</div></div>'
+          +'<span style="font-size:10px;font-weight:600;color:'+tagCol+';white-space:nowrap">'+tag+'</span></div>';
+      }).join('');
+    }
+  }
+}
+
+function emOpenModal(id){
+  _emEditId=id||null;
+  var data=id?(_emData.find(function(d){return d._id===id;})||{}):{};
+  document.getElementById('em-modal-title').textContent=id?'Edit Mother':'Add Mother';
+  document.getElementById('em-delete-btn').style.display=id?'block':'none';
+  var iS='width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:Inter,sans-serif;font-size:12px;padding:7px 10px;border-radius:7px;outline:none;box-sizing:border-box';
+  var body='';
+  EM_FIELDS.forEach(function(f){
+    var val=data[f.id]||(f.id==='status'&&!id?'Expecting':'');
+    body+='<div style="'+(f.span===2?'grid-column:1/-1':'')+'">';
+    body+='<div style="font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">'+f.label+(f.req?' <span style="color:#f85149">*</span>':'')+'</div>';
+    if(f.hint)body+='<div style="font-size:10px;color:var(--text2);margin-bottom:4px;font-style:italic">'+f.hint+'</div>';
+    if(f.type==='select'){
+      body+='<select id="emf-'+f.id+'" style="'+iS+';cursor:pointer">';
+      (f.opts||[]).forEach(function(o){body+='<option value="'+o+'"'+(o===val?' selected':'')+'>'+(o||'Select...')+'</option>';});
+      body+='</select>';
+    }else if(f.type==='textarea'){
+      body+='<textarea id="emf-'+f.id+'" rows="3" placeholder="'+(f.ph||'')+'" style="'+iS+';resize:vertical">'+val+'</textarea>';
+    }else{
+      body+='<input id="emf-'+f.id+'" type="'+f.type+'" value="'+String(val).replace(/"/g,'&quot;')+'" placeholder="'+(f.ph||f.label)+'" style="'+iS+'">';
+    }
+    body+='</div>';
+  });
+  document.getElementById('em-modal-body').innerHTML=body;
+  document.getElementById('em-modal').style.display='flex';
+  setTimeout(function(){var el=document.getElementById('emf-name');if(el)el.focus();},80);
+}
+function emCloseModal(){document.getElementById('em-modal').style.display='none';_emEditId=null;}
+
+async function emSave(){
+  var data={},ok=true;
+  EM_FIELDS.forEach(function(f){
+    var el=document.getElementById('emf-'+f.id);if(!el)return;
+    var v=el.value.trim();
+    if(f.req&&!v){el.style.borderColor='#f85149';ok=false;}else el.style.borderColor='var(--border)';
+    data[f.id]=v;
+  });
+  if(!ok)return;
+  if(!data.status)data.status='Expecting';
+  var now=new Date().toISOString();
+  if(_emEditId){
+    data.updated_at=now;
+    var idx=_emData.findIndex(function(d){return d._id===_emEditId;});
+    if(idx>=0)_emData[idx]=Object.assign(_emData[idx],data);
+    if(_db){try{await _db.collection(_EM_COLL).doc(_emEditId).set(data,{merge:true});}catch(e){console.warn(e);}}
+  }else{
+    data.created_at=now;data.updated_at=now;
+    var nid='em_'+Date.now();data._id=nid;
+    _emData.unshift(data);
+    if(_db){try{await _db.collection(_EM_COLL).doc(nid).set(data);}catch(e){console.warn(e);}}
+  }
+  emCloseModal();emPopulateDueFilter();emRender();
+}
+
+async function emSaveField(id,field,value){
+  var idx=_emData.findIndex(function(d){return d._id===id;});
+  if(idx<0)return;
+  _emData[idx][field]=value;
+  if(_db){try{var upd={};upd[field]=value;upd.updated_at=new Date().toISOString();await _db.collection(_EM_COLL).doc(id).set(upd,{merge:true});}catch(e){console.warn(e);}}
+  emRender();
+}
+
+function emAskDelete(id,name){
+  if(!id&&_emEditId){var d=_emData.find(function(x){return x._id===_emEditId;})||{};id=_emEditId;name=d.name||'';}
+  if(!id)return;
+  if(!confirm('Delete "'+(name||'this entry')+'"? This cannot be undone.'))return;
+  _emDeleteId=id;emConfirmDelete();
+}
+async function emConfirmDelete(){
+  if(!_emDeleteId)return;
+  _emData=_emData.filter(function(d){return d._id!==_emDeleteId;});
+  if(_db){try{await _db.collection(_EM_COLL).doc(_emDeleteId).delete();}catch(e){console.warn(e);}}
+  _emDeleteId=null;emCloseModal();emPopulateDueFilter();emRender();
+}
+
+function emExportCSV(){
+  if(!_emData.length){alert('No data to export.');return;}
+  var cols=['date','name','phone','due_month','expected_start','city','package','source','status','notes','created_at'];
+  var hdrs=['Date Added','Name','Phone','Due Month','Wants To Start','City','Package','Source','Status','Notes','Created At'];
+  var rows=[hdrs.join(',')];
+  _emData.forEach(function(d){rows.push(cols.map(function(c){return'"'+String(d[c]||'').replace(/"/g,'""')+'"';}).join(','));});
+  var blob=new Blob([rows.join('\n')],{type:'text/csv'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='expecting_mothers_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+}
+// END EXPECTING MOTHERS TRACKER
 
 // ── Init ─────────────────────────────────────────────────────────
 if(checkExistingSession()){
