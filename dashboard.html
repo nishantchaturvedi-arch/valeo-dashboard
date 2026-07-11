@@ -1,6 +1,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
@@ -563,6 +564,25 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 .stage-docs-pending{background:rgba(249,115,22,.15);color:#ea580c;border:1px solid rgba(249,115,22,.3);}
 .stage-onboarded{background:rgba(63,185,80,.15);color:var(--duty);border:1px solid rgba(63,185,80,.3);}
 .stage-rejected{background:rgba(248,81,73,.12);color:var(--absent);border:1px solid rgba(248,81,73,.25);}
+
+/* ── Onboarding Checklist (Supply Tracker) ── */
+.ck-wrap{margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
+.ck-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.ck-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text2)}
+.ck-progress-pct{font-size:12px;font-weight:700;color:var(--duty);font-family:monospace}
+.ck-bar-track{height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-bottom:14px}
+.ck-bar-fill{height:100%;background:var(--duty);border-radius:3px;transition:width .3s}
+.ck-section{margin-bottom:14px}
+.ck-section-title{font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+.ck-item{display:flex;align-items:flex-start;gap:9px;padding:6px 4px;border-radius:6px;cursor:pointer;transition:background .12s}
+.ck-item:hover{background:var(--bg3)}
+.ck-box{width:16px;height:16px;border:1.5px solid var(--border2);border-radius:4px;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;background:var(--bg3)}
+.ck-item.done .ck-box{background:var(--duty);border-color:var(--duty)}
+.ck-item.done .ck-text{color:var(--text2);text-decoration:line-through}
+.ck-text{font-size:11.5px;line-height:1.5;color:var(--text)}
+.ck-col-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-family:monospace;padding:2px 7px;border-radius:10px;background:var(--bg3);color:var(--text2);white-space:nowrap}
+.ck-col-badge.complete{background:rgba(63,185,80,.15);color:var(--duty)}
+.ck-col-badge.started{background:rgba(210,153,34,.15);color:var(--sick)}
 
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -5999,6 +6019,88 @@ var _candidates=[],_editCandIdx=-1;
 var SUPPLY_STAGES=['Applied','Screened','Interview Scheduled','Interviewed','Docs Pending','Onboarded','Rejected'];
 var SUPPLY_SOURCES=['LinkedIn','Agency','Referral','Walk-in','Other'];
 function stageCls(stage){return'stage-'+(stage||'applied').toLowerCase().replace(/\s+/g,'-');}
+
+// ── Onboarding Checklist ─────────────────────────────────────────
+var CHECKLIST_SECTIONS=[
+  {key:'pre',title:'Pre-Onboarding',items:[
+    'Verify certifications & qualifications (nursing/caregiving certificate, CPR/First Aid, MOHAP/DHA/DOH license if applicable)',
+    'Verify passport, visa status, Emirates ID, and educational documents (attested where required)',
+    'Prepare the employment offer letter (English & Arabic where applicable) and obtain signed acceptance'
+  ]},
+  {key:'orientation',title:'1. Complete Orientation',items:[
+    'Company mission, values, dress code, and code of conduct',
+    'UAE labor rights, working hours, rest days, leave entitlements, and complaint procedures',
+    'Client privacy, confidentiality, and cultural sensitivity (including Islamic customs)',
+    'Emergency contacts, reporting lines, and escalation process'
+  ]},
+  {key:'training',title:'2. Provide Job-Specific Training',items:[
+    'Shadow an experienced caregiver or supervisor for the agreed period',
+    'Train on client care plans, daily documentation, and shift reporting',
+    'Train on safe mobility, infection control, and medication handling protocols'
+  ]},
+  {key:'compliance',title:'3. Maintain Compliance Records',items:[
+    'Collect Emirates ID (front & back) and visa page copies',
+    'Prepare/update caregiver CV and profile photo for client submission',
+    'Upload all documents & signed forms to the company Drive (organized by caregiver name)',
+    'Set renewal reminders for Emirates ID, visa, insurance, and license'
+  ]}
+];
+
+function checklistTotal(){
+  return CHECKLIST_SECTIONS.reduce(function(s,sec){return s+sec.items.length;},0);
+}
+
+function checklistProgress(c){
+  var checked=(c&&c.checklist)||{},done=0;
+  CHECKLIST_SECTIONS.forEach(function(sec){
+    sec.items.forEach(function(_,i){ if(checked[sec.key+'_'+i]) done++; });
+  });
+  var total=checklistTotal();
+  return{done:done,total:total,pct:total?Math.round(done/total*100):0};
+}
+
+function checklistBadge(c){
+  if(!c._id) return '<span class="ck-col-badge">—</span>';
+  var p=checklistProgress(c);
+  var cls=p.pct===100?'complete':p.pct>0?'started':'';
+  return '<span class="ck-col-badge '+cls+'">'+p.done+'/'+p.total+' &middot; '+p.pct+'%</span>';
+}
+
+function buildChecklistHTML(c){
+  var p=checklistProgress(c);
+  var html='<div class="ck-wrap"><div class="ck-header"><span class="ck-title">🧾 Onboarding Checklist</span>'
+    +'<span class="ck-progress-pct">'+p.done+'/'+p.total+' &middot; '+p.pct+'%</span></div>';
+  html+='<div class="ck-bar-track"><div class="ck-bar-fill" style="width:'+p.pct+'%"></div></div>';
+  CHECKLIST_SECTIONS.forEach(function(sec){
+    html+='<div class="ck-section"><div class="ck-section-title">'+sec.title+'</div>';
+    sec.items.forEach(function(text,i){
+      var key=sec.key+'_'+i;
+      var done=!!(c.checklist&&c.checklist[key]);
+      html+='<div class="ck-item'+(done?' done':'')+'" onclick="toggleChecklistItem(\''+key+'\')">'
+        +'<div class="ck-box">'+(done?'<svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>':'')+'</div>'
+        +'<div class="ck-text">'+text+'</div></div>';
+    });
+    html+='</div>';
+  });
+  html+='</div>';
+  return html;
+}
+
+async function toggleChecklistItem(key){
+  if(_editCandIdx<0) return;
+  var c=_candidates[_editCandIdx];
+  if(!c.checklist) c.checklist={};
+  c.checklist[key]=!c.checklist[key];
+  try{
+    if(!_db) await initFirebase();
+    await _db.collection('valeo_supply').doc(c._id).set(
+      {checklist:c.checklist, updated_at:new Date().toISOString()}, {merge:true}
+    );
+  }catch(e){ console.warn('checklist save failed',e); }
+  var ckWrap=document.querySelector('#candidate-modal-body .ck-wrap');
+  if(ckWrap) ckWrap.outerHTML=buildChecklistHTML(c);
+  renderSupplyTable();
+}
 async function loadSupply(){
   if(!_db)await initFirebase();
   try{var snap=await _db.collection('valeo_supply').get();_candidates=[];snap.forEach(function(doc){var d=doc.data();d._id=doc.id;d._idx=_candidates.length;_candidates.push(d);});}
@@ -6014,7 +6116,7 @@ async function saveCandidate(){
   try{
     await _db.collection('valeo_supply').doc(id).set(data,{merge:true});
     data._id=id;
-    if(isEdit){_candidates[_editCandIdx]=Object.assign({},data,{_idx:_editCandIdx});}
+    if(isEdit){_candidates[_editCandIdx]=Object.assign({},existing,data,{_idx:_editCandIdx});}
     else{data._idx=_candidates.length;_candidates.push(data);}
     closeCandidateModal();populateSupplyFilters();renderSupplyKPIs();renderSupplyTable();
   }catch(e){alert('Save failed: '+e.message);}
@@ -6071,7 +6173,8 @@ function buildCandidateForm(c){
     +'<div><label '+lbl+'>Has Kids?</label><select id="cf-kids" '+inp+'><option value="">—</option><option value="Yes"'+(c.has_kids==='Yes'?' selected':'')+'>Yes</option><option value="No"'+(c.has_kids==='No'?' selected':'')+'>No</option></select></div>'
     +field('Kids Age(s)','cf-kage','text',c.kids_age,'e.g. 3, 7')
     +'<div style="grid-column:1/-1"><label '+lbl+'>Notes</label><textarea id="cf-notes" rows="3" '+inp.replace('border-radius:7px','border-radius:7px;resize:vertical')+'>'+( c.notes||'')+'</textarea></div>'
-    +'</div>';
+    +'</div>'
+    + (c._id ? buildChecklistHTML(c) : '');
 }
 function openAddCandidateModal(){
   _editCandIdx=-1;
@@ -6127,13 +6230,16 @@ function renderSupplyKPIs(){
   html+=kpiCard(_candidates.length,'Total','var(--accent)');
   var cols={Onboarded:'var(--duty)',Applied:'#2f81f7','Interview Scheduled':'#7c3aed',Rejected:'var(--absent)'};
   SUPPLY_STAGES.forEach(function(s){html+=kpiCard(counts[s],s,cols[s]||'var(--text2)');});
+  var inProgress=_candidates.filter(function(c){var p=checklistProgress(c);return p.done>0&&p.pct<100;}).length;
+  var complete=_candidates.filter(function(c){return checklistProgress(c).pct===100;}).length;
+  html+=kpiCard(inProgress,'🧾 Onboarding','#d97706')+kpiCard(complete,'✅ Fully Onboarded','var(--duty)');
   html+='</div>';el.innerHTML=html;
 }
 function renderSupplyTable(){
   var filtered=getFilteredCandidates(),wrap=document.getElementById('supply-table-wrap');if(!wrap)return;
   if(!filtered.length){wrap.innerHTML='<div style="padding:40px;text-align:center;color:var(--text2)">No candidates found</div>';return;}
   var html='<div style="font-size:11px;color:var(--text2);margin-bottom:8px">Showing '+filtered.length+' of '+_candidates.length+' candidates</div>';
-  html+='<table class="supply-table"><thead><tr><th>Name</th><th>Phone</th><th>Nationality</th><th>Age</th><th>Kids</th><th>Homecare</th><th>Experience</th><th>Source</th><th>Stage</th><th>Interview</th><th>Meeting</th><th>Joining Date</th><th>Notes</th></tr></thead><tbody>';
+  html+='<table class="supply-table"><thead><tr><th>Name</th><th>Phone</th><th>Nationality</th><th>Age</th><th>Kids</th><th>Homecare</th><th>Experience</th><th>Source</th><th>Stage</th><th>Onboarding</th><th>Interview</th><th>Meeting</th><th>Joining Date</th><th>Notes</th></tr></thead><tbody>';
   filtered.forEach(function(c){
     var sb='<span class="stage-badge '+stageCls(c.stage)+'">'+(c.stage||'—')+'</span>';
     var iDateTime=(c.interview_date||'')+(c.interview_time?' '+c.interview_time:'');
@@ -6149,6 +6255,7 @@ function renderSupplyTable(){
       +'<td style="font-size:11px">'+(c.experience||'—')+'</td>'
       +'<td style="font-size:11px">'+(c.source||'—')+'</td>'
       +'<td>'+sb+'</td>'
+      +'<td>'+checklistBadge(c)+'</td>'
       +'<td style="font-size:11px;white-space:nowrap">'+(iDateTime||'—')+'</td>'
       +'<td style="text-align:center">'+meetLink+'</td>'
       +'<td style="font-size:11px;white-space:nowrap">'+(c.joining_date||'—')+'</td>'
