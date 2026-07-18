@@ -2,6 +2,8 @@
 
 
 
+
+
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
@@ -2746,6 +2748,8 @@ function renderAnalyticsData(){
 
 // ── Tab switching ────────────────────────────────────────────────
 function switchTab(tab){
+  // HC partner accounts: Calendar + Roster only
+  if(_session&&_session.role==='hc'&&tab!=='calendar'&&tab!=='roster'){alert('Access restricted');return;}
   if(tab==='roster'){setTimeout(switchToRoster,80);}
   if(tab==='daily'){setTimeout(switchToDaily,80);}
   document.querySelectorAll('.main-tab').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase().includes(tab)));
@@ -3907,7 +3911,11 @@ function filterCGSearch(){
 }
 
 function populateCGHCFilter(){
-  const hcs = [...new Set(rawData.map(r=>r.homecare))].filter(Boolean).sort();
+  let hcs = [...new Set(rawData.map(r=>r.homecare))].filter(Boolean).sort();
+  if(_session&&_session.role==='hc'&&_session.homecare){
+    const _s=_session.homecare.toLowerCase().replace(/[\s\u00a0]+/g,'');
+    hcs=hcs.filter(h=>h.toLowerCase().replace(/[\s\u00a0]+/g,'')===_s);
+  }
   const sel = document.getElementById('cg-hc-filter');
   if(!sel) return;
   sel.innerHTML = '<option value="all">All Homecare</option>';
@@ -5032,7 +5040,13 @@ function switchToRoster(){
   if(sel&&rawData&&rawData.length){
     var cur=sel.value;
     var hcs=[...new Set(rawData.map(function(r){return r.homecare;}))].filter(Boolean).sort();
-    sel.innerHTML='<option value="">All Homecare</option>';
+    if(_session&&_session.role==='hc'&&_session.homecare){
+      var _shc=_session.homecare.toLowerCase().replace(/[\s\u00a0]+/g,'');
+      hcs=hcs.filter(function(h){return h.toLowerCase().replace(/[\s\u00a0]+/g,'')===_shc;});
+      sel.innerHTML='';
+    } else {
+      sel.innerHTML='<option value="">All Homecare</option>';
+    }
     hcs.forEach(function(hc){sel.innerHTML+='<option value="'+hc+'"'+(hc===cur?' selected':'')+'>'+hc+'</option>';});
     // Populate city filter
     var citysel=document.getElementById('roster-city-filter');
@@ -5431,6 +5445,7 @@ async function doLogin(){
       {username:'zakha',password:'zakha2026',role:'hc',homecare:'ZAKHA HOME HEALTHCARE CENTER L.L.C'},
       {username:'bayti',password:'bayti2026',role:'hc',homecare:'Bayti Dubai and Abudhabi Caregiver'},
       {username:'mahara',password:'mahara2026',role:'hc',homecare:'Mahara HC AD'},
+      {username:'caresynch',password:'caresynch2026',role:'hc',homecare:'Caresynq'},
     ];
     var match=ALL_USERS.find(function(u){return u.username===user&&u.password===pass;});
     if(!match)throw new Error('invalid');
