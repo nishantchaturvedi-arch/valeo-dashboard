@@ -1,9 +1,3 @@
-
-
-
-
-
-
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
@@ -1908,7 +1902,12 @@ async function loadData(force=false){
 window.addEventListener('focus',function(){var now=Date.now();if(now-_lastSync>2*60*1000){_lastSync=now;syncFromSheet();}});
     if(document.getElementById('page-analytics').classList.contains('active'))renderAnalytics();
     populateCGHCFilter();
-    document.getElementById('cg-result-count').textContent = [...new Set(rawData.map(r=>r.caregiver)).values()].filter(Boolean).length + ' caregivers';
+    var _cntRows=rawData;
+    if(_session&&_session.role==='hc'&&_session.homecare){
+      var _cS=_session.homecare.toLowerCase().replace(/[\s\u00a0]+/g,'');
+      _cntRows=rawData.filter(function(r){return (r.homecare||'').toLowerCase().replace(/[\s\u00a0]+/g,'')===_cS;});
+    }
+    document.getElementById('cg-result-count').textContent = [...new Set(_cntRows.map(r=>r.caregiver)).values()].filter(Boolean).length + ' caregivers';
   }catch(e){
     setSyncState('err','Error — click to retry');
     document.getElementById('hc-grid-wrap').innerHTML=`<div class="loading-wrap" style="color:var(--absent)">Failed: ${e.message}<br><br>Check Metabase credentials or CORS settings.</div>`;
@@ -2052,7 +2051,12 @@ function renderHCGrid(){
   });
 
   // ── Manual caregivers not covered by Metabase HCs ──
-  const manualHCsOnly = [...new Set(Object.values(manualCGs).map(function(c){return c.homecare;}))].filter(function(h){return !hcs.includes(h);}).sort();
+  let manualHCsOnly = [...new Set(Object.values(manualCGs).map(function(c){return c.homecare;}))].filter(function(h){return !hcs.includes(h);}).sort();
+  // HC partner accounts must never see other partners' manual caregivers
+  if(_session&&_session.role==='hc'&&_session.homecare){
+    var _mhcS=_session.homecare.toLowerCase().replace(/[\s\u00a0]+/g,'');
+    manualHCsOnly=manualHCsOnly.filter(function(h){return h.toLowerCase().replace(/[\s\u00a0]+/g,'')===_mhcS;});
+  }
   manualHCsOnly.forEach(function(hc){
     const col=hcColor(hc);
     const mCGs=Object.values(manualCGs).filter(function(c){return c.homecare===hc;});
@@ -4899,7 +4903,12 @@ function updateHiddenBadge(){
   if(!btn) return;
   if(hiddenCGs.size>0){
     btn.classList.add('visible');
-    btn.textContent=showHiddenMode?('👁 Showing '+hiddenCGs.size+' removed'):('🗑 '+hiddenCGs.size+' removed');
+    var _hidSet=[...hiddenCGs];
+    if(_session&&_session.role==='hc'&&_session.homecare){
+      var _hS=_session.homecare.toLowerCase().replace(/[\s\u00a0]+/g,'');
+      _hidSet=_hidSet.filter(function(k){return (k.split('|')[1]||'').toLowerCase().replace(/[\s\u00a0]+/g,'')===_hS;});
+    }
+    btn.textContent=showHiddenMode?('👁 Showing '+_hidSet.length+' removed'):('🗑 '+_hidSet.length+' removed');
   } else {
     btn.classList.remove('visible');
     showHiddenMode=false;
