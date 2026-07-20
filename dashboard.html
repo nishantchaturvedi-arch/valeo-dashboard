@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
@@ -441,6 +443,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .rd-sick{background:#ef4444;color:#fff;}
 .rd-off{background:#475569;color:#fff;}
 .rd-shady{background:#f472b6;color:#fff;}
+.rd-b2b{background:#ec4899;color:#fff;}
 .rd-empty{background:transparent;}
 .rd-today{outline:2px solid var(--accent)!important;outline-offset:-2px;}
 .col-weekend{opacity:.7;}
@@ -937,6 +940,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
    <span class="rl-dot" style="background:#1a1a1a"></span>Week Off
    <span class="rl-dot" style="background:#ef4444"></span>Sick
    <span class="rl-dot" style="background:#475569"></span>Off/Holiday
+   <span class="rl-dot" style="background:#ec4899"></span>B2B Order
   </span>
  </div>
  <div class="roster-wrap" id="roster-wrap"></div>
@@ -1597,6 +1601,8 @@ const DAYS  = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Satu
 const MONTHS= ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
 let rawData=[], allData=[], weekOffCfg={};
+// caregiver|date keys that have at least one B2B order (survives dedup)
+var _b2bDays={};
 let overrides = {}; // key: "caregiver|date" or "order_id|date" -> override object
 let splitAssignments = {}; // key: order_id -> {cg2: name}
 let activeCG=null, calYear=new Date().getFullYear(), calMo=new Date().getMonth();
@@ -1696,6 +1702,23 @@ function calcTimeEnd(timeStr,pkg){
 }
 
 // ── Expand recurring orders into daily rows ──────────────────────
+// Normalise the B2B flag from Metabase.
+// Key name varies (IS_B2B_ORDER / IS_B2B_Order / is_b2b_order ...) so match case-insensitively.
+function isB2BVal(v){
+  if(v===true||v===1) return true;
+  var s=String(v==null?'':v).trim().toLowerCase();
+  return s==='1'||s==='true'||s==='yes'||s==='y'||s==='b2b'||s==='t';
+}
+function pickB2B(r){
+  if(!r||typeof r!=='object') return false;
+  for(var k in r){
+    if(!Object.prototype.hasOwnProperty.call(r,k)) continue;
+    var kn=k.toLowerCase().replace(/[^a-z0-9]/g,'');
+    if(kn==='isb2border'||kn==='isb2b'||kn==='b2border'||kn==='b2b') return isB2BVal(r[k]);
+  }
+  return false;
+}
+
 function expandOrders(orders){
   // Build lookup of real Metabase orders for Customer Order > Week Off priority
   var realDutyLookup={};
@@ -1789,7 +1812,8 @@ async function loadData(force=false){
           order_id:String(r['order_id']||'').trim(),
           package_type:String(r['package_type']||'').trim(),
           location:String(r['location']||'').trim(),
-          type_of_user:String(r['type_of_user']||'').trim()
+          type_of_user:String(r['type_of_user']||'').trim(),
+          is_b2b:pickB2B(r)
         };
       }
       const slot=String(r['Confirmed_DateTime']||r['Booked_Slot']||r['Order_Date']||'');
@@ -1828,6 +1852,7 @@ async function loadData(force=false){
         package_raw:String(r['Package']||'').trim(),
         location:String(r['City']||'').trim(),
         type_of_user:String(r['Type_Of_User']||'').trim(),
+        is_b2b:pickB2B(r),
         final_price:parseFloat(r['Final_Price']||r['Order_Price']||0)||0
       };
     }).filter(Boolean);
@@ -1864,6 +1889,11 @@ async function loadData(force=false){
         // else: existing is the new one (already in map), keep it
       }
       // No override or no child_order_id: keep existing (already in map)
+    });
+    // Record B2B caregiver|date keys from the full expanded set, before dedup drops rows
+    _b2bDays={};
+    expandedRaw.forEach(function(r){
+      if(r.is_b2b && r.caregiver && r.date) _b2bDays[r.caregiver+'|'+r.date]=true;
     });
     allData = Object.values(dedupMap);
     // Load overrides (also calls loadLocalCache which populates hiddenCGs)
@@ -5209,7 +5239,9 @@ function renderRoster(){
           else if(st==='cancelled'||st==='absent'){cls+=' rd-off';inner='<div class="rd-in"><div class="rd-cl">'+st+'</div></div>';}
           else{
             var cl2=(ev.client_name||'').split(' ')[0];
-            if((ev.client_name||'').toLowerCase().includes('shady'))cls+=' rd-shady';
+            var isB2B=_b2bDays[cgName+'|'+ds]||recs.some(function(rr){return rr.is_b2b;});
+            if(isB2B)cls+=' rd-b2b';
+            else if((ev.client_name||'').toLowerCase().includes('shady'))cls+=' rd-shady';
             else cls+=' rd-duty';
             var t3=ev.time_start&&ev.time_end?ev.time_start+'-'+ev.time_end:(ev.time_start||'');
             var oid=ev.child_order_id||ev.order_id||'';
