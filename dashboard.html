@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
@@ -111,6 +109,14 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .stat-n.duty{color:var(--duty)}
 .stat-n.off{color:var(--off)}
 .stat-n.sick{color:var(--sick)}
+.stat-n.unpaid{color:#f97316}
+.stat-n.holiday{color:var(--accent)}
+.cg-stats.five{gap:3px}
+.cg-stats.five .cg-stat{padding:4px 1px}
+.cg-stats.five .stat-n{font-size:13px}
+.cg-stats.five .stat-l{font-size:7px;letter-spacing:0}
+.cg-card.lc-exited{opacity:.45;filter:grayscale(.6)}
+.cg-lc-tag{position:absolute;top:8px;left:8px;font-size:8px;font-weight:700;padding:2px 6px;border-radius:8px;background:rgba(248,81,73,.15);color:var(--absent);border:1px solid rgba(248,81,73,.35)}
 .cg-view-btn{width:100%;padding:6px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;text-align:center}
 .cg-view-btn:hover{border-color:var(--accent);color:var(--accent)}
 
@@ -419,7 +425,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .roster-table{border-collapse:collapse;table-layout:auto;}
 .roster-table th,.roster-table td{border:1px solid var(--border);}
 .col-photo{position:sticky;left:0;z-index:10;background:var(--bg2);width:62px;min-width:62px;text-align:center;padding:4px;}
-.col-info{position:sticky;left:62px;z-index:10;background:var(--bg2);width:150px;min-width:150px;max-width:150px;padding:4px 8px;overflow:hidden;}
+.col-info{position:sticky;left:62px;z-index:10;background:var(--bg2);width:172px;min-width:172px;max-width:172px;padding:4px 8px;overflow:hidden;}
 .roster-table thead th{position:sticky;top:0;z-index:4;background:var(--bg2);padding:5px 2px;font-size:10px;color:var(--text2);text-align:center;width:36px;min-width:36px;}
 .roster-table thead .col-photo,.roster-table thead .col-info{z-index:15;}
 .roster-hc-hdr td{background:var(--accent);color:#fff;font-weight:700;font-size:11px;padding:4px 10px;letter-spacing:.4px;}
@@ -447,6 +453,44 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .rd-empty{background:transparent;}
 .rd-today{outline:2px solid var(--accent)!important;outline-offset:-2px;}
 .col-weekend{opacity:.7;}
+.rd-exited{background:repeating-linear-gradient(45deg,rgba(248,81,73,.10),rgba(248,81,73,.10) 4px,transparent 4px,transparent 9px);cursor:default;}
+.rd-pre{background:repeating-linear-gradient(-45deg,rgba(110,118,129,.10),rgba(110,118,129,.10) 4px,transparent 4px,transparent 9px);cursor:default;}
+.rd-pause{background:#7c3aed;color:#fff;}
+.r-counts{display:flex;gap:2px;margin-top:3px;flex-wrap:wrap;}
+.rc{font-size:8px;font-weight:700;padding:0 4px;border-radius:6px;background:var(--bg3);border:1px solid var(--border);font-family:monospace;line-height:14px;}
+.rc.d{color:#f59e0b}.rc.o{color:#94a3b8}.rc.s{color:#ef4444}.rc.u{color:#f97316}.rc.h{color:var(--accent)}
+.r-row-acts{display:flex;gap:4px;margin-top:3px;align-items:center;}
+.r-exit-btn{background:none;border:1px solid var(--border);color:var(--text3);border-radius:5px;font-size:9px;padding:0 5px;line-height:15px;cursor:pointer;font-family:'Inter',sans-serif;}
+.r-exit-btn:hover{border-color:var(--absent);color:var(--absent);}
+.r-exit-tag{display:inline-block;font-size:8px;font-weight:700;padding:0 5px;line-height:15px;border-radius:6px;background:rgba(248,81,73,.15);color:#f85149;}
+.r-join-tag{display:inline-block;font-size:8px;font-weight:700;padding:0 5px;line-height:15px;border-radius:6px;background:rgba(63,185,80,.15);color:#3fb950;}
+/* ── Caregiver lifecycle modal ── */
+.lc-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:900;align-items:center;justify-content:center;padding:16px;}
+.lc-modal.show{display:flex;}
+.lc-box{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;width:470px;max-width:96vw;max-height:88vh;overflow-y:auto;}
+.lc-h{font-size:14px;font-weight:700;color:var(--text);}
+.lc-sub{font-size:11px;color:var(--text2);margin:2px 0 14px;}
+.lc-lbl{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text2);margin-bottom:4px;}
+.lc-inp{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:7px;padding:7px 10px;font-size:12px;font-family:'Inter',sans-serif;outline:none;}
+.lc-inp:focus{border-color:var(--accent);}
+.lc-row{display:flex;gap:10px;margin-bottom:12px;}
+.lc-col{flex:1;}
+.lc-pause-row{display:flex;gap:6px;align-items:center;margin-bottom:6px;}
+.lc-x{background:none;border:none;color:var(--absent);cursor:pointer;font-size:15px;padding:0 4px;}
+.lc-add{background:var(--bg3);border:1px dashed var(--border);color:var(--text2);border-radius:7px;padding:7px;font-size:11px;cursor:pointer;width:100%;font-family:'Inter',sans-serif;}
+.lc-add:hover{border-color:var(--accent);color:var(--accent);}
+.lc-note{background:var(--bg3);border-radius:8px;padding:9px 11px;font-size:11px;color:var(--text2);line-height:1.65;margin:12px 0;}
+.lc-acts{display:flex;gap:8px;margin-top:14px;}
+.lc-btn{flex:1;padding:9px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:'Inter',sans-serif;}
+.lc-save{background:var(--accent);color:#fff;}
+.lc-cancel{background:var(--bg3);color:var(--text2);border:1px solid var(--border);}
+.lc-reset{background:rgba(248,81,73,.12);color:var(--absent);border:1px solid rgba(248,81,73,.3);}
+/* ── Calendar-tab month navigator ── */
+.gmn{display:flex;align-items:center;gap:6px;}
+.gmn-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text);width:26px;height:26px;border-radius:6px;cursor:pointer;font-size:15px;line-height:1;}
+.gmn-btn:hover{border-color:var(--accent);color:var(--accent);}
+.gmn-label{font-size:12px;font-weight:700;min-width:100px;text-align:center;color:var(--text);}
+.gmn-today{background:var(--accent);border:none;color:#fff;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;}
 .rd-in{display:flex;flex-direction:column;gap:1px;height:100%;overflow:hidden;}
 .rd-cl{font-weight:700;font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .rd-tm{font-size:8px;opacity:.85;}
@@ -690,6 +734,12 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <option value="all">All Homecare</option>
  </select>
  <div class="cg-result-count" id="cg-result-count"></div>
+    <div class="gmn" title="Counts on each card are taken from the roster for this month">
+     <button class="gmn-btn" onclick="gridShiftMo(-1)">‹</button>
+     <div class="gmn-label" id="grid-mo-label">—</div>
+     <button class="gmn-btn" onclick="gridShiftMo(1)">›</button>
+     <button class="gmn-today" onclick="gridToday()">Today</button>
+    </div>
     <button class="show-hidden-btn" id="show-hidden-btn" onclick="toggleShowHidden()"></button>
     <button class="add-cg-btn" onclick="openAddCGModal()">✦ Add Caregiver</button>
  </div>
@@ -909,6 +959,39 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 </div>
 
 
+<!-- ── CAREGIVER LIFECYCLE MODAL (join / exit / pauses) ── -->
+<div class="lc-modal" id="lc-modal" onclick="if(event.target===this)closeLifecycle()">
+ <div class="lc-box">
+  <div class="lc-h" id="lc-title">Caregiver timeline</div>
+  <div class="lc-sub" id="lc-sub">—</div>
+
+  <div class="lc-row">
+   <div class="lc-col">
+    <div class="lc-lbl">Joined / start date</div>
+    <input class="lc-inp" type="date" id="lc-start">
+    <div style="font-size:10px;color:var(--text3);margin-top:4px">Blank = active from the 1st of every month</div>
+   </div>
+   <div class="lc-col">
+    <div class="lc-lbl">Exit date (resigned / removed)</div>
+    <input class="lc-inp" type="date" id="lc-exit">
+    <div style="font-size:10px;color:var(--text3);margin-top:4px">Blank = still active</div>
+   </div>
+  </div>
+
+  <div class="lc-lbl">Pauses — vacation / unpaid break</div>
+  <div id="lc-pause-list" style="margin-bottom:8px"></div>
+  <button class="lc-add" onclick="lcAddPause()">+ Add pause period</button>
+
+  <div class="lc-note" id="lc-preview">—</div>
+
+  <div class="lc-acts">
+   <button class="lc-btn lc-cancel" onclick="closeLifecycle()">Cancel</button>
+   <button class="lc-btn lc-reset" onclick="lcReset()">Reset all</button>
+   <button class="lc-btn lc-save" onclick="lcSave()">Save</button>
+  </div>
+ </div>
+</div>
+
 <!-- ── Saved Planners Modal ── -->
 <div id="saved-planners-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:700;align-items:center;justify-content:center">
  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:24px;width:520px;max-width:95vw;max-height:80vh;overflow-y:auto">
@@ -934,6 +1017,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
    <option value="AUH">🕌 Abu Dhabi</option>
    <option value="RAK">🏔 RAK</option>
   </select>
+  <button class="roster-hc-filter" id="roster-exited-btn" onclick="toggleShowExited()" style="cursor:pointer" title="Caregivers who resigned / were removed are hidden from the month they left onward. Earlier months are untouched.">👤 Exited hidden</button>
   <span class="roster-legend">
    <span class="rl-dot" style="background:#f59e0b"></span>Duty
    <span class="rl-dot" style="background:#a855f7"></span>Manual
@@ -941,6 +1025,8 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
    <span class="rl-dot" style="background:#ef4444"></span>Sick
    <span class="rl-dot" style="background:#475569"></span>Off/Holiday
    <span class="rl-dot" style="background:#ec4899"></span>B2B Order
+   <span class="rl-dot" style="background:#7c3aed"></span>Pause / Vacation
+   <span class="rl-dot" style="background:rgba(248,81,73,.35)"></span>Exited
   </span>
  </div>
  <div class="roster-wrap" id="roster-wrap"></div>
@@ -1608,6 +1694,7 @@ let splitAssignments = {}; // key: order_id -> {cg2: name}
 let activeCG=null, calYear=new Date().getFullYear(), calMo=new Date().getMonth();
 let chatOpen=false, chatHistory=[], chatData='';
 let manualCGs = {}; // key: "name|homecare" -> {name,homecare,expertise,age}
+var activeCGHC = '';   // homecare of the caregiver whose calendar is open
 let hiddenCGs = new Set(); // "name|homecare" keys
 let showHiddenMode = false;
 
@@ -1957,7 +2044,11 @@ function setSyncState(state,text){
 
 // ── HC Grid ──────────────────────────────────────────────────────
 function renderHCGrid(){
-  const now=new Date();const yr=now.getFullYear(),mo=now.getMonth();
+  invalidateRosterIndex();
+  const yr=gridYr, mo=gridMo;
+  syncGridLabel();
+  const _idx=rosterDayIndex(), _wo=rosterWoLookup();
+  window._gridExited=0;   // caregivers who had left before this month
   // Build hcs from actual rawData strings (guaranteed exact match for cgs lookup)
   // Include HCs from hiddenCGs so their CG cards are rendered (needed for restore)
   var _hiddenHCs=[...hiddenCGs].map(function(k){var p=k.split('|');return p[1]||'';}).filter(Boolean);
@@ -1994,14 +2085,17 @@ function renderHCGrid(){
       <div class="cg-grid">`;
 
     cgs.forEach(cg=>{
-      const recs=allData.filter(r=>r.caregiver===cg&&r.homecare===hc);
-      const moRecs=recs.filter(r=>{const d=parseD(r.date);return d&&d.y===yr&&d.m===mo;});
-      const duty=moRecs.filter(r=>r.status.toLowerCase()==='duty').length;
-      const off=moRecs.filter(r=>r.status.toLowerCase().includes('off')).length;
-      const sick=moRecs.filter(r=>r.status.toLowerCase()==='sick').length;
+      // Caregivers who left are dropped from the month they exited onward
+      const _gone=!cgVisibleInMonth(cg,hc,yr,mo);
+      if(_gone){ window._gridExited++; if(!showHiddenMode) return; }
+      // Counts are read straight off the roster for the selected month
+      const _mc=rosterMonthCounts(cg,hc,yr,mo,_idx,_wo);
+      const duty=_mc.worked, off=_mc.off, sick=_mc.sick, unpaid=_mc.unpaid, holiday=_mc.holiday;
+      const _statTip=MONTHS[mo]+' '+yr+' · from roster — duty '+_mc.worked+' (incl '+_mc.manual+' manual) · day off '+_mc.dayoff+' · week off '+_mc.weekoff+' · sick '+_mc.sick+' · unpaid '+_mc.unpaid+' · public holiday '+_mc.holiday+(_mc.pause?' · paused '+_mc.pause:'');
       const cardId='cgc-'+cg.replace(/[^a-zA-Z0-9]/g,'_');
 
-      html+=`<div class="cg-card" data-cg="${cg}" data-hc="${hc}" id="${cardId}" onclick="openCGCal('${cg.replace(/'/g,"\\'")}','${hc.replace(/'/g,"\\'")}',this)" style="--card-col:${col}">
+      html+=`<div class="cg-card${_gone?' lc-exited':''}" data-cg="${cg}" data-hc="${hc}" id="${cardId}" onclick="openCGCal('${cg.replace(/'/g,"\\'")}','${hc.replace(/'/g,"\\'")}',this)" style="--card-col:${col}">
+        ${_gone?`<div class="cg-lc-tag">🚪 Exited ${getCGExit(cg,hc)}</div>`:''}
         <div class="cg-card::before" style="background:${col}"></div>
         <style>#${cardId}::before{background:${col}}
 /* ── Package Planner ── */
@@ -2067,17 +2161,19 @@ function renderHCGrid(){
           <div class="cg-meta-item"><div class="meta-label">Marital</div><div class="meta-value empty">—</div></div>
           <div class="cg-meta-item"><div class="meta-label">Score</div><div class="meta-value empty">—</div></div>
         </div>
-        <div class="cg-stats">
+        <div class="cg-stats five" title="${_statTip}">
           <div class="cg-stat"><div class="stat-n duty">${duty}</div><div class="stat-l">Duty</div></div>
           <div class="cg-stat"><div class="stat-n off">${off}</div><div class="stat-l">Off</div></div>
           <div class="cg-stat"><div class="stat-n sick">${sick}</div><div class="stat-l">Sick</div></div>
+          <div class="cg-stat"><div class="stat-n unpaid">${unpaid}</div><div class="stat-l">Unpaid</div></div>
+          <div class="cg-stat"><div class="stat-n holiday">${holiday}</div><div class="stat-l">Holiday</div></div>
         </div>
         ${renderCGCardExtra(cg, hc)}
         <button class="cg-remove-btn" onclick="event.stopPropagation();removeCGByKey(this)">✕</button>
         <button class="cg-excl-btn" onclick="event.stopPropagation();toggleExclusive('${cg}','${hc}')" title="${isExclusiveCG(cg,hc)?'Remove exclusive':'Mark as exclusive'}" style="position:absolute;top:8px;right:32px;background:${isExclusiveCG(cg,hc)?'rgba(245,158,11,.25)':'rgba(110,118,129,.15)'};border:1px solid ${isExclusiveCG(cg,hc)?'#f59e0b':'var(--border)'};border-radius:4px;padding:2px 6px;font-size:9px;font-weight:700;color:${isExclusiveCG(cg,hc)?'#f59e0b':'var(--text2)'};cursor:pointer;font-family:Inter,sans-serif">${isExclusiveCG(cg,hc)?'👑 EX':'EX?'}</button>
-        <button onclick="event.stopPropagation();toggleOnLeave('${cg}','${hc}')" title="Toggle on leave" style="position:absolute;top:8px;right:64px;background:${isCGOnLeave(cg,hc)?'rgba(248,81,73,.2)':'rgba(110,118,129,.1)'};border:1px solid ${isCGOnLeave(cg,hc)?'var(--absent)':'var(--border)'};border-radius:4px;padding:2px 6px;font-size:9px;font-weight:700;color:${isCGOnLeave(cg,hc)?'var(--absent)':'var(--text2)'};cursor:pointer;font-family:Inter,sans-serif">${isCGOnLeave(cg,hc)?'🛌 '+(getCGSetting(cg,hc).leave_start||'').slice(5)+'&rarr;'+(getCGSetting(cg,hc).leave_end||'').slice(5):'LEAVE?'}</button>
+        ${lcCardBtn(cg,hc)}
         <div class="cg-view-btn">View Calendar →</div>
-        <button onclick="event.stopPropagation();openStartDateModal('${cg}','${hc}')" style="position:absolute;bottom:8px;right:8px;background:rgba(47,129,247,.1);border:1px solid rgba(47,129,247,.3);border-radius:4px;padding:2px 6px;font-size:9px;color:var(--accent);cursor:pointer;font-family:Inter,sans-serif">📅 ${getCGSetting(cg,hc).start_date||'Start: 1st'}</button>
+        ${lcCardStartBtn(cg,hc)}
       </div>`;
     });
     html+='</div></div>';
@@ -2101,6 +2197,8 @@ function renderHCGrid(){
       +'</div><div class="cg-grid">';
     mCGs.forEach(function(m){
       const cg=m.name,cardId2='cgc-'+cg.replace(/[^a-zA-Z0-9]/g,'_');
+      if(!cgVisibleInMonth(cg,hc,yr,mo)){ window._gridExited++; if(!showHiddenMode) return; }
+      const mc2=rosterMonthCounts(cg,hc,yr,mo,_idx,_wo);
       html+='<div class="cg-card" data-cg="'+cg.replace(/"/g,'"')+'" data-hc="'+hc.replace(/"/g,'"')+'" id="'+cardId2+'" onclick="openCGCalFromDataset(this)" style="--card-col:'+col+'">'
         +'<style>#'+cardId2+'::before{background:'+col+'}</style>'
         +'<button class="cg-remove-btn" onclick="event.stopPropagation();removeCGByKey(this)">✕</button>'
@@ -2115,11 +2213,15 @@ function renderHCGrid(){
         +'<div class="cg-meta-item"><div class="meta-label">Marital</div><div class="meta-value empty">—</div></div>'
         +'<div class="cg-meta-item"><div class="meta-label">Score</div><div class="meta-value empty">—</div></div>'
         +'</div>'
-        +'<div class="cg-stats">'
-        +'<div class="cg-stat"><div class="stat-n duty">0</div><div class="stat-l">Duty</div></div>'
-        +'<div class="cg-stat"><div class="stat-n off">0</div><div class="stat-l">Off</div></div>'
-        +'<div class="cg-stat"><div class="stat-n sick">0</div><div class="stat-l">Sick</div></div>'
+        +'<div class="cg-stats five">'
+        +'<div class="cg-stat"><div class="stat-n duty">'+mc2.worked+'</div><div class="stat-l">Duty</div></div>'
+        +'<div class="cg-stat"><div class="stat-n off">'+mc2.off+'</div><div class="stat-l">Off</div></div>'
+        +'<div class="cg-stat"><div class="stat-n sick">'+mc2.sick+'</div><div class="stat-l">Sick</div></div>'
+        +'<div class="cg-stat"><div class="stat-n unpaid">'+mc2.unpaid+'</div><div class="stat-l">Unpaid</div></div>'
+        +'<div class="cg-stat"><div class="stat-n holiday">'+mc2.holiday+'</div><div class="stat-l">Holiday</div></div>'
         +'</div>'
+        +lcCardBtn(cg,hc)
+        +lcCardStartBtn(cg,hc)
         +'<div class="cg-view-btn">View Calendar →</div>'
         +'</div>';
     });
@@ -2133,8 +2235,8 @@ function renderHCGrid(){
 
 // ── CG Calendar ──────────────────────────────────────────────────
 function openCGCal(cg,hc){
-  activeCG=cg;
-  calYear=new Date().getFullYear();calMo=new Date().getMonth();
+  activeCG=cg;activeCGHC=hc||'';
+  calYear=gridYr;calMo=gridMo;
   document.getElementById('cg-cal-title').textContent=cg;
   document.getElementById('cg-cal-sub').textContent=hc;
   document.getElementById('hc-list-view').style.display='none';
@@ -2435,6 +2537,7 @@ function setAnaWk(wk, end){
 }
 
 function getAnalyticsData(){
+  var _aIdx=rosterDayIndex(), _aWo=rosterWoLookup();
   // Mirror EXACTLY what roster shows:
   // - Exclude hidden CGs
   // - Override status takes priority over allData status
@@ -2453,7 +2556,14 @@ function getAnalyticsData(){
     // Exclude HCs that are excluded from roster
     var excludedHC=['Carezone Home Healthcare LLC','Dummy HomeCare','Helpful Agency','Nifas HC','babysitting KSA','Pyramid Home Health care'];
     if(r.homecare && excludedHC.some(function(e){return (r.homecare||'').toLowerCase()===e.toLowerCase();})) return false;
+    // Days outside the caregiver's active window (before joining, after exit, or
+    // during a pause) are not on the roster, so they are not counted here either
+    if(r.caregiver && cgDayState(r.caregiver, r.homecare||'', r.date)!=='active') return false;
     return true;
+  }).map(function(r){
+    // _rcode = exactly what this day looks like on the roster
+    r._rcode = rosterDay(r.caregiver, r.homecare||'', r.date, _aIdx, _aWo).code;
+    return r;
   });
 }
 
@@ -2506,7 +2616,7 @@ function renderAnalyticsData(){
   const periodLabel = anaWk==='all' ? MONTHS[anaMo]+' '+anaYr : `${MONTHS[anaMo]} W — ${anaWkStart} to ${anaWkEnd}`;
 
   const total = data.length;
-  const duty=data.filter(function(r){var s=(r.status||'').toLowerCase().replace(/\s+/g,'');return s!=='cancelled'&&s!=='removed'&&s!=='weekoff'&&s!=='sick'&&s!=='off'&&s!=='holiday'&&s!=='unpaid';}).length;
+  const duty=data.filter(isActiveShift).length;
   const cgs = new Set(data.map(r=>r.caregiver)).size;
   const util = total ? Math.round((duty/total)*100) : 0;
 
@@ -2524,7 +2634,12 @@ function renderAnalyticsData(){
     <div class="kpi k3"><div class="kpi-val" style="color:var(--text2)">${clients}</div><div class="kpi-label">Clients</div></div>
     <div class="kpi k4"><div class="kpi-val" style="color:var(--sick)">${util}%</div><div class="kpi-label">Utilization</div></div>`;
 
-  function isActiveShift(r){var s=(r.status||'').toLowerCase().replace(/\s+/g,'');return s!=='cancelled'&&s!=='removed'&&s!=='weekoff'&&s!=='sick'&&s!=='off'&&s!=='holiday'&&s!=='unpaid';}
+  // A shift only counts if the roster shows the caregiver actually working that day
+  function isActiveShift(r){
+    if(r._rcode) return r._rcode==='duty'||r._rcode==='manual';
+    var s=(r.status||'').toLowerCase().replace(/\s+/g,'');
+    return s!=='cancelled'&&s!=='removed'&&s!=='weekoff'&&s!=='sick'&&s!=='off'&&s!=='holiday'&&s!=='unpaid';
+  }
   const hcMap={};
   data.filter(isActiveShift).forEach(r=>{if(r.homecare)hcMap[r.homecare]=(hcMap[r.homecare]||0)+1;});
   const hcS=Object.entries(hcMap).sort((a,b)=>b[1]-a[1]);
@@ -2564,9 +2679,10 @@ function renderAnalyticsData(){
   const cgS = Object.entries(cgMap).map(function(e){
     var cg=e[0], hrs=e[1];
     var hc=(rawData.find(function(r){return r.caregiver===cg;})||{}).homecare||'';
-    var maxHrs = getCGMaxHrs(cg, hc);
+    var pr = getCGProRata(cg, hc);          // pro-rata: joining date, exit date, pauses
+    var maxHrs = pr.maxHrs;
     var pct = Math.min(Math.round((hrs/maxHrs)*100), 100);
-    return [cg, hrs, maxHrs, pct, hc]; // [name, hrs, maxHrs, pct, hc]
+    return [cg, hrs, maxHrs, pct, hc, pr];  // [name, hrs, maxHrs, pct, hc, proRata]
   }).sort(function(a,b){return b[3]-a[3];}); // sort by pct desc
   window._cgS_full = cgS;
   const maxCG = MAX_MONTH_HRS;
@@ -2603,7 +2719,7 @@ function renderAnalyticsData(){
   });
 
   // Build rev-per-hour list using cgS (which has hours)
-  var rphData = (window._cgS_full||[]).filter(function(e){ return e[1]>0 && !isCGOnLeave(e[0],e[4]); }).map(function(e){
+  var rphData = (window._cgS_full||[]).filter(function(e){ return e[1]>0 && (e[5]?e[5].days:1)>0; }).map(function(e){
     var cg=e[0], hrs=e[1], hc=e[4];
     var rev = revMap[cg]||0;
     var rph = hrs>0 ? Math.round(rev/hrs) : 0;
@@ -2697,7 +2813,8 @@ function renderAnalyticsData(){
     <div class="a-card" style="grid-column:1/-1">
       <div class="a-title"><div class="a-title-bar" style="background:var(--duty)"></div>Caregiver Utilisation — Hours Worked</div>
       <div style="font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.6">
-        📌 <b style="color:var(--text2)">What this shows:</b> How busy each caregiver was. Max possible = <b>${MAX_MONTH_HRS} hours/month</b> (fully booked every day).<br>
+        📌 <b style="color:var(--text2)">What this shows:</b> How busy each caregiver was. A caregiver available all month can bill <b>${MAX_MONTH_HRS} hours</b> (24 working days × 12h).<br>
+        ⚖️ <b style="color:var(--text2)">Pro-rata:</b> anyone who joined mid-month, left mid-month, or was on a pause is measured only against the days they were actually available — shown as <b>18/31d</b> next to their bar. Default joining date is the 1st of the month; set the real date, exit date or vacation on the caregiver card (📅 button) in the Calendar tab.<br>
         🟢 <b>Green (70%+)</b> = well utilised, good.  
         🔵 <b>Blue (40–70%)</b> = moderate, room to fill.  
         🔴 <b>Red (below 40%)</b> = too many free days — needs a new booking assigned.<br>
@@ -2713,15 +2830,16 @@ function renderAnalyticsData(){
         <div id="excl-avg-util" style="display:flex;gap:12px;font-size:11px"></div>
       </div>
       <div id="cg-util-bars" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:4px 20px">
-      ${cgS.length ? cgS.filter(function(e){return !isCGOnLeave(e[0],e[4]);}).map(function(e){
-        var k=e[0],v=e[1],maxHrs=e[2],pct=e[3];
+      ${cgS.length ? cgS.filter(function(e){return (e[5]?e[5].days:1)>0;}).map(function(e){
+        var k=e[0],v=e[1],maxHrs=e[2],pct=e[3],pr=e[5]||{full:true,days:0,span:0};
         const col = pct>=70?'var(--duty)':pct>=40?'var(--accent)':'var(--sick)';
         const emoji = pct>=70?'🟢':pct>=40?'🔵':'🔴';
         var _exTag = isExclusiveCG(k,e[4]) ? ' <span style="font-size:8px;padding:1px 3px;border-radius:3px;background:rgba(245,158,11,.25);color:#f59e0b">EX</span>' : '';
-        return `<div class="bar-row" style="margin-bottom:4px">
+        var _prTag = pr.full ? '' : ' <span style="font-size:8px;padding:1px 3px;border-radius:3px;background:rgba(210,153,34,.2);color:var(--sick)" title="Pro-rata: available '+pr.days+' of '+pr.span+' days">'+pr.days+'/'+pr.span+'d</span>';
+        return `<div class="bar-row" style="margin-bottom:4px" title="${k} — ${v}h worked of ${maxHrs}h possible (${pr.days}/${pr.span} days available)">
           <div class="bar-label" title="${k}" style="width:100px;min-width:100px;font-size:11px;overflow:hidden;text-overflow:ellipsis">${emoji} ${k.split(' ')[0]}${_exTag}</div>
           <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${col};border-radius:4px"></div></div>
-          <div class="bar-val" style="font-size:11px">${v}h <span style="color:var(--text3);font-size:9px">${pct}%</span></div>
+          <div class="bar-val" style="font-size:11px">${v}<span style="color:var(--text3)">/${maxHrs}h</span> <span style="color:var(--text3);font-size:9px">${pct}%</span>${_prTag}</div>
         </div>`;
       }).join('') : '<div style="color:var(--text2);font-size:12px;padding:10px">No data</div>'}
       </div>
@@ -2744,7 +2862,8 @@ function renderAnalyticsData(){
   (function(){
     var eP=[],nP=[],eH=[],nH=[],eM=[],nM=[];
     (window._cgS_full||[]).forEach(function(e){
-      if(isCGOnLeave(e[0],e[4])) return;
+      if((e[5]?e[5].days:1)<=0) return; // no available days in this period
+
       if(isExclusiveCG(e[0],e[4])){ eP.push(e[3]);eH.push(e[1]);eM.push(e[2]); }
       else{ nP.push(e[3]);nH.push(e[1]);nM.push(e[2]); }
     });
@@ -4013,6 +4132,7 @@ function saveLocalCache(){
 
 function reRenderAll(){
   applyOverrides(); // always first — rebuilds allData with overrides
+  invalidateRosterIndex();
   renderHCGrid();
   applyHiddenFilter();
   updateHiddenBadge();
@@ -4042,7 +4162,7 @@ async function syncFromSheet(){
   try{
     var snap=await _db.collection('valeo_state').get();
     if(snap.empty) return;
-    var no={},nm={},nh=new Set(),nw={},ns={};
+    var no={},nm={},nh=new Set(),nw={},ns={},ncs={};
     snap.forEach(function(doc){
       var d=doc.data(),dt=(d.type||'').toLowerCase().trim(),dk=d.key,dv;
       try{dv=JSON.parse(d.value);}catch(e){dv=d.value;}
@@ -4052,8 +4172,10 @@ async function syncFromSheet(){
       else if(dt==='hidden_cg') nh.add(dk);
       else if(dt==='weekoff') nw[dk]=dv;
       else if(dt==='split') ns[dk]=dv;
+      else if(dt==='cg_setting' && dv && typeof dv==='object') ncs[dk]=dv;
     });
     overrides=no;manualCGs=nm;hiddenCGs=nh;weekOffCfg=nw;splitAssignments=ns;
+    if(Object.keys(ncs).length){ Object.keys(ncs).forEach(function(k){ cgSettings[k]=ncs[k]; }); saveCGSettings(); }
     saveLocalCache();reRenderAll();
     console.log('[sync] synced',snap.size,'docs');
   }catch(e){console.warn('[sync] failed:',e);}
@@ -4092,6 +4214,7 @@ function applyOverrides(){
     else if(ov.type==='removed')  { r.status='Removed';   r.time_start=''; r.time_end=''; }
     // No end-date extension for any override type
   });
+  invalidateRosterIndex();
 
   // Inject manual bookings — only if no real Duty order exists that day
   Object.values(overrides).forEach(function(ov){
@@ -4934,14 +5057,23 @@ function toggleShowHidden(){
 function updateHiddenBadge(){
   var btn=document.getElementById('show-hidden-btn');
   if(!btn) return;
-  if(hiddenCGs.size>0){
+  var _exN=window._gridExited||0;   // resigned/removed before the month on screen
+  var _hidSet=[...hiddenCGs];
+  if(_session&&_session.role==='hc'&&_session.homecare){
+    var _hS=_session.homecare.toLowerCase().replace(/[\s\u00a0]+/g,'');
+    _hidSet=_hidSet.filter(function(k){return (k.split('|')[1]||'').toLowerCase().replace(/[\s\u00a0]+/g,'')===_hS;});
+  }
+  if(_hidSet.length>0 || _exN>0){
     btn.classList.add('visible');
-    var _hidSet=[...hiddenCGs];
-    if(_session&&_session.role==='hc'&&_session.homecare){
-      var _hS=_session.homecare.toLowerCase().replace(/[\s\u00a0]+/g,'');
-      _hidSet=_hidSet.filter(function(k){return (k.split('|')[1]||'').toLowerCase().replace(/[\s\u00a0]+/g,'')===_hS;});
+    if(showHiddenMode){
+      btn.textContent='👁 Showing hidden'+(_exN?' + '+_exN+' exited':'');
+    } else {
+      var parts=[];
+      if(_hidSet.length) parts.push('🗑 '+_hidSet.length+' removed');
+      if(_exN) parts.push('🚪 '+_exN+' exited');
+      btn.textContent=parts.join(' · ');
     }
-    btn.textContent=showHiddenMode?('👁 Showing '+_hidSet.length+' removed'):('🗑 '+_hidSet.length+' removed');
+    btn.title='Show caregivers removed from the dashboard, and those who exited before '+MONTHS[gridMo]+' '+gridYr;
   } else {
     btn.classList.remove('visible');
     showHiddenMode=false;
@@ -5074,8 +5206,19 @@ async function downloadSchedJPG(){
 
 // ── Roster View ──────────────────────────────────────────────────
 var rosterDate=new Date();
+var rosterShowExited=false;
 function rosterPrevMonth(){rosterDate.setMonth(rosterDate.getMonth()-1);renderRoster();}
 function rosterNextMonth(){rosterDate.setMonth(rosterDate.getMonth()+1);renderRoster();}
+function toggleShowExited(){
+  rosterShowExited=!rosterShowExited;
+  var b=document.getElementById('roster-exited-btn');
+  if(b){
+    b.textContent=rosterShowExited?'👤 Exited shown':'👤 Exited hidden';
+    b.style.color=rosterShowExited?'var(--absent)':'';
+    b.style.borderColor=rosterShowExited?'var(--absent)':'';
+  }
+  renderRoster();
+}
 
 function switchToRoster(){
   var sel=document.getElementById('roster-hc-filter');
@@ -5165,11 +5308,21 @@ function renderRoster(){
     if(!filterHC||hc===filterHC) delete cgMap[n];
   });
   var hcGroups={};
+  var exitedCount=0;
   Object.values(cgMap).forEach(function(cg){
     var hc=cg.homecare||'Other';
+    // Resigned / removed caregivers vanish from their exit month onward.
+    // Earlier months still show them exactly as they were.
+    if(!cgVisibleInMonth(cg.name,cg.homecare||'',year,month)){
+      exitedCount++;
+      if(!rosterShowExited) return;
+    }
     if(!hcGroups[hc]) hcGroups[hc]=[];
     hcGroups[hc].push(cg.name);
   });
+  var _xb=document.getElementById('roster-exited-btn');
+  if(_xb) _xb.textContent=(rosterShowExited?'👤 Exited shown':'👤 Exited hidden')+(exitedCount?' ('+exitedCount+')':'');
+  invalidateRosterIndex();
   var dayMap={};
   allData.forEach(function(r){
     if(!r.caregiver||!r.date) return;
@@ -5200,7 +5353,23 @@ function renderRoster(){
       var ini=((parts[0]||'')[0]||'')+((parts[1]||'')[0]||'');
       var hcVal=cgMap[cgName]?cgMap[cgName].homecare:'';
       html+='<tr><td class="col-photo"><div class="r-photo">'+ini.toUpperCase()+'</div></td>';
+      var _mc=rosterMonthCounts(cgName,hcVal,year,month,dayMap,woLookup);
+      var _exit=getCGExit(cgName,hcVal), _join=getCGJoin(cgName,hcVal);
+      var _safeN0=cgName.replace(/'/g,"&#39;").replace(/"/g,'&quot;');
+      var _safeH0=hcVal.replace(/'/g,"&#39;").replace(/"/g,'&quot;');
       html+='<td class="col-info"><div class="r-name">'+cgName+'</div><div class="r-hc">'+hcVal+'</div>'
+        +'<div class="r-counts" title="From this roster — '+MNAMES[month]+' '+year+'">'
+          +'<span class="rc d" title="Duty '+_mc.duty+' + manual '+_mc.manual+'">D'+_mc.worked+'</span>'
+          +'<span class="rc o" title="Day off '+_mc.dayoff+' + week off '+_mc.weekoff+'">O'+_mc.off+'</span>'
+          +'<span class="rc s" title="Sick leave">S'+_mc.sick+'</span>'
+          +'<span class="rc u" title="Unpaid leave">U'+_mc.unpaid+'</span>'
+          +'<span class="rc h" title="Public holiday">H'+_mc.holiday+'</span>'
+        +'</div>'
+        +'<div class="r-row-acts">'
+          +(_exit?'<span class="r-exit-tag" title="Removed from '+_exit+' onward">🚪 '+_exit.slice(5)+'</span>'
+                 :(_join?'<span class="r-join-tag" title="Joined '+_join+'">▶ '+_join.slice(5)+'</span>':''))
+          +'<button class="r-exit-btn" onclick="event.stopPropagation();offboardCG(\''+_safeN0+'\',\''+_safeH0+'\')" title="Caregiver resigned / removed — set the date they leave from">'+(_exit?'Edit exit':'✕ Remove')+'</button>'
+        +'</div>'
         +(function(){
           var city=getCGCity(cgName,hcVal);
           var cls=cityCls(city);
@@ -5219,41 +5388,45 @@ function renderRoster(){
         var dow=new Date(ds+'T12:00:00').getDay();
         var isWE=dow===0||dow===6,isT=ds===todayStr;
         var cls='rd'+(isWE?' col-weekend':'')+(isT?' rd-today':'');
-        var inner='';
-        var ov=overrides[cgName+'|'+ds];
+        var inner='',tip=cgName+' | '+ds,clickable=true;
         var recs=dayMap[cgName+'|'+ds]||[];
-        if(ov){
-          if(ov.type==='sick'){cls+=' rd-sick';inner='<div class="rd-in"><div class="rd-cl">Sick</div></div>';}
-          else if(ov.type==='off'||ov.type==='holiday'||ov.type==='unpaid'){cls+=' rd-off';inner='<div class="rd-in"><div class="rd-cl">'+(ov.type==='holiday'?'Holiday':ov.type==='unpaid'?'Unpaid':'Off')+'</div></div>';}
-          else if(ov.type==='cancelled'){cls+=' rd-off';inner='<div class="rd-in"><div class="rd-cl">Cxl</div></div>';}
-          else if(ov.type==='manual'){
-            cls+=' rd-manual';
-            var t2=ov.time_start&&ov.time_end?ov.time_start+'-'+ov.time_end:(ov.time_start||'');
-            inner='<div class="rd-in"><div class="rd-cl">'+(ov.client_name||'Manual')+'</div>'+(t2?'<div class="rd-tm">'+t2+'</div>':'')+'</div>';
-          }
-        } else if(recs.length>0){
-          var ev=recs[0];
-          var st=(ev.status||'').toLowerCase().replace(/\s+/g,'');
-          if(st==='weekoff'){cls+=' rd-wo';inner='<div class="rd-in"><div class="rd-cl">Week Off</div></div>';}
-          else if(st==='sick'){cls+=' rd-sick';inner='<div class="rd-in"><div class="rd-cl">Sick</div></div>';}
-          else if(st==='cancelled'||st==='absent'){cls+=' rd-off';inner='<div class="rd-in"><div class="rd-cl">'+st+'</div></div>';}
-          else{
-            var cl2=(ev.client_name||'').split(' ')[0];
-            var isB2B=_b2bDays[cgName+'|'+ds]||recs.some(function(rr){return rr.is_b2b;});
-            if(isB2B)cls+=' rd-b2b';
-            else if((ev.client_name||'').toLowerCase().includes('shady'))cls+=' rd-shady';
-            else cls+=' rd-duty';
-            var t3=ev.time_start&&ev.time_end?ev.time_start+'-'+ev.time_end:(ev.time_start||'');
-            var oid=ev.child_order_id||ev.order_id||'';
-            inner='<div class="rd-in">'+(cl2?'<div class="rd-cl">'+cl2+'</div>':'')+(t3?'<div class="rd-tm">'+t3+'</div>':'')+(oid?'<div class="rd-od">#'+oid+'</div>':'')+'</div>';
-          }
-        } else {
-          var woDays2=woLookup[cgName]||[];
-          var isWO=woDays2.some(function(wd){return wd&&wd.startsWith(DFULL[dow].slice(0,3));});
-          if(isWO){cls+=' rd-wo';inner='<div class="rd-in"><div class="rd-cl">Week Off</div></div>';}
+        var st=rosterDay(cgName,hcVal,ds,dayMap,woLookup);
+        function _lbl(t){return '<div class="rd-in"><div class="rd-cl">'+t+'</div></div>';}
+        if(st.code==='exited'){
+          cls+=' rd-exited';clickable=false;tip=cgName+' left on '+_exit;
+        } else if(st.code==='pre'){
+          cls+=' rd-pre';clickable=false;tip=cgName+' joins on '+_join;
+        } else if(st.code==='pause'){
+          var _p=pauseOn(cgName,hcVal,ds)||{};
+          cls+=' rd-pause';inner=_lbl(_p.label||'Pause');tip=cgName+' — '+(_p.label||'Pause')+' '+(_p.from||'')+' → '+(_p.to||'');
+        } else if(st.code==='sick'){
+          cls+=' rd-sick';inner=_lbl('Sick');
+        } else if(st.code==='off'||st.code==='holiday'||st.code==='unpaid'){
+          cls+=' rd-off';inner=_lbl(st.code==='holiday'?'Holiday':st.code==='unpaid'?'Unpaid':'Off');
+        } else if(st.code==='cancelled'){
+          cls+=' rd-off';inner=_lbl('Cxl');
+        } else if(st.code==='weekoff'){
+          cls+=' rd-wo';inner=_lbl('Week Off');
+        } else if(st.code==='manual'){
+          cls+=' rd-manual';
+          var ovm=st.ov||{};
+          var t2=ovm.time_start&&ovm.time_end?ovm.time_start+'-'+ovm.time_end:(ovm.time_start||'');
+          inner='<div class="rd-in"><div class="rd-cl">'+(ovm.client_name||'Manual')+'</div>'+(t2?'<div class="rd-tm">'+t2+'</div>':'')+'</div>';
+        } else if(st.code==='duty'){
+          var ev=st.rec||recs[0]||{};
+          var cl2=(ev.client_name||'').split(' ')[0];
+          var isB2B=_b2bDays[cgName+'|'+ds]||recs.some(function(rr){return rr.is_b2b;});
+          if(isB2B)cls+=' rd-b2b';
+          else if((ev.client_name||'').toLowerCase().includes('shady'))cls+=' rd-shady';
+          else cls+=' rd-duty';
+          var t3=ev.time_start&&ev.time_end?ev.time_start+'-'+ev.time_end:(ev.time_start||'');
+          var oid=ev.child_order_id||ev.order_id||'';
+          inner='<div class="rd-in">'+(cl2?'<div class="rd-cl">'+cl2+'</div>':'')+(t3?'<div class="rd-tm">'+t3+'</div>':'')+(oid?'<div class="rd-od">#'+oid+'</div>':'')+'</div>';
         }
         var safeN=cgName.replace(/'/g,"&#39;").replace(/"/g,'&quot;');
-        html+='<td class="'+cls+'" title="'+safeN+' | '+ds+'" data-cg="'+safeN+'" data-ds="'+ds+'" onclick="openOvModal(this.dataset.cg,this.dataset.ds)">'+inner+'</td>';
+        var tipS=String(tip).replace(/"/g,'&quot;');
+        html+='<td class="'+cls+'" title="'+tipS+'" data-cg="'+safeN+'" data-ds="'+ds+'"'
+          +(clickable?' onclick="openOvModal(this.dataset.cg,this.dataset.ds)"':'')+'>'+inner+'</td>';
       });
       html+='</tr>';
     });
@@ -6910,25 +7083,26 @@ function setCGFilter(f){
   var el = document.getElementById('cg-util-bars');
   if(!el || !window._cgS_full) return;
   var filtered = (window._cgS_full||[]).filter(function(e){
-    if(isCGOnLeave(e[0],e[4])) return false; // always hide on-leave
+    if((e[5]?e[5].days:1)<=0) return false; // not available at all this period
     if(f==='all') return true;
     return f==='exclusive' ? isExclusiveCG(e[0],e[4]) : !isExclusiveCG(e[0],e[4]);
   });
   el.innerHTML = filtered.length ? filtered.map(function(e){
-    var k=e[0],v=e[1],pct=e[3];
+    var k=e[0],v=e[1],maxHrs=e[2],pct=e[3],pr=e[5]||{full:true,days:0,span:0};
     var col=pct>=70?'var(--duty)':pct>=40?'var(--accent)':'var(--sick)';
     var emoji=pct>=70?'🟢':pct>=40?'🔵':'🔴';
     var exTag=isExclusiveCG(k,e[4])?'<span style="font-size:8px;padding:1px 3px;border-radius:3px;background:rgba(245,158,11,.25);color:#f59e0b;margin-left:2px">EX</span>':'';
-    return '<div class="bar-row" style="margin-bottom:4px">'
+    var prTag=pr.full?'':'<span style="font-size:8px;padding:1px 3px;border-radius:3px;background:rgba(210,153,34,.2);color:var(--sick);margin-left:3px">'+pr.days+'/'+pr.span+'d</span>';
+    return '<div class="bar-row" style="margin-bottom:4px" title="'+k+' — '+v+'h of '+maxHrs+'h possible ('+pr.days+'/'+pr.span+' days available)">'
       +'<div class="bar-label" title="'+k+'" style="width:100px;min-width:100px;font-size:11px;overflow:hidden;text-overflow:ellipsis">'+emoji+' '+k.split(' ')[0]+exTag+'</div>'
       +'<div class="bar-track"><div class="bar-fill" style="width:'+pct+'%;background:'+col+';min-width:'+(pct>0?'3px':'0')+'"></div></div>'
-      +'<div class="bar-val" style="font-size:11px">'+v+'h <span style="color:var(--text3);font-size:9px">'+pct+'%</span></div>'
+      +'<div class="bar-val" style="font-size:11px">'+v+'<span style="color:var(--text3)">/'+maxHrs+'h</span> <span style="color:var(--text3);font-size:9px">'+pct+'%</span>'+prTag+'</div>'
       +'</div>';
   }).join('') : '<div style="color:var(--text2);font-size:11px;padding:8px">No CGs match filter</div>';
 }
 
 // ── CG Settings (start date, on-leave flag) ────────────────────────
-var cgSettings = {}; // key: "cg|hc", value: {start_date, on_leave}
+var cgSettings = {}; // key: "cg|hc" -> {city, start_date, exit_date, pauses:[{from,to,label}]}
 
 function loadCGSettings(){
   try{ cgSettings=JSON.parse(localStorage.getItem('valeo_cg_settings')||'{}'); }catch(e){ cgSettings={}; }
@@ -6968,69 +7142,336 @@ function setCGCity(cg, hc, city){
 
 
 
-function isCGOnLeave(cg, hc){
-  return !!(getCGSetting(cg,hc).on_leave);
-}
+// ══════════════════════════════════════════════════════════════════
+// CAREGIVER LIFECYCLE  —  join date · exit date · pauses (vacation)
+// ------------------------------------------------------------------
+// Stored per caregiver in cgSettings["<name>|<homecare>"] as:
+//   { start_date:'YYYY-MM-DD', exit_date:'YYYY-MM-DD',
+//     pauses:[{from:'YYYY-MM-DD', to:'YYYY-MM-DD', label:'Vacation'}] }
+// Rules:
+//   · start_date blank  → active from the 1st of every month (default)
+//   · exit_date set     → caregiver disappears from that DATE onward only.
+//                         Earlier months keep showing them exactly as before.
+//   · pauses            → days are neither worked nor counted against the
+//                         caregiver in the analytics denominator.
+// ══════════════════════════════════════════════════════════════════
 
-function toggleOnLeave(cg, hc){
-  var s=getCGSetting(cg,hc);
-  if(s.on_leave){
-    delete s.on_leave; delete s.leave_start; delete s.leave_end;
-    saveCGSettings(); renderHCGrid();
-    var ap=document.getElementById('page-analytics');
-    if(ap&&ap.classList.contains('active')) renderAnalyticsData();
-    return;
-  }
-  var mo=anaMo+1, defS=anaYr+'-'+String(mo).padStart(2,'0')+'-01';
-  var defE=anaYr+'-'+String(mo).padStart(2,'0')+'-'+String(new Date(anaYr,anaMo+1,0).getDate()).padStart(2,'0');
-  var r=prompt('Leave dates for '+cg+' (YYYY-MM-DD to YYYY-MM-DD):',defS+' to '+defE);
-  if(!r) return;
-  var pts=r.split(' to ');
-  if(pts.length!==2){alert('Use: YYYY-MM-DD to YYYY-MM-DD');return;}
-  s.on_leave=true; s.leave_start=pts[0].trim(); s.leave_end=pts[1].trim();
-  saveCGSettings(); renderHCGrid();
-  var ap=document.getElementById('page-analytics');
-  if(ap&&ap.classList.contains('active')) renderAnalyticsData();
-}
-
-
-
-// Weighted max hours based on start date in the analytics period
-function getCGStartDate(cg, hc){
-  // anaMo is 0-indexed globally; build default as 1st of current analytics month
-  var moDisplay = anaMo + 1;
-  var defaultDate = anaYr+'-'+String(moDisplay).padStart(2,'0')+'-01';
-  return getCGSetting(cg,hc).start_date || defaultDate;
-}
-
-function getCGMaxHrs(cg, hc){
-  var MAX_DAILY=12,DAYS_PER_WEEK=6;
-  var start=new Date(getCGStartDate(cg,hc)+'T12:00:00');
-  var lastDay=new Date(anaYr,anaMo+1,0);
-  var days=Math.min(Math.max(0,Math.floor((lastDay-start)/86400000)+1),28);
-  var s=getCGSetting(cg,hc);
-  if(s.on_leave&&s.leave_start&&s.leave_end){
-    var ls=new Date(s.leave_start+'T12:00:00'),le=new Date(s.leave_end+'T12:00:00');
-    var cs=ls>start?ls:start, ce=le<lastDay?le:lastDay;
-    if(ce>=cs) days=Math.max(0,days-(Math.floor((ce-cs)/86400000)+1));
-  }
-  return Math.max(Math.round(days*DAYS_PER_WEEK/7)*MAX_DAILY,1);
-}
-
-function openStartDateModal(cg, hc){
+function getLC(cg, hc){
   var s = getCGSetting(cg, hc);
-  var moDisplay = anaMo + 1;
-  var defaultStr = anaYr+'-'+String(moDisplay).padStart(2,'0')+'-01';
-  var current = s.start_date || defaultStr;
-  var entered = prompt('Start date for '+cg+' (YYYY-MM-DD) — leave blank to reset to default ('+defaultStr+')', current);
-  if(entered===null) return;
-  if(entered.trim()==='') { delete s.start_date; }
-  else if(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(entered.trim())) { s.start_date=entered.trim(); }
-  else { alert('Use YYYY-MM-DD format e.g. 2026-05-15'); return; }
+  // migrate the old single on_leave window into pauses[]
+  if(s.on_leave || s.leave_start || s.leave_end){
+    if(!Array.isArray(s.pauses)) s.pauses = [];
+    if(s.leave_start && s.leave_end){
+      var dup = s.pauses.some(function(p){return p.from===s.leave_start && p.to===s.leave_end;});
+      if(!dup) s.pauses.push({from:s.leave_start, to:s.leave_end, label:'Vacation'});
+    }
+    delete s.on_leave; delete s.leave_start; delete s.leave_end;
+  }
+  return s;
+}
+function getCGJoin(cg, hc){ return getLC(cg,hc).start_date || ''; }
+function getCGExit(cg, hc){ return getLC(cg,hc).exit_date  || ''; }
+function getCGPauses(cg, hc){ var p = getLC(cg,hc).pauses; return Array.isArray(p)?p:[]; }
+function hasLifecycle(cg, hc){
+  return !!(getCGJoin(cg,hc) || getCGExit(cg,hc) || getCGPauses(cg,hc).length);
+}
+function pauseOn(cg, hc, ds){
+  var ps = getCGPauses(cg,hc);
+  for(var i=0;i<ps.length;i++){
+    var p = ps[i];
+    if(p && p.from && p.to && ds>=p.from && ds<=p.to) return p;
+  }
+  return null;
+}
+// 'exited' | 'pre' | 'pause' | 'active'   for one caregiver on one date
+function cgDayState(cg, hc, ds){
+  var x = getCGExit(cg,hc); if(x && ds >= x) return 'exited';
+  var j = getCGJoin(cg,hc); if(j && ds <  j) return 'pre';
+  return pauseOn(cg,hc,ds) ? 'pause' : 'active';
+}
+// Should this caregiver appear on the roster / calendar for this month at all?
+// exit on 01-Jun → gone from June onward, May and earlier untouched.
+function cgVisibleInMonth(cg, hc, y, m){
+  var first = y+'-'+pad(m+1)+'-01';
+  var last  = y+'-'+pad(m+1)+'-'+pad(new Date(y,m+1,0).getDate());
+  var x = getCGExit(cg,hc); if(x && x <= first) return false;
+  var j = getCGJoin(cg,hc); if(j && j >  last)  return false;
+  return true;
+}
+// Active (payable) days for a caregiver inside a date window
+function cgActiveDaysBetween(cg, hc, fromDs, toDs){
+  var n = 0, d = new Date(fromDs+'T12:00:00'), end = new Date(toDs+'T12:00:00');
+  while(d <= end){
+    var ds = d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+    if(cgDayState(cg,hc,ds) === 'active') n++;
+    d.setDate(d.getDate()+1);
+  }
+  return n;
+}
+function getCGActiveDays(cg, hc, y, m){
+  var dim = new Date(y,m+1,0).getDate();
+  return cgActiveDaysBetween(cg,hc, y+'-'+pad(m+1)+'-01', y+'-'+pad(m+1)+'-'+pad(dim));
+}
+
+// ── Kept for backward compatibility with existing call sites ──────
+// "on leave" now means: zero active days in the selected analytics period
+function isCGOnLeave(cg, hc){ return getCGProRata(cg,hc).days <= 0; }
+function toggleOnLeave(cg, hc){ openLifecycle(cg, hc); }
+function openStartDateModal(cg, hc){ openLifecycle(cg, hc); }
+function getCGStartDate(cg, hc){
+  return getCGJoin(cg,hc) || (anaYr+'-'+pad(anaMo+1)+'-01');
+}
+
+// ── PRO-RATA capacity for the analytics period ────────────────────
+// Full month, no join/exit/pause = 288h (24 working days x 12h).
+// Anything else is scaled by the caregiver's active days in the period.
+function getCGProRata(cg, hc){
+  var dim   = new Date(anaYr, anaMo+1, 0).getDate();
+  var mFrom = anaYr+'-'+pad(anaMo+1)+'-01';
+  var mTo   = anaYr+'-'+pad(anaMo+1)+'-'+pad(dim);
+  var from  = (anaWk!=='all' && anaWkStart) ? (anaWkStart > mFrom ? anaWkStart : mFrom) : mFrom;
+  var to    = (anaWk!=='all' && anaWkEnd)   ? (anaWkEnd   < mTo   ? anaWkEnd   : mTo)   : mTo;
+  var span  = Math.floor((new Date(to+'T12:00:00') - new Date(from+'T12:00:00'))/86400000) + 1;
+  var days  = cgActiveDaysBetween(cg, hc, from, to);
+  var perDay = 288 / dim;                      // ≈9.3h of sellable capacity per calendar day
+  return { days: days, span: Math.max(span,0), dim: dim,
+           maxHrs: Math.max(Math.round(perDay*days), 1),
+           full: days >= span && span > 0 };
+}
+function getCGMaxHrs(cg, hc){ return getCGProRata(cg,hc).maxHrs; }
+// Short human label, e.g. "18/31d" — blank when the CG was available all period
+function proRataLabel(cg, hc){
+  var p = getCGProRata(cg,hc);
+  return p.full ? '' : p.days+'/'+p.span+'d';
+}
+
+// ── Lifecycle modal ───────────────────────────────────────────────
+var _lcCG = '', _lcHC = '', _lcPauses = [];
+
+function openLifecycle(cg, hc, defaultExit){
+  _lcCG = cg; _lcHC = hc || '';
+  var s = getLC(cg, hc);
+  _lcPauses = (s.pauses||[]).map(function(p){return {from:p.from||'', to:p.to||'', label:p.label||'Vacation'};});
+  document.getElementById('lc-title').textContent = cg;
+  document.getElementById('lc-sub').textContent   = (hc||'—') + ' · joining, exit and pause dates';
+  document.getElementById('lc-start').value = s.start_date || '';
+  document.getElementById('lc-exit').value  = s.exit_date  || (defaultExit || '');
+  lcRenderPauses();
+  document.getElementById('lc-modal').classList.add('show');
+}
+function closeLifecycle(){ document.getElementById('lc-modal').classList.remove('show'); }
+
+function lcRenderPauses(){
+  var el = document.getElementById('lc-pause-list');
+  if(!el) return;
+  el.innerHTML = _lcPauses.length ? _lcPauses.map(function(p,i){
+    return '<div class="lc-pause-row">'
+      +'<input class="lc-inp" type="date" value="'+(p.from||'')+'" onchange="_lcPauses['+i+'].from=this.value;lcPreview()">'
+      +'<span style="color:var(--text3);font-size:11px">→</span>'
+      +'<input class="lc-inp" type="date" value="'+(p.to||'')+'" onchange="_lcPauses['+i+'].to=this.value;lcPreview()">'
+      +'<input class="lc-inp" type="text" style="max-width:100px" value="'+(p.label||'').replace(/"/g,'&quot;')+'" placeholder="Reason" onchange="_lcPauses['+i+'].label=this.value">'
+      +'<button class="lc-x" onclick="lcRemovePause('+i+')" title="Remove">✕</button>'
+      +'</div>';
+  }).join('') : '<div style="font-size:11px;color:var(--text3);padding:2px 0 6px">No pauses — caregiver counted for the whole period.</div>';
+  lcPreview();
+}
+function lcAddPause(){
+  var mo = anaMo+1;
+  _lcPauses.push({from: anaYr+'-'+pad(mo)+'-01', to: anaYr+'-'+pad(mo)+'-'+pad(new Date(anaYr,anaMo+1,0).getDate()), label:'Vacation'});
+  lcRenderPauses();
+}
+function lcRemovePause(i){ _lcPauses.splice(i,1); lcRenderPauses(); }
+
+function lcPreview(){
+  var el = document.getElementById('lc-preview'); if(!el) return;
+  var st = (document.getElementById('lc-start')||{}).value || '';
+  var ex = (document.getElementById('lc-exit')||{}).value || '';
+  var dim = new Date(anaYr, anaMo+1, 0).getDate();
+  var days = 0;
+  for(var d=1; d<=dim; d++){
+    var ds = anaYr+'-'+pad(anaMo+1)+'-'+pad(d);
+    if(ex && ds >= ex) continue;
+    if(st && ds <  st) continue;
+    if(_lcPauses.some(function(p){return p.from&&p.to&&ds>=p.from&&ds<=p.to;})) continue;
+    days++;
+  }
+  var maxH = Math.max(Math.round((288/dim)*days),0);
+  el.innerHTML = '<b style="color:var(--text2)">Effect on '+MONTHS[anaMo]+' '+anaYr+':</b> '
+    + days+' of '+dim+' days active → capacity <b style="color:var(--accent)">'+maxH+'h</b> instead of 288h.'
+    + (ex ? '<br>Hidden from the roster and the calendar tab from <b>'+ex+'</b> onward. Months before that are untouched.' : '')
+    + (st ? '<br>Not shown before <b>'+st+'</b>.' : '');
+}
+
+async function lcSave(){
+  var s  = getLC(_lcCG, _lcHC);
+  var st = (document.getElementById('lc-start')||{}).value || '';
+  var ex = (document.getElementById('lc-exit')||{}).value  || '';
+  if(st && ex && ex <= st){ alert('Exit date must be after the start date.'); return; }
+  if(st) s.start_date = st; else delete s.start_date;
+  if(ex) s.exit_date  = ex; else delete s.exit_date;
+  var clean = _lcPauses.filter(function(p){return p.from && p.to && p.to >= p.from;});
+  if(clean.length) s.pauses = clean; else delete s.pauses;
   saveCGSettings();
+  closeLifecycle();
+  lcRefreshViews();
+  try{ await persistWrite('cg_setting', _lcCG+'|'+_lcHC, s); }catch(e){ console.warn('lcSave persist', e); }
+}
+async function lcReset(){
+  if(!confirm('Clear start date, exit date and all pauses for '+_lcCG+'?')) return;
+  var s = getLC(_lcCG, _lcHC);
+  delete s.start_date; delete s.exit_date; delete s.pauses;
+  _lcPauses = [];
+  saveCGSettings();
+  closeLifecycle();
+  lcRefreshViews();
+  try{ await persistWrite('cg_setting', _lcCG+'|'+_lcHC, s); }catch(e){ console.warn('lcReset persist', e); }
+}
+function lcRefreshViews(){
+  invalidateRosterIndex();
+  if(typeof renderHCGrid==='function') renderHCGrid();
+  var rp = document.getElementById('page-roster');
+  if(rp && rp.classList.contains('active') && typeof renderRoster==='function') renderRoster();
+  var ap = document.getElementById('page-analytics');
+  if(ap && ap.classList.contains('active') && typeof renderAnalyticsData==='function') renderAnalyticsData();
+}
+
+// Quick offboard from a roster row: defaults to the 1st of the month on screen
+function offboardCG(cg, hc){
+  var y = rosterDate.getFullYear(), m = rosterDate.getMonth();
+  openLifecycle(cg, hc, getCGExit(cg,hc) || (y+'-'+pad(m+1)+'-01'));
+}
+
+// ── Card buttons (calendar tab) ───────────────────────────────────
+function lcCardBtn(cg, hc){
+  var ex = getCGExit(cg,hc), jn = getCGJoin(cg,hc), np = getCGPauses(cg,hc).length;
+  var txt, bg, bd, col;
+  if(ex){ txt='🚪 '+ex.slice(5); bg='rgba(248,81,73,.2)';  bd='var(--absent)'; col='var(--absent)'; }
+  else if(np){ txt='🛌 '+np+' pause'+(np>1?'s':''); bg='rgba(210,153,34,.18)'; bd='var(--sick)'; col='var(--sick)'; }
+  else if(jn){ txt='🟢 '+jn.slice(5); bg='rgba(63,185,80,.15)'; bd='var(--duty)'; col='var(--duty)'; }
+  else { txt='TIMELINE'; bg='rgba(110,118,129,.1)'; bd='var(--border)'; col='var(--text2)'; }
+  var c = String(cg).replace(/'/g,"\\'"), h = String(hc||'').replace(/'/g,"\\'");
+  return '<button onclick="event.stopPropagation();openLifecycle(\'' + c + '\',\'' + h + '\')" '
+    + 'title="Set joining date, exit date and pause periods" '
+    + 'style="position:absolute;top:8px;right:64px;background:'+bg+';border:1px solid '+bd+';border-radius:4px;padding:2px 6px;font-size:9px;font-weight:700;color:'+col+';cursor:pointer;font-family:Inter,sans-serif">'
+    + txt + '</button>';
+}
+function lcCardStartBtn(cg, hc){
+  var p = getCGProRata(cg,hc);
+  var jn = getCGJoin(cg,hc);
+  var c = String(cg).replace(/'/g,"\\'"), h = String(hc||'').replace(/'/g,"\\'");
+  var lbl = jn ? ('Start: '+jn) : 'Start: 1st';
+  if(!p.full) lbl += ' · '+p.days+'/'+p.span+'d';
+  return '<button onclick="event.stopPropagation();openLifecycle(\'' + c + '\',\'' + h + '\')" '
+    + 'title="Pro-rata basis used in Analytics" '
+    + 'style="position:absolute;bottom:8px;right:8px;background:rgba(47,129,247,.1);border:1px solid rgba(47,129,247,.3);border-radius:4px;padding:2px 6px;font-size:9px;color:var(--accent);cursor:pointer;font-family:Inter,sans-serif">📅 '
+    + lbl + '</button>';
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ROSTER TRUTH  —  one function every tab counts from
+// ══════════════════════════════════════════════════════════════════
+var _rdxCache = null, _woCache = null;
+function invalidateRosterIndex(){ _rdxCache = null; _woCache = null; }
+
+function rosterDayIndex(){
+  if(_rdxCache) return _rdxCache;
+  var m = {};
+  (allData||[]).forEach(function(r){
+    if(!r.caregiver || !r.date) return;
+    var k = r.caregiver+'|'+r.date;
+    if(!m[k]) m[k] = [];
+    m[k].push(r);
+  });
+  _rdxCache = m; return m;
+}
+function rosterWoLookup(){
+  if(_woCache) return _woCache;
+  var wo = {};
+  Object.entries(weekOffCfg||{}).forEach(function(e){
+    var cfgKey = e[0], woDays = e[1]||[];
+    var rec = (rawData||[]).find(function(r){return r.child_order_id===cfgKey||r.order_id===cfgKey||r.caregiver===cfgKey;});
+    if(rec) wo[rec.caregiver] = woDays;
+  });
+  _woCache = wo; return wo;
+}
+
+var _RD_DFULL = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+// What the roster shows for one caregiver on one day.
+// code: exited | pre | pause | duty | manual | sick | off | holiday | unpaid
+//       | cancelled | weekoff | empty
+function rosterDay(cg, hc, ds, idx, wo){
+  idx = idx || rosterDayIndex();
+  wo  = wo  || rosterWoLookup();
+  var state = cgDayState(cg, hc, ds);
+  if(state !== 'active') return {code: state};
+  var ov   = overrides[cg+'|'+ds];
+  var recs = idx[cg+'|'+ds] || [];
+  if(ov){
+    if(ov.type==='sick')      return {code:'sick',      ov:ov};
+    if(ov.type==='off')       return {code:'off',       ov:ov};
+    if(ov.type==='holiday')   return {code:'holiday',   ov:ov};
+    if(ov.type==='unpaid')    return {code:'unpaid',    ov:ov};
+    if(ov.type==='cancelled') return {code:'cancelled', ov:ov};
+    if(ov.type==='manual')    return {code:'manual',    ov:ov, rec:recs[0], recs:recs};
+    if(ov.type==='removed')   return {code:'empty'};
+  }
+  if(recs.length){
+    var ev = recs[0], st = (ev.status||'').toLowerCase().replace(/\s+/g,'');
+    if(st==='weekoff')                  return {code:'weekoff',   rec:ev, recs:recs};
+    if(st==='sick')                     return {code:'sick',      rec:ev, recs:recs};
+    if(st==='holiday')                  return {code:'holiday',   rec:ev, recs:recs};
+    if(st==='unpaid')                   return {code:'unpaid',    rec:ev, recs:recs};
+    if(st==='off')                      return {code:'off',       rec:ev, recs:recs};
+    if(st==='removed')                  return {code:'empty'};
+    if(st==='cancelled'||st==='absent') return {code:'cancelled', rec:ev, recs:recs};
+    return {code:'duty', rec:ev, recs:recs};
+  }
+  var woDays = wo[cg] || [], dow = new Date(ds+'T12:00:00').getDay();
+  if(woDays.some(function(wd){return wd && wd.startsWith(_RD_DFULL[dow].slice(0,3));})) return {code:'weekoff'};
+  return {code:'empty'};
+}
+
+// Month tally straight off the roster, for one caregiver
+function rosterMonthCounts(cg, hc, y, m, idx, wo){
+  idx = idx || rosterDayIndex();
+  wo  = wo  || rosterWoLookup();
+  var dim = new Date(y, m+1, 0).getDate();
+  var c = {duty:0, manual:0, dayoff:0, weekoff:0, sick:0, unpaid:0, holiday:0, cancelled:0, pause:0, worked:0};
+  for(var d=1; d<=dim; d++){
+    var ds = y+'-'+pad(m+1)+'-'+pad(d);
+    var r  = rosterDay(cg, hc, ds, idx, wo);
+    switch(r.code){
+      case 'duty':      c.duty++;   c.worked++; break;
+      case 'manual':    c.manual++; c.worked++; break;
+      case 'off':       c.dayoff++;    break;
+      case 'weekoff':   c.weekoff++;   break;
+      case 'sick':      c.sick++;      break;
+      case 'unpaid':    c.unpaid++;    break;
+      case 'holiday':   c.holiday++;   break;
+      case 'cancelled': c.cancelled++; break;
+      case 'pause':     c.pause++;     break;
+    }
+  }
+  c.off = c.dayoff + c.weekoff;
+  return c;
+}
+
+// ── Calendar tab month navigator ──────────────────────────────────
+var gridYr = new Date().getFullYear(), gridMo = new Date().getMonth();
+function gridShiftMo(d){
+  gridMo += d;
+  if(gridMo > 11){ gridMo = 0;  gridYr++; }
+  if(gridMo < 0) { gridMo = 11; gridYr--; }
   renderHCGrid();
-  var ap=document.getElementById('page-analytics');
-  if(ap&&ap.classList.contains('active')) renderAnalyticsData();
+}
+function gridToday(){
+  var n = new Date(); gridYr = n.getFullYear(); gridMo = n.getMonth();
+  renderHCGrid();
+}
+function syncGridLabel(){
+  var el = document.getElementById('grid-mo-label');
+  if(el) el.textContent = MONTHS[gridMo].slice(0,3)+' '+gridYr;
 }
 
 // ══════════════════════════════════════════════════════════════════
