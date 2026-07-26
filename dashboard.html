@@ -109,12 +109,13 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .stat-n.duty{color:var(--duty)}
 .stat-n.off{color:var(--off)}
 .stat-n.sick{color:var(--sick)}
+.stat-n.paid{color:#22b8d6}
 .stat-n.unpaid{color:#f97316}
 .stat-n.holiday{color:var(--accent)}
-.cg-stats.five{gap:3px}
-.cg-stats.five .cg-stat{padding:4px 1px}
-.cg-stats.five .stat-n{font-size:13px}
-.cg-stats.five .stat-l{font-size:7px;letter-spacing:0}
+.cg-stats.six{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.cg-stats.six .cg-stat{padding:4px 2px}
+.cg-stats.six .stat-n{font-size:14px}
+.cg-stats.six .stat-l{font-size:8px;letter-spacing:0}
 .cg-card.lc-exited{opacity:.45;filter:grayscale(.6)}
 .cg-lc-tag{position:absolute;top:8px;left:8px;font-size:8px;font-weight:700;padding:2px 6px;border-radius:8px;background:rgba(248,81,73,.15);color:var(--absent);border:1px solid rgba(248,81,73,.35)}
 .cg-view-btn{width:100%;padding:6px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;text-align:center}
@@ -304,6 +305,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .ov-type-btn.sick.selected{background:rgba(248,81,73,.15);color:var(--absent);border-color:var(--absent)}
 .ov-type-btn.off.selected{background:rgba(110,118,129,.15);color:var(--text2);border-color:var(--border2)}
 .ov-type-btn.holiday.selected{background:rgba(47,129,247,.15);color:var(--accent);border-color:var(--accent)}
+.ov-type-btn.paid.selected{background:rgba(8,145,178,.18);color:#0891b2;border-color:#0891b2}
 .ov-type-btn.unpaid.selected{background:rgba(210,153,34,.15);color:var(--sick);border-color:var(--sick)}
 .ov-type-btn.cancelled.selected{background:rgba(248,81,73,.1);color:var(--absent);border-color:var(--absent)}
 .ov-type-btn.removed.selected{background:rgba(110,118,129,.1);color:var(--text3);border-color:var(--border)}
@@ -317,6 +319,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .cal-ev.sick{background:rgba(248,81,73,.2);color:var(--absent);border-left:2px solid var(--absent)}
 .cal-ev.off-day{background:rgba(110,118,129,.2);color:var(--text2);border-left:2px solid var(--text2)}
 .cal-ev.holiday{background:rgba(47,129,247,.2);color:var(--accent);border-left:2px solid var(--accent)}
+.cal-ev.paid{background:rgba(8,145,178,.2);color:#22b8d6;border-left:2px solid #0891b2}
 .cal-ev.unpaid{background:rgba(210,153,34,.2);color:var(--sick);border-left:2px solid var(--sick)}
 .cal-ev.override-removed{background:rgba(110,118,129,.1);color:var(--text3);text-decoration:line-through;border-left:2px solid var(--border)}
 .working-days-bar{display:flex;align-items:center;gap:6px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
@@ -357,6 +360,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .status-off{color:var(--text2)}
 .status-sick{color:var(--absent)}
 .status-holiday{color:var(--accent)}
+.status-paid{color:#22b8d6}
 .status-unpaid{color:var(--sick)}
 .planner-off-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;background:rgba(110,118,129,.15);color:var(--text2)}
 .planner-duty-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;background:rgba(63,185,80,.12);color:var(--duty)}
@@ -456,9 +460,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .rd-exited{background:repeating-linear-gradient(45deg,rgba(248,81,73,.10),rgba(248,81,73,.10) 4px,transparent 4px,transparent 9px);cursor:default;}
 .rd-pre{background:repeating-linear-gradient(-45deg,rgba(110,118,129,.10),rgba(110,118,129,.10) 4px,transparent 4px,transparent 9px);cursor:default;}
 .rd-pause{background:#7c3aed;color:#fff;}
+.rd-paid{background:#0891b2;color:#fff;}
 .r-counts{display:flex;gap:2px;margin-top:3px;flex-wrap:wrap;}
 .rc{font-size:8px;font-weight:700;padding:0 4px;border-radius:6px;background:var(--bg3);border:1px solid var(--border);font-family:monospace;line-height:14px;}
-.rc.d{color:#f59e0b}.rc.o{color:#94a3b8}.rc.s{color:#ef4444}.rc.u{color:#f97316}.rc.h{color:var(--accent)}
+.rc.d{color:#f59e0b}.rc.o{color:#94a3b8}.rc.s{color:#ef4444}.rc.p{color:#22b8d6}.rc.u{color:#f97316}.rc.h{color:var(--accent)}
 .r-row-acts{display:flex;gap:4px;margin-top:3px;align-items:center;}
 .r-exit-btn{background:none;border:1px solid var(--border);color:var(--text3);border-radius:5px;font-size:9px;padding:0 5px;line-height:15px;cursor:pointer;font-family:'Inter',sans-serif;}
 .r-exit-btn:hover{border-color:var(--absent);color:var(--absent);}
@@ -485,6 +490,22 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .lc-save{background:var(--accent);color:#fff;}
 .lc-cancel{background:var(--bg3);color:var(--text2);border:1px solid var(--border);}
 .lc-reset{background:rgba(248,81,73,.12);color:var(--absent);border:1px solid rgba(248,81,73,.3);}
+/* ── Leave report ── */
+.lr-box{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;width:900px;max-width:97vw;max-height:90vh;overflow-y:auto;}
+.lr-bar{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px;}
+.lr-tbl{width:100%;border-collapse:collapse;font-size:11px;}
+.lr-tbl th{position:sticky;top:0;background:var(--bg3);padding:6px 8px;text-align:right;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text2);border-bottom:1px solid var(--border);white-space:nowrap;}
+.lr-tbl th:first-child{text-align:left;}
+.lr-tbl td{padding:5px 8px;text-align:right;border-bottom:1px solid var(--border);font-family:monospace;}
+.lr-tbl td:first-child{text-align:left;font-family:'Inter',sans-serif;}
+.lr-hc-row td{background:var(--accent);color:#fff;font-weight:700;font-family:'Inter',sans-serif;text-align:left;padding:6px 8px;}
+.lr-hc-row button{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:5px;font-size:10px;padding:2px 8px;cursor:pointer;margin-left:8px;font-family:'Inter',sans-serif;}
+.lr-tot-row td{background:var(--bg3);font-weight:700;}
+.lr-z{color:var(--text3);}
+.lr-btn{padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:'Inter',sans-serif;}
+.lr-btn.pri{background:var(--duty);color:#fff;}
+.lr-btn.sec{background:var(--bg3);color:var(--text2);border:1px solid var(--border);}
+.lr-wrap{max-height:52vh;overflow:auto;border:1px solid var(--border);border-radius:8px;}
 /* ── Calendar-tab month navigator ── */
 .gmn{display:flex;align-items:center;gap:6px;}
 .gmn-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text);width:26px;height:26px;border-radius:6px;cursor:pointer;font-size:15px;line-height:1;}
@@ -634,6 +655,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 
@@ -740,6 +762,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
      <button class="gmn-btn" onclick="gridShiftMo(1)">›</button>
      <button class="gmn-today" onclick="gridToday()">Today</button>
     </div>
+    <button class="add-cg-btn" onclick="openLeaveReport()" style="background:var(--duty)" title="Leave counter per caregiver — download as Excel, one sheet per homecare">📊 Leave Report</button>
     <button class="show-hidden-btn" id="show-hidden-btn" onclick="toggleShowHidden()"></button>
     <button class="add-cg-btn" onclick="openAddCGModal()">✦ Add Caregiver</button>
  </div>
@@ -935,6 +958,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <div class="ov-type-btn sick" onclick="selectOvType('sick',this)">🤒 Sick Leave</div>
  <div class="ov-type-btn off" onclick="selectOvType('off',this)">🌙 Day Off</div>
  <div class="ov-type-btn holiday" onclick="selectOvType('holiday',this)">🎉 Public Holiday</div>
+ <div class="ov-type-btn paid" onclick="selectOvType('paid',this)">🏖 Paid Leave</div>
  <div class="ov-type-btn unpaid" onclick="selectOvType('unpaid',this)">💸 Unpaid Leave</div>
  <div class="ov-type-btn cancelled" onclick="selectOvType('cancelled',this)">❌ Cancelled</div>
  <div class="ov-type-btn removed" onclick="selectOvType('removed',this)">🗑 Remove Booking</div>
@@ -958,6 +982,32 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  </div>
 </div>
 
+
+<!-- ── LEAVE REPORT MODAL ── -->
+<div class="lc-modal" id="lr-modal" onclick="if(event.target===this)closeLeaveReport()">
+ <div class="lr-box">
+  <div class="lc-h">📊 Leave counter per caregiver</div>
+  <div class="lc-sub">Counted from the roster — sick, paid, unpaid and public holiday, plus rest days and duty.</div>
+  <div class="lr-bar">
+   <div>
+    <div class="lc-lbl">Month</div>
+    <input class="lc-inp" type="month" id="lr-month" onchange="renderLeaveReport()" style="width:150px">
+   </div>
+   <div>
+    <div class="lc-lbl">Homecare</div>
+    <select class="lc-inp" id="lr-hc" onchange="renderLeaveReport()" style="width:200px"><option value="">All homecares</option></select>
+   </div>
+   <button class="lr-btn pri" onclick="downloadLeaveExcel('')">⬇ Excel — one sheet per homecare</button>
+   <button class="lr-btn sec" onclick="copyLeaveSummary()">📋 Copy summary</button>
+   <button class="lr-btn sec" onclick="closeLeaveReport()" style="margin-left:auto">✕ Close</button>
+  </div>
+  <div class="lr-wrap"><table class="lr-tbl" id="lr-table"></table></div>
+  <div style="font-size:10px;color:var(--text3);margin-top:8px;line-height:1.6">
+   <b>Total leave</b> = sick + paid + unpaid + public holiday. <b>Off</b> = day off + week off (rest days, not leave).
+   <b>Available days</b> reflects joining date, exit date and pauses. Use the ⬇ button on a homecare row to send that partner their own file.
+  </div>
+ </div>
+</div>
 
 <!-- ── CAREGIVER LIFECYCLE MODAL (join / exit / pauses) ── -->
 <div class="lc-modal" id="lc-modal" onclick="if(event.target===this)closeLifecycle()">
@@ -1017,6 +1067,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
    <option value="AUH">🕌 Abu Dhabi</option>
    <option value="RAK">🏔 RAK</option>
   </select>
+  <button class="roster-hc-filter" onclick="openLeaveReport()" style="cursor:pointer;font-weight:600" title="Leave counter per caregiver — download as Excel, one sheet per homecare">📊 Leave Report</button>
   <button class="roster-hc-filter" id="roster-exited-btn" onclick="toggleShowExited()" style="cursor:pointer" title="Caregivers who resigned / were removed are hidden from the month they left onward. Earlier months are untouched.">👤 Exited hidden</button>
   <span class="roster-legend">
    <span class="rl-dot" style="background:#f59e0b"></span>Duty
@@ -1025,6 +1076,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
    <span class="rl-dot" style="background:#ef4444"></span>Sick
    <span class="rl-dot" style="background:#475569"></span>Off/Holiday
    <span class="rl-dot" style="background:#ec4899"></span>B2B Order
+   <span class="rl-dot" style="background:#0891b2"></span>Paid Leave
    <span class="rl-dot" style="background:#7c3aed"></span>Pause / Vacation
    <span class="rl-dot" style="background:rgba(248,81,73,.35)"></span>Exited
   </span>
@@ -2090,8 +2142,8 @@ function renderHCGrid(){
       if(_gone){ window._gridExited++; if(!showHiddenMode) return; }
       // Counts are read straight off the roster for the selected month
       const _mc=rosterMonthCounts(cg,hc,yr,mo,_idx,_wo);
-      const duty=_mc.worked, off=_mc.off, sick=_mc.sick, unpaid=_mc.unpaid, holiday=_mc.holiday;
-      const _statTip=MONTHS[mo]+' '+yr+' · from roster — duty '+_mc.worked+' (incl '+_mc.manual+' manual) · day off '+_mc.dayoff+' · week off '+_mc.weekoff+' · sick '+_mc.sick+' · unpaid '+_mc.unpaid+' · public holiday '+_mc.holiday+(_mc.pause?' · paused '+_mc.pause:'');
+      const duty=_mc.worked, off=_mc.off, sick=_mc.sick, paid=_mc.paid, unpaid=_mc.unpaid, holiday=_mc.holiday;
+      const _statTip=MONTHS[mo]+' '+yr+' · from roster — duty '+_mc.worked+' (incl '+_mc.manual+' manual) · day off '+_mc.dayoff+' · week off '+_mc.weekoff+' · sick '+_mc.sick+' · paid leave '+_mc.paid+' · unpaid '+_mc.unpaid+' · public holiday '+_mc.holiday+' · total leave '+_mc.leave+(_mc.pause?' · paused '+_mc.pause:'');
       const cardId='cgc-'+cg.replace(/[^a-zA-Z0-9]/g,'_');
 
       html+=`<div class="cg-card${_gone?' lc-exited':''}" data-cg="${cg}" data-hc="${hc}" id="${cardId}" onclick="openCGCal('${cg.replace(/'/g,"\\'")}','${hc.replace(/'/g,"\\'")}',this)" style="--card-col:${col}">
@@ -2122,6 +2174,7 @@ function renderHCGrid(){
 .status-off{color:var(--text2)}
 .status-sick{color:var(--absent)}
 .status-holiday{color:var(--accent)}
+.status-paid{color:#22b8d6}
 .status-unpaid{color:var(--sick)}
 .planner-off-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;background:rgba(110,118,129,.15);color:var(--text2)}
 .planner-duty-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;background:rgba(63,185,80,.12);color:var(--duty)}
@@ -2161,10 +2214,11 @@ function renderHCGrid(){
           <div class="cg-meta-item"><div class="meta-label">Marital</div><div class="meta-value empty">—</div></div>
           <div class="cg-meta-item"><div class="meta-label">Score</div><div class="meta-value empty">—</div></div>
         </div>
-        <div class="cg-stats five" title="${_statTip}">
+        <div class="cg-stats six" title="${_statTip}">
           <div class="cg-stat"><div class="stat-n duty">${duty}</div><div class="stat-l">Duty</div></div>
           <div class="cg-stat"><div class="stat-n off">${off}</div><div class="stat-l">Off</div></div>
           <div class="cg-stat"><div class="stat-n sick">${sick}</div><div class="stat-l">Sick</div></div>
+          <div class="cg-stat"><div class="stat-n paid">${paid}</div><div class="stat-l">Paid</div></div>
           <div class="cg-stat"><div class="stat-n unpaid">${unpaid}</div><div class="stat-l">Unpaid</div></div>
           <div class="cg-stat"><div class="stat-n holiday">${holiday}</div><div class="stat-l">Holiday</div></div>
         </div>
@@ -2213,10 +2267,11 @@ function renderHCGrid(){
         +'<div class="cg-meta-item"><div class="meta-label">Marital</div><div class="meta-value empty">—</div></div>'
         +'<div class="cg-meta-item"><div class="meta-label">Score</div><div class="meta-value empty">—</div></div>'
         +'</div>'
-        +'<div class="cg-stats five">'
+        +'<div class="cg-stats six">'
         +'<div class="cg-stat"><div class="stat-n duty">'+mc2.worked+'</div><div class="stat-l">Duty</div></div>'
         +'<div class="cg-stat"><div class="stat-n off">'+mc2.off+'</div><div class="stat-l">Off</div></div>'
         +'<div class="cg-stat"><div class="stat-n sick">'+mc2.sick+'</div><div class="stat-l">Sick</div></div>'
+        +'<div class="cg-stat"><div class="stat-n paid">'+mc2.paid+'</div><div class="stat-l">Paid</div></div>'
         +'<div class="cg-stat"><div class="stat-n unpaid">'+mc2.unpaid+'</div><div class="stat-l">Unpaid</div></div>'
         +'<div class="cg-stat"><div class="stat-n holiday">'+mc2.holiday+'</div><div class="stat-l">Holiday</div></div>'
         +'</div>'
@@ -2291,8 +2346,8 @@ function renderCalendar(){
       if(_ov){
         if(_ov.type!=='manual'&&_ov.type!=='manual_list'){
           if(_ov.type==='removed') return; // don't show removed — just blank
-          var _cls={sick:'sick',off:'off-day',holiday:'holiday',unpaid:'unpaid',cancelled:'cancelled'}[_ov.type]||'absent';
-          var _lbl={sick:'Sick',off:'Day Off',holiday:'Holiday',unpaid:'Unpaid',cancelled:'Cancelled'}[_ov.type]||_ov.type;
+          var _cls={sick:'sick',off:'off-day',holiday:'holiday',paid:'paid',unpaid:'unpaid',cancelled:'cancelled'}[_ov.type]||'absent';
+          var _lbl={sick:'Sick',off:'Day Off',holiday:'Holiday',paid:'Paid Leave',unpaid:'Unpaid',cancelled:'Cancelled'}[_ov.type]||_ov.type;
           var _safe=encodeURIComponent(JSON.stringify({caregiver:activeCG,date:dateStr,status:_ov.type,override:_ov}));
           var _d1=document.createElement('div');_d1.className='cal-ev '+_cls;_d1.textContent=_lbl;_d1.onclick=(function(s){return function(){openEvModal(s);};})(_safe);evHtml+=_d1.outerHTML;
         }
@@ -2318,6 +2373,7 @@ function renderCalendar(){
           ovLbl = ov.type==='sick'?'🤒 Sick Leave':
                   ov.type==='off'?'🌙 Day Off':
                   ov.type==='holiday'?'🎉 Holiday':
+                  ov.type==='paid'?'🏖 Paid Leave':
                   ov.type==='unpaid'?'💸 Unpaid Leave':
                   ov.type==='cancelled'?'❌ Cancelled':
                   ov.type==='removed'?'🗑 Removed':'Override';
@@ -2325,7 +2381,7 @@ function renderCalendar(){
       }
       // Skip rendering removed entries — just show blank day
       if(ov && ov.type==='removed') { evHtml+=''; return; }
-      const cls2 = ov&&ov.type!=='manual'&&ov.type!=='manual_list' ? (ov.type==='sick'?'sick':ov.type==='off'?'off-day':ov.type==='holiday'?'holiday':ov.type==='unpaid'?'unpaid':'cancelled') :
+      const cls2 = ov&&ov.type!=='manual'&&ov.type!=='manual_list' ? (ov.type==='sick'?'sick':ov.type==='off'?'off-day':ov.type==='holiday'?'holiday':ov.type==='paid'?'paid':ov.type==='unpaid'?'unpaid':'cancelled') :
                    st==='duty'?'duty':st==='weekoff'?'weekoff':st==='sick'?'sick':st==='cancelled'?'cancelled':'absent';
       const safe=encodeURIComponent(JSON.stringify({...ev, override: ov}));
       let lbl='';
@@ -2446,7 +2502,7 @@ function checkAvail(){
       if(!k.startsWith(cg+'|'))return false;
       var ovDate=ov.date||k.split('|')[1];
       if(!ovDate||ovDate<from||ovDate>to)return false;
-      return['sick','off','holiday','unpaid'].includes(ov.type);
+      return['sick','off','holiday','paid','unpaid'].includes(ov.type);
     });
     if(!busy)busy=Object.entries(overrides).some(function(e){
       var k=e[0],ov=e[1];
@@ -2638,7 +2694,7 @@ function renderAnalyticsData(){
   function isActiveShift(r){
     if(r._rcode) return r._rcode==='duty'||r._rcode==='manual';
     var s=(r.status||'').toLowerCase().replace(/\s+/g,'');
-    return s!=='cancelled'&&s!=='removed'&&s!=='weekoff'&&s!=='sick'&&s!=='off'&&s!=='holiday'&&s!=='unpaid';
+    return s!=='cancelled'&&s!=='removed'&&s!=='weekoff'&&s!=='sick'&&s!=='off'&&s!=='holiday'&&s!=='paid'&&s!=='unpaid';
   }
   const hcMap={};
   data.filter(isActiveShift).forEach(r=>{if(r.homecare)hcMap[r.homecare]=(hcMap[r.homecare]||0)+1;});
@@ -4209,6 +4265,7 @@ function applyOverrides(){
     if(ov.type==='sick')          { r.status='Sick';      r.time_start=''; r.time_end=''; }
     else if(ov.type==='off')      { r.status='Week Off';  r.time_start=''; r.time_end=''; }
     else if(ov.type==='holiday')  { r.status='Holiday';   r.time_start=''; r.time_end=''; }
+    else if(ov.type==='paid')     { r.status='Paid';      r.time_start=''; r.time_end=''; }
     else if(ov.type==='unpaid')   { r.status='Unpaid';    r.time_start=''; r.time_end=''; }
     else if(ov.type==='cancelled'){ r.status='Cancelled'; r.time_start=''; r.time_end=''; }
     else if(ov.type==='removed')  { r.status='Removed';   r.time_start=''; r.time_end=''; }
@@ -4422,7 +4479,7 @@ function generatePlannerTable(){
 
   // Count overrides for extension
   const ovCount = Object.values(overrides).filter(function(o){
-    return o.caregiver===cg && ['sick','off','holiday','unpaid','cancelled','removed'].includes(o.type);
+    return o.caregiver===cg && ['sick','off','holiday','paid','unpaid','cancelled','removed'].includes(o.type);
   }).length;
 
   plannerData = [];
@@ -4435,7 +4492,7 @@ function generatePlannerTable(){
     const ovKey = cg+'|'+ds;
     const ov = overrides[ovKey];
     let status = isWeekOff ? 'Off' : 'Duty';
-    if(ov){ status = ov.type==='sick'?'Sick':ov.type==='off'?'Off':ov.type==='holiday'?'Holiday':ov.type==='unpaid'?'Unpaid':ov.type==='cancelled'?'Cancelled':ov.type==='removed'?'Removed':ov.type==='manual'?((ov.client_name||'Manual')+(ov.time_start&&ov.time_end?' · '+ov.time_start+' – '+ov.time_end:'')):status; }
+    if(ov){ status = ov.type==='sick'?'Sick':ov.type==='off'?'Off':ov.type==='holiday'?'Holiday':ov.type==='paid'?'Paid':ov.type==='unpaid'?'Unpaid':ov.type==='cancelled'?'Cancelled':ov.type==='removed'?'Removed':ov.type==='manual'?((ov.client_name||'Manual')+(ov.time_start&&ov.time_end?' · '+ov.time_start+' – '+ov.time_end:'')):status; }
     const row = {
       num: i+1, date: ds, day: dayName,
       timeSlot: rec.time_start&&rec.time_end ? formatTime(rec.time_start)+' – '+formatTime(rec.time_end) : formatTime(rec.time_start)||'—',
@@ -5362,6 +5419,7 @@ function renderRoster(){
           +'<span class="rc d" title="Duty '+_mc.duty+' + manual '+_mc.manual+'">D'+_mc.worked+'</span>'
           +'<span class="rc o" title="Day off '+_mc.dayoff+' + week off '+_mc.weekoff+'">O'+_mc.off+'</span>'
           +'<span class="rc s" title="Sick leave">S'+_mc.sick+'</span>'
+          +'<span class="rc p" title="Paid leave">P'+_mc.paid+'</span>'
           +'<span class="rc u" title="Unpaid leave">U'+_mc.unpaid+'</span>'
           +'<span class="rc h" title="Public holiday">H'+_mc.holiday+'</span>'
         +'</div>'
@@ -5401,6 +5459,8 @@ function renderRoster(){
           cls+=' rd-pause';inner=_lbl(_p.label||'Pause');tip=cgName+' — '+(_p.label||'Pause')+' '+(_p.from||'')+' → '+(_p.to||'');
         } else if(st.code==='sick'){
           cls+=' rd-sick';inner=_lbl('Sick');
+        } else if(st.code==='paid'){
+          cls+=' rd-paid';inner=_lbl('Paid');
         } else if(st.code==='off'||st.code==='holiday'||st.code==='unpaid'){
           cls+=' rd-off';inner=_lbl(st.code==='holiday'?'Holiday':st.code==='unpaid'?'Unpaid':'Off');
         } else if(st.code==='cancelled'){
@@ -5621,6 +5681,7 @@ function renderDailyOrders(){
       if(stLower==='sick'){badgeCls='badge-cancelled';badgeLbl='Sick';}
       else if(stLower==='holiday'){badgeCls='badge-other';badgeLbl='Holiday';}
       else if(stLower==='weekoff'){badgeCls='badge-other';badgeLbl='Week Off';}
+      else if(stLower==='paid'){badgeCls='badge-other';badgeLbl='Paid Leave';}
       else if(stLower==='unpaid'){badgeCls='badge-other';badgeLbl='Unpaid';}
       else{
         var rawLower=(rawSt||allSt).toLowerCase().replace(/\s+/g,'');
@@ -7398,7 +7459,7 @@ function rosterWoLookup(){
 var _RD_DFULL = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
 // What the roster shows for one caregiver on one day.
-// code: exited | pre | pause | duty | manual | sick | off | holiday | unpaid
+// code: exited | pre | pause | duty | manual | sick | off | holiday | paid | unpaid
 //       | cancelled | weekoff | empty
 function rosterDay(cg, hc, ds, idx, wo){
   idx = idx || rosterDayIndex();
@@ -7411,6 +7472,7 @@ function rosterDay(cg, hc, ds, idx, wo){
     if(ov.type==='sick')      return {code:'sick',      ov:ov};
     if(ov.type==='off')       return {code:'off',       ov:ov};
     if(ov.type==='holiday')   return {code:'holiday',   ov:ov};
+    if(ov.type==='paid')      return {code:'paid',      ov:ov};
     if(ov.type==='unpaid')    return {code:'unpaid',    ov:ov};
     if(ov.type==='cancelled') return {code:'cancelled', ov:ov};
     if(ov.type==='manual')    return {code:'manual',    ov:ov, rec:recs[0], recs:recs};
@@ -7421,6 +7483,7 @@ function rosterDay(cg, hc, ds, idx, wo){
     if(st==='weekoff')                  return {code:'weekoff',   rec:ev, recs:recs};
     if(st==='sick')                     return {code:'sick',      rec:ev, recs:recs};
     if(st==='holiday')                  return {code:'holiday',   rec:ev, recs:recs};
+    if(st==='paid')                     return {code:'paid',      rec:ev, recs:recs};
     if(st==='unpaid')                   return {code:'unpaid',    rec:ev, recs:recs};
     if(st==='off')                      return {code:'off',       rec:ev, recs:recs};
     if(st==='removed')                  return {code:'empty'};
@@ -7437,7 +7500,7 @@ function rosterMonthCounts(cg, hc, y, m, idx, wo){
   idx = idx || rosterDayIndex();
   wo  = wo  || rosterWoLookup();
   var dim = new Date(y, m+1, 0).getDate();
-  var c = {duty:0, manual:0, dayoff:0, weekoff:0, sick:0, unpaid:0, holiday:0, cancelled:0, pause:0, worked:0};
+  var c = {duty:0, manual:0, dayoff:0, weekoff:0, sick:0, paid:0, unpaid:0, holiday:0, cancelled:0, pause:0, worked:0};
   for(var d=1; d<=dim; d++){
     var ds = y+'-'+pad(m+1)+'-'+pad(d);
     var r  = rosterDay(cg, hc, ds, idx, wo);
@@ -7447,14 +7510,230 @@ function rosterMonthCounts(cg, hc, y, m, idx, wo){
       case 'off':       c.dayoff++;    break;
       case 'weekoff':   c.weekoff++;   break;
       case 'sick':      c.sick++;      break;
+      case 'paid':      c.paid++;      break;
       case 'unpaid':    c.unpaid++;    break;
       case 'holiday':   c.holiday++;   break;
       case 'cancelled': c.cancelled++; break;
       case 'pause':     c.pause++;     break;
     }
   }
-  c.off = c.dayoff + c.weekoff;
+  c.off   = c.dayoff + c.weekoff;              // rest days
+  c.leave = c.sick + c.paid + c.unpaid + c.holiday;  // leave days
   return c;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// LEAVE REPORT  —  per-caregiver leave counter, exportable per homecare
+// ══════════════════════════════════════════════════════════════════
+var _lrY = new Date().getFullYear(), _lrM = new Date().getMonth();
+
+function _lrSessionHCOk(hc){
+  if(!(_session && _session.role==='hc' && _session.homecare)) return true;
+  var a = String(hc||'').toLowerCase().replace(/[\s\u00a0]+/g,'');
+  var b = String(_session.homecare).toLowerCase().replace(/[\s\u00a0]+/g,'');
+  return a === b;
+}
+
+// One row per caregiver for the given month
+function collectLeaveRows(y, m, hcFilter){
+  invalidateRosterIndex();
+  var idx = rosterDayIndex(), wo = rosterWoLookup();
+  var dim = new Date(y, m+1, 0).getDate();
+  var seen = {}, out = [];
+  var add = function(name, hc){
+    if(!name) return;
+    hc = hc || 'Other';
+    var k = name+'|'+hc;
+    if(seen[k]) return;
+    seen[k] = 1;
+    if(!_lrSessionHCOk(hc)) return;
+    if(hcFilter && hc !== hcFilter) return;
+    if([...hiddenCGs].some(function(hk){return hk.toLowerCase() === k.toLowerCase();})) return;
+    if(!cgVisibleInMonth(name, hc, y, m)) return;          // left before this month
+    var c = rosterMonthCounts(name, hc, y, m, idx, wo);
+    out.push({
+      name: name, homecare: hc,
+      city: CITY_LABELS[getCGCity(name,hc)] ? getCGCity(name,hc) : '',
+      joined: getCGJoin(name,hc) || '',
+      exit: getCGExit(name,hc) || '',
+      days: dim,
+      available: getCGActiveDays(name, hc, y, m),
+      duty: c.worked, manual: c.manual,
+      dayoff: c.dayoff, weekoff: c.weekoff, off: c.off,
+      sick: c.sick, paid: c.paid, unpaid: c.unpaid, holiday: c.holiday,
+      leave: c.leave, cancelled: c.cancelled, pause: c.pause
+    });
+  };
+  (rawData||[]).forEach(function(r){ add(r.caregiver, r.homecare); });
+  Object.values(manualCGs||{}).forEach(function(v){ add(v.name, v.homecare); });
+  out.sort(function(a,b){ return a.homecare===b.homecare ? a.name.localeCompare(b.name) : a.homecare.localeCompare(b.homecare); });
+  return out;
+}
+
+function openLeaveReport(){
+  var d = document.getElementById('page-roster');
+  // default to the month you were last looking at
+  if(d && d.classList.contains('active') && rosterDate){ _lrY = rosterDate.getFullYear(); _lrM = rosterDate.getMonth(); }
+  else { _lrY = gridYr; _lrM = gridMo; }
+  var mi = document.getElementById('lr-month');
+  if(mi) mi.value = _lrY+'-'+pad(_lrM+1);
+  var sel = document.getElementById('lr-hc');
+  if(sel){
+    var cur = sel.value;
+    var hcs = [...new Set([].concat(
+      (rawData||[]).map(function(r){return r.homecare;}),
+      Object.values(manualCGs||{}).map(function(c){return c.homecare;})
+    ))].filter(Boolean).filter(_lrSessionHCOk).sort();
+    sel.innerHTML = '<option value="">All homecares</option>';
+    hcs.forEach(function(h){ sel.innerHTML += '<option value="'+h+'"'+(h===cur?' selected':'')+'>'+h+'</option>'; });
+    if(_session && _session.role==='hc' && hcs.length===1){ sel.value = hcs[0]; sel.disabled = true; }
+  }
+  renderLeaveReport();
+  document.getElementById('lr-modal').classList.add('show');
+}
+function closeLeaveReport(){ document.getElementById('lr-modal').classList.remove('show'); }
+
+function _lrRead(){
+  var mi = document.getElementById('lr-month');
+  if(mi && mi.value && /^\d{4}-\d{2}$/.test(mi.value)){
+    _lrY = parseInt(mi.value.slice(0,4),10);
+    _lrM = parseInt(mi.value.slice(5,7),10) - 1;
+  }
+  return { y:_lrY, m:_lrM, hc:(document.getElementById('lr-hc')||{}).value || '' };
+}
+
+function renderLeaveReport(){
+  var q = _lrRead();
+  var rows = collectLeaveRows(q.y, q.m, q.hc);
+  var tbl = document.getElementById('lr-table');
+  if(!tbl) return;
+  var head = '<thead><tr><th>Caregiver ('+MONTHS[q.m]+' '+q.y+')</th><th>Duty</th><th>Off</th><th>Sick</th>'
+    + '<th>Paid</th><th>Unpaid</th><th>Holiday</th><th>Total leave</th><th>Avail. days</th></tr></thead>';
+  if(!rows.length){ tbl.innerHTML = head+'<tbody><tr><td colspan="9" style="text-align:center;color:var(--text2);padding:16px">No caregivers for this month</td></tr></tbody>'; return; }
+  var z = function(n){ return n ? String(n) : '<span class="lr-z">0</span>'; };
+  var body = '', curHC = null, t = null;
+  var flush = function(){
+    if(!t) return;
+    body += '<tr class="lr-tot-row"><td>'+t.n+' caregivers</td><td>'+t.duty+'</td><td>'+t.off+'</td><td>'+t.sick+'</td>'
+         +  '<td>'+t.paid+'</td><td>'+t.unpaid+'</td><td>'+t.holiday+'</td><td>'+t.leave+'</td><td>'+t.available+'</td></tr>';
+  };
+  rows.forEach(function(r){
+    if(r.homecare !== curHC){
+      flush();
+      curHC = r.homecare; t = {n:0,duty:0,off:0,sick:0,paid:0,unpaid:0,holiday:0,leave:0,available:0};
+      var safe = curHC.replace(/'/g,"&#39;").replace(/"/g,'&quot;');
+      body += '<tr class="lr-hc-row"><td colspan="9">'+curHC
+           +  '<button onclick="downloadLeaveExcel(\''+safe+'\')" title="Download only this homecare">⬇ Excel</button></td></tr>';
+    }
+    t.n++; ['duty','off','sick','paid','unpaid','holiday','leave','available'].forEach(function(k){ t[k]+=r[k]; });
+    body += '<tr><td>'+r.name+(r.exit?' <span style="color:var(--absent);font-size:9px">🚪 '+r.exit+'</span>':'')
+         +  (r.joined?' <span style="color:var(--duty);font-size:9px">▶ '+r.joined+'</span>':'')+'</td>'
+         +  '<td>'+z(r.duty)+'</td><td>'+z(r.off)+'</td><td>'+z(r.sick)+'</td><td>'+z(r.paid)+'</td>'
+         +  '<td>'+z(r.unpaid)+'</td><td>'+z(r.holiday)+'</td><td><b>'+z(r.leave)+'</b></td><td>'+r.available+'/'+r.days+'</td></tr>';
+  });
+  flush();
+  tbl.innerHTML = head+'<tbody>'+body+'</tbody>';
+}
+
+var LR_HEAD = ['Caregiver','Homecare','City','Joined','Exit date','Days in month','Available days',
+               'Duty (worked)','of which manual','Day off','Week off','Sick leave','Paid leave',
+               'Unpaid leave','Public holiday','Total leave','Cancelled','Pause'];
+function _lrAOA(rows){
+  return [LR_HEAD].concat(rows.map(function(r){
+    return [r.name, r.homecare, r.city, r.joined, r.exit, r.days, r.available,
+            r.duty, r.manual, r.dayoff, r.weekoff, r.sick, r.paid, r.unpaid, r.holiday, r.leave, r.cancelled, r.pause];
+  }));
+}
+function _lrTotals(rows){
+  var t = {duty:0,manual:0,dayoff:0,weekoff:0,sick:0,paid:0,unpaid:0,holiday:0,leave:0,cancelled:0,pause:0,available:0};
+  rows.forEach(function(r){ Object.keys(t).forEach(function(k){ t[k]+=r[k]; }); });
+  return t;
+}
+function _lrSheetName(name, used){
+  var n = String(name||'Sheet').replace(/[\\\/\?\*\[\]:]/g,'-').slice(0,28) || 'Sheet';
+  var base = n, i = 2;
+  while(used[n]){ n = (base.slice(0,26)+'_'+i); i++; }
+  used[n] = 1; return n;
+}
+function _lrDownload(blob, fname){
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = fname;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+}
+
+// scope = '' → every homecare on its own sheet;  scope = 'Shifa...' → that partner only
+function downloadLeaveExcel(scope){
+  var q = _lrRead();
+  var hcWanted = scope || q.hc || '';
+  var rows = collectLeaveRows(q.y, q.m, hcWanted);
+  if(!rows.length){ alert('Nothing to export for this month.'); return; }
+  var per = MONTHS[q.m]+'_'+q.y;
+  var tag = hcWanted ? String(hcWanted).replace(/[^A-Za-z0-9]+/g,'_') : 'All_Homecares';
+  var fname = 'Valeo_Leave_'+tag+'_'+per;
+
+  if(typeof XLSX === 'undefined'){          // CDN blocked → CSV fallback
+    var csv = _lrAOA(rows).map(function(r){
+      return r.map(function(c){ var v=String(c==null?'':c); return /[",\n]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v; }).join(',');
+    }).join('\r\n');
+    _lrDownload(new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8'}), fname+'.csv');
+    return;
+  }
+
+  var wb = XLSX.utils.book_new(), used = {};
+  var hcs = [...new Set(rows.map(function(r){return r.homecare;}))].sort();
+
+  // Summary sheet first (skip when exporting a single partner)
+  if(hcs.length > 1){
+    var sum = [['Valeo Health — Leave summary', MONTHS[q.m]+' '+q.y], [],
+               ['Homecare','Caregivers','Duty','Day off','Week off','Sick','Paid','Unpaid','Holiday','Total leave']];
+    hcs.forEach(function(h){
+      var hr = rows.filter(function(r){return r.homecare===h;}), t = _lrTotals(hr);
+      sum.push([h, hr.length, t.duty, t.dayoff, t.weekoff, t.sick, t.paid, t.unpaid, t.holiday, t.leave]);
+    });
+    var g = _lrTotals(rows);
+    sum.push(['TOTAL', rows.length, g.duty, g.dayoff, g.weekoff, g.sick, g.paid, g.unpaid, g.holiday, g.leave]);
+    var ws0 = XLSX.utils.aoa_to_sheet(sum);
+    ws0['!cols'] = [{wch:30},{wch:11},{wch:8},{wch:9},{wch:9},{wch:8},{wch:8},{wch:9},{wch:9},{wch:11}];
+    XLSX.utils.book_append_sheet(wb, ws0, _lrSheetName('Summary', used));
+  }
+
+  hcs.forEach(function(h){
+    var hr = rows.filter(function(r){return r.homecare===h;});
+    var aoa = _lrAOA(hr);
+    var t = _lrTotals(hr);
+    aoa.push([]);
+    aoa.push(['TOTAL ('+hr.length+' caregiver'+(hr.length===1?'':'s')+')','','','','', '', t.available, t.duty, t.manual, t.dayoff,
+              t.weekoff, t.sick, t.paid, t.unpaid, t.holiday, t.leave, t.cancelled, t.pause]);
+    var ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols'] = [{wch:26},{wch:26},{wch:7},{wch:11},{wch:11},{wch:13},{wch:14},{wch:13},{wch:15},
+                   {wch:9},{wch:9},{wch:11},{wch:11},{wch:13},{wch:14},{wch:11},{wch:10},{wch:8}];
+    XLSX.utils.book_append_sheet(wb, ws, _lrSheetName(h, used));
+  });
+
+  XLSX.writeFile(wb, fname+'.xlsx');
+}
+
+// Plain-text roll-up, handy for sending a partner their numbers on WhatsApp
+function copyLeaveSummary(){
+  var q = _lrRead();
+  var rows = collectLeaveRows(q.y, q.m, q.hc);
+  if(!rows.length){ alert('Nothing to summarise for this month.'); return; }
+  var lines = ['Valeo Health — Leave summary · '+MONTHS[q.m]+' '+q.y], curHC = null;
+  rows.forEach(function(r){
+    if(r.homecare !== curHC){ curHC = r.homecare; lines.push('', '*'+curHC+'*'); }
+    var bits = [];
+    if(r.sick)    bits.push('Sick '+r.sick);
+    if(r.paid)    bits.push('Paid '+r.paid);
+    if(r.unpaid)  bits.push('Unpaid '+r.unpaid);
+    if(r.holiday) bits.push('Holiday '+r.holiday);
+    lines.push('• '+r.name+' — Duty '+r.duty+(bits.length?' | '+bits.join(' | ')+' (leave '+r.leave+')':' | no leave'));
+  });
+  var txt = lines.join('\n');
+  var done = function(){ alert('Summary copied — paste it straight into WhatsApp or email.'); };
+  if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(done, function(){ window.prompt('Copy the summary:', txt); }); }
+  else { window.prompt('Copy the summary:', txt); }
 }
 
 // ── Calendar tab month navigator ──────────────────────────────────
