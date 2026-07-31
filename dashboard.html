@@ -1785,7 +1785,24 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 
 <script>
 // ── CONFIG ──────────────────────────────────────────────────────
-const N8N_DATA_URL      = 'https://feelvaleo.app.n8n.cloud/webhook/d0f62c8a-6d05-4834-885e-6ca9bb589d9a';
+
+// ── Valeo API helper ────────────────────────────────────────────────────────
+// n8n could return HTTP 200 with an empty body (quota exhaustion), which made
+// res.json() throw "Unexpected end of JSON input" and res.ok useless as a guard.
+// Treat an empty body as a failure, and surface the server's error message.
+const VALEO_API_BASE = 'https://dashboard-api-alpha.vercel.app';
+async function fetchJSON(url, opts){
+  const res  = await fetch(url, opts);
+  const text = await res.text();
+  if(!text)    throw new Error('Data service returned an empty response (HTTP '+res.status+')');
+  let parsed;
+  try{ parsed = JSON.parse(text); }
+  catch(e){ throw new Error('Data service returned invalid JSON (HTTP '+res.status+')'); }
+  if(!res.ok)  throw new Error(parsed && parsed.message ? parsed.message : 'HTTP '+res.status);
+  return parsed;
+}
+
+const N8N_DATA_URL = VALEO_API_BASE + '/api/metabase';
 // Overrides stored directly in Firebase Firestore (overrides-read/write not used)
 // ────────────────────────────────────────────────────────────────
 
@@ -6269,9 +6286,7 @@ async function loadLeads(force){
   var wrap=document.getElementById('leads-table-wrap');
   if(wrap)wrap.innerHTML='<div style="padding:40px;text-align:center;color:var(--text2)">Loading leads...</div>';
   try{
-    var res=await fetch('https://feelvaleo.app.n8n.cloud/webhook/valeo-leads');
-    if(!res.ok)throw new Error('HTTP '+res.status);
-    var json=await res.json();
+    var json=await fetchJSON(VALEO_API_BASE + '/api/leads');
     _leads=parseLeadsJSON(json);
     await loadLeadsOverrides();populateLeadFilters();renderLeadsKPIs();renderLeadsTable();
   }catch(e){
