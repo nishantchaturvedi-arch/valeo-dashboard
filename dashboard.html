@@ -1981,8 +1981,14 @@ function expandOrders(orders){
 async function loadData(force=false){
   setSyncState('loading','Fetching...');
   try{
-    console.log('[loadData] fetching from:', N8N_DATA_URL);
-    const res=await fetch(N8N_DATA_URL);
+    // `force` is the Sync button. Send ?fresh=<ts> so the CDN sees a new cache key and
+    // the API answers no-store; otherwise Sync can be served a cached response and new
+    // orders look like they are missing.
+    const url = force
+      ? N8N_DATA_URL + (N8N_DATA_URL.includes('?') ? '&' : '?') + 'fresh=' + Date.now()
+      : N8N_DATA_URL;
+    console.log('[loadData] fetching from:', url, 'force =', force);
+    const res=await fetch(url, force ? {cache:'no-store'} : undefined);
     console.log('[loadData] HTTP status:', res.status, res.statusText);
     const text=await res.text();
     console.log('[loadData] response length:', text.length, 'chars');
@@ -6329,7 +6335,8 @@ async function loadLeads(force){
   var wrap=document.getElementById('leads-table-wrap');
   if(wrap)wrap.innerHTML='<div style="padding:40px;text-align:center;color:var(--text2)">Loading leads...</div>';
   try{
-    var json=await fetchJSON(VALEO_API_BASE + '/api/leads');
+    var leadsUrl=VALEO_API_BASE+'/api/leads'+(force?('?fresh='+Date.now()):'');
+    var json=await fetchJSON(leadsUrl, force?{cache:'no-store'}:undefined);
     _leads=parseLeadsJSON(json);
     await loadLeadsOverrides();populateLeadFilters();renderLeadsKPIs();renderLeadsTable();
   }catch(e){
