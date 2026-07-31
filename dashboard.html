@@ -2278,34 +2278,28 @@ function renderHCGrid(){
 </style>
         <div class="cg-avail-tag">✓ Available</div>
         <div class="cg-unavail-tag">✗ Unavailable</div>
+        <div class="cg-actions">${lcCardBtn(cg,hc)}<button class="cg-excl-btn" onclick="event.stopPropagation();toggleExclusive('${cg}','${hc}')" title="${isExclusiveCG(cg,hc)?'Remove exclusive':'Mark as exclusive'}" style="background:${isExclusiveCG(cg,hc)?'rgba(245,158,11,.25)':'rgba(110,118,129,.15)'};border:1px solid ${isExclusiveCG(cg,hc)?'#f59e0b':'var(--border)'}">${isExclusiveCG(cg,hc)?'👑 EX':'EX?'}</button><button class="cg-remove-btn" title="Remove caregiver" onclick="event.stopPropagation();removeCGByKey(this)">✕</button></div>
         <div class="cg-top">
           <div class="cg-avatar" style="background:${col}">${initials(cg)}</div>
           <div>
-            <div class="cg-name">${cg}</div>
-            <div class="cg-hc-label">${hc}</div>
+            <div class="cg-name" title="${cg}">${cg}</div>
             ${cxBadge(cg,hc,false)}
           </div>
         </div>
         <div class="cg-meta">
           <div class="cg-meta-item"><div class="meta-label">Expertise</div><div class="meta-value ${cgInfo(cg).expertise!=='—'?'':'empty'}">${cgInfo(cg).expertise||'—'}</div></div>
           <div class="cg-meta-item"><div class="meta-label">Age</div><div class="meta-value ${cgInfo(cg).age!=='—'?'':'empty'}">${cgInfo(cg).age||'—'}</div></div>
-          <div class="cg-meta-item"><div class="meta-label">Marital</div><div class="meta-value empty">—</div></div>
-          <div class="cg-meta-item"><div class="meta-label">Score</div><div class="meta-value empty">—</div></div>
         </div>
         <div class="cg-stats six" title="${_statTip}">
-          <div class="cg-stat"><div class="stat-n duty">${duty}</div><div class="stat-l">Duty</div></div>
-          <div class="cg-stat"><div class="stat-n off">${off}</div><div class="stat-l">Off</div></div>
-          <div class="cg-stat"><div class="stat-n sick">${sick}</div><div class="stat-l">Sick</div></div>
-          <div class="cg-stat"><div class="stat-n paid">${paid}</div><div class="stat-l">Paid</div></div>
-          <div class="cg-stat"><div class="stat-n unpaid">${unpaid}</div><div class="stat-l">Unpaid</div></div>
-          <div class="cg-stat"><div class="stat-n holiday">${holiday}</div><div class="stat-l">Holiday</div></div>
+          <div class="cg-stat"><div class="stat-n duty${duty?"":" is-zero"}">${duty}</div><div class="stat-l">Duty</div></div>
+          <div class="cg-stat"><div class="stat-n off${off?"":" is-zero"}">${off}</div><div class="stat-l">Off</div></div>
+          <div class="cg-stat"><div class="stat-n sick${sick?"":" is-zero"}">${sick}</div><div class="stat-l">Sick</div></div>
+          <div class="cg-stat"><div class="stat-n paid${paid?"":" is-zero"}">${paid}</div><div class="stat-l">Paid</div></div>
+          <div class="cg-stat"><div class="stat-n unpaid${unpaid?"":" is-zero"}">${unpaid}</div><div class="stat-l">Unpaid</div></div>
+          <div class="cg-stat"><div class="stat-n holiday${holiday?"":" is-zero"}">${holiday}</div><div class="stat-l">Holiday</div></div>
         </div>
         ${renderCGCardExtra(cg, hc)}
-        <button class="cg-remove-btn" onclick="event.stopPropagation();removeCGByKey(this)">✕</button>
-        <button class="cg-excl-btn" onclick="event.stopPropagation();toggleExclusive('${cg}','${hc}')" title="${isExclusiveCG(cg,hc)?'Remove exclusive':'Mark as exclusive'}" style="position:absolute;top:8px;right:32px;background:${isExclusiveCG(cg,hc)?'rgba(245,158,11,.25)':'rgba(110,118,129,.15)'};border:1px solid ${isExclusiveCG(cg,hc)?'#f59e0b':'var(--border)'};border-radius:4px;padding:2px 6px;font-size:9px;font-weight:700;color:${isExclusiveCG(cg,hc)?'#f59e0b':'var(--text2)'};cursor:pointer;font-family:Inter,sans-serif">${isExclusiveCG(cg,hc)?'👑 EX':'EX?'}</button>
-        ${lcCardBtn(cg,hc)}
-        <div class="cg-view-btn">View Calendar →</div>
-        ${lcCardStartBtn(cg,hc)}
+        <div class="cg-cta-row"><div class="cg-view-btn">View Calendar →</div>${lcCardStartBtn(cg,hc)}</div>
       </div>`;
     });
     html+='</div></div>';
@@ -2333,17 +2327,15 @@ function renderHCGrid(){
       const mc2=rosterMonthCounts(cg,hc,yr,mo,_idx,_wo);
       html+='<div class="cg-card" data-cg="'+cg.replace(/"/g,'"')+'" data-hc="'+hc.replace(/"/g,'"')+'" id="'+cardId2+'" onclick="openCGCalFromDataset(this)" style="--card-col:'+col+'">'
         +'<style>#'+cardId2+'::before{background:'+col+'}</style>'
-        +'<button class="cg-remove-btn" onclick="event.stopPropagation();removeCGByKey(this)">✕</button>'
+        +'<div class="cg-actions">'+lcCardBtn(cg,hc)+'<button class="cg-remove-btn" title="Remove caregiver" onclick="event.stopPropagation();removeCGByKey(this)">✕</button></div>'
         +'<div class="cg-avail-tag">✓ Available</div>'
         +'<div class="cg-unavail-tag">✗ Unavailable</div>'
         +'<div class="cg-top"><div class="cg-avatar" style="background:'+col+'">'+initials(cg)+'</div>'
         +'<div><div class="cg-name">'+cg+'<span class="manual-badge">manual</span></div>'
-        +'<div class="cg-hc-label">'+hc+'</div>'+cxBadge(cg,hc,false)+'</div></div>'
+        +cxBadge(cg,hc,false)+'</div></div>'
         +'<div class="cg-meta">'
         +'<div class="cg-meta-item"><div class="meta-label">Expertise</div><div class="meta-value">'+m.expertise+'</div></div>'
         +'<div class="cg-meta-item"><div class="meta-label">Age</div><div class="meta-value">'+m.age+'</div></div>'
-        +'<div class="cg-meta-item"><div class="meta-label">Marital</div><div class="meta-value empty">—</div></div>'
-        +'<div class="cg-meta-item"><div class="meta-label">Score</div><div class="meta-value empty">—</div></div>'
         +'</div>'
         +'<div class="cg-stats six">'
         +'<div class="cg-stat"><div class="stat-n duty">'+mc2.worked+'</div><div class="stat-l">Duty</div></div>'
@@ -2353,9 +2345,7 @@ function renderHCGrid(){
         +'<div class="cg-stat"><div class="stat-n unpaid">'+mc2.unpaid+'</div><div class="stat-l">Unpaid</div></div>'
         +'<div class="cg-stat"><div class="stat-n holiday">'+mc2.holiday+'</div><div class="stat-l">Holiday</div></div>'
         +'</div>'
-        +lcCardBtn(cg,hc)
-        +lcCardStartBtn(cg,hc)
-        +'<div class="cg-view-btn">View Calendar →</div>'
+        +'<div class="cg-cta-row"><div class="cg-view-btn">View Calendar →</div>'+lcCardStartBtn(cg,hc)+'</div>'
         +'</div>';
     });
     html+='</div></div>';
@@ -5365,6 +5355,59 @@ tr.week-sep:hover td{background:#f7f8fa}
   <span class="legend-item"><span class="legend-dot" style="background:#fdf4ff;border:1px solid #e9d5ff"></span>Cancelled</span>
 </div>
 <div class="footer">Generated by Valeo Health  ·  ${clientName}</div>
+
+<style id="cg-declutter">
+/* ── Caregiver card declutter ──────────────────────────────────────────────
+   The top badges and the Start badge used to be absolutely positioned over
+   content that had no space reserved for them, so long names and the
+   View Calendar button were overlapped. They are now in normal flow. */
+
+.cg-actions{display:flex;justify-content:flex-end;align-items:center;gap:4px;
+  min-height:18px;margin-bottom:6px}
+
+/* Shared chrome for the small card badges — was repeated inline three times. */
+.cg-actions > button,.cg-start-btn{border-radius:4px;padding:2px 6px;font-size:9px;
+  font-weight:700;line-height:1.4;cursor:pointer;font-family:'Inter',sans-serif;
+  white-space:nowrap;background:rgba(110,118,129,.12);border:1px solid var(--border);
+  color:var(--text2);transition:border-color .15s,color .15s}
+.cg-actions > button:hover,.cg-start-btn:hover{border-color:var(--accent);color:var(--accent)}
+.cg-actions > button:focus-visible,.cg-start-btn:focus-visible{outline:2px solid var(--accent);
+  outline-offset:1px}
+
+/* Destructive, and rarely wanted — reveal on hover or keyboard focus. */
+.cg-remove-btn{position:static!important;width:auto;height:auto;opacity:0;
+  transition:opacity .15s}
+.cg-card:hover .cg-remove-btn,.cg-remove-btn:focus-visible{opacity:1}
+@media (hover:none){.cg-remove-btn{opacity:.55}}
+
+/* Long names now wrap in the space that's left instead of sliding under badges. */
+.cg-top{align-items:flex-start}
+.cg-name{overflow-wrap:anywhere}
+
+/* Footer: the CTA and the pro-rata badge share a row. */
+.cg-cta-row{display:flex;align-items:center;gap:6px;margin-top:2px}
+.cg-cta-row .cg-view-btn{flex:1;min-width:0}
+.cg-start-btn{flex-shrink:0;background:rgba(47,129,247,.1);
+  border-color:rgba(47,129,247,.3);color:var(--accent);font-weight:600}
+
+/* Metadata is down to the two fields that actually carry data. */
+.cg-meta{margin-bottom:8px}
+
+/* Restore is appended by JS at bottom-right, where it already sat on top of the
+   View Calendar button. Put it in flow, below the footer row. */
+.cg-restore-btn{position:static!important;width:100%;margin-top:6px}
+
+/* Let the non-zero counts read first. */
+.cg-stats .stat-n.is-zero{color:var(--text3);font-weight:600}
+
+/* Nav labels used to wrap to two lines; keep one scrollable row instead. */
+.main-tabs{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:thin}
+.main-tab{white-space:nowrap;flex-shrink:0}
+
+@media (prefers-reduced-motion:reduce){
+  .cg-remove-btn,.cg-actions > button,.cg-start-btn{transition:none}
+}
+</style>
 </body>
 </html>`;
 }
@@ -7869,22 +7912,24 @@ function lcCardBtn(cg, hc){
   if(ex){ txt='🚪 '+ex.slice(5); bg='rgba(248,81,73,.2)';  bd='var(--absent)'; col='var(--absent)'; }
   else if(np){ txt='🛌 '+np+' pause'+(np>1?'s':''); bg='rgba(210,153,34,.18)'; bd='var(--sick)'; col='var(--sick)'; }
   else if(jn){ txt='🟢 '+jn.slice(5); bg='rgba(63,185,80,.15)'; bd='var(--duty)'; col='var(--duty)'; }
-  else { txt='TIMELINE'; bg='rgba(110,118,129,.1)'; bd='var(--border)'; col='var(--text2)'; }
+  else { txt='🕘'; bg='rgba(110,118,129,.1)'; bd='var(--border)'; col='var(--text2)'; }
   var c = String(cg).replace(/'/g,"\\'"), h = String(hc||'').replace(/'/g,"\\'");
   return '<button onclick="event.stopPropagation();openLifecycle(\'' + c + '\',\'' + h + '\')" '
     + 'title="Set joining date, exit date and pause periods" '
-    + 'style="position:absolute;top:8px;right:64px;background:'+bg+';border:1px solid '+bd+';border-radius:4px;padding:2px 6px;font-size:9px;font-weight:700;color:'+col+';cursor:pointer;font-family:Inter,sans-serif">'
+    + 'class="cg-lc-btn" style="background:'+bg+';border:1px solid '+bd+';color:'+col+'">'
     + txt + '</button>';
 }
 function lcCardStartBtn(cg, hc){
   var p = getCGProRata(cg,hc);
   var jn = getCGJoin(cg,hc);
   var c = String(cg).replace(/'/g,"\\'"), h = String(hc||'').replace(/'/g,"\\'");
+  // Nothing to say when the caregiver ran the whole month with no explicit join date.
+  if(!jn && p.full) return '';
   var lbl = jn ? ('Start: '+jn) : 'Start: 1st';
   if(!p.full) lbl += ' · '+p.days+'/'+p.span+'d';
   return '<button onclick="event.stopPropagation();openLifecycle(\'' + c + '\',\'' + h + '\')" '
     + 'title="Pro-rata basis used in Analytics" '
-    + 'style="position:absolute;bottom:8px;right:8px;background:rgba(47,129,247,.1);border:1px solid rgba(47,129,247,.3);border-radius:4px;padding:2px 6px;font-size:9px;color:var(--accent);cursor:pointer;font-family:Inter,sans-serif">📅 '
+    + 'class="cg-start-btn">📅 '
     + lbl + '</button>';
 }
 
