@@ -754,6 +754,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
@@ -801,7 +802,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <button class="main-tab" onclick="switchTab('planner')">📋 Schedule Builder</button>
  <button class="main-tab" onclick="switchTab('roster')">🗓 Roster View</button>
  <button class="main-tab" onclick="switchTab('tickets')">🎫 HC Tickets<span id="tk-tab-badge" style="font-weight:800"></span></button>
- <button class="main-tab" onclick="switchTab('daily')">📆 Daily Orders</button>
+ <button class="main-tab" onclick="switchTab('leave')">🏖 Leave Applications<span id="lv-tab-badge" style="font-weight:800"></span></button>
  <button class="main-tab" onclick="switchTab('leads')">🎯 SM Lead Tracker</button>
  <button class="main-tab" onclick="switchTab('fclead')">💬 FC Lead Tracker</button>
  <button class="main-tab" onclick="switchTab('supply')">👥 Supply Tracker</button>
@@ -1823,6 +1824,76 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  </div>
 </div>
 
+
+
+<!-- ══ LEAVE APPLICATIONS ══ -->
+<div class="page" id="page-leave">
+ <div class="tk-bar">
+  <div style="font-size:15px;font-weight:700">🏖 Leave Applications</div>
+  <input id="lv-search" class="tk-inp" type="text" placeholder="Search ref / caregiver / reason..." oninput="lvRenderLog()" style="width:230px">
+  <select id="lv-f-hc" class="tk-inp" onchange="lvRenderLog()"><option value="">All homecares</option></select>
+  <select id="lv-f-type" class="tk-inp" onchange="lvRenderLog()"><option value="">All leave types</option></select>
+  <select id="lv-f-status" class="tk-inp" onchange="lvRenderLog()"><option value="">All statuses</option></select>
+  <select id="lv-f-period" class="tk-inp" onchange="lvRenderLog()">
+   <option value="90">Last 90 days</option>
+   <option value="30">Last 30 days</option>
+   <option value="365">Last 12 months</option>
+   <option value="all">All time</option>
+  </select>
+  <button class="tk-btn" onclick="initLeave(true)">↻ Refresh</button>
+  <button class="tk-btn" id="lv-export" onclick="lvExportExcel()">⬇ Excel</button>
+  <button class="tk-btn pri" onclick="lvOpenModal()">+ Apply for leave</button>
+ </div>
+
+ <div class="tk-kpis" id="lv-kpi-row"></div>
+
+ <div class="tk-page">
+  <div class="tk-hero" id="lv-hc-hint">
+   <div>
+    <div class="tk-hero-t">Need time off for a caregiver? Apply here.</div>
+    <div class="tk-hero-s">Pick the caregiver and the dates, attach the medical certificate or supporting document, and Valeo reviews it.<br>
+     Once approved, those dates are marked on the calendar and roster automatically — you will see any booked shifts that need cover before you submit.</div>
+   </div>
+   <button class="tk-btn pri big" onclick="lvOpenModal()">+ Apply for leave</button>
+  </div>
+
+  <div class="tk-card">
+   <div class="tk-card-h"><span>📋 Applications</span><span id="lv-log-count" style="font-size:10px;font-weight:400;color:var(--text3)"></span></div>
+   <div class="tk-scroll"><table class="tk-tbl" id="lv-log-tbl"></table></div>
+  </div>
+ </div>
+</div>
+
+<!-- ── APPLY FOR LEAVE MODAL ── -->
+<div class="tk-modal" id="lv-modal" onclick="if(event.target===this)lvCloseModal()">
+ <div class="tk-modal-box">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+   <div style="font-size:15px;font-weight:700">🏖 Apply for caregiver leave</div>
+   <button class="tk-x" style="font-size:20px" onclick="lvCloseModal()">&#x2715;</button>
+  </div>
+  <div style="font-size:11px;color:var(--text2);margin-bottom:14px">Valeo reviews every application — nothing is marked on the calendar until it is approved.</div>
+  <div class="tk-form" id="lv-form"></div>
+  <div id="lv-modal-preview" style="background:var(--bg3);border-radius:8px;padding:10px 12px;font-size:11px;color:var(--text2);line-height:1.6;margin-top:14px">—</div>
+  <div style="display:flex;gap:8px;margin-top:14px">
+   <button class="tk-btn" style="flex:1" onclick="lvCloseModal()">Cancel</button>
+   <button class="tk-btn pri" id="lv-save-btn" style="flex:2" onclick="lvSave()">Submit application</button>
+  </div>
+ </div>
+</div>
+
+<!-- ── LEAVE DETAIL ── -->
+<div class="tk-modal" id="lv-detail" onclick="if(event.target===this)lvCloseDetail()">
+ <div class="tk-modal-box">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px">
+   <div style="font-size:14px;font-weight:700" id="lv-detail-title"></div>
+   <button class="tk-x" style="font-size:20px" onclick="lvCloseDetail()">&#x2715;</button>
+  </div>
+  <div id="lv-detail-body"></div>
+  <div style="display:flex;gap:8px;margin-top:16px">
+   <button class="tk-btn" style="flex:1" onclick="lvCloseDetail()">Close</button>
+  </div>
+ </div>
+</div>
 
 <!-- ══ HC TICKET DESK ══ -->
 <div class="page" id="page-tickets">
@@ -3159,10 +3230,13 @@ function renderAnalyticsData(){
 // ── Tab switching ────────────────────────────────────────────────
 function switchTab(tab){
   // HC partner accounts: Calendar + Roster only
-  if(_session&&_session.role==='hc'&&tab!=='calendar'&&tab!=='roster'&&tab!=='complaints'&&tab!=='tickets'){alert('Access restricted');return;}
+  if(_session&&_session.role==='hc'&&tab!=='calendar'&&tab!=='roster'&&tab!=='complaints'&&tab!=='tickets'&&tab!=='leave'){alert('Access restricted');return;}
   if(tab==='roster'){setTimeout(switchToRoster,80);}
   if(tab==='daily'){setTimeout(switchToDaily,80);}
-  document.querySelectorAll('.main-tab').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase().includes(tab)));
+  var _tabLbl={calendar:'calendar',analytics:'analytics',ops:'operations',planner:'schedule builder',roster:'roster',
+    daily:'daily orders',leads:'sm lead',fclead:'fc lead',supply:'supply',customleads:'lead tracker',
+    complaints:'complaint',penalty:'penalty',expecting:'expecting',tickets:'hc tickets',leave:'leave applications'}[tab]||tab;
+  document.querySelectorAll('.main-tab').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase().includes(_tabLbl)));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   var _pg=document.getElementById('page-'+tab);if(_pg)_pg.classList.add('active');
   document.getElementById('avail-bar').style.display=tab==='calendar'?'flex':'none';
@@ -3173,6 +3247,7 @@ function switchTab(tab){
   if(tab==='customleads'){initCustomLeads();}
   if(tab==='complaints'){initComplaints();}
   if(tab==='tickets'){initTickets();}
+  if(tab==='leave'){initLeave();}
   if(tab==='expecting'){initExpecting();}
   if(tab==='supply'){if(_session&&_session.role!=='master'){alert('Master access only');return;}loadSupply();}
   if(tab==='penalty'){if(_session&&_session.role!=='master'){alert('Master access only');return;}loadPenalties();}
@@ -4768,6 +4843,617 @@ function tkExportExcel(){
     var hr = rows.filter(function(r){ return (r.homecare||'Unassigned') === h; });
     var ws = XLSX.utils.aoa_to_sheet([TK_HEAD].concat(hr.map(tkRowAOA)));
     ws['!cols'] = wsA['!cols'];
+    XLSX.utils.book_append_sheet(wb, ws, sheetName(h, used));
+  });
+  XLSX.writeFile(wb, fname + '.xlsx');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// LEAVE APPLICATIONS — homecare partners apply for caregiver leave,
+// Valeo approves. Approval writes straight into the override system,
+// so the calendar and roster update themselves.
+// ══════════════════════════════════════════════════════════════════
+var _LV_COLL = 'valeo_hc_leave';
+var _lvData = [], _lvLoaded = false, _lvDetailId = null, _lvFile = null, _lvBusy = false, _stg = null;
+
+var LV_TYPES = [
+  {k:'Sick leave',           ov:'sick',   emo:'🤒', col:'#d29922', doc:true},
+  {k:'Paid / annual leave',  ov:'paid',   emo:'🏖', col:'#3fb950', doc:false},
+  {k:'Unpaid leave',         ov:'unpaid', emo:'💸', col:'#8b949e', doc:false},
+  {k:'Emergency leave',      ov:'unpaid', emo:'🚨', col:'#f85149', doc:false},
+  {k:'Day off / weekly off change', ov:'off', emo:'🌙', col:'#6e7681', doc:false}
+];
+var LV_STATUS = ['Pending','Approved','Rejected'];
+var LV_STATUS_STYLE = {
+  'Pending': {bg:'rgba(210,153,34,.14)', col:'#d29922'},
+  'Approved':{bg:'rgba(63,185,80,.14)',  col:'#3fb950'},
+  'Rejected':{bg:'rgba(248,81,73,.14)',  col:'#f85149'}
+};
+var LV_MAX_DAYS   = 90;
+var LV_INLINE_CAP = 700 * 1024;   // biggest file we will keep inside the Firestore doc
+
+function lvType(k){ return LV_TYPES.find(function(t){ return t.k === k; }) || null; }
+function lvIsMaster(){ return tkIsMaster(); }
+function lvSessionHC(){ return tkSessionHC(); }
+
+// ── Dates ────────────────────────────────────────────────────────
+function lvDateList(from, to){
+  if(!from) return [];
+  var out = [], cur = new Date(from + 'T12:00:00'), end = new Date((to || from) + 'T12:00:00');
+  if(isNaN(cur) || isNaN(end) || end < cur) return [];
+  var guard = 0;
+  while(cur <= end && guard++ < LV_MAX_DAYS + 1){
+    out.push(cur.getFullYear() + '-' + pad(cur.getMonth()+1) + '-' + pad(cur.getDate()));
+    cur.setDate(cur.getDate() + 1);
+  }
+  return out;
+}
+// bookings that this leave would disrupt
+function lvAffected(cg, dates, hc){
+  if(!cg || !dates.length) return [];
+  var lock = hc || lvSessionHC();
+  return (allData||[]).filter(function(o){
+    if(o.caregiver !== cg || dates.indexOf(o.date) < 0) return false;
+    if(lock && !tkHCMatch(o.homecare, lock)) return false;
+    var s = String(o.status||'').toLowerCase();
+    return s !== 'cancelled' && s !== 'week off';
+  });
+}
+
+// ── Load ─────────────────────────────────────────────────────────
+async function initLeave(force){
+  lvSyncChrome();
+  if(_lvLoaded && !force){ lvRenderAll(); return; }
+  var t = document.getElementById('lv-log-tbl');
+  if(t) t.innerHTML = '<tbody><tr><td class="tk-empty">Loading applications…</td></tr></tbody>';
+  try{
+    if(!_db) await initFirebase();
+    if(!_db) throw new Error('Firebase not connected');
+    var snap = await _db.collection(_LV_COLL).get();
+    _lvData = []; snap.forEach(function(d){ _lvData.push(Object.assign({_id:d.id}, d.data())); });
+    _lvData.sort(function(a,b){ return String(b.created_at||'').localeCompare(String(a.created_at||'')); });
+    _lvLoaded = true;
+  }catch(e){
+    console.warn('[leave]', e);
+    if(t) t.innerHTML = '<tbody><tr><td class="tk-empty" style="color:var(--absent)">Could not load applications — ' + tkEsc(e.message) + '</td></tr></tbody>';
+    return;
+  }
+  lvPopulateFilters(); lvRenderAll();
+}
+async function lvPreload(){
+  try{
+    if(!_db) await initFirebase();
+    if(!_db) return;
+    var snap = await _db.collection(_LV_COLL).get();
+    _lvData = []; snap.forEach(function(d){ _lvData.push(Object.assign({_id:d.id}, d.data())); });
+    _lvData.sort(function(a,b){ return String(b.created_at||'').localeCompare(String(a.created_at||'')); });
+    _lvLoaded = true; lvBadge();
+  }catch(e){ console.warn('[leave] preload', e); }
+}
+function lvSyncChrome(){
+  var master = lvIsMaster();
+  ['lv-f-hc','lv-export'].forEach(function(id){
+    var el = document.getElementById(id); if(el) el.style.display = master ? '' : 'none';
+  });
+  var hint = document.getElementById('lv-hc-hint');
+  if(hint) hint.style.display = master ? 'none' : '';
+}
+function lvBadge(){
+  var el = document.getElementById('lv-tab-badge'); if(!el) return;
+  var p = lvScoped().filter(function(r){ return r.status === 'Pending'; }).length;
+  el.textContent = p ? ' ' + p : '';
+  el.style.color = p ? '#d29922' : 'inherit';
+}
+
+// ── Scoping ──────────────────────────────────────────────────────
+function lvScoped(){
+  var hc = lvSessionHC();
+  if(!hc) return _lvData;
+  return _lvData.filter(function(r){ return tkHCMatch(r.homecare, hc); });
+}
+function lvFiltered(){
+  var rows = lvScoped();
+  var g = function(id){ var e = document.getElementById(id); return e ? e.value : ''; };
+  var q = (g('lv-search')||'').toLowerCase().trim();
+  var fhc = g('lv-f-hc'), ft = g('lv-f-type'), fs = g('lv-f-status'), per = g('lv-f-period');
+  if(fhc) rows = rows.filter(function(r){ return r.homecare === fhc; });
+  if(ft)  rows = rows.filter(function(r){ return r.leave_type === ft; });
+  if(fs)  rows = rows.filter(function(r){ return r.status === fs; });
+  if(per && per !== 'all'){
+    var cut = new Date(); cut.setDate(cut.getDate() - parseInt(per,10));
+    rows = rows.filter(function(r){ return new Date(r.created_at||0) >= cut; });
+  }
+  if(q) rows = rows.filter(function(r){
+    return [r.leave_id,r.caregiver,r.homecare,r.leave_type,r.reason,r.cover_by,r.raised_by].join(' ').toLowerCase().indexOf(q) >= 0;
+  });
+  return rows;
+}
+function lvPopulateFilters(){
+  var set = function(id, arr, first){
+    var el = document.getElementById(id); if(!el) return;
+    var cur = el.value;
+    el.innerHTML = '<option value="">' + first + '</option>' + arr.map(function(o){ return '<option>'+tkEsc(o)+'</option>'; }).join('');
+    if(cur) el.value = cur;
+  };
+  set('lv-f-hc', [...new Set(lvScoped().map(function(r){ return r.homecare; }))].filter(Boolean).sort(), 'All homecares');
+  set('lv-f-type', LV_TYPES.map(function(t){ return t.k; }), 'All leave types');
+  set('lv-f-status', LV_STATUS, 'All statuses');
+}
+
+// ── Render ───────────────────────────────────────────────────────
+function lvRenderAll(){ lvRenderKPIs(); lvRenderLog(); lvBadge(); }
+
+function lvRenderKPIs(){
+  var el = document.getElementById('lv-kpi-row'); if(!el) return;
+  var rows = lvScoped();
+  var pend = rows.filter(function(r){ return r.status === 'Pending'; });
+  var mo = new Date(); mo.setDate(mo.getDate()-30);
+  var recent = rows.filter(function(r){ return new Date(r.created_at||0) >= mo; });
+  var appr = recent.filter(function(r){ return r.status === 'Approved'; });
+  var days = appr.reduce(function(a,r){ return a + (r.days||0); }, 0);
+  var sick = recent.filter(function(r){ return r.leave_type === 'Sick leave'; }).length;
+  var card = function(v,l,c){ return '<div class="tk-kpi"><div class="tk-kpi-v"'+(c?' style="color:'+c+'"':'')+'>'+v+'</div><div class="tk-kpi-l">'+l+'</div></div>'; };
+  el.innerHTML = card(pend.length,'Awaiting approval', pend.length?'#d29922':'')
+    + card(appr.length,'Approved · last 30 days','#3fb950')
+    + card(days,'Leave days approved')
+    + card(sick,'Sick applications · 30 days', sick?'#d29922':'')
+    + card(recent.length,'Applications · 30 days');
+}
+
+function lvRenderLog(){
+  var t = document.getElementById('lv-log-tbl'); if(!t) return;
+  var master = lvIsMaster(), rows = lvFiltered();
+  var cnt = document.getElementById('lv-log-count');
+  if(cnt) cnt.textContent = rows.length + (rows.length===1?' application':' applications');
+
+  var head = '<thead><tr><th>Ref</th><th>Applied</th>' + (master?'<th>Homecare</th>':'')
+    + '<th>Caregiver</th><th>Leave</th><th>Dates</th><th>Days</th><th>Doc</th><th>Cover</th>'
+    + '<th>Affects</th><th>Status</th><th></th></tr></thead>';
+
+  if(!rows.length){
+    t.innerHTML = head + '<tbody><tr><td colspan="12" class="tk-empty">No applications here'
+      + (master?'':' — use <b>Apply for leave</b> when a caregiver needs time off') + '</td></tr></tbody>';
+    return;
+  }
+
+  t.innerHTML = head + '<tbody>' + rows.map(function(r){
+    var ty = lvType(r.leave_type) || {emo:'',col:'var(--text2)'};
+    var ss = LV_STATUS_STYLE[r.status] || LV_STATUS_STYLE.Pending;
+    var when = r.created_at ? new Date(r.created_at) : null;
+    var dates = r.date_from === r.date_to ? r.date_from : (r.date_from + ' → ' + r.date_to);
+    var statusCell = master
+      ? '<select class="tk-sel" onchange="lvSetStatus(\''+r._id+'\',this.value)">' + LV_STATUS.map(function(s){
+          return '<option'+(s===r.status?' selected':'')+'>'+s+'</option>'; }).join('') + '</select>'
+      : '<span class="tk-pill" style="background:'+ss.bg+';color:'+ss.col+'">'+tkEsc(r.status)+'</span>';
+    var doc = r.attachment
+      ? '<button class="tk-x" title="'+tkEsc(r.attachment.name||'attachment')+'" onclick="lvViewDoc(\''+r._id+'\')">📎</button>'
+      : (ty.doc ? '<span style="color:var(--sick);font-size:14px" title="No document attached">—</span>' : '<span style="color:var(--text3)">—</span>');
+    return '<tr'+(r.status==='Pending'?' style="background:rgba(210,153,34,.05)"':'')+'>'
+      + '<td><b style="font-family:monospace;font-size:10px">'+tkEsc(r.leave_id||'—')+'</b></td>'
+      + '<td style="white-space:nowrap;font-size:10px;color:var(--text2)">'+(when?when.toISOString().slice(0,10):'—')
+        + '<div style="font-size:9px;color:var(--text3)">by '+tkEsc(r.raised_by||'—')+'</div></td>'
+      + (master?'<td>'+tkEsc(r.homecare||'—')+'</td>':'')
+      + '<td>'+tkEsc(r.caregiver||'—')+'</td>'
+      + '<td><span style="color:'+ty.col+'">'+ty.emo+'</span> '+tkEsc(r.leave_type||'')+'</td>'
+      + '<td style="white-space:nowrap;font-size:10px">'+tkEsc(dates)+'</td>'
+      + '<td class="num"><b>'+(r.days||0)+'</b></td>'
+      + '<td style="text-align:center">'+doc+'</td>'
+      + '<td style="font-size:10px;color:var(--text2)">'+tkEsc(r.cover_by||'—')+'</td>'
+      + '<td class="num" style="color:'+((r.affected_count||0)?'var(--absent)':'var(--text3)')+'">'+(r.affected_count||0)+'</td>'
+      + '<td>'+statusCell+'</td>'
+      + '<td><button class="tk-x" title="Open" onclick="lvOpenDetail(\''+r._id+'\')">🔍</button>'
+        + (master?'<button class="tk-x" title="Delete" onclick="lvDelete(\''+r._id+'\')">✕</button>':'')+'</td>'
+      + '</tr>';
+  }).join('') + '</tbody>';
+}
+
+// ── Apply modal ──────────────────────────────────────────────────
+function lvOpenModal(){
+  _lvFile = null;
+  var hc = lvSessionHC(), today = new Date().toISOString().slice(0,10);
+  var hcField = hc
+    ? '<input id="lvf-hc" value="'+tkEsc(hc)+'" disabled>'
+    : '<select id="lvf-hc" onchange="lvOnHCChange()">' + tkHomecares().map(function(h){ return '<option>'+tkEsc(h)+'</option>'; }).join('') + '</select>';
+
+  document.getElementById('lv-form').innerHTML =
+      '<div class="tk-f"><label>Homecare</label>'+hcField+'<div class="hint">Locked to your account</div></div>'
+    + '<div class="tk-f"><label>Caregiver</label><select id="lvf-cg" onchange="lvPreview()"></select></div>'
+    + '<div class="tk-f"><label>Leave type</label><select id="lvf-type" onchange="lvOnTypeChange()">'
+      + '<option value="">— choose —</option>' + LV_TYPES.map(function(t){ return '<option>'+tkEsc(t.k)+'</option>'; }).join('') + '</select></div>'
+    + '<div class="tk-f"><label>Who will cover the shifts</label><select id="lvf-cover" onchange="lvPreview()"></select>'
+      + '<div class="hint">Leave blank if Valeo should arrange it</div></div>'
+    + '<div class="tk-f"><label>From</label><input id="lvf-from" type="date" value="'+today+'" onchange="lvOnDateChange()"></div>'
+    + '<div class="tk-f"><label>To</label><input id="lvf-to" type="date" value="'+today+'" onchange="lvPreview()"></div>'
+    + '<div class="tk-f span2"><label>Reason <span id="lvf-reason-req" style="color:var(--absent)">· required</span></label>'
+      + '<textarea id="lvf-reason" rows="2" placeholder="Why the caregiver needs the time off"></textarea></div>'
+    + '<div class="tk-f span2"><label>Supporting document <span id="lvf-doc-req" style="color:var(--absent);display:none">· required for sick leave</span></label>'
+      + '<input id="lvf-doc" type="file" accept="image/*,application/pdf" onchange="lvPickFile(this)">'
+      + '<div class="hint" id="lvf-doc-hint">Medical certificate, ticket, or any proof. Photos are compressed automatically. Max 5 MB.</div>'
+      + '<div id="lvf-doc-chip"></div></div>'
+    + '<div class="tk-f span2"><label>Your name</label><input id="lvf-by" value="'+tkEsc((_session&&_session.username)||'')+'"></div>';
+
+  lvOnHCChange(); lvOnTypeChange();
+  document.getElementById('lv-modal').classList.add('show');
+}
+function lvCloseModal(){ document.getElementById('lv-modal').classList.remove('show'); _lvFile = null; }
+function lvFormHC(){ var e = document.getElementById('lvf-hc'); return e ? e.value : ''; }
+
+function lvOnHCChange(){
+  var cgs = tkCaregiversFor(lvFormHC());
+  var a = document.getElementById('lvf-cg'), b = document.getElementById('lvf-cover');
+  if(a) a.innerHTML = '<option value="">— choose a caregiver —</option>' + cgs.map(function(c){ return '<option>'+tkEsc(c)+'</option>'; }).join('');
+  if(b) b.innerHTML = '<option value="">— Valeo to arrange —</option>' + cgs.map(function(c){ return '<option>'+tkEsc(c)+'</option>'; }).join('');
+  lvPreview();
+}
+function lvOnTypeChange(){
+  var t = lvType((document.getElementById('lvf-type')||{}).value || '');
+  var req = document.getElementById('lvf-doc-req');
+  if(req) req.style.display = (t && t.doc) ? '' : 'none';
+  lvPreview();
+}
+function lvOnDateChange(){
+  var f = document.getElementById('lvf-from'), t = document.getElementById('lvf-to');
+  if(f && t && (!t.value || t.value < f.value)) t.value = f.value;
+  lvPreview();
+}
+
+// ── Attachment ───────────────────────────────────────────────────
+function lvStorage(){
+  if(_stg) return _stg;
+  try{ if(typeof firebase !== 'undefined' && firebase.storage) _stg = firebase.storage(); }
+  catch(e){ console.warn('[leave] storage unavailable', e); }
+  return _stg;
+}
+function lvKB(n){ return n < 1024*1024 ? Math.round(n/1024) + ' KB' : (n/1048576).toFixed(1) + ' MB'; }
+
+// photos get downscaled so a certificate snapped on a phone fits inside the doc
+function lvShrinkImage(file){
+  return new Promise(function(resolve){
+    if(!/^image\//.test(file.type)) return resolve(null);
+    var fr = new FileReader();
+    fr.onload = function(){
+      var img = new Image();
+      img.onload = function(){
+        var max = 1600, w = img.width, h = img.height;
+        if(w > max || h > max){ var s = max / Math.max(w,h); w = Math.round(w*s); h = Math.round(h*s); }
+        var cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+        cv.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(cv.toDataURL('image/jpeg', 0.72));
+      };
+      img.onerror = function(){ resolve(null); };
+      img.src = fr.result;
+    };
+    fr.onerror = function(){ resolve(null); };
+    fr.readAsDataURL(file);
+  });
+}
+function lvReadDataURL(file){
+  return new Promise(function(res, rej){
+    var fr = new FileReader();
+    fr.onload = function(){ res(fr.result); };
+    fr.onerror = function(){ rej(new Error('Could not read the file')); };
+    fr.readAsDataURL(file);
+  });
+}
+
+async function lvPickFile(input){
+  var chip = document.getElementById('lvf-doc-chip');
+  var file = input.files && input.files[0];
+  _lvFile = null;
+  if(!file){ if(chip) chip.innerHTML = ''; return; }
+  if(file.size > 5*1024*1024){
+    if(chip) chip.innerHTML = '<div class="lv-chip err">That file is '+lvKB(file.size)+' — please attach something under 5 MB.</div>';
+    input.value = ''; return;
+  }
+  if(chip) chip.innerHTML = '<div class="lv-chip">Preparing '+tkEsc(file.name)+'…</div>';
+  try{
+    var shrunk = await lvShrinkImage(file);
+    var dataUrl = shrunk || await lvReadDataURL(file);
+    var bytes = Math.round((dataUrl.length - (dataUrl.indexOf(',')+1)) * 3 / 4);
+    _lvFile = {name:file.name, type: shrunk ? 'image/jpeg' : (file.type||'application/octet-stream'), size:bytes, data:dataUrl};
+    if(chip) chip.innerHTML = '<div class="lv-chip ok">📎 '+tkEsc(file.name)+' · '+lvKB(bytes)
+      + (shrunk ? ' <span style="color:var(--text3)">(compressed)</span>' : '')
+      + ' <button class="tk-x" onclick="lvClearFile()">✕</button></div>';
+  }catch(e){
+    if(chip) chip.innerHTML = '<div class="lv-chip err">'+tkEsc(e.message)+'</div>';
+  }
+  lvPreview();
+}
+function lvClearFile(){
+  _lvFile = null;
+  var i = document.getElementById('lvf-doc'); if(i) i.value = '';
+  var c = document.getElementById('lvf-doc-chip'); if(c) c.innerHTML = '';
+  lvPreview();
+}
+// small files ride inside the Firestore doc; anything bigger goes to Storage
+async function lvPersistFile(f, ref){
+  if(!f) return null;
+  if(f.size <= LV_INLINE_CAP) return {name:f.name, type:f.type, size:f.size, mode:'inline', data:f.data};
+  var st = lvStorage();
+  if(!st) throw new Error('That file is ' + lvKB(f.size) + ' and Firebase Storage is not available — please attach a smaller photo.');
+  var path = 'hc-leave/' + ref + '_' + String(f.name).replace(/[^A-Za-z0-9._-]/g,'_');
+  var snap = await st.ref(path).putString(f.data, 'data_url');
+  var url  = await snap.ref.getDownloadURL();
+  return {name:f.name, type:f.type, size:f.size, mode:'storage', url:url, path:path};
+}
+function lvViewDoc(id){
+  var r = _lvData.find(function(x){ return x._id === id; });
+  if(!r || !r.attachment) return;
+  var a = r.attachment, src = a.mode === 'storage' ? a.url : a.data;
+  if(!src) return;
+  if(a.mode === 'storage'){ window.open(src, '_blank'); return; }
+  var w = window.open('', '_blank');
+  if(!w){ alert('Please allow pop-ups to view the attachment.'); return; }
+  var body = /^image\//.test(a.type)
+    ? '<img src="'+src+'" style="max-width:100%;height:auto">'
+    : '<iframe src="'+src+'" style="border:0;width:100%;height:100vh"></iframe>';
+  w.document.write('<title>'+tkEsc(a.name||'attachment')+'</title><body style="margin:0;background:#111">'+body+'</body>');
+  w.document.close();
+}
+
+// ── Preview ──────────────────────────────────────────────────────
+function lvPreview(){
+  var el = document.getElementById('lv-modal-preview'); if(!el) return;
+  var g = function(id){ var e = document.getElementById('lvf-'+id); return e ? e.value : ''; };
+  var cg = g('cg'), from = g('from'), to = g('to'), t = lvType(g('type'));
+  var dates = lvDateList(from, to);
+  if(!cg || !dates.length || !t){ el.innerHTML = 'Choose the caregiver, leave type and dates to see what this affects.'; return; }
+  var aff = lvAffected(cg, dates, lvFormHC());
+  var clients = [...new Set(aff.map(function(o){ return o.client_name; }))].filter(Boolean);
+  el.innerHTML = '<b>'+dates.length+' day'+(dates.length>1?'s':'')+'</b> · '+t.emo+' '+tkEsc(t.k)
+    + '<br>Once Valeo approves, these dates are marked <b style="color:'+t.col+'">'+tkEsc(t.k)+'</b> on the calendar and roster automatically.'
+    + (aff.length
+        ? '<br><span style="color:var(--absent)">⚠ '+aff.length+' booked shift'+(aff.length>1?'s':'')+' affected</span>'
+          + (clients.length ? ' — ' + tkEsc(clients.slice(0,4).join(', ')) + (clients.length>4?' +'+(clients.length-4)+' more':'') : '')
+        : '<br><span style="color:var(--duty)">No booked shifts in this range</span>')
+    + (_lvFile ? '<br>📎 '+tkEsc(_lvFile.name)+' attached' : (t.doc ? '<br><span style="color:var(--sick)">A medical certificate is expected for sick leave</span>' : ''));
+}
+
+// ── Save ─────────────────────────────────────────────────────────
+async function lvSave(){
+  if(_lvBusy) return;
+  var g = function(id){ var e = document.getElementById('lvf-'+id); return e ? String(e.value||'').trim() : ''; };
+  var sessHC = lvSessionHC();
+  var hc = sessHC || lvFormHC();
+  var cg = g('cg'), tk = g('type'), from = g('from'), to = g('to') || from, reason = g('reason'), cover = g('cover');
+  var t = lvType(tk);
+  if(!hc){ alert('Homecare is required.'); return; }
+  if(!cg){ alert('Choose the caregiver.'); return; }
+  if(sessHC && tkCaregiversFor(sessHC).indexOf(cg) < 0){ alert('That caregiver is not on your roster.'); return; }
+  if(!t){ alert('Choose the leave type.'); return; }
+  var dates = lvDateList(from, to);
+  if(!dates.length){ alert('Check the dates — the end date cannot be before the start date.'); return; }
+  if(dates.length > LV_MAX_DAYS){ alert('That is more than ' + LV_MAX_DAYS + ' days. Please split it into separate applications.'); return; }
+  if(!reason){ alert('Please give a reason.'); return; }
+  if(t.doc && !_lvFile && !confirm('No medical certificate attached. Send the application anyway?')) return;
+
+  var aff = lvAffected(cg, dates, hc);
+  var now = new Date();
+  var seq = String(_lvData.filter(function(r){ return (r.created_at||'').slice(0,10) === now.toISOString().slice(0,10); }).length + 1).padStart(3,'0');
+  var lid = 'LV-' + now.toISOString().slice(2,10).replace(/-/g,'') + '-' + seq;
+
+  _lvBusy = true;
+  var btn = document.getElementById('lv-save-btn'); if(btn){ btn.disabled = true; btn.textContent = 'Sending…'; }
+  try{
+    if(!_db) await initFirebase();
+    if(!_db) throw new Error('Firebase not connected');
+    var att = await lvPersistFile(_lvFile, lid);
+    var rec = {
+      leave_id:lid, homecare:hc, caregiver:cg, leave_type:t.k, override_type:t.ov,
+      date_from:dates[0], date_to:dates[dates.length-1], dates:dates, days:dates.length,
+      reason:reason, cover_by:cover, attachment:att,
+      affected_count:aff.length,
+      affected_clients:[...new Set(aff.map(function(o){ return o.client_name; }))].filter(Boolean),
+      status:'Pending', decided_by:'', decision_note:'', applied_keys:[],
+      raised_by:g('by') || (_session && _session.username) || 'HC',
+      created_at:now.toISOString(), updated_at:now.toISOString(),
+      timeline:[{t:now.toISOString(), by:(g('by') || (_session&&_session.username) || 'HC'), note:'Application submitted'}]
+    };
+    var ref = await _db.collection(_LV_COLL).add(rec);
+    _lvData.unshift(Object.assign({_id:ref.id}, rec));
+    lvNotify('leave_created', Object.assign({_id:ref.id}, rec));
+    lvCloseModal(); lvPopulateFilters(); lvRenderAll();
+    tkToast('Leave application ' + lid + ' sent to Valeo');
+  }catch(e){
+    alert('Could not submit: ' + e.message);
+  }finally{
+    _lvBusy = false;
+    if(btn){ btn.disabled = false; btn.textContent = 'Submit application'; }
+  }
+}
+
+function lvNotify(event, rec){
+  try{
+    fetch(TK_WEBHOOK, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        event:event, kind:'leave', doc_id:rec._id, leave_id:rec.leave_id,
+        homecare:rec.homecare, caregiver:rec.caregiver, leave_type:rec.leave_type,
+        date_from:rec.date_from, date_to:rec.date_to, days:rec.days,
+        reason:rec.reason, cover_by:rec.cover_by,
+        has_document:!!rec.attachment, document_name:rec.attachment ? rec.attachment.name : '',
+        affected_count:rec.affected_count, affected_clients:(rec.affected_clients||[]).join(', '),
+        status:rec.status, decided_by:rec.decided_by, decision_note:rec.decision_note,
+        raised_by:rec.raised_by, created_at:rec.created_at, updated_at:rec.updated_at,
+        slack_channel:TK_SLACK.channel,
+        link:location.origin + location.pathname + '#leave=' + rec.leave_id
+      })
+    }).catch(function(e){ console.warn('[leave] webhook', e); });
+  }catch(e){ console.warn('[leave] webhook', e); }
+}
+
+// ── Approval — writes into the existing override system ──────────
+async function lvApplyOverrides(rec, on){
+  var keys = [];
+  if(on){
+    rec.dates.forEach(function(d){
+      var key = rec.caregiver + '|' + d;
+      overrides[key] = {
+        caregiver:rec.caregiver, date:d, type:rec.override_type,
+        note:rec.leave_type + ' · ' + rec.leave_id + (rec.reason ? ' · ' + rec.reason : ''),
+        saved_at:new Date().toISOString(), source:'leave', leave_id:rec.leave_id
+      };
+      keys.push(key);
+    });
+  }else{
+    (rec.applied_keys||[]).forEach(function(key){
+      var o = overrides[key];
+      if(o && o.leave_id === rec.leave_id) delete overrides[key];
+    });
+  }
+  saveLocalCache();
+  try{ reRenderAll(); }catch(e){ console.warn('[leave] rerender', e); }
+  var list = on ? keys : (rec.applied_keys||[]);
+  for(var i=0; i<list.length; i++){
+    try{
+      if(on) await persistWrite('override', list[i], JSON.parse(JSON.stringify(overrides[list[i]])));
+      else   await persistDelete('override', list[i]);
+    }catch(e){ console.warn('[leave] persist', e); }
+  }
+  return keys;
+}
+
+async function lvSetStatus(id, status){
+  if(!lvIsMaster()){ alert('Only Valeo can approve or reject leave.'); return; }
+  var r = _lvData.find(function(x){ return x._id === id; }); if(!r) return;
+  var prev = r.status;
+  if(prev === status) return;
+  if(status === 'Approved'){
+    if(!confirm('Approve ' + r.days + ' day(s) of ' + r.leave_type + ' for ' + r.caregiver + '?\n\n'
+      + 'These dates will be marked on the calendar and roster'
+      + (r.affected_count ? ' and ' + r.affected_count + ' booked shift(s) will need cover.' : '.'))) { lvRenderLog(); return; }
+  }
+  var now = new Date().toISOString(), who = (_session && _session.username) || 'Valeo';
+  var note = '';
+  if(status === 'Rejected'){
+    note = prompt('Reason for rejecting (the partner will see this):', '') || '';
+  }
+  r.status = status; r.updated_at = now; r.decided_by = who;
+  if(note) r.decision_note = note;
+  r.timeline = (r.timeline||[]).concat([{t:now, by:who, note:prev + ' → ' + status + (note ? ' · ' + note : '')}]);
+
+  var keys = r.applied_keys || [];
+  if(status === 'Approved'){ keys = await lvApplyOverrides(r, true); }
+  else if(prev === 'Approved'){ await lvApplyOverrides(r, false); keys = []; }
+  r.applied_keys = keys;
+
+  lvRenderAll();
+  try{
+    if(!_db) await initFirebase();
+    await _db.collection(_LV_COLL).doc(id).set({
+      status:r.status, updated_at:now, decided_by:who, decision_note:r.decision_note||'',
+      applied_keys:keys, timeline:r.timeline
+    }, {merge:true});
+    lvNotify('leave_status', r);
+  }catch(e){ console.warn('[leave] status', e); }
+  tkToast(status === 'Approved' ? (r.days + ' day(s) marked on the calendar') : ('Application ' + status.toLowerCase()));
+}
+
+async function lvDelete(id){
+  if(!lvIsMaster()) return;
+  var r = _lvData.find(function(x){ return x._id === id; }); if(!r) return;
+  if(!confirm('Delete ' + (r.leave_id||'') + '?' + (r.status==='Approved' ? '\n\nThe leave already marked on the calendar will also be removed.' : ''))) return;
+  if(r.status === 'Approved') await lvApplyOverrides(r, false);
+  _lvData = _lvData.filter(function(x){ return x._id !== id; });
+  lvRenderAll();
+  try{ if(!_db) await initFirebase(); await _db.collection(_LV_COLL).doc(id).delete(); }
+  catch(e){ console.warn('[leave] delete', e); }
+}
+
+// ── Detail ───────────────────────────────────────────────────────
+function lvOpenDetail(id){
+  var r = _lvData.find(function(x){ return x._id === id; }); if(!r) return;
+  _lvDetailId = id;
+  var ty = lvType(r.leave_type) || {emo:'',col:'var(--text2)'};
+  var ss = LV_STATUS_STYLE[r.status] || LV_STATUS_STYLE.Pending;
+  var row = function(l,v){ return v ? '<div class="tk-dt"><span>'+tkEsc(l)+'</span><b>'+tkEsc(v)+'</b></div>' : ''; };
+  document.getElementById('lv-detail-title').innerHTML =
+    '<span style="font-family:monospace">'+tkEsc(r.leave_id||'')+'</span> '
+    + '<span class="tk-pill" style="background:'+ss.bg+';color:'+ss.col+'">'+tkEsc(r.status)+'</span>';
+
+  var tl = (r.timeline||[]).slice().reverse().map(function(e){
+    return '<div class="tk-tl"><div class="tk-tl-d">'+tkEsc(new Date(e.t).toLocaleString())+' · '+tkEsc(e.by||'')+'</div><div>'+tkEsc(e.note||'')+'</div></div>';
+  }).join('') || '<div style="font-size:11px;color:var(--text3)">No activity yet.</div>';
+
+  var att = r.attachment
+    ? '<button class="tk-btn" onclick="lvViewDoc(\''+r._id+'\')">📎 '+tkEsc(r.attachment.name||'View document')+' · '+lvKB(r.attachment.size||0)+'</button>'
+    : '<span style="font-size:11px;color:var(--text3)">No document attached.</span>';
+
+  document.getElementById('lv-detail-body').innerHTML =
+      '<div class="tk-dgrid">'
+    + row('Homecare', r.homecare) + row('Applied by', r.raised_by)
+    + row('Caregiver', r.caregiver) + row('Leave type', ty.emo + ' ' + r.leave_type)
+    + row('From', r.date_from) + row('To', r.date_to)
+    + row('Days', String(r.days||0)) + row('Cover arranged by', r.cover_by || 'Valeo to arrange')
+    + row('Shifts affected', String(r.affected_count||0))
+    + row('Clients affected', (r.affected_clients||[]).join(', '))
+    + row('Applied on', r.created_at ? new Date(r.created_at).toLocaleString() : '')
+    + row('Decided by', r.decided_by)
+    + '</div>'
+    + (r.reason ? '<div class="tk-dsec"><div class="tk-dsec-h">Reason</div><div class="tk-dsec-b">'+tkEsc(r.reason)+'</div></div>' : '')
+    + '<div class="tk-dsec"><div class="tk-dsec-h">Supporting document</div>'+att+'</div>'
+    + (r.decision_note ? '<div class="tk-dsec"><div class="tk-dsec-h">Valeo note</div><div class="tk-dsec-b">'+tkEsc(r.decision_note)+'</div></div>' : '')
+    + (lvIsMaster() && r.status === 'Pending'
+        ? '<div style="display:flex;gap:8px;margin-top:14px">'
+          + '<button class="tk-btn" style="flex:1" onclick="lvDecide(\''+r._id+'\',\'Rejected\')">Reject</button>'
+          + '<button class="tk-btn pri" style="flex:2" onclick="lvDecide(\''+r._id+'\',\'Approved\')">Approve &amp; mark on calendar</button></div>'
+        : '')
+    + '<div class="tk-dsec"><div class="tk-dsec-h">Activity</div>'+tl+'</div>';
+
+  document.getElementById('lv-detail').classList.add('show');
+}
+function lvCloseDetail(){ document.getElementById('lv-detail').classList.remove('show'); _lvDetailId = null; }
+async function lvDecide(id, status){ lvCloseDetail(); await lvSetStatus(id, status); }
+
+// ── Excel (Valeo only) ───────────────────────────────────────────
+var LV_HEAD = ['Ref','Applied on','Homecare','Applied by','Caregiver','Leave type','From','To','Days',
+               'Reason','Document','Cover by','Shifts affected','Clients affected','Status','Decided by','Valeo note'];
+function lvRowAOA(r){
+  return [r.leave_id||'', r.created_at?new Date(r.created_at).toLocaleString():'', r.homecare||'', r.raised_by||'',
+    r.caregiver||'', r.leave_type||'', r.date_from||'', r.date_to||'', r.days||0, r.reason||'',
+    r.attachment ? (r.attachment.name||'yes') : 'no', r.cover_by||'', r.affected_count||0,
+    (r.affected_clients||[]).join(', '), r.status||'', r.decided_by||'', r.decision_note||''];
+}
+function lvExportExcel(){
+  if(!lvIsMaster()) return;
+  var rows = lvFiltered();
+  if(!rows.length){ alert('Nothing to export with these filters.'); return; }
+  var fname = 'Valeo_Leave_Applications_' + new Date().toISOString().slice(0,10);
+  if(typeof XLSX === 'undefined'){
+    var csv = [LV_HEAD].concat(rows.map(lvRowAOA)).map(function(rr){
+      return rr.map(function(c){ var v = String(c==null?'':c); return /[",\n]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v; }).join(',');
+    }).join('\n');
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download = fname + '.csv'; a.click();
+    return;
+  }
+  var wb = XLSX.utils.book_new(), used = {};
+  var sheetName = (typeof _lrSheetName === 'function') ? _lrSheetName : function(n){ return String(n).slice(0,28); };
+  var hcs = [...new Set(rows.map(function(r){ return r.homecare || 'Unassigned'; }))].sort();
+
+  var sum = [['Homecare','Applications','Pending','Approved','Rejected','Leave days approved','Sick applications']];
+  hcs.forEach(function(h){
+    var hr = rows.filter(function(r){ return (r.homecare||'Unassigned') === h; });
+    sum.push([h, hr.length,
+      hr.filter(function(r){return r.status==='Pending';}).length,
+      hr.filter(function(r){return r.status==='Approved';}).length,
+      hr.filter(function(r){return r.status==='Rejected';}).length,
+      hr.filter(function(r){return r.status==='Approved';}).reduce(function(a,r){return a+(r.days||0);},0),
+      hr.filter(function(r){return r.leave_type==='Sick leave';}).length]);
+  });
+  var wsS = XLSX.utils.aoa_to_sheet(sum);
+  wsS['!cols'] = [{wch:28},{wch:13},{wch:9},{wch:10},{wch:10},{wch:20},{wch:19}];
+  XLSX.utils.book_append_sheet(wb, wsS, sheetName('Summary', used));
+
+  var cols = LV_HEAD.map(function(h,i){ return {wch: (i===9||i===13||i===16) ? 40 : Math.max(11, h.length+3)}; });
+  var wsA = XLSX.utils.aoa_to_sheet([LV_HEAD].concat(rows.map(lvRowAOA)));
+  wsA['!cols'] = cols;
+  XLSX.utils.book_append_sheet(wb, wsA, sheetName('All applications', used));
+
+  hcs.forEach(function(h){
+    var hr = rows.filter(function(r){ return (r.homecare||'Unassigned') === h; });
+    var ws = XLSX.utils.aoa_to_sheet([LV_HEAD].concat(hr.map(lvRowAOA)));
+    ws['!cols'] = cols;
     XLSX.utils.book_append_sheet(wb, ws, sheetName(h, used));
   });
   XLSX.writeFile(wb, fname + '.xlsx');
@@ -7032,7 +7718,7 @@ function applySessionUI(){
     header.insertBefore(badge,header.firstChild);
   }
   if(_session.role==='hc'){
-    document.querySelectorAll('.main-tab').forEach(function(t){var txt=t.textContent.trim();if(!txt.includes('Calendar')&&!txt.includes('Roster')&&!txt.includes('Complaint')&&!txt.includes('Tickets'))t.style.display='none';});
+    document.querySelectorAll('.main-tab').forEach(function(t){var txt=t.textContent.trim();if(!txt.includes('Calendar')&&!txt.includes('Roster')&&!txt.includes('Complaint')&&!txt.includes('Tickets')&&!txt.includes('Leave Applications'))t.style.display='none';});
     // hide "Add Caregiver" but keep the Leave Report / Complaint exports available
     document.querySelectorAll('.add-cg-btn').forEach(function(ab){ if(!ab.classList.contains('lr-open-btn')) ab.style.display='none'; });
   }
@@ -9379,6 +10065,7 @@ if(checkExistingSession()){
   // complaint data drives the roster / card warning badges, so pull it up front
   setTimeout(function(){ try{ initComplaints(); }catch(e){ console.warn('[complaints] preload', e); } }, 1200);
   setTimeout(function(){ try{ tkPreload(); }catch(e){ console.warn('[tickets] preload', e); } }, 1600);
+  setTimeout(function(){ try{ lvPreload(); }catch(e){ console.warn('[leave] preload', e); } }, 2000);
 }
 </script>
 </body>
