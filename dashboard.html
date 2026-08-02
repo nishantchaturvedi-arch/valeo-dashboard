@@ -4227,11 +4227,15 @@ function tkHomecares(){
   return [...new Set((rawData||[]).map(function(x){ return x.homecare; })
     .concat(Object.values(manualCGs||{}).map(function(c){ return c.homecare; })))].filter(Boolean).sort();
 }
-// every booking that covers this caregiver on this date — the ticket ties to a real order
-function tkOrdersFor(cg, date){
+// every booking that covers this caregiver on this date — the ticket ties to a real order.
+// hc is passed so a partner can never pull a booking belonging to another homecare
+// (two partners can have caregivers with the same name).
+function tkOrdersFor(cg, date, hc){
   if(!cg || !date) return [];
+  var lock = hc || tkSessionHC();
   var out = [], seen = {};
   var push = function(o){
+    if(lock && !tkHCMatch(o.homecare, lock)) return;
     var key = o.child_order_id || o.order_id || (o.client_name + '|' + o.time_start);
     if(!key || seen[key]) return; seen[key] = 1;
     out.push({
@@ -4467,7 +4471,7 @@ function tkOnHCChange(){
 function tkOnCGChange(){
   var cg = (document.getElementById('tkf-cg')||{}).value || '';
   var d  = (document.getElementById('tkf-date')||{}).value || '';
-  _tkOrderOpts = tkOrdersFor(cg, d);
+  _tkOrderOpts = tkOrdersFor(cg, d, tkFormHC());
   var sel = document.getElementById('tkf-order');
   var hint = document.getElementById('tkf-order-hint');
   if(!sel) return;
@@ -4521,8 +4525,11 @@ function tkPreview(){
 async function tkSave(){
   if(_tkBusy) return;
   var g = function(id){ var e = document.getElementById('tkf-'+id); return e ? String(e.value||'').trim() : ''; };
-  var hc = tkFormHC(), cat = g('cat'), cg = g('cg'), date = g('date'), reason = g('reason'), desc = g('desc');
+  var sessHC = tkSessionHC();
+  var hc = sessHC || tkFormHC();   // a partner can only ever raise under its own homecare
+  var cat = g('cat'), cg = g('cg'), date = g('date'), reason = g('reason'), desc = g('desc');
   var c = tkCat(cat);
+  if(sessHC && cg && tkCaregiversFor(sessHC).indexOf(cg) < 0){ alert('That caregiver is not on your roster.'); return; }
   if(!hc)   { alert('Homecare is required.'); return; }
   if(!cat)  { alert('Choose what happened.'); return; }
   if(!c.nocg && !cg){ alert('Choose the caregiver this is about.'); return; }
@@ -7025,7 +7032,7 @@ function applySessionUI(){
     header.insertBefore(badge,header.firstChild);
   }
   if(_session.role==='hc'){
-    document.querySelectorAll('.main-tab').forEach(function(t){var txt=t.textContent.trim();if(!txt.includes('Calendar')&&!txt.includes('Roster')&&!txt.includes('Complaint'))t.style.display='none';});
+    document.querySelectorAll('.main-tab').forEach(function(t){var txt=t.textContent.trim();if(!txt.includes('Calendar')&&!txt.includes('Roster')&&!txt.includes('Complaint')&&!txt.includes('Tickets'))t.style.display='none';});
     // hide "Add Caregiver" but keep the Leave Report / Complaint exports available
     document.querySelectorAll('.add-cg-btn').forEach(function(ab){ if(!ab.classList.contains('lr-open-btn')) ab.style.display='none'; });
   }
