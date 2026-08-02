@@ -2,6 +2,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
@@ -538,6 +539,57 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .cx-f input,.cx-f select,.cx-f textarea{background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'Inter',sans-serif;font-size:12px;padding:7px 10px;border-radius:7px;outline:none;width:100%}
 .cx-f input:focus,.cx-f select:focus,.cx-f textarea:focus{border-color:var(--accent)}
 .cx-f .hint{font-size:10px;color:var(--text3)}
+/* ── HC Ticket Desk ── */
+.tk-bar{padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tk-inp{background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'Inter',sans-serif;font-size:12px;padding:6px 10px;border-radius:6px;outline:none}
+.tk-inp:focus{border-color:var(--accent)}
+.tk-btn{padding:6px 14px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;border:1px solid var(--border);background:var(--bg3);color:var(--text)}
+.tk-btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.tk-btn.big{padding:8px 18px;font-size:12px}
+.tk-btn:disabled{opacity:.55;cursor:not-allowed}
+.tk-kpis{padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap}
+.tk-kpi{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 16px;min-width:118px}
+.tk-kpi-v{font-size:20px;font-weight:700;font-family:monospace;line-height:1.1}
+.tk-kpi-l{font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-top:3px}
+.tk-page{padding:16px 20px}
+.tk-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;margin-bottom:16px;overflow:hidden}
+.tk-card-h{padding:10px 14px;background:var(--bg3);border-bottom:1px solid var(--border);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.tk-tbl{width:100%;border-collapse:collapse;font-size:11px}
+.tk-tbl th{padding:7px 10px;text-align:left;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text2);background:var(--bg3);border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0;z-index:2}
+.tk-tbl td{padding:6px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+.tk-tbl tr:hover td{background:var(--bg3)}
+.tk-scroll{max-height:520px;overflow:auto}
+.tk-empty{padding:22px;text-align:center;color:var(--text2);font-size:12px}
+.tk-pill{display:inline-block;font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;white-space:nowrap;border:1px solid currentColor}
+.tk-badge{display:inline-block;font-size:8px;font-weight:700;padding:0 5px;line-height:15px;border-radius:6px;white-space:nowrap}
+.tk-sel{background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:10px;padding:2px 6px;border-radius:5px;outline:none;font-family:'Inter',sans-serif;max-width:140px}
+.tk-x{background:none;border:none;color:var(--text3);cursor:pointer;font-size:12px;padding:0 4px}
+.tk-x:hover{color:var(--accent)}
+.tk-hero{background:linear-gradient(135deg,rgba(47,129,247,.10),rgba(63,185,80,.06));border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.tk-hero-t{font-size:14px;font-weight:700}
+.tk-hero-s{font-size:11px;color:var(--text2);margin-top:3px;line-height:1.6}
+.tk-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9000;align-items:center;justify-content:center;padding:16px}
+.tk-modal.show{display:flex}
+.tk-modal-box{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;width:720px;max-width:97vw;max-height:90vh;overflow-y:auto}
+.tk-form{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tk-f{display:flex;flex-direction:column;gap:4px}
+.tk-f.span2{grid-column:1/-1}
+.tk-f label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text2)}
+.tk-f input,.tk-f select,.tk-f textarea{background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'Inter',sans-serif;font-size:12px;padding:7px 10px;border-radius:7px;outline:none;width:100%}
+.tk-f input:disabled{opacity:.7}
+.tk-f input:focus,.tk-f select:focus,.tk-f textarea:focus{border-color:var(--accent)}
+.tk-f .hint{font-size:10px;color:var(--text3)}
+.tk-ta{background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'Inter',sans-serif;font-size:12px;padding:8px 10px;border-radius:7px;outline:none;width:100%}
+.tk-dgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px 18px;margin-bottom:14px}
+.tk-dt{display:flex;justify-content:space-between;gap:10px;font-size:11px;padding:4px 0;border-bottom:1px solid var(--border)}
+.tk-dt span{color:var(--text2)}
+.tk-dsec{margin-top:14px}
+.tk-dsec-h{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text2);margin-bottom:6px}
+.tk-dsec-b{background:var(--bg3);border-radius:8px;padding:10px 12px;font-size:11.5px;line-height:1.65;white-space:pre-wrap}
+.tk-tl{border-left:2px solid var(--border);padding:4px 0 8px 10px;margin-left:3px;font-size:11px}
+.tk-tl-d{font-size:9px;color:var(--text3);margin-bottom:2px}
+@media(max-width:720px){.tk-form,.tk-dgrid{grid-template-columns:1fr}}
+
 /* ── Leave report ── */
 .lr-box{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px;width:900px;max-width:97vw;max-height:90vh;overflow-y:auto;}
 .lr-bar{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px;}
@@ -748,6 +800,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <button class="main-tab" onclick="switchTab('ops')">⚡ Operations</button>
  <button class="main-tab" onclick="switchTab('planner')">📋 Schedule Builder</button>
  <button class="main-tab" onclick="switchTab('roster')">🗓 Roster View</button>
+ <button class="main-tab" onclick="switchTab('tickets')">🎫 HC Tickets<span id="tk-tab-badge" style="font-weight:800"></span></button>
  <button class="main-tab" onclick="switchTab('daily')">📆 Daily Orders</button>
  <button class="main-tab" onclick="switchTab('leads')">🎯 SM Lead Tracker</button>
  <button class="main-tab" onclick="switchTab('fclead')">💬 FC Lead Tracker</button>
@@ -1766,6 +1819,77 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
   <div style="display:flex;gap:8px;margin-top:14px">
    <button class="cx-btn" style="flex:1" onclick="cxCloseModal()">Cancel</button>
    <button class="cx-btn pri" style="flex:2" onclick="cxSave()">Save</button>
+  </div>
+ </div>
+</div>
+
+
+<!-- ══ HC TICKET DESK ══ -->
+<div class="page" id="page-tickets">
+ <div class="tk-bar">
+  <div style="font-size:15px;font-weight:700">🎫 HC Ticket Desk</div>
+  <input id="tk-search" class="tk-inp" type="text" placeholder="Search ticket / caregiver / client / order..." oninput="tkRenderLog()" style="width:250px">
+  <select id="tk-f-hc" class="tk-inp" onchange="tkRenderLog()"><option value="">All homecares</option></select>
+  <select id="tk-f-cat" class="tk-inp" onchange="tkRenderLog()"><option value="">All categories</option></select>
+  <select id="tk-f-status" class="tk-inp" onchange="tkRenderLog()"><option value="">All statuses</option></select>
+  <select id="tk-f-prio" class="tk-inp" onchange="tkRenderLog()"><option value="">All priorities</option></select>
+  <select id="tk-f-period" class="tk-inp" onchange="tkRenderLog()">
+   <option value="30">Last 30 days</option>
+   <option value="7">Last 7 days</option>
+   <option value="90">Last 90 days</option>
+   <option value="all">All time</option>
+  </select>
+  <button class="tk-btn" onclick="initTickets(true)">↻ Refresh</button>
+  <button class="tk-btn" id="tk-export" onclick="tkExportExcel()">⬇ Excel</button>
+  <button class="tk-btn pri" onclick="tkOpenModal()">+ Raise a ticket</button>
+ </div>
+
+ <div class="tk-kpis" id="tk-kpi-row"></div>
+
+ <div class="tk-page">
+  <div class="tk-hero" id="tk-hc-hint">
+   <div>
+    <div class="tk-hero-t">Something wrong with a shift? Tell Valeo here.</div>
+    <div class="tk-hero-s">Pick the caregiver and the booking, say what happened, and the right person at Valeo is tagged on Slack immediately.<br>
+     Urgent issues — no-show, client not responding, no access, a caregiver unwell — are answered within <b>15 minutes</b>. You will see the status update on this page.</div>
+   </div>
+   <button class="tk-btn pri big" onclick="tkOpenModal()">+ Raise a ticket</button>
+  </div>
+
+  <div class="tk-card">
+   <div class="tk-card-h"><span>📋 Tickets</span><span id="tk-log-count" style="font-size:10px;font-weight:400;color:var(--text3)"></span></div>
+   <div class="tk-scroll"><table class="tk-tbl" id="tk-log-tbl"></table></div>
+  </div>
+ </div>
+</div>
+
+<!-- ── RAISE TICKET MODAL ── -->
+<div class="tk-modal" id="tk-modal" onclick="if(event.target===this)tkCloseModal()">
+ <div class="tk-modal-box">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+   <div style="font-size:15px;font-weight:700">🎫 Raise a ticket</div>
+   <button class="tk-x" style="font-size:20px" onclick="tkCloseModal()">&#x2715;</button>
+  </div>
+  <div style="font-size:11px;color:var(--text2);margin-bottom:14px">Priority is set automatically from the issue — you do not need to choose it.</div>
+  <div class="tk-form" id="tk-form"></div>
+  <div id="tk-modal-preview" style="background:var(--bg3);border-radius:8px;padding:10px 12px;font-size:11px;color:var(--text2);line-height:1.6;margin-top:14px">—</div>
+  <div style="display:flex;gap:8px;margin-top:14px">
+   <button class="tk-btn" style="flex:1" onclick="tkCloseModal()">Cancel</button>
+   <button class="tk-btn pri" id="tk-save-btn" style="flex:2" onclick="tkSave()">Raise ticket</button>
+  </div>
+ </div>
+</div>
+
+<!-- ── TICKET DETAIL ── -->
+<div class="tk-modal" id="tk-detail" onclick="if(event.target===this)tkCloseDetail()">
+ <div class="tk-modal-box">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px">
+   <div style="font-size:14px;font-weight:700" id="tk-detail-title"></div>
+   <button class="tk-x" style="font-size:20px" onclick="tkCloseDetail()">&#x2715;</button>
+  </div>
+  <div id="tk-detail-body"></div>
+  <div style="display:flex;gap:8px;margin-top:16px">
+   <button class="tk-btn" style="flex:1" onclick="tkCloseDetail()">Close</button>
   </div>
  </div>
 </div>
@@ -3035,7 +3159,7 @@ function renderAnalyticsData(){
 // ── Tab switching ────────────────────────────────────────────────
 function switchTab(tab){
   // HC partner accounts: Calendar + Roster only
-  if(_session&&_session.role==='hc'&&tab!=='calendar'&&tab!=='roster'&&tab!=='complaints'){alert('Access restricted');return;}
+  if(_session&&_session.role==='hc'&&tab!=='calendar'&&tab!=='roster'&&tab!=='complaints'&&tab!=='tickets'){alert('Access restricted');return;}
   if(tab==='roster'){setTimeout(switchToRoster,80);}
   if(tab==='daily'){setTimeout(switchToDaily,80);}
   document.querySelectorAll('.main-tab').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase().includes(tab)));
@@ -3048,6 +3172,7 @@ function switchTab(tab){
   if(tab==='leads'){if(_session&&_session.role!=='master'){alert('Master access only');return;}loadLeads();}
   if(tab==='customleads'){initCustomLeads();}
   if(tab==='complaints'){initComplaints();}
+  if(tab==='tickets'){initTickets();}
   if(tab==='expecting'){initExpecting();}
   if(tab==='supply'){if(_session&&_session.role!=='master'){alert('Master access only');return;}loadSupply();}
   if(tab==='penalty'){if(_session&&_session.role!=='master'){alert('Master access only');return;}loadPenalties();}
@@ -3995,6 +4120,650 @@ function cxRefreshBadges(){
   if(rp && rp.classList.contains('active') && typeof renderRoster === 'function') renderRoster();
   var cp = document.getElementById('page-calendar');
   if(cp && cp.classList.contains('active') && typeof renderHCGrid === 'function') renderHCGrid();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// HC TICKET DESK — homecare partners raise live operational issues
+// to Valeo. HC creates + tracks their own; only Valeo resolves.
+// ══════════════════════════════════════════════════════════════════
+var _TK_COLL   = 'valeo_hc_tickets';
+var TK_WEBHOOK = 'https://feelvaleo.app.n8n.cloud/webhook/hc-ticket';
+
+var _tkData = [], _tkLoaded = false, _tkDetailId = null, _tkOrderOpts = [], _tkBusy = false;
+
+// ── Priority + SLA (first response, in minutes) ──────────────────
+var TK_PRIO = {
+  P1:{lbl:'P1 · Urgent', col:'#f85149', sla:15},
+  P2:{lbl:'P2 · High',   col:'#d29922', sla:60},
+  P3:{lbl:'P3 · Normal', col:'#8b949e', sla:480}
+};
+var TK_STATUS = ['Open','Acknowledged','In progress','Resolved'];
+var TK_STATUS_STYLE = {
+  'Open':        {bg:'rgba(248,81,73,.14)',  col:'#f85149'},
+  'Acknowledged':{bg:'rgba(47,129,247,.14)', col:'#2f81f7'},
+  'In progress': {bg:'rgba(210,153,34,.14)', col:'#d29922'},
+  'Resolved':    {bg:'rgba(63,185,80,.14)',  col:'#3fb950'}
+};
+
+// ── Catalogue — written in the HC coordinator's voice ────────────
+// p = auto priority (HC never picks it) · team = Slack routing · nocg = caregiver optional
+var TK_CATS = [
+ {g:'Shift at risk', c:'Caregiver no-show / unavailable', p:'P1', team:'Ops',
+  r:['Sick','Not available','Personal emergency','Transport issue','Other (specify)']},
+ {g:'Shift at risk', c:'Delay', p:'P2', team:'Ops', mins:true,
+  r:['Traffic','Previous shift overrun','Transport issue','Overslept','Other (specify)']},
+ {g:'Shift at risk', c:'Replacement needed', p:'P1', team:'Ops',
+  r:['Caregiver dropped the shift','Client asked for a change','Caregiver on leave','Other (specify)']},
+ {g:'Shift at risk', c:'Caregiver leave — advance notice', p:'P3', team:'Ops',
+  r:['Annual leave','Sick leave','Emergency leave','Travel / exit','Other (specify)']},
+
+ {g:'At the client location', c:'Client not responding', p:'P1', team:'Ops',
+  r:['Not answering calls','Door not opening','Not at home','Wrong address','Other (specify)']},
+ {g:'At the client location', c:'Cannot access the location', p:'P1', team:'Ops',
+  r:['Building security','Gate pass missing','No parking','Address incomplete','Other (specify)']},
+ {g:'At the client location', c:'Client cancelled at the door', p:'P2', team:'Ops',
+  r:['Client not at home','Client changed plan','Client unwell','Other (specify)']},
+ {g:'At the client location', c:'Client ended the shift early', p:'P2', team:'Ops',
+  r:['Help no longer needed','Client unhappy','Client travelling','Other (specify)']},
+
+ {g:'Outside the agreement', c:'Extra hours requested on the spot', p:'P2', team:'Category', mins:true,
+  r:['Client wants more hours today','Client wants to extend the package','Other (specify)']},
+ {g:'Outside the agreement', c:'Work outside the agreed scope', p:'P2', team:'Category',
+  r:['House cleaning','Cooking','Extra children / patients','Pet care','Elderly care not booked','Other (specify)']},
+ {g:'Outside the agreement', c:'Client asking to book or pay directly', p:'P1', team:'Category',
+  r:['Asked caregiver for a direct booking','Offered cash payment','Asked for personal number','Other (specify)']},
+ {g:'Outside the agreement', c:'Unsafe or uncomfortable environment', p:'P1', team:'Category',
+  r:['Caregiver feels unsafe','Harassment','Unhygienic conditions','Aggressive pets','Smoking / substances','Other (specify)']},
+
+ {g:'Schedule mismatch', c:'Wrong details in the schedule', p:'P2', team:'Ops',
+  r:['Date is wrong','Time is wrong','Address is wrong','Client name is wrong','Package hours are wrong','Other (specify)']},
+ {g:'Schedule mismatch', c:'Order not showing in the dashboard', p:'P2', team:'Ops', nocg:true,
+  r:['Told about a booking we cannot see','Order disappeared from the roster','Other (specify)']},
+ {g:'Schedule mismatch', c:'Client asking to change the shift timing', p:'P2', team:'Ops',
+  r:['Same-day time change','Change from tomorrow','Change the weekly off','Other (specify)']},
+
+ {g:'Caregiver welfare', c:'Incident or injury on duty', p:'P1', team:'Ops',
+  r:['Injury at the client home','Accident on the way','Altercation','Other (specify)']},
+ {g:'Caregiver welfare', c:'Caregiver unwell during the shift', p:'P1', team:'Ops',
+  r:['Needs to leave mid-shift','Needs a doctor','Other (specify)']}
+];
+
+// ── Slack — every ticket posts to this one channel, no member tagging
+var TK_SLACK = { channel: 'C0AF2GS4FNF' };
+
+// ── Small helpers ────────────────────────────────────────────────
+function tkEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function tkIsMaster(){ return !(_session && _session.role === 'hc'); }
+function tkSessionHC(){ return (_session && _session.role==='hc' && _session.homecare) ? _session.homecare : ''; }
+function tkNorm(s){ return String(s||'').toLowerCase().replace(/[\s\u00a0]+/g,''); }
+function tkHCMatch(a,b){ return tkNorm(a) === tkNorm(b); }
+function tkCat(name){ return TK_CATS.find(function(x){ return x.c === name; }) || null; }
+function tkPrio(r){ var c = tkCat(r.category); return r.priority || (c ? c.p : 'P2'); }
+function tkAgeMin(r){ return Math.max(0, Math.round((Date.now() - new Date(r.created_at||Date.now()).getTime())/60000)); }
+function tkFmtAge(m){
+  if(m < 60) return m + 'm';
+  if(m < 1440) return Math.floor(m/60) + 'h ' + (m%60) + 'm';
+  return Math.floor(m/1440) + 'd ' + Math.floor((m%1440)/60) + 'h';
+}
+function tkBreached(r){
+  if(r.status !== 'Open') return false;
+  var sla = (TK_PRIO[tkPrio(r)]||{}).sla || 60;
+  return tkAgeMin(r) > sla;
+}
+function tkRespMin(r){
+  if(!r.first_response_at) return null;
+  return Math.max(0, Math.round((new Date(r.first_response_at) - new Date(r.created_at))/60000));
+}
+
+// ── Caregivers / orders available to the logged-in partner ───────
+function tkCaregiversFor(hc){
+  var pool = (rawData||[]).filter(function(x){ return x.caregiver; });
+  var man  = Object.values(manualCGs||{}).map(function(c){ return {caregiver:c.name, homecare:c.homecare}; });
+  var all  = pool.concat(man);
+  if(hc) all = all.filter(function(x){ return tkHCMatch(x.homecare, hc); });
+  return [...new Set(all.map(function(x){ return x.caregiver; }))].filter(Boolean).sort();
+}
+function tkHomecares(){
+  return [...new Set((rawData||[]).map(function(x){ return x.homecare; })
+    .concat(Object.values(manualCGs||{}).map(function(c){ return c.homecare; })))].filter(Boolean).sort();
+}
+// every booking that covers this caregiver on this date — the ticket ties to a real order
+function tkOrdersFor(cg, date){
+  if(!cg || !date) return [];
+  var out = [], seen = {};
+  var push = function(o){
+    var key = o.child_order_id || o.order_id || (o.client_name + '|' + o.time_start);
+    if(!key || seen[key]) return; seen[key] = 1;
+    out.push({
+      order_id:o.order_id||'', child_order_id:o.child_order_id||'',
+      client_name:o.client_name||'', time_start:o.time_start||'', time_end:o.time_end||'',
+      package_raw:o.package_raw||o.package_type||'', location:o.location||'',
+      homecare:o.homecare||'', is_b2b:!!o.is_b2b, status:o.status||''
+    });
+  };
+  (allData||[]).forEach(function(o){ if(o.caregiver===cg && o.date===date) push(o); });
+  (rawData||[]).forEach(function(o){
+    if(o.caregiver!==cg) return;
+    var s = o.date, e = o.end_date || o.date;
+    if(s && date >= s && date <= e) push(o);
+  });
+  return out;
+}
+function tkOrderLabel(o){
+  var bits = [];
+  if(o.time_start) bits.push(o.time_start + (o.time_end ? '–' + o.time_end : ''));
+  bits.push(o.client_name || 'Client not named');
+  if(o.package_raw) bits.push(o.package_raw);
+  if(o.location) bits.push(o.location);
+  var id = o.child_order_id || o.order_id;
+  if(id) bits.push('#' + id);
+  return bits.join(' · ');
+}
+
+// ── Load ─────────────────────────────────────────────────────────
+async function initTickets(force){
+  tkSyncChrome();
+  if(_tkLoaded && !force){ tkRenderAll(); return; }
+  var wrap = document.getElementById('tk-log-tbl');
+  if(wrap) wrap.innerHTML = '<tbody><tr><td class="tk-empty">Loading tickets…</td></tr></tbody>';
+  try{
+    if(!_db) await initFirebase();
+    if(!_db) throw new Error('Firebase not connected');
+    var snap = await _db.collection(_TK_COLL).get();
+    _tkData = [];
+    snap.forEach(function(d){ _tkData.push(Object.assign({_id:d.id}, d.data())); });
+    _tkData.sort(function(a,b){ return String(b.created_at||'').localeCompare(String(a.created_at||'')); });
+    _tkLoaded = true;
+  }catch(e){
+    console.warn('[tickets]', e);
+    if(wrap) wrap.innerHTML = '<tbody><tr><td class="tk-empty" style="color:var(--absent)">Could not load tickets — ' + tkEsc(e.message) + '</td></tr></tbody>';
+    return;
+  }
+  tkPopulateFilters();
+  tkRenderAll();
+}
+async function tkPreload(){
+  try{
+    if(!_db) await initFirebase();
+    if(!_db) return;
+    var snap = await _db.collection(_TK_COLL).get();
+    _tkData = []; snap.forEach(function(d){ _tkData.push(Object.assign({_id:d.id}, d.data())); });
+    _tkData.sort(function(a,b){ return String(b.created_at||'').localeCompare(String(a.created_at||'')); });
+    _tkLoaded = true; tkBadge();
+  }catch(e){ console.warn('[tickets] preload', e); }
+}
+
+// show / hide the master-only controls
+function tkSyncChrome(){
+  var master = tkIsMaster();
+  ['tk-f-hc','tk-export'].forEach(function(id){
+    var el = document.getElementById(id); if(el) el.style.display = master ? '' : 'none';
+  });
+  var hint = document.getElementById('tk-hc-hint');
+  if(hint) hint.style.display = master ? 'none' : '';
+}
+
+function tkBadge(){
+  var el = document.getElementById('tk-tab-badge'); if(!el) return;
+  var open = tkScoped().filter(function(r){ return r.status !== 'Resolved'; }).length;
+  el.textContent = open ? ' ' + open : '';
+  el.style.color = tkScoped().some(tkBreached) ? '#f85149' : 'inherit';
+}
+
+// ── Scoping — an HC only ever sees its own tickets ───────────────
+function tkScoped(){
+  var hc = tkSessionHC();
+  if(!hc) return _tkData;
+  return _tkData.filter(function(r){ return tkHCMatch(r.homecare, hc); });
+}
+function tkFiltered(){
+  var rows = tkScoped();
+  var g = function(id){ var e = document.getElementById(id); return e ? e.value : ''; };
+  var q = (g('tk-search')||'').toLowerCase().trim();
+  var fhc = g('tk-f-hc'), fcat = g('tk-f-cat'), fst = g('tk-f-status'), fp = g('tk-f-prio'), per = g('tk-f-period');
+  if(fhc)  rows = rows.filter(function(r){ return r.homecare === fhc; });
+  if(fcat) rows = rows.filter(function(r){ return r.category === fcat; });
+  if(fst)  rows = rows.filter(function(r){ return fst === 'open' ? r.status !== 'Resolved' : r.status === fst; });
+  if(fp)   rows = rows.filter(function(r){ return tkPrio(r) === fp; });
+  if(per && per !== 'all'){
+    var cut = new Date(); cut.setDate(cut.getDate() - parseInt(per,10));
+    rows = rows.filter(function(r){ return new Date(r.created_at||0) >= cut; });
+  }
+  if(q) rows = rows.filter(function(r){
+    return [r.ticket_id,r.caregiver,r.client_name,r.order_id,r.child_order_id,r.category,r.reason,r.description,r.homecare,r.owner]
+      .join(' ').toLowerCase().indexOf(q) >= 0;
+  });
+  return rows;
+}
+function tkPopulateFilters(){
+  var setOpts = function(id, arr, first){
+    var el = document.getElementById(id); if(!el) return;
+    var cur = el.value;
+    el.innerHTML = '<option value="">' + first + '</option>' + arr.map(function(o){
+      return '<option value="' + tkEsc(o.v!=null?o.v:o) + '">' + tkEsc(o.l!=null?o.l:o) + '</option>'; }).join('');
+    if(cur) el.value = cur;
+  };
+  setOpts('tk-f-hc', [...new Set(tkScoped().map(function(r){ return r.homecare; }))].filter(Boolean).sort(), 'All homecares');
+  setOpts('tk-f-cat', TK_CATS.map(function(c){ return c.c; }), 'All categories');
+  setOpts('tk-f-status', [{v:'open',l:'Not resolved'}].concat(TK_STATUS), 'All statuses');
+  setOpts('tk-f-prio', ['P1','P2','P3'], 'All priorities');
+}
+
+// ── Render ───────────────────────────────────────────────────────
+function tkRenderAll(){ tkRenderKPIs(); tkRenderLog(); tkBadge(); }
+
+function tkRenderKPIs(){
+  var el = document.getElementById('tk-kpi-row'); if(!el) return;
+  var rows = tkScoped();
+  var open = rows.filter(function(r){ return r.status !== 'Resolved'; });
+  var p1   = open.filter(function(r){ return tkPrio(r) === 'P1'; });
+  var br   = open.filter(tkBreached);
+  var wk = new Date(); wk.setDate(wk.getDate()-7);
+  var res7 = rows.filter(function(r){ return r.status==='Resolved' && new Date(r.resolved_at||0) >= wk; });
+  var resp = rows.map(tkRespMin).filter(function(v){ return v != null; });
+  var avg  = resp.length ? Math.round(resp.reduce(function(a,b){return a+b;},0)/resp.length) : null;
+  var card = function(v,l,c){ return '<div class="tk-kpi"><div class="tk-kpi-v"'+(c?' style="color:'+c+'"':'')+'>'+v+'</div><div class="tk-kpi-l">'+l+'</div></div>'; };
+  el.innerHTML = card(open.length,'Open tickets', open.length?'#d29922':'')
+    + card(p1.length,'P1 urgent', p1.length?'#f85149':'')
+    + card(br.length,'Past first-response SLA', br.length?'#f85149':'')
+    + card(res7.length,'Resolved · last 7 days','#3fb950')
+    + card(avg==null?'—':tkFmtAge(avg),'Avg first response');
+}
+
+function tkPill(txt,bg,col){ return '<span class="tk-pill" style="background:'+bg+';color:'+col+'">'+tkEsc(txt)+'</span>'; }
+
+function tkRenderLog(){
+  var t = document.getElementById('tk-log-tbl'); if(!t) return;
+  var master = tkIsMaster();
+  var rows = tkFiltered();
+  var cnt = document.getElementById('tk-log-count');
+  if(cnt) cnt.textContent = rows.length + (rows.length===1?' ticket':' tickets');
+
+  var head = '<thead><tr>'
+    + '<th>Ticket</th><th>Raised</th>' + (master?'<th>Homecare</th>':'')
+    + '<th>Caregiver</th><th>Client / Order</th><th>Issue</th><th>Priority</th>'
+    + '<th>Status</th><th>Age</th>' + (master?'<th>Owner</th>':'') + '<th></th>'
+    + '</tr></thead>';
+
+  if(!rows.length){
+    t.innerHTML = head + '<tbody><tr><td colspan="11" class="tk-empty">No tickets here'
+      + (master ? '' : ' — use <b>Raise a ticket</b> when a shift needs Valeo to step in') + '</td></tr></tbody>';
+    return;
+  }
+
+  t.innerHTML = head + '<tbody>' + rows.map(function(r){
+    var p = tkPrio(r), pc = TK_PRIO[p] || TK_PRIO.P2;
+    var ss = TK_STATUS_STYLE[r.status] || TK_STATUS_STYLE.Open;
+    var brk = tkBreached(r);
+    var oid = r.child_order_id || r.order_id || '';
+    var when = r.created_at ? new Date(r.created_at) : null;
+    var whenTxt = when ? (when.toISOString().slice(0,10) + ' · ' + when.toTimeString().slice(0,5)) : '—';
+    var statusCell = master
+      ? '<select class="tk-sel" onchange="tkSetStatus(\''+r._id+'\',this.value)">' + TK_STATUS.map(function(s){
+          return '<option'+(s===r.status?' selected':'')+'>'+s+'</option>'; }).join('') + '</select>'
+      : tkPill(r.status, ss.bg, ss.col);
+    var ownerCell = master
+      ? '<input class="tk-sel" style="width:100px" value="'+tkEsc(r.owner||'')+'" placeholder="—" onchange="tkSetField(\''+r._id+'\',\'owner\',this.value)">'
+      : '';
+    return '<tr'+(brk?' style="background:rgba(248,81,73,.06)"':'')+'>'
+      + '<td><b style="font-family:monospace;font-size:10px">'+tkEsc(r.ticket_id||'—')+'</b>'
+        + (brk?' <span class="tk-badge" style="background:rgba(248,81,73,.16);color:#f85149">SLA</span>':'')+'</td>'
+      + '<td style="white-space:nowrap;font-size:10px;color:var(--text2)">'+whenTxt+'<div style="font-size:9px;color:var(--text3)">by '+tkEsc(r.raised_by||'—')+'</div></td>'
+      + (master ? '<td>'+tkEsc(r.homecare||'—')+'</td>' : '')
+      + '<td>'+tkEsc(r.caregiver||'—')+'</td>'
+      + '<td>'+tkEsc(r.client_name||'—')+(oid?'<div style="font-size:9px;color:var(--text3);font-family:monospace">#'+tkEsc(oid)+(r.shift_time?' · '+tkEsc(r.shift_time):'')+'</div>':'')+'</td>'
+      + '<td><b>'+tkEsc(r.category||'—')+'</b>'+(r.reason?'<div style="font-size:9px;color:var(--text2)">'+tkEsc(r.reason)+(r.delay_mins?' · '+r.delay_mins+' min':'')+'</div>':'')+'</td>'
+      + '<td>'+tkPill(p, 'rgba(0,0,0,0)', pc.col)+'</td>'
+      + '<td>'+statusCell+'</td>'
+      + '<td style="white-space:nowrap;font-size:10px;color:'+(brk?'#f85149':'var(--text2)')+'">'+tkFmtAge(tkAgeMin(r))+'</td>'
+      + (master ? '<td>'+ownerCell+'</td>' : '')
+      + '<td><button class="tk-x" title="Open" onclick="tkOpenDetail(\''+r._id+'\')">🔍</button>'
+        + (master?'<button class="tk-x" title="Delete" onclick="tkDelete(\''+r._id+'\')">✕</button>':'')+'</td>'
+      + '</tr>';
+  }).join('') + '</tbody>';
+}
+
+// ── Raise-ticket modal ───────────────────────────────────────────
+function tkOpenModal(){
+  var hc = tkSessionHC();
+  var today = new Date().toISOString().slice(0,10);
+  var hcField = hc
+    ? '<input id="tkf-hc" value="'+tkEsc(hc)+'" disabled>'
+    : '<select id="tkf-hc" onchange="tkOnHCChange()">' + tkHomecares().map(function(h){ return '<option>'+tkEsc(h)+'</option>'; }).join('') + '</select>';
+
+  var groups = [...new Set(TK_CATS.map(function(c){ return c.g; }))];
+  var catSel = '<select id="tkf-cat" onchange="tkOnCatChange()"><option value="">— choose what happened —</option>'
+    + groups.map(function(g){
+        return '<optgroup label="'+tkEsc(g)+'">' + TK_CATS.filter(function(c){ return c.g===g; })
+          .map(function(c){ return '<option>'+tkEsc(c.c)+'</option>'; }).join('') + '</optgroup>';
+      }).join('') + '</select>';
+
+  document.getElementById('tk-form').innerHTML =
+      '<div class="tk-f"><label>Homecare</label>'+hcField+'<div class="hint">Locked to your account</div></div>'
+    + '<div class="tk-f"><label>Date of the shift</label><input id="tkf-date" type="date" value="'+today+'" onchange="tkOnCGChange()"></div>'
+    + '<div class="tk-f"><label>Caregiver</label><select id="tkf-cg" onchange="tkOnCGChange()"></select></div>'
+    + '<div class="tk-f"><label>Which booking</label><select id="tkf-order" onchange="tkOnOrderChange()"></select><div class="hint" id="tkf-order-hint">Pulled live from the roster</div></div>'
+    + '<div class="tk-f span2"><label>What happened</label>'+catSel+'</div>'
+    + '<div class="tk-f"><label>Reason</label><select id="tkf-reason" onchange="tkOnReasonChange()"><option value="">—</option></select></div>'
+    + '<div class="tk-f" id="tkf-mins-wrap" style="display:none"><label id="tkf-mins-lbl">How many minutes</label><input id="tkf-mins" type="number" min="0" step="5" placeholder="30"></div>'
+    + '<div class="tk-f span2"><label>Details <span id="tkf-desc-req" style="color:var(--absent);display:none">· required</span></label>'
+      + '<textarea id="tkf-desc" rows="3" placeholder="Times, what the caregiver reported, what you already tried…"></textarea></div>'
+    + '<div class="tk-f span2"><label>Your name / who to call back</label><input id="tkf-by" placeholder="Coordinator name & number" value="'+tkEsc((_session&&_session.username)||'')+'"></div>';
+
+  tkOnHCChange();
+  tkOnCatChange();
+  document.getElementById('tk-modal').classList.add('show');
+}
+function tkCloseModal(){ document.getElementById('tk-modal').classList.remove('show'); }
+
+function tkFormHC(){ var e = document.getElementById('tkf-hc'); return e ? e.value : ''; }
+
+function tkOnHCChange(){
+  var cgs = tkCaregiversFor(tkFormHC());
+  var sel = document.getElementById('tkf-cg'); if(!sel) return;
+  sel.innerHTML = '<option value="">— choose a caregiver —</option>' + cgs.map(function(c){ return '<option>'+tkEsc(c)+'</option>'; }).join('');
+  tkOnCGChange();
+}
+function tkOnCGChange(){
+  var cg = (document.getElementById('tkf-cg')||{}).value || '';
+  var d  = (document.getElementById('tkf-date')||{}).value || '';
+  _tkOrderOpts = tkOrdersFor(cg, d);
+  var sel = document.getElementById('tkf-order');
+  var hint = document.getElementById('tkf-order-hint');
+  if(!sel) return;
+  if(!cg){ sel.innerHTML = '<option value="">— pick a caregiver first —</option>'; if(hint) hint.textContent = 'Pulled live from the roster'; tkPreview(); return; }
+  if(!_tkOrderOpts.length){
+    sel.innerHTML = '<option value="">No booking found on this date</option>';
+    if(hint){ hint.textContent = 'Nothing on the roster for ' + cg + ' on this date'; hint.style.color = 'var(--sick)'; }
+  }else{
+    sel.innerHTML = _tkOrderOpts.map(function(o,i){ return '<option value="'+i+'">'+tkEsc(tkOrderLabel(o))+'</option>'; }).join('');
+    if(hint){ hint.textContent = _tkOrderOpts.length + ' booking' + (_tkOrderOpts.length>1?'s':'') + ' on the roster'; hint.style.color = ''; }
+  }
+  tkOnOrderChange();
+}
+function tkOnOrderChange(){ tkPreview(); }
+
+function tkOnCatChange(){
+  var c = tkCat((document.getElementById('tkf-cat')||{}).value || '');
+  var rs = document.getElementById('tkf-reason');
+  if(rs){
+    rs.innerHTML = '<option value="">— choose a reason —</option>' + (c ? c.r.map(function(x){ return '<option>'+tkEsc(x)+'</option>'; }).join('') : '');
+  }
+  var mw = document.getElementById('tkf-mins-wrap');
+  if(mw){
+    mw.style.display = (c && c.mins) ? '' : 'none';
+    var lbl = document.getElementById('tkf-mins-lbl');
+    if(lbl && c) lbl.textContent = (c.c === 'Delay') ? 'How many minutes late' : 'How many extra hours (in minutes)';
+  }
+  tkOnReasonChange();
+}
+function tkOnReasonChange(){
+  var rv = (document.getElementById('tkf-reason')||{}).value || '';
+  var req = document.getElementById('tkf-desc-req');
+  if(req) req.style.display = /Other \(specify\)/.test(rv) ? '' : 'none';
+  tkPreview();
+}
+function tkPreview(){
+  var el = document.getElementById('tk-modal-preview'); if(!el) return;
+  var cName = (document.getElementById('tkf-cat')||{}).value || '';
+  var c = tkCat(cName);
+  if(!c){ el.innerHTML = 'Pick what happened and Valeo will be notified on Slack straight away.'; return; }
+  var pc = TK_PRIO[c.p] || TK_PRIO.P2;
+  var oi = (document.getElementById('tkf-order')||{}).value;
+  var o  = (oi !== '' && _tkOrderOpts[oi]) ? _tkOrderOpts[oi] : null;
+  el.innerHTML = 'This will go out as <b style="color:'+pc.col+'">'+pc.lbl+'</b>'
+    + ' — Valeo aims to respond within <b>'+tkFmtAge(pc.sla)+'</b>.<br>'
+    + 'Valeo is notified on Slack straight away'
+    + (o ? '<br>Linked booking: <b>'+tkEsc(tkOrderLabel(o))+'</b>' : '<br><span style="color:var(--sick)">No booking linked</span>');
+}
+
+// ── Save ─────────────────────────────────────────────────────────
+async function tkSave(){
+  if(_tkBusy) return;
+  var g = function(id){ var e = document.getElementById('tkf-'+id); return e ? String(e.value||'').trim() : ''; };
+  var hc = tkFormHC(), cat = g('cat'), cg = g('cg'), date = g('date'), reason = g('reason'), desc = g('desc');
+  var c = tkCat(cat);
+  if(!hc)   { alert('Homecare is required.'); return; }
+  if(!cat)  { alert('Choose what happened.'); return; }
+  if(!c.nocg && !cg){ alert('Choose the caregiver this is about.'); return; }
+  if(!reason){ alert('Choose a reason.'); return; }
+  if(/Other \(specify\)/.test(reason) && !desc){ alert('You picked "Other" — please describe what happened.'); return; }
+  var oi = (document.getElementById('tkf-order')||{}).value;
+  var o  = (oi !== '' && _tkOrderOpts[oi]) ? _tkOrderOpts[oi] : null;
+  if(!o && _tkOrderOpts.length && !c.nocg){ alert('Please pick which booking this is about.'); return; }
+
+  var now = new Date();
+  var seq = String(_tkData.filter(function(r){ return (r.created_at||'').slice(0,10) === now.toISOString().slice(0,10); }).length + 1).padStart(3,'0');
+  var tid = 'TKT-' + now.toISOString().slice(2,10).replace(/-/g,'') + '-' + seq;
+
+  var rec = {
+    ticket_id:tid, homecare:hc, caregiver:cg, shift_date:date,
+    category:cat, group:c.g, reason:reason,
+    delay_mins: (c.mins ? (parseInt(g('mins'),10) || 0) : 0),
+    description:desc, priority:c.p, team:c.team,
+    sla_minutes:(TK_PRIO[c.p]||{}).sla || 60,
+    slack_channel:TK_SLACK.channel,
+    order_id:o ? o.order_id : '', child_order_id:o ? o.child_order_id : '',
+    client_name:o ? o.client_name : '', shift_time:o ? (o.time_start + (o.time_end ? '–' + o.time_end : '')) : '',
+    package:o ? o.package_raw : '', city:o ? (typeof normCity==='function' ? normCity(o.location) : o.location) : '',
+    is_b2b:o ? !!o.is_b2b : false,
+    status:'Open', owner:'', resolution:'',
+    raised_by:g('by') || (_session && _session.username) || 'HC',
+    raised_role:(_session && _session.role) || 'unknown',
+    created_at:now.toISOString(), updated_at:now.toISOString(),
+    timeline:[{t:now.toISOString(), by:(g('by') || (_session&&_session.username) || 'HC'), note:'Ticket raised', to:'Open'}]
+  };
+
+  _tkBusy = true;
+  var btn = document.getElementById('tk-save-btn'); if(btn){ btn.disabled = true; btn.textContent = 'Sending…'; }
+  try{
+    if(!_db) await initFirebase();
+    if(!_db) throw new Error('Firebase not connected');
+    var ref = await _db.collection(_TK_COLL).add(rec);
+    _tkData.unshift(Object.assign({_id:ref.id}, rec));
+    tkNotify('created', Object.assign({_id:ref.id}, rec));
+    tkCloseModal(); tkPopulateFilters(); tkRenderAll();
+    tkToast('Ticket ' + tid + ' sent to Valeo — Slack notified');
+  }catch(e){
+    alert('Could not raise the ticket: ' + e.message);
+  }finally{
+    _tkBusy = false;
+    if(btn){ btn.disabled = false; btn.textContent = 'Raise ticket'; }
+  }
+}
+
+// ── Slack via n8n — fire and forget, never blocks the save ───────
+function tkNotify(event, rec){
+  try{
+    fetch(TK_WEBHOOK, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        event:event, doc_id:rec._id, ticket_id:rec.ticket_id,
+        homecare:rec.homecare, caregiver:rec.caregiver, client_name:rec.client_name,
+        order_id:rec.child_order_id || rec.order_id, shift_date:rec.shift_date, shift_time:rec.shift_time,
+        city:rec.city, is_b2b:rec.is_b2b, package:rec.package,
+        group:rec.group, category:rec.category, reason:rec.reason, delay_mins:rec.delay_mins,
+        description:rec.description, priority:rec.priority, sla_minutes:rec.sla_minutes,
+        team:rec.team, slack_channel:rec.slack_channel,
+        status:rec.status, owner:rec.owner, resolution:rec.resolution,
+        raised_by:rec.raised_by, created_at:rec.created_at, updated_at:rec.updated_at,
+        link:location.origin + location.pathname + '#ticket=' + rec.ticket_id
+      })
+    }).catch(function(e){ console.warn('[tickets] webhook', e); });
+  }catch(e){ console.warn('[tickets] webhook', e); }
+}
+
+function tkToast(msg){
+  var d = document.createElement('div');
+  d.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--bg3);border:1px solid var(--duty);color:var(--text);padding:10px 18px;border-radius:9px;font-size:12px;font-weight:600;z-index:9999;box-shadow:0 6px 24px rgba(0,0,0,.4)';
+  d.textContent = '✅ ' + msg;
+  document.body.appendChild(d);
+  setTimeout(function(){ d.style.opacity = '0'; d.style.transition = 'opacity .4s'; }, 3200);
+  setTimeout(function(){ d.remove(); }, 3700);
+}
+
+// ── Valeo-side actions (master only) ─────────────────────────────
+async function tkSetStatus(id, status){
+  if(!tkIsMaster()){ alert('Only Valeo can change a ticket status.'); return; }
+  var r = _tkData.find(function(x){ return x._id === id; }); if(!r) return;
+  var prev = r.status, now = new Date().toISOString();
+  var who = (_session && _session.username) || 'Valeo';
+  r.status = status; r.updated_at = now;
+  if(prev === 'Open' && status !== 'Open' && !r.first_response_at) r.first_response_at = now;
+  if(status === 'Resolved') r.resolved_at = now; else r.resolved_at = '';
+  r.timeline = (r.timeline||[]).concat([{t:now, by:who, note:'Status ' + prev + ' → ' + status, to:status}]);
+  tkRenderAll();
+  try{
+    if(!_db) await initFirebase();
+    await _db.collection(_TK_COLL).doc(id).set({
+      status:r.status, updated_at:r.updated_at, first_response_at:r.first_response_at||'',
+      resolved_at:r.resolved_at||'', timeline:r.timeline
+    }, {merge:true});
+    tkNotify('status', r);
+  }catch(e){ console.warn('[tickets] status', e); }
+}
+async function tkSetField(id, field, value){
+  if(!tkIsMaster()) return;
+  var r = _tkData.find(function(x){ return x._id === id; }); if(!r) return;
+  r[field] = value; r.updated_at = new Date().toISOString();
+  try{
+    if(!_db) await initFirebase();
+    var patch = {updated_at:r.updated_at}; patch[field] = value;
+    await _db.collection(_TK_COLL).doc(id).set(patch, {merge:true});
+  }catch(e){ console.warn('[tickets] field', e); }
+}
+async function tkDelete(id){
+  if(!tkIsMaster()) return;
+  var r = _tkData.find(function(x){ return x._id === id; }); if(!r) return;
+  if(!confirm('Delete ticket ' + (r.ticket_id||'') + '? This cannot be undone.')) return;
+  _tkData = _tkData.filter(function(x){ return x._id !== id; });
+  tkRenderAll();
+  try{ if(!_db) await initFirebase(); await _db.collection(_TK_COLL).doc(id).delete(); }
+  catch(e){ console.warn('[tickets] delete', e); }
+}
+
+// ── Detail drawer ────────────────────────────────────────────────
+function tkOpenDetail(id){
+  var r = _tkData.find(function(x){ return x._id === id; }); if(!r) return;
+  _tkDetailId = id;
+  var master = tkIsMaster();
+  var p = tkPrio(r), pc = TK_PRIO[p] || TK_PRIO.P2, ss = TK_STATUS_STYLE[r.status] || TK_STATUS_STYLE.Open;
+  var row = function(l,v){ return v ? '<div class="tk-dt"><span>'+tkEsc(l)+'</span><b>'+tkEsc(v)+'</b></div>' : ''; };
+  document.getElementById('tk-detail-title').innerHTML =
+    '<span style="font-family:monospace">'+tkEsc(r.ticket_id||'')+'</span> '
+    + tkPill(p,'rgba(0,0,0,0)',pc.col) + ' ' + tkPill(r.status, ss.bg, ss.col)
+    + (tkBreached(r) ? ' <span class="tk-badge" style="background:rgba(248,81,73,.16);color:#f85149">past SLA</span>' : '');
+
+  var tl = (r.timeline||[]).slice().reverse().map(function(e){
+    return '<div class="tk-tl"><div class="tk-tl-d">'+tkEsc(new Date(e.t).toLocaleString())+' · '+tkEsc(e.by||'')+'</div>'
+      + '<div>'+tkEsc(e.note||'')+'</div></div>';
+  }).join('') || '<div style="font-size:11px;color:var(--text3)">No activity yet.</div>';
+
+  document.getElementById('tk-detail-body').innerHTML =
+      '<div class="tk-dgrid">'
+    + row('Homecare', r.homecare) + row('Raised by', r.raised_by)
+    + row('Caregiver', r.caregiver) + row('Client', r.client_name)
+    + row('Shift date', r.shift_date) + row('Shift time', r.shift_time)
+    + row('Order ID', r.child_order_id || r.order_id) + row('Package', r.package)
+    + row('City', r.city) + row('B2B', r.is_b2b ? 'Yes' : '')
+    + row('Issue', r.category) + row('Reason', r.reason + (r.delay_mins ? ' · ' + r.delay_mins + ' min' : ''))
+    + row('Raised at', r.created_at ? new Date(r.created_at).toLocaleString() : '')
+    + row('First response', r.first_response_at ? new Date(r.first_response_at).toLocaleString() + ' (' + tkFmtAge(tkRespMin(r)) + ')' : '')
+    + row('Owner', r.owner) + row('Resolved at', r.resolved_at ? new Date(r.resolved_at).toLocaleString() : '')
+    + '</div>'
+    + (r.description ? '<div class="tk-dsec"><div class="tk-dsec-h">What the coordinator reported</div><div class="tk-dsec-b">'+tkEsc(r.description)+'</div></div>' : '')
+    + '<div class="tk-dsec"><div class="tk-dsec-h">Valeo response</div>'
+      + (master
+        ? '<textarea id="tk-res-box" rows="3" class="tk-ta" placeholder="What Valeo did — replacement sent, client called, schedule corrected…">'+tkEsc(r.resolution||'')+'</textarea>'
+          + '<div style="display:flex;gap:8px;margin-top:8px"><button class="tk-btn" onclick="tkSaveResolution()">Save update</button>'
+          + '<button class="tk-btn pri" onclick="tkResolveNow()">Save &amp; mark resolved</button></div>'
+        : '<div class="tk-dsec-b">'+(r.resolution ? tkEsc(r.resolution) : '<span style="color:var(--text3)">Valeo has not posted an update yet.</span>')+'</div>')
+    + '</div>'
+    + '<div class="tk-dsec"><div class="tk-dsec-h">Activity</div>'+tl+'</div>';
+
+  document.getElementById('tk-detail').classList.add('show');
+}
+function tkCloseDetail(){ document.getElementById('tk-detail').classList.remove('show'); _tkDetailId = null; }
+
+async function tkSaveResolution(silent){
+  if(!tkIsMaster() || !_tkDetailId) return;
+  var r = _tkData.find(function(x){ return x._id === _tkDetailId; }); if(!r) return;
+  var box = document.getElementById('tk-res-box'); if(!box) return;
+  var txt = String(box.value||'').trim();
+  var now = new Date().toISOString(), who = (_session && _session.username) || 'Valeo';
+  if(txt && txt !== r.resolution){
+    r.resolution = txt;
+    r.timeline = (r.timeline||[]).concat([{t:now, by:who, note:'Update: ' + txt}]);
+  }
+  r.updated_at = now;
+  if(!r.first_response_at){ r.first_response_at = now; }
+  try{
+    if(!_db) await initFirebase();
+    await _db.collection(_TK_COLL).doc(r._id).set({resolution:r.resolution, updated_at:now, first_response_at:r.first_response_at, timeline:r.timeline}, {merge:true});
+    tkNotify('update', r);
+  }catch(e){ console.warn('[tickets] resolution', e); }
+  if(!silent){ tkRenderAll(); tkOpenDetail(r._id); tkToast('Update saved'); }
+}
+async function tkResolveNow(){
+  if(!_tkDetailId) return;
+  var id = _tkDetailId;
+  await tkSaveResolution(true);
+  await tkSetStatus(id, 'Resolved');
+  tkCloseDetail(); tkToast('Ticket resolved');
+}
+
+// ── Excel export (Valeo only) ────────────────────────────────────
+var TK_HEAD = ['Ticket ID','Raised at','Homecare','Raised by','Caregiver','Client','Order ID','Shift date','Shift time',
+               'City','B2B','Group','Category','Reason','Delay/extra (min)','Details','Priority','SLA (min)',
+               'Status','Owner','First response','Response (min)','Resolved at','Valeo response'];
+function tkRowAOA(r){
+  return [r.ticket_id||'', r.created_at ? new Date(r.created_at).toLocaleString() : '', r.homecare||'', r.raised_by||'',
+    r.caregiver||'', r.client_name||'', r.child_order_id||r.order_id||'', r.shift_date||'', r.shift_time||'',
+    r.city||'', r.is_b2b?'Yes':'No', r.group||'', r.category||'', r.reason||'', r.delay_mins||0, r.description||'',
+    tkPrio(r), r.sla_minutes||'', r.status||'', r.owner||'',
+    r.first_response_at ? new Date(r.first_response_at).toLocaleString() : '', tkRespMin(r)==null?'':tkRespMin(r),
+    r.resolved_at ? new Date(r.resolved_at).toLocaleString() : '', r.resolution||''];
+}
+function tkExportExcel(){
+  if(!tkIsMaster()) return;
+  var rows = tkFiltered();
+  if(!rows.length){ alert('Nothing to export with these filters.'); return; }
+  var fname = 'Valeo_HC_Tickets_' + new Date().toISOString().slice(0,10);
+  if(typeof XLSX === 'undefined'){
+    var csv = [TK_HEAD].concat(rows.map(tkRowAOA)).map(function(rr){
+      return rr.map(function(c){ var v = String(c==null?'':c); return /[",\n]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v; }).join(',');
+    }).join('\n');
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'})); a.download = fname + '.csv'; a.click();
+    return;
+  }
+  var wb = XLSX.utils.book_new(), used = {};
+  var hcs = [...new Set(rows.map(function(r){ return r.homecare || 'Unassigned'; }))].sort();
+  var sheetName = (typeof _lrSheetName === 'function') ? _lrSheetName : function(n){ return String(n).slice(0,28); };
+
+  var sum = [['Homecare','Tickets','Open','P1','Past SLA','Avg response (min)']];
+  hcs.forEach(function(h){
+    var hr = rows.filter(function(r){ return (r.homecare||'Unassigned') === h; });
+    var resp = hr.map(tkRespMin).filter(function(v){ return v != null; });
+    sum.push([h, hr.length, hr.filter(function(r){ return r.status!=='Resolved'; }).length,
+      hr.filter(function(r){ return tkPrio(r)==='P1'; }).length, hr.filter(tkBreached).length,
+      resp.length ? Math.round(resp.reduce(function(a,b){return a+b;},0)/resp.length) : '']);
+  });
+  var wsS = XLSX.utils.aoa_to_sheet(sum);
+  wsS['!cols'] = [{wch:28},{wch:9},{wch:8},{wch:6},{wch:10},{wch:19}];
+  XLSX.utils.book_append_sheet(wb, wsS, sheetName('Summary', used));
+
+  var wsA = XLSX.utils.aoa_to_sheet([TK_HEAD].concat(rows.map(tkRowAOA)));
+  wsA['!cols'] = TK_HEAD.map(function(h,i){ return {wch: i===15||i===23 ? 46 : Math.max(11, h.length+3)}; });
+  XLSX.utils.book_append_sheet(wb, wsA, sheetName('All tickets', used));
+
+  hcs.forEach(function(h){
+    var hr = rows.filter(function(r){ return (r.homecare||'Unassigned') === h; });
+    var ws = XLSX.utils.aoa_to_sheet([TK_HEAD].concat(hr.map(tkRowAOA)));
+    ws['!cols'] = wsA['!cols'];
+    XLSX.utils.book_append_sheet(wb, ws, sheetName(h, used));
+  });
+  XLSX.writeFile(wb, fname + '.xlsx');
 }
 
 // ── Theme toggle ─────────────────────────────────────────────────
@@ -8602,6 +9371,7 @@ if(checkExistingSession()){
   loadData();
   // complaint data drives the roster / card warning badges, so pull it up front
   setTimeout(function(){ try{ initComplaints(); }catch(e){ console.warn('[complaints] preload', e); } }, 1200);
+  setTimeout(function(){ try{ tkPreload(); }catch(e){ console.warn('[tickets] preload', e); } }, 1600);
 }
 </script>
 </body>
