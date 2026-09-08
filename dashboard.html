@@ -3,6 +3,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
@@ -459,6 +460,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .rd-off{background:#475569;color:#fff;}
 .rd-shady{background:#f472b6;color:#fff;}
 .rd-b2b{background:#ec4899;color:#fff;}
+.rd-mumz{background:#ff2d95;color:#fff;}
 .rd-empty{background:transparent;}
 .rd-today{outline:2px solid var(--accent)!important;outline-offset:-2px;}
 .col-weekend{opacity:.7;}
@@ -762,18 +764,18 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 
 <!-- ── Header ── -->
 <div id="login-screen">
-  <div class="login-box">
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:28px">
-      <div class="login-logo-icon">V</div>
-      <div><div style="font-size:18px;font-weight:700">Valeo Health</div><div style="font-size:11px;color:var(--text2)">Caregiver Operations</div></div>
-    </div>
-    <div style="font-size:14px;font-weight:600;margin-bottom:6px">Welcome back</div>
-    <div style="font-size:12px;color:var(--text2);margin-bottom:22px">Sign in to continue</div>
-    <div style="margin-bottom:14px"><label class="login-label">Username</label><input class="login-input" id="login-user" type="text" placeholder="Enter username" onkeydown="if(event.key==='Enter')doLogin()"></div>
-    <div style="margin-bottom:14px"><label class="login-label">Password</label><input class="login-input" id="login-pass" type="password" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()"></div>
-    <button class="login-btn" id="login-btn" onclick="doLogin()">Sign In</button>
-    <div class="login-error" id="login-error">Incorrect username or password</div>
-  </div>
+ <div class="login-box">
+ <div style="display:flex;align-items:center;gap:12px;margin-bottom:28px">
+ <div class="login-logo-icon">V</div>
+ <div><div style="font-size:18px;font-weight:700">Valeo Health</div><div style="font-size:11px;color:var(--text2)">Caregiver Operations</div></div>
+ </div>
+ <div style="font-size:14px;font-weight:600;margin-bottom:6px">Welcome back</div>
+ <div style="font-size:12px;color:var(--text2);margin-bottom:22px">Sign in to continue</div>
+ <div style="margin-bottom:14px"><label class="login-label">Username</label><input class="login-input" id="login-user" type="text" placeholder="Enter username" onkeydown="if(event.key==='Enter')doLogin()"></div>
+ <div style="margin-bottom:14px"><label class="login-label">Password</label><input class="login-input" id="login-pass" type="password" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+ <button class="login-btn" id="login-btn" onclick="doLogin()">Sign In</button>
+ <div class="login-error" id="login-error">Incorrect username or password</div>
+ </div>
 </div>
 
 <div class="header">
@@ -801,6 +803,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <button class="main-tab" onclick="switchTab('ops')">⚡ Operations</button>
  <button class="main-tab" onclick="switchTab('planner')">📋 Schedule Builder</button>
  <button class="main-tab" onclick="switchTab('roster')">🗓 Roster View</button>
+ <button class="main-tab" onclick="switchTab('mumz')">🛍️ Mumzworld Orders</button>
  <button class="main-tab" onclick="switchTab('tickets')">🎫 HC Tickets<span id="tk-tab-badge" style="font-weight:800"></span></button>
  <button class="main-tab" onclick="switchTab('leave')">🏖 Leave Applications<span id="lv-tab-badge" style="font-weight:800"></span></button>
  <button class="main-tab" onclick="switchTab('leads')">🎯 SM Lead Tracker</button>
@@ -858,15 +861,15 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <option value="all">All Homecare</option>
  </select>
  <div class="cg-result-count" id="cg-result-count"></div>
-    <div class="gmn" title="Counts on each card are taken from the roster for this month">
-     <button class="gmn-btn" onclick="gridShiftMo(-1)">‹</button>
-     <div class="gmn-label" id="grid-mo-label">—</div>
-     <button class="gmn-btn" onclick="gridShiftMo(1)">›</button>
-     <button class="gmn-today" onclick="gridToday()">Today</button>
-    </div>
-    <button class="add-cg-btn lr-open-btn" onclick="openLeaveReport()" style="background:var(--duty)" title="Leave counter per caregiver — download as Excel, one sheet per homecare">📊 Leave Report</button>
-    <button class="show-hidden-btn" id="show-hidden-btn" onclick="toggleShowHidden()"></button>
-    <button class="add-cg-btn" onclick="openAddCGModal()">✦ Add Caregiver</button>
+ <div class="gmn" title="Counts on each card are taken from the roster for this month">
+ <button class="gmn-btn" onclick="gridShiftMo(-1)">‹</button>
+ <div class="gmn-label" id="grid-mo-label">—</div>
+ <button class="gmn-btn" onclick="gridShiftMo(1)">›</button>
+ <button class="gmn-today" onclick="gridToday()">Today</button>
+ </div>
+ <button class="add-cg-btn lr-open-btn" onclick="openLeaveReport()" style="background:var(--duty)" title="Leave counter per caregiver — download as Excel, one sheet per homecare">📊 Leave Report</button>
+ <button class="show-hidden-btn" id="show-hidden-btn" onclick="toggleShowHidden()"></button>
+ <button class="add-cg-btn" onclick="openAddCGModal()">✦ Add Caregiver</button>
  </div>
  <div class="cal-page" id="hc-grid-wrap">
  <div class="loading-wrap"><div class="spinner"></div><span>Fetching live data from Metabase...</span></div>
@@ -910,11 +913,11 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <div class="week-tabs" id="week-tabs"></div>
  <!-- KPI explanation -->
  <div style="font-size:11px;color:var(--text3);padding:8px 4px;margin-bottom:4px;line-height:1.7">
-  <b style="color:var(--text2)">How to read the numbers below:</b>
-    <b>Duty Shifts</b> = confirmed caregiver working days.
-    <b>Active CGs</b> = caregivers with at least one booking.
-    <b>Clients</b> = unique clients served.
-    <b>Utilisation</b> = % of shifts that were actual duty (vs cancelled/off).
+ <b style="color:var(--text2)">How to read the numbers below:</b>
+ <b>Duty Shifts</b> = confirmed caregiver working days.
+ <b>Active CGs</b> = caregivers with at least one booking.
+ <b>Clients</b> = unique clients served.
+ <b>Utilisation</b> = % of shifts that were actual duty (vs cancelled/off).
  </div>
  <!-- KPIs -->
  <div class="kpi-grid" id="kpi-grid"></div>
@@ -993,56 +996,56 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 <!-- ── Churned Clients ── -->
 <div style="margin-top:24px">
  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-  <span style="font-size:13px;font-weight:700;color:var(--text)">🔄 Churned Clients <span class="ops-count" id="churned-count">—</span></span>
-  <span style="font-size:11px;color:var(--text3)">Package ended 1–30 days ago · no renewal</span>
+ <span style="font-size:13px;font-weight:700;color:var(--text)">🔄 Churned Clients <span class="ops-count" id="churned-count">—</span></span>
+ <span style="font-size:11px;color:var(--text3)">Package ended 1–30 days ago · no renewal</span>
  </div>
  <div style="overflow-x:auto">
-  <table class="ops-table">
-   <thead><tr><th>Client</th><th>${splitCg2?"Day ":""}Caregiver</th>${splitCg2?"<th>Night Caregiver</th>":""}<th>Homecare</th><th>Package</th><th>Ended</th><th>Days Ago</th><th>City</th></tr></thead>
-   <tbody id="churned-tbody"></tbody>
-  </table>
+ <table class="ops-table">
+ <thead><tr><th>Client</th><th>${splitCg2?"Day ":""}Caregiver</th>${splitCg2?"<th>Night Caregiver</th>":""}<th>Homecare</th><th>Package</th><th>Ended</th><th>Days Ago</th><th>City</th></tr></thead>
+ <tbody id="churned-tbody"></tbody>
+ </table>
  </div>
 </div>
 
 <!-- ── Churn Risk Score ── -->
 <div style="margin-top:24px">
  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-  <span style="font-size:13px;font-weight:700;color:var(--text)">🧠 Churn Risk Score <span class="ops-count" id="churn-risk-count">—</span></span>
-  <span style="font-size:11px;color:var(--text3)">Logistic regression · clients ranked by renewal risk</span>
+ <span style="font-size:13px;font-weight:700;color:var(--text)">🧠 Churn Risk Score <span class="ops-count" id="churn-risk-count">—</span></span>
+ <span style="font-size:11px;color:var(--text3)">Logistic regression · clients ranked by renewal risk</span>
  </div>
  <div style="overflow-x:auto">
-  <table class="ops-table">
-   <thead><tr><th>Client</th><th>Homecare</th><th>Risk Score</th><th>Risk Level</th><th>Last Package</th><th>End Date</th><th>Key Factors</th></tr></thead>
-   <tbody id="churn-risk-tbody"></tbody>
-  </table>
+ <table class="ops-table">
+ <thead><tr><th>Client</th><th>Homecare</th><th>Risk Score</th><th>Risk Level</th><th>Last Package</th><th>End Date</th><th>Key Factors</th></tr></thead>
+ <tbody id="churn-risk-tbody"></tbody>
+ </table>
  </div>
 </div>
 
 <!-- ── Idle Caregivers ── -->
 <div style="margin-top:24px">
  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-  <span style="font-size:13px;font-weight:700;color:var(--text)">💤 Idle Caregivers <span class="ops-count" id="idle-cg-count">—</span></span>
-  <span style="font-size:11px;color:var(--text3)">No bookings in next 14 days</span>
+ <span style="font-size:13px;font-weight:700;color:var(--text)">💤 Idle Caregivers <span class="ops-count" id="idle-cg-count">—</span></span>
+ <span style="font-size:11px;color:var(--text3)">No bookings in next 14 days</span>
  </div>
  <div style="overflow-x:auto">
-  <table class="ops-table">
-   <thead><tr><th>Caregiver</th><th>Homecare</th><th>Last Booking</th><th>Last Client</th><th>Days Since Last Booking</th></tr></thead>
-   <tbody id="idle-cg-tbody"></tbody>
-  </table>
+ <table class="ops-table">
+ <thead><tr><th>Caregiver</th><th>Homecare</th><th>Last Booking</th><th>Last Client</th><th>Days Since Last Booking</th></tr></thead>
+ <tbody id="idle-cg-tbody"></tbody>
+ </table>
  </div>
 </div>
 
 <!-- ── Double Booked ── -->
 <div style="margin-top:24px">
  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-  <span style="font-size:13px;font-weight:700;color:var(--text)">🚨 Double Booked <span class="ops-count" id="double-booked-count">—</span></span>
-  <span style="font-size:11px;color:var(--text3)">Caregivers with overlapping shifts · next 30 days</span>
+ <span style="font-size:13px;font-weight:700;color:var(--text)">🚨 Double Booked <span class="ops-count" id="double-booked-count">—</span></span>
+ <span style="font-size:11px;color:var(--text3)">Caregivers with overlapping shifts · next 30 days</span>
  </div>
  <div style="overflow-x:auto">
-  <table class="ops-table">
-   <thead><tr><th>Date</th><th>Caregiver</th><th>Homecare</th><th>Order 1</th><th>Shift 1</th><th>Order 2</th><th>Shift 2</th></tr></thead>
-   <tbody id="double-booked-tbody"></tbody>
-  </table>
+ <table class="ops-table">
+ <thead><tr><th>Date</th><th>Caregiver</th><th>Homecare</th><th>Order 1</th><th>Shift 1</th><th>Order 2</th><th>Shift 2</th></tr></thead>
+ <tbody id="double-booked-tbody"></tbody>
+ </table>
  </div>
 </div>
 
@@ -1088,125 +1091,170 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 <!-- ── LEAVE REPORT MODAL ── -->
 <div class="lc-modal" id="lr-modal" onclick="if(event.target===this)closeLeaveReport()">
  <div class="lr-box">
-  <div class="lc-h">📊 Leave counter per caregiver</div>
-  <div class="lc-sub">Counted from the roster — sick, paid, unpaid and public holiday, plus rest days and duty.</div>
-  <div class="lr-bar">
-   <div>
-    <div class="lc-lbl">Month</div>
-    <input class="lc-inp" type="month" id="lr-month" onchange="renderLeaveReport()" style="width:150px">
-   </div>
-   <div>
-    <div class="lc-lbl">Homecare</div>
-    <select class="lc-inp" id="lr-hc" onchange="renderLeaveReport()" style="width:200px"><option value="">All homecares</option></select>
-   </div>
-   <button class="lr-btn pri" onclick="downloadLeaveExcel('')">⬇ Excel — one sheet per homecare</button>
-   <button class="lr-btn sec" onclick="copyLeaveSummary()">📋 Copy summary</button>
-   <button class="lr-btn sec" onclick="closeLeaveReport()" style="margin-left:auto">✕ Close</button>
-  </div>
-  <div class="lr-wrap"><table class="lr-tbl" id="lr-table"></table></div>
-  <div style="font-size:10px;color:var(--text3);margin-top:8px;line-height:1.6">
-   <b>Total leave</b> = sick + paid + unpaid + public holiday. <b>Off</b> = day off + week off (rest days, not leave).
-   <b>Available days</b> reflects joining date, exit date and pauses. Use the ⬇ button on a homecare row to send that partner their own file.
-  </div>
+ <div class="lc-h">📊 Leave counter per caregiver</div>
+ <div class="lc-sub">Counted from the roster — sick, paid, unpaid and public holiday, plus rest days and duty.</div>
+ <div class="lr-bar">
+ <div>
+ <div class="lc-lbl">Month</div>
+ <input class="lc-inp" type="month" id="lr-month" onchange="renderLeaveReport()" style="width:150px">
+ </div>
+ <div>
+ <div class="lc-lbl">Homecare</div>
+ <select class="lc-inp" id="lr-hc" onchange="renderLeaveReport()" style="width:200px"><option value="">All homecares</option></select>
+ </div>
+ <button class="lr-btn pri" onclick="downloadLeaveExcel('')">⬇ Excel — one sheet per homecare</button>
+ <button class="lr-btn sec" onclick="copyLeaveSummary()">📋 Copy summary</button>
+ <button class="lr-btn sec" onclick="closeLeaveReport()" style="margin-left:auto">✕ Close</button>
+ </div>
+ <div class="lr-wrap"><table class="lr-tbl" id="lr-table"></table></div>
+ <div style="font-size:10px;color:var(--text3);margin-top:8px;line-height:1.6">
+ <b>Total leave</b> = sick + paid + unpaid + public holiday. <b>Off</b> = day off + week off (rest days, not leave).
+ <b>Available days</b> reflects joining date, exit date and pauses. Use the ⬇ button on a homecare row to send that partner their own file.
+ </div>
  </div>
 </div>
 
 <!-- ── CAREGIVER LIFECYCLE MODAL (join / exit / pauses) ── -->
 <div class="lc-modal" id="lc-modal" onclick="if(event.target===this)closeLifecycle()">
  <div class="lc-box">
-  <div class="lc-h" id="lc-title">Caregiver timeline</div>
-  <div class="lc-sub" id="lc-sub">—</div>
+ <div class="lc-h" id="lc-title">Caregiver timeline</div>
+ <div class="lc-sub" id="lc-sub">—</div>
 
-  <div class="lc-row">
-   <div class="lc-col">
-    <div class="lc-lbl">Joined / start date</div>
-    <input class="lc-inp" type="date" id="lc-start">
-    <div style="font-size:10px;color:var(--text3);margin-top:4px">Blank = active from the 1st of every month</div>
-   </div>
-   <div class="lc-col">
-    <div class="lc-lbl">Exit date (resigned / removed)</div>
-    <input class="lc-inp" type="date" id="lc-exit">
-    <div style="font-size:10px;color:var(--text3);margin-top:4px">Blank = still active</div>
-   </div>
-  </div>
+ <div class="lc-row">
+ <div class="lc-col">
+ <div class="lc-lbl">Joined / start date</div>
+ <input class="lc-inp" type="date" id="lc-start">
+ <div style="font-size:10px;color:var(--text3);margin-top:4px">Blank = active from the 1st of every month</div>
+ </div>
+ <div class="lc-col">
+ <div class="lc-lbl">Exit date (resigned / removed)</div>
+ <input class="lc-inp" type="date" id="lc-exit">
+ <div style="font-size:10px;color:var(--text3);margin-top:4px">Blank = still active</div>
+ </div>
+ </div>
 
-  <div class="lc-lbl">Pauses — vacation / unpaid break</div>
-  <div id="lc-pause-list" style="margin-bottom:8px"></div>
-  <button class="lc-add" onclick="lcAddPause()">+ Add pause period</button>
+ <div class="lc-lbl">Pauses — vacation / unpaid break</div>
+ <div id="lc-pause-list" style="margin-bottom:8px"></div>
+ <button class="lc-add" onclick="lcAddPause()">+ Add pause period</button>
 
-  <div class="lc-note" id="lc-preview">—</div>
+ <div class="lc-note" id="lc-preview">—</div>
 
-  <div class="lc-acts">
-   <button class="lc-btn lc-cancel" onclick="closeLifecycle()">Cancel</button>
-   <button class="lc-btn lc-reset" onclick="lcReset()">Reset all</button>
-   <button class="lc-btn lc-save" onclick="lcSave()">Save</button>
-  </div>
+ <div class="lc-acts">
+ <button class="lc-btn lc-cancel" onclick="closeLifecycle()">Cancel</button>
+ <button class="lc-btn lc-reset" onclick="lcReset()">Reset all</button>
+ <button class="lc-btn lc-save" onclick="lcSave()">Save</button>
+ </div>
  </div>
 </div>
 
 <!-- ── Saved Planners Modal ── -->
 <div id="saved-planners-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:700;align-items:center;justify-content:center">
  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:24px;width:520px;max-width:95vw;max-height:80vh;overflow-y:auto">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-   <span style="font-size:14px;font-weight:700;color:var(--text)">Saved Schedules</span>
-   <button onclick="document.getElementById('saved-planners-overlay').style.display='none'" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer">✕</button>
-  </div>
-  <div id="saved-planners-list">Loading...</div>
+ <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+ <span style="font-size:14px;font-weight:700;color:var(--text)">Saved Schedules</span>
+ <button onclick="document.getElementById('saved-planners-overlay').style.display='none'" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer">✕</button>
+ </div>
+ <div id="saved-planners-list">Loading...</div>
  </div>
 </div>
+<!-- ══ MUMZWORLD DAILY ORDERS (demand-side partner view) ══ -->
+<div class="page" id="page-mumz">
+ <div class="daily-toolbar">
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+   <div style="font-size:15px;font-weight:700;margin-right:6px">🛍️ Mumzworld Orders</div>
+   <label style="font-size:12px;font-weight:600;color:var(--text2)">Date</label>
+   <input type="date" id="mz-date" class="avail-input" style="width:160px" onchange="renderMumzDaily()">
+   <button class="avail-btn" onclick="mzToday()">Today</button>
+   <button class="roster-nav-btn" onclick="mzShiftDate(-1)" style="width:28px;height:28px;font-size:16px">‹</button>
+   <button class="roster-nav-btn" onclick="mzShiftDate(1)" style="width:28px;height:28px;font-size:16px">›</button>
+   <button class="tk-btn" onclick="loadData(true)" title="Pull the latest orders">↻ Refresh</button>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px">
+   <input id="mz-search" class="tk-inp" type="text" placeholder="Search customer / caregiver / order..." oninput="renderMumzDaily()" style="width:240px">
+   <select id="mz-status-filter" class="roster-hc-filter" onchange="renderMumzDaily()">
+    <option value="">All Status</option>
+    <option value="Assigned">Assigned</option>
+    <option value="Unassigned">Unassigned</option>
+    <option value="Cancelled">Cancelled</option>
+   </select>
+   <span id="mz-summary" style="font-size:12px;color:var(--text2);margin-left:4px"></span>
+  </div>
+ </div>
+ <div class="daily-wrap" id="mz-wrap"></div>
+</div>
+
+<!-- ── RAISE CONCERN MODAL (Mumzworld) ── -->
+<div class="tk-modal" id="mz-modal" onclick="if(event.target===this)mzCloseModal()">
+ <div class="tk-modal-box">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+   <div style="font-size:15px;font-weight:700">🚩 Raise a concern</div>
+   <button class="tk-x" style="font-size:20px" onclick="mzCloseModal()">&#x2715;</button>
+  </div>
+  <div style="font-size:11px;color:var(--text2);margin-bottom:14px">Valeo is notified on Slack straight away. Urgent issues are answered within <b>15 minutes</b>.</div>
+  <div id="mz-order-card" style="background:var(--bg3);border-radius:8px;padding:10px 12px;font-size:11.5px;line-height:1.7;margin-bottom:14px"></div>
+  <div class="tk-form" id="mz-form"></div>
+  <div id="mz-preview" style="background:var(--bg3);border-radius:8px;padding:10px 12px;font-size:11px;color:var(--text2);line-height:1.6;margin-top:14px">—</div>
+  <div style="display:flex;gap:8px;margin-top:14px">
+   <button class="tk-btn" style="flex:1" onclick="mzCloseModal()">Cancel</button>
+   <button class="tk-btn pri" id="mz-save-btn" style="flex:2" onclick="mzSaveConcern()">Submit concern</button>
+  </div>
+ </div>
+</div>
+
 <!-- ── PACKAGE PLANNER PAGE ── -->
 <div class="page" id="page-roster">
  <div class="roster-toolbar">
-  <button class="roster-nav-btn" onclick="rosterPrevMonth()">‹</button>
-  <span class="roster-month-label" id="roster-month-label"></span>
-  <button class="roster-nav-btn" onclick="rosterNextMonth()">›</button>
-  <select class="roster-hc-filter" id="roster-hc-filter" onchange="renderRoster()">
-   <option value="">All Homecare</option>
-  </select>
-  <select class="roster-hc-filter" id="roster-city-filter" onchange="renderRoster()">
-   <option value="">All Cities</option>
-   <option value="Dubai">🏙 Dubai</option>
-   <option value="AUH">🕌 Abu Dhabi</option>
-   <option value="RAK">🏔 RAK</option>
-  </select>
-  <button class="roster-hc-filter" onclick="openLeaveReport()" style="cursor:pointer;font-weight:600" title="Leave counter per caregiver — download as Excel, one sheet per homecare">📊 Leave Report</button>
-  <button class="roster-hc-filter" id="roster-exited-btn" onclick="toggleShowExited()" style="cursor:pointer" title="Caregivers who resigned / were removed are hidden from the month they left onward. Earlier months are untouched.">👤 Exited hidden</button>
-  <span class="roster-legend">
-   <span class="rl-dot" style="background:#f59e0b"></span>Duty
-   <span class="rl-dot" style="background:#a855f7"></span>Manual
-   <span class="rl-dot" style="background:#1a1a1a"></span>Week Off
-   <span class="rl-dot" style="background:#ef4444"></span>Sick
-   <span class="rl-dot" style="background:#475569"></span>Off/Holiday
-   <span class="rl-dot" style="background:#ec4899"></span>B2B Order
-   <span class="rl-dot" style="background:#0891b2"></span>Paid Leave
-   <span class="rl-dot" style="background:#7c3aed"></span>Pause / Vacation
-   <span class="rl-dot" style="background:rgba(248,81,73,.35)"></span>Exited
-  </span>
+ <button class="roster-nav-btn" onclick="rosterPrevMonth()">‹</button>
+ <span class="roster-month-label" id="roster-month-label"></span>
+ <button class="roster-nav-btn" onclick="rosterNextMonth()">›</button>
+ <select class="roster-hc-filter" id="roster-hc-filter" onchange="renderRoster()">
+ <option value="">All Homecare</option>
+ </select>
+ <select class="roster-hc-filter" id="roster-city-filter" onchange="renderRoster()">
+ <option value="">All Cities</option>
+ <option value="Dubai">🏙 Dubai</option>
+ <option value="AUH">🕌 Abu Dhabi</option>
+ <option value="RAK">🏔 RAK</option>
+ </select>
+ <button class="roster-hc-filter" onclick="openLeaveReport()" style="cursor:pointer;font-weight:600" title="Leave counter per caregiver — download as Excel, one sheet per homecare">📊 Leave Report</button>
+ <button class="roster-hc-filter" id="roster-exited-btn" onclick="toggleShowExited()" style="cursor:pointer" title="Caregivers who resigned / were removed are hidden from the month they left onward. Earlier months are untouched.">👤 Exited hidden</button>
+ <span class="roster-legend">
+ <span class="rl-dot" style="background:#f59e0b"></span>Duty
+ <span class="rl-dot" style="background:#a855f7"></span>Manual
+ <span class="rl-dot" style="background:#1a1a1a"></span>Week Off
+ <span class="rl-dot" style="background:#ef4444"></span>Sick
+ <span class="rl-dot" style="background:#475569"></span>Off/Holiday
+ <span class="rl-dot" style="background:#ec4899"></span>B2B Order
+ <span class="rl-dot" style="background:#ff2d95"></span>Mumzworld
+ <span class="rl-dot" style="background:#0891b2"></span>Paid Leave
+ <span class="rl-dot" style="background:#7c3aed"></span>Pause / Vacation
+ <span class="rl-dot" style="background:rgba(248,81,73,.35)"></span>Exited
+ </span>
  </div>
  <div class="roster-wrap" id="roster-wrap"></div>
 </div>
 <div class="page" id="page-daily">
  <div class="daily-toolbar">
-  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-   <label style="font-size:12px;font-weight:600;color:var(--text2)">Date</label>
-   <input type="date" id="daily-date" class="avail-input" style="width:160px" onchange="renderDailyOrders()">
-   <button class="avail-btn" onclick="setDailyToday()">Today</button>
-   <button class="roster-nav-btn" onclick="shiftDailyDate(-1)" style="width:28px;height:28px;font-size:16px">‹</button>
-   <button class="roster-nav-btn" onclick="shiftDailyDate(1)" style="width:28px;height:28px;font-size:16px">›</button>
-  </div>
-  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px">
-   <select id="daily-hc-filter" class="roster-hc-filter" onchange="renderDailyOrders()">
-    <option value="">All Homecare</option>
-   </select>
-   <select id="daily-status-filter" class="roster-hc-filter" onchange="renderDailyOrders()">
-    <option value="">All Status</option>
-    <option value="Assigned">Assigned</option>
-    <option value="Unassigned">Unassigned</option>
-    <option value="Cancelled">Cancelled</option>
-    <option value="Completed">Completed</option>
-   </select>
-   <span id="daily-summary" style="font-size:12px;color:var(--text2);margin-left:8px"></span>
-  </div>
+ <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+ <label style="font-size:12px;font-weight:600;color:var(--text2)">Date</label>
+ <input type="date" id="daily-date" class="avail-input" style="width:160px" onchange="renderDailyOrders()">
+ <button class="avail-btn" onclick="setDailyToday()">Today</button>
+ <button class="roster-nav-btn" onclick="shiftDailyDate(-1)" style="width:28px;height:28px;font-size:16px">‹</button>
+ <button class="roster-nav-btn" onclick="shiftDailyDate(1)" style="width:28px;height:28px;font-size:16px">›</button>
+ </div>
+ <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px">
+ <select id="daily-hc-filter" class="roster-hc-filter" onchange="renderDailyOrders()">
+ <option value="">All Homecare</option>
+ </select>
+ <select id="daily-status-filter" class="roster-hc-filter" onchange="renderDailyOrders()">
+ <option value="">All Status</option>
+ <option value="Assigned">Assigned</option>
+ <option value="Unassigned">Unassigned</option>
+ <option value="Cancelled">Cancelled</option>
+ <option value="Completed">Completed</option>
+ </select>
+ <span id="daily-summary" style="font-size:12px;color:var(--text2);margin-left:8px"></span>
+ </div>
  </div>
  <div class="daily-wrap" id="daily-wrap"></div>
 </div>
@@ -1215,39 +1263,39 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 
  <!-- Schedule Builder -->
  <div class="planner-controls" style="flex-direction:column;gap:0;padding:0;border:none;background:none">
-  <div id="sb-pre-form" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:18px">
-   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:14px">
-    <div class="planner-field"><span class="planner-label">Client Name</span><input class="planner-input" id="sb-client" type="text" placeholder="e.g. Noor Al Mansouri"></div>
-    <div class="planner-field"><span class="planner-label">Order ID</span><input class="planner-input" id="sb-order-id" type="text" placeholder="e.g. 12345"></div>
-    <div class="planner-field"><span class="planner-label">Package</span><select class="planner-select" id="sb-pkg-type"><option value="monthly">Monthly</option><option value="weekly">Weekly</option></select></div>
-    <div class="planner-field"><span class="planner-label">Days/Week</span><select class="planner-select" id="sb-days-per-week"><option value="5">5 days</option><option value="6">6 days</option><option value="7">7 days</option></select></div>
-    <div class="planner-field"><span class="planner-label">Weeks</span><select class="planner-select" id="sb-weeks"><option value="4">4 weeks</option><option value="1">1 week</option><option value="2">2 weeks</option><option value="3">3 weeks</option></select></div>
-    <div class="planner-field"><span class="planner-label">Start Date</span><input class="planner-input" id="sb-start" type="date"></div>
-   </div>
-   <div style="background:var(--bg3);border-radius:8px;padding:12px;margin-bottom:10px">
-    <div style="font-size:11px;font-weight:600;color:var(--duty);margin-bottom:8px">☀️ CG 1 (Day Shift)</div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px">
-     <div class="planner-field"><span class="planner-label">Homecare</span><select class="planner-select" id="sb-hc1" onchange="sbLoadCGs(1)"><option value="">— HC —</option></select></div>
-     <div class="planner-field"><span class="planner-label">Caregiver</span><select class="planner-select" id="sb-cg1"><option value="">— CG —</option></select></div>
-     <div class="planner-field"><span class="planner-label">Start Time</span><input class="planner-input" id="sb-t1s" type="text" placeholder="9:00 AM"></div>
-     <div class="planner-field"><span class="planner-label">End Time</span><input class="planner-input" id="sb-t1e" type="text" placeholder="9:00 PM"></div>
-    </div>
-    <div style="margin-top:8px"><span class="planner-label">Week Off (CG1)</span><div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px" id="sb-wo1"><div class="day-chip-pl" data-day="Sunday" onclick="this.classList.toggle('on')">Sun</div><div class="day-chip-pl" data-day="Monday" onclick="this.classList.toggle('on')">Mon</div><div class="day-chip-pl" data-day="Tuesday" onclick="this.classList.toggle('on')">Tue</div><div class="day-chip-pl" data-day="Wednesday" onclick="this.classList.toggle('on')">Wed</div><div class="day-chip-pl" data-day="Thursday" onclick="this.classList.toggle('on')">Thu</div><div class="day-chip-pl" data-day="Friday" onclick="this.classList.toggle('on')">Fri</div><div class="day-chip-pl" data-day="Saturday" onclick="this.classList.toggle('on')">Sat</div></div></div>
-   </div>
-   <div style="margin-bottom:10px"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--text2)"><input type="checkbox" id="sb-split-toggle" onchange="sbToggleSplit()" style="width:16px;height:16px"><span>Add second caregiver (night/split shift)</span></label></div>
-   <div id="sb-cg2-section" style="display:none;background:var(--bg3);border-radius:8px;padding:12px;margin-bottom:10px">
-    <div style="font-size:11px;font-weight:600;color:var(--accent);margin-bottom:8px">🌙 CG 2 (Night Shift)</div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px">
-     <div class="planner-field"><span class="planner-label">Homecare</span><select class="planner-select" id="sb-hc2" onchange="sbLoadCGs(2)"><option value="">— HC —</option></select></div>
-     <div class="planner-field"><span class="planner-label">Caregiver</span><select class="planner-select" id="sb-cg2"><option value="">— CG —</option></select></div>
-     <div class="planner-field"><span class="planner-label">Start Time</span><input class="planner-input" id="sb-t2s" type="text" placeholder="9:00 PM"></div>
-     <div class="planner-field"><span class="planner-label">End Time</span><input class="planner-input" id="sb-t2e" type="text" placeholder="9:00 AM"></div>
-    </div>
-    <div style="margin-top:8px"><span class="planner-label">Week Off (CG2)</span><div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px" id="sb-wo2"><div class="day-chip-pl" data-day="Sunday" onclick="this.classList.toggle('on')">Sun</div><div class="day-chip-pl" data-day="Monday" onclick="this.classList.toggle('on')">Mon</div><div class="day-chip-pl" data-day="Tuesday" onclick="this.classList.toggle('on')">Tue</div><div class="day-chip-pl" data-day="Wednesday" onclick="this.classList.toggle('on')">Wed</div><div class="day-chip-pl" data-day="Thursday" onclick="this.classList.toggle('on')">Thu</div><div class="day-chip-pl" data-day="Friday" onclick="this.classList.toggle('on')">Fri</div><div class="day-chip-pl" data-day="Saturday" onclick="this.classList.toggle('on')">Sat</div></div></div>
-   </div>
-   <button <button class="planner-btn" onclick="sbGenerate()" style="flex:1;margin:0">Generate Schedule</button>
-    <button class="planner-btn" onclick="openSavedPlanners()" style="flex:1;margin:0;background:var(--bg3);color:var(--text);border:1px solid var(--border)">📂 Load Saved</button>
-  </div>
+ <div id="sb-pre-form" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:18px">
+ <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:14px">
+ <div class="planner-field"><span class="planner-label">Client Name</span><input class="planner-input" id="sb-client" type="text" placeholder="e.g. Noor Al Mansouri"></div>
+ <div class="planner-field"><span class="planner-label">Order ID</span><input class="planner-input" id="sb-order-id" type="text" placeholder="e.g. 12345"></div>
+ <div class="planner-field"><span class="planner-label">Package</span><select class="planner-select" id="sb-pkg-type"><option value="monthly">Monthly</option><option value="weekly">Weekly</option></select></div>
+ <div class="planner-field"><span class="planner-label">Days/Week</span><select class="planner-select" id="sb-days-per-week"><option value="5">5 days</option><option value="6">6 days</option><option value="7">7 days</option></select></div>
+ <div class="planner-field"><span class="planner-label">Weeks</span><select class="planner-select" id="sb-weeks"><option value="4">4 weeks</option><option value="1">1 week</option><option value="2">2 weeks</option><option value="3">3 weeks</option></select></div>
+ <div class="planner-field"><span class="planner-label">Start Date</span><input class="planner-input" id="sb-start" type="date"></div>
+ </div>
+ <div style="background:var(--bg3);border-radius:8px;padding:12px;margin-bottom:10px">
+ <div style="font-size:11px;font-weight:600;color:var(--duty);margin-bottom:8px">☀️ CG 1 (Day Shift)</div>
+ <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px">
+ <div class="planner-field"><span class="planner-label">Homecare</span><select class="planner-select" id="sb-hc1" onchange="sbLoadCGs(1)"><option value="">— HC —</option></select></div>
+ <div class="planner-field"><span class="planner-label">Caregiver</span><select class="planner-select" id="sb-cg1"><option value="">— CG —</option></select></div>
+ <div class="planner-field"><span class="planner-label">Start Time</span><input class="planner-input" id="sb-t1s" type="text" placeholder="9:00 AM"></div>
+ <div class="planner-field"><span class="planner-label">End Time</span><input class="planner-input" id="sb-t1e" type="text" placeholder="9:00 PM"></div>
+ </div>
+ <div style="margin-top:8px"><span class="planner-label">Week Off (CG1)</span><div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px" id="sb-wo1"><div class="day-chip-pl" data-day="Sunday" onclick="this.classList.toggle('on')">Sun</div><div class="day-chip-pl" data-day="Monday" onclick="this.classList.toggle('on')">Mon</div><div class="day-chip-pl" data-day="Tuesday" onclick="this.classList.toggle('on')">Tue</div><div class="day-chip-pl" data-day="Wednesday" onclick="this.classList.toggle('on')">Wed</div><div class="day-chip-pl" data-day="Thursday" onclick="this.classList.toggle('on')">Thu</div><div class="day-chip-pl" data-day="Friday" onclick="this.classList.toggle('on')">Fri</div><div class="day-chip-pl" data-day="Saturday" onclick="this.classList.toggle('on')">Sat</div></div></div>
+ </div>
+ <div style="margin-bottom:10px"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;color:var(--text2)"><input type="checkbox" id="sb-split-toggle" onchange="sbToggleSplit()" style="width:16px;height:16px"><span>Add second caregiver (night/split shift)</span></label></div>
+ <div id="sb-cg2-section" style="display:none;background:var(--bg3);border-radius:8px;padding:12px;margin-bottom:10px">
+ <div style="font-size:11px;font-weight:600;color:var(--accent);margin-bottom:8px">🌙 CG 2 (Night Shift)</div>
+ <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px">
+ <div class="planner-field"><span class="planner-label">Homecare</span><select class="planner-select" id="sb-hc2" onchange="sbLoadCGs(2)"><option value="">— HC —</option></select></div>
+ <div class="planner-field"><span class="planner-label">Caregiver</span><select class="planner-select" id="sb-cg2"><option value="">— CG —</option></select></div>
+ <div class="planner-field"><span class="planner-label">Start Time</span><input class="planner-input" id="sb-t2s" type="text" placeholder="9:00 PM"></div>
+ <div class="planner-field"><span class="planner-label">End Time</span><input class="planner-input" id="sb-t2e" type="text" placeholder="9:00 AM"></div>
+ </div>
+ <div style="margin-top:8px"><span class="planner-label">Week Off (CG2)</span><div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px" id="sb-wo2"><div class="day-chip-pl" data-day="Sunday" onclick="this.classList.toggle('on')">Sun</div><div class="day-chip-pl" data-day="Monday" onclick="this.classList.toggle('on')">Mon</div><div class="day-chip-pl" data-day="Tuesday" onclick="this.classList.toggle('on')">Tue</div><div class="day-chip-pl" data-day="Wednesday" onclick="this.classList.toggle('on')">Wed</div><div class="day-chip-pl" data-day="Thursday" onclick="this.classList.toggle('on')">Thu</div><div class="day-chip-pl" data-day="Friday" onclick="this.classList.toggle('on')">Fri</div><div class="day-chip-pl" data-day="Saturday" onclick="this.classList.toggle('on')">Sat</div></div></div>
+ </div>
+ <button <button class="planner-btn" onclick="sbGenerate()" style="flex:1;margin:0">Generate Schedule</button>
+ <button class="planner-btn" onclick="openSavedPlanners()" style="flex:1;margin:0;background:var(--bg3);color:var(--text);border:1px solid var(--border)">📂 Load Saved</button>
+ </div>
 
  </div>
 
@@ -1307,97 +1355,97 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 </div>
 <div class="page" id="page-leads">
 <div style="padding:16px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-  <div style="font-size:15px;font-weight:700">🎯 SM Lead Tracker</div>
-  <div style="display:flex;gap:8px;flex-wrap:wrap">
-    <button onclick="loadLeads(true)" style="padding:6px 14px;background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;cursor:pointer">🔄 Refresh</button>
-    <button onclick="exportLeadsCSV()" style="padding:6px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-weight:600;cursor:pointer">📥 Export CSV</button>
-    <button onclick="openAddLeadModal()" style="padding:6px 14px;background:var(--duty);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;cursor:pointer">+ Add Lead</button>
-    <label style="padding:6px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:11px;cursor:pointer">📤 Upload CSV<input type="file" accept=".csv" id="leads-upload" style="display:none" onchange="uploadLeadsCSV(this)"></label>
-  </div>
+ <div style="font-size:15px;font-weight:700">🎯 SM Lead Tracker</div>
+ <div style="display:flex;gap:8px;flex-wrap:wrap">
+ <button onclick="loadLeads(true)" style="padding:6px 14px;background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;cursor:pointer">🔄 Refresh</button>
+ <button onclick="exportLeadsCSV()" style="padding:6px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-weight:600;cursor:pointer">📥 Export CSV</button>
+ <button onclick="openAddLeadModal()" style="padding:6px 14px;background:var(--duty);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;cursor:pointer">+ Add Lead</button>
+ <label style="padding:6px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:11px;cursor:pointer">📤 Upload CSV<input type="file" accept=".csv" id="leads-upload" style="display:none" onchange="uploadLeadsCSV(this)"></label>
+ </div>
 </div>
 <div id="leads-kpi-row" style="padding:14px 20px;background:var(--bg2);border-bottom:1px solid var(--border)"></div>
 <div style="padding:10px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;gap:8px">
-  <input id="lead-search" type="text" placeholder="🔍 Search name / phone..." style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:Inter,sans-serif;font-size:12px;padding:6px 10px;border-radius:6px;outline:none;width:200px" oninput="renderLeadsTable()">
-  <select id="lead-filter-status" onchange="renderLeadsTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Status</option><option value="no answer">No Answer</option><option value="connected">Connected</option><option value="hung up">Hung Up</option><option value="disconnected while ringing">Disconnected While Ringing</option><option value="unreachable">Unreachable</option><option value="on fc">On FC</option><option value="international number">International Number</option><option value="busy">Busy</option><option value="voice mail">Voice Mail</option><option value="invalid">INVALID</option><option value="switched off">Switched Off</option><option value="not in use">Not In Use</option><option value="call back">Call Back</option><option value="incorrect no">Incorrect No</option><option value="not available">Not Available</option><option value="duplicate">Duplicate</option><option value="cancelled">Cancelled</option><option value="out of service">Out Of Service</option><option value="test account">Test Account</option><option value="others">Others</option><option value="converted">Converted</option><option value="ongoing">Ongoing</option><option value="lost">Lost</option></select>
-  <select id="lead-filter-heat" onchange="renderLeadsTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Classifications</option><option value="hot">🔥 Hot</option><option value="warm">🌤 Warm</option><option value="cold">❄️ Cold</option><option value="dead">💀 Dead</option></select>
-  <select id="lead-filter-city" onchange="renderLeadsTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Cities</option></select>
-  <select id="lead-filter-month" onchange="renderLeadsTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Months</option></select>
-  <select id="lead-filter-week" onchange="renderLeadsTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Weeks</option><option value="1">Week 1</option><option value="2">Week 2</option><option value="3">Week 3</option><option value="4">Week 4</option></select>
-  <select id="lead-filter-agent" onchange="renderLeadsTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Agents</option><option>Nishant</option><option>Muaaz</option><option>Priyanka</option></select>
-  <input id="lead-filter-date" type="date" onchange="renderLeadsTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:5px 8px;border-radius:6px;outline:none" title="Filter by specific date">
-  <button onclick="clearLeadFilters()" style="padding:6px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:11px;cursor:pointer">Clear</button>
+ <input id="lead-search" type="text" placeholder="🔍 Search name / phone..." style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:Inter,sans-serif;font-size:12px;padding:6px 10px;border-radius:6px;outline:none;width:200px" oninput="renderLeadsTable()">
+ <select id="lead-filter-status" onchange="renderLeadsTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Status</option><option value="no answer">No Answer</option><option value="connected">Connected</option><option value="hung up">Hung Up</option><option value="disconnected while ringing">Disconnected While Ringing</option><option value="unreachable">Unreachable</option><option value="on fc">On FC</option><option value="international number">International Number</option><option value="busy">Busy</option><option value="voice mail">Voice Mail</option><option value="invalid">INVALID</option><option value="switched off">Switched Off</option><option value="not in use">Not In Use</option><option value="call back">Call Back</option><option value="incorrect no">Incorrect No</option><option value="not available">Not Available</option><option value="duplicate">Duplicate</option><option value="cancelled">Cancelled</option><option value="out of service">Out Of Service</option><option value="test account">Test Account</option><option value="others">Others</option><option value="converted">Converted</option><option value="ongoing">Ongoing</option><option value="lost">Lost</option></select>
+ <select id="lead-filter-heat" onchange="renderLeadsTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Classifications</option><option value="hot">🔥 Hot</option><option value="warm">🌤 Warm</option><option value="cold">❄️ Cold</option><option value="dead">💀 Dead</option></select>
+ <select id="lead-filter-city" onchange="renderLeadsTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Cities</option></select>
+ <select id="lead-filter-month" onchange="renderLeadsTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Months</option></select>
+ <select id="lead-filter-week" onchange="renderLeadsTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Weeks</option><option value="1">Week 1</option><option value="2">Week 2</option><option value="3">Week 3</option><option value="4">Week 4</option></select>
+ <select id="lead-filter-agent" onchange="renderLeadsTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Agents</option><option>Nishant</option><option>Muaaz</option><option>Priyanka</option></select>
+ <input id="lead-filter-date" type="date" onchange="renderLeadsTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:5px 8px;border-radius:6px;outline:none" title="Filter by specific date">
+ <button onclick="clearLeadFilters()" style="padding:6px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:11px;cursor:pointer">Clear</button>
 </div>
 <div style="overflow:auto;max-height:calc(100vh - 260px);padding:0 20px 20px"><div id="leads-table-wrap" style="margin-top:14px"></div></div>
 </div>
 
 <div class="page" id="page-supply">
 <div style="padding:16px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-  <div style="font-size:15px;font-weight:700">👥 Supply Tracker</div>
-  <button onclick="exportSupplyCSV()" style="padding:6px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-weight:600;cursor:pointer">📥 Export CSV</button>
-  <button onclick="openAddCandidateModal()" style="padding:6px 14px;background:var(--duty);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;cursor:pointer">+ Add Candidate</button>
+ <div style="font-size:15px;font-weight:700">👥 Supply Tracker</div>
+ <button onclick="exportSupplyCSV()" style="padding:6px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-weight:600;cursor:pointer">📥 Export CSV</button>
+ <button onclick="openAddCandidateModal()" style="padding:6px 14px;background:var(--duty);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;cursor:pointer">+ Add Candidate</button>
 </div>
 <div id="supply-kpi-row" style="padding:14px 20px;background:var(--bg2);border-bottom:1px solid var(--border)"></div>
 <div style="padding:10px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;gap:8px">
-  <input id="supply-search" type="text" placeholder="🔍 Search..." style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:Inter,sans-serif;font-size:12px;padding:6px 10px;border-radius:6px;outline:none;width:200px" oninput="renderSupplyTable()">
-  <select id="supply-filter-stage" onchange="renderSupplyTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Stages</option><option>Applied</option><option>Screened</option><option>Interview Scheduled</option><option>Interviewed</option><option>Docs Pending</option><option>Onboarded</option><option>Rejected</option></select>
-  <select id="supply-filter-hc" onchange="renderSupplyTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Homecare</option></select>
-  <select id="supply-filter-source" onchange="renderSupplyTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Sources</option><option>LinkedIn</option><option>Agency</option><option>Referral</option><option>Walk-in</option><option>Other</option></select>
-  <select id="supply-filter-nationality" onchange="renderSupplyTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Nationalities</option></select>
-  <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2)">
+ <input id="supply-search" type="text" placeholder="🔍 Search..." style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:Inter,sans-serif;font-size:12px;padding:6px 10px;border-radius:6px;outline:none;width:200px" oninput="renderSupplyTable()">
+ <select id="supply-filter-stage" onchange="renderSupplyTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Stages</option><option>Applied</option><option>Screened</option><option>Interview Scheduled</option><option>Interviewed</option><option>Docs Pending</option><option>Onboarded</option><option>Rejected</option></select>
+ <select id="supply-filter-hc" onchange="renderSupplyTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Homecare</option></select>
+ <select id="supply-filter-source" onchange="renderSupplyTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Sources</option><option>LinkedIn</option><option>Agency</option><option>Referral</option><option>Walk-in</option><option>Other</option></select>
+ <select id="supply-filter-nationality" onchange="renderSupplyTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Nationalities</option></select>
+ <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2)">
     Interview:
-    <input id="supply-filter-idate-from" type="date" onchange="renderSupplyTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:11px;padding:5px 8px;border-radius:6px;outline:none">
-    <span>–</span>
-    <input id="supply-filter-idate-to" type="date" onchange="renderSupplyTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:11px;padding:5px 8px;border-radius:6px;outline:none">
-  </div>
-  <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2)">
+ <input id="supply-filter-idate-from" type="date" onchange="renderSupplyTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:11px;padding:5px 8px;border-radius:6px;outline:none">
+ <span>–</span>
+ <input id="supply-filter-idate-to" type="date" onchange="renderSupplyTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:11px;padding:5px 8px;border-radius:6px;outline:none">
+ </div>
+ <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2)">
     Joining:
-    <input id="supply-filter-jdate-from" type="date" onchange="renderSupplyTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:11px;padding:5px 8px;border-radius:6px;outline:none">
-    <span>–</span>
-    <input id="supply-filter-jdate-to" type="date" onchange="renderSupplyTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:11px;padding:5px 8px;border-radius:6px;outline:none">
-  </div>
-  <button onclick="clearSupplyFilters()" style="padding:6px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:11px;cursor:pointer">Clear</button>
+ <input id="supply-filter-jdate-from" type="date" onchange="renderSupplyTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:11px;padding:5px 8px;border-radius:6px;outline:none">
+ <span>–</span>
+ <input id="supply-filter-jdate-to" type="date" onchange="renderSupplyTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:11px;padding:5px 8px;border-radius:6px;outline:none">
+ </div>
+ <button onclick="clearSupplyFilters()" style="padding:6px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:11px;cursor:pointer">Clear</button>
 </div>
 <div style="overflow:auto;max-height:calc(100vh - 260px);padding:0 20px 20px"><div id="supply-table-wrap" style="margin-top:14px"></div></div>
 </div>
 
 <div id="lead-modal" onclick="if(event.target===this)closeLeadModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:600;align-items:center;justify-content:center">
  <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:22px;width:480px;max-width:95vw;max-height:90vh;overflow-y:auto">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div style="font-size:14px;font-weight:600" id="lead-modal-title">Lead</div><button onclick="closeLeadModal()" style="background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer">✕</button></div>
-  <div id="lead-modal-body"></div>
-  <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
-   <button onclick="saveLeadEdit()" style="flex:1;padding:9px;background:var(--accent);border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer">Save</button>
-   <button onclick="convertLead()" id="lead-convert-btn" style="flex:1;padding:9px;background:var(--duty);border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer">✅ Converted</button>
-   <button onclick="deleteLead()" style="padding:9px 14px;background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);border-radius:7px;color:var(--absent);font-size:12px;cursor:pointer">🗑</button>
-  </div>
+ <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div style="font-size:14px;font-weight:600" id="lead-modal-title">Lead</div><button onclick="closeLeadModal()" style="background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer">✕</button></div>
+ <div id="lead-modal-body"></div>
+ <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
+ <button onclick="saveLeadEdit()" style="flex:1;padding:9px;background:var(--accent);border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer">Save</button>
+ <button onclick="convertLead()" id="lead-convert-btn" style="flex:1;padding:9px;background:var(--duty);border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer">✅ Converted</button>
+ <button onclick="deleteLead()" style="padding:9px 14px;background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);border-radius:7px;color:var(--absent);font-size:12px;cursor:pointer">🗑</button>
+ </div>
  </div>
 </div>
 
 <div id="add-lead-modal" onclick="if(event.target===this)this.style.display='none'" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:700;align-items:center;justify-content:center">
  <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:22px;width:440px;max-width:95vw;max-height:90vh;overflow-y:auto">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div style="font-size:14px;font-weight:600">➕ Add New Lead</div><button onclick="document.getElementById('add-lead-modal').style.display='none'" style="background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer">✕</button></div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-   <div><div style="font-size:10px;color:var(--text2);margin-bottom:4px">FULL NAME *</div><input id="nl-name" class="login-input" type="text" placeholder="Name"></div>
-   <div><div style="font-size:10px;color:var(--text2);margin-bottom:4px">PHONE *</div><input id="nl-phone" class="login-input" type="text" placeholder="+971..."></div>
-   <div><div style="font-size:10px;color:var(--text2);margin-bottom:4px">EMAIL</div><input id="nl-email" class="login-input" type="text" placeholder="email@..."></div>
-   <div><div style="font-size:10px;color:var(--text2);margin-bottom:4px">CITY</div><input id="nl-city" class="login-input" type="text" placeholder="Dubai"></div>
-   <div style="grid-column:1/-1"><div style="font-size:10px;color:var(--text2);margin-bottom:4px">PACKAGE</div><input id="nl-pkg" class="login-input" type="text" placeholder="Package"></div>
-   <div><div style="font-size:10px;color:var(--text2);margin-bottom:4px">STATUS</div><select id="nl-status" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:10px;border-radius:8px;outline:none"><option>connected</option><option>no answer</option><option>hung up</option><option>on fc</option></select></div>
-   <div><div style="font-size:10px;color:var(--text2);margin-bottom:4px">CLASSIFICATION</div><select id="nl-heat" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:10px;border-radius:8px;outline:none"><option value="warm">🌤 Warm</option><option value="hot">🔥 Hot</option><option value="cold">❄️ Cold</option><option value="dead">💀 Dead</option></select></div>
-   <div style="grid-column:1/-1"><div style="font-size:10px;color:var(--text2);margin-bottom:4px">NOTES</div><textarea id="nl-notes" rows="2" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:Inter,sans-serif;font-size:12px;padding:8px;border-radius:8px;outline:none;resize:vertical"></textarea></div>
-  </div>
-  <button onclick="saveNewLead()" style="width:100%;margin-top:14px;padding:10px;background:var(--accent);border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:600;cursor:pointer">Add Lead</button>
+ <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div style="font-size:14px;font-weight:600">➕ Add New Lead</div><button onclick="document.getElementById('add-lead-modal').style.display='none'" style="background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer">✕</button></div>
+ <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+ <div><div style="font-size:10px;color:var(--text2);margin-bottom:4px">FULL NAME *</div><input id="nl-name" class="login-input" type="text" placeholder="Name"></div>
+ <div><div style="font-size:10px;color:var(--text2);margin-bottom:4px">PHONE *</div><input id="nl-phone" class="login-input" type="text" placeholder="+971..."></div>
+ <div><div style="font-size:10px;color:var(--text2);margin-bottom:4px">EMAIL</div><input id="nl-email" class="login-input" type="text" placeholder="email@..."></div>
+ <div><div style="font-size:10px;color:var(--text2);margin-bottom:4px">CITY</div><input id="nl-city" class="login-input" type="text" placeholder="Dubai"></div>
+ <div style="grid-column:1/-1"><div style="font-size:10px;color:var(--text2);margin-bottom:4px">PACKAGE</div><input id="nl-pkg" class="login-input" type="text" placeholder="Package"></div>
+ <div><div style="font-size:10px;color:var(--text2);margin-bottom:4px">STATUS</div><select id="nl-status" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:10px;border-radius:8px;outline:none"><option>connected</option><option>no answer</option><option>hung up</option><option>on fc</option></select></div>
+ <div><div style="font-size:10px;color:var(--text2);margin-bottom:4px">CLASSIFICATION</div><select id="nl-heat" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:10px;border-radius:8px;outline:none"><option value="warm">🌤 Warm</option><option value="hot">🔥 Hot</option><option value="cold">❄️ Cold</option><option value="dead">💀 Dead</option></select></div>
+ <div style="grid-column:1/-1"><div style="font-size:10px;color:var(--text2);margin-bottom:4px">NOTES</div><textarea id="nl-notes" rows="2" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:Inter,sans-serif;font-size:12px;padding:8px;border-radius:8px;outline:none;resize:vertical"></textarea></div>
+ </div>
+ <button onclick="saveNewLead()" style="width:100%;margin-top:14px;padding:10px;background:var(--accent);border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:600;cursor:pointer">Add Lead</button>
  </div>
 </div>
 
 <div id="candidate-modal" onclick="if(event.target===this)closeCandidateModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:600;align-items:center;justify-content:center">
  <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:22px;width:560px;max-width:95vw;max-height:90vh;overflow-y:auto">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div style="font-size:14px;font-weight:600" id="candidate-modal-title">Candidate</div><button onclick="closeCandidateModal()" style="background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer">✕</button></div>
-  <div id="candidate-modal-body"></div>
-  <div style="display:flex;gap:8px;margin-top:16px">
-   <button onclick="saveCandidate()" style="flex:1;padding:9px;background:var(--accent);border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer">Save</button>
-   <button id="candidate-onboard-btn" onclick="onboardCandidate()" style="flex:1;padding:9px;background:var(--duty);border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer">✅ Onboarded</button>
-   <button id="candidate-delete-btn" onclick="deleteCandidate()" style="padding:9px 14px;background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);border-radius:7px;color:var(--absent);font-size:12px;cursor:pointer">🗑</button>
-  </div>
+ <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div style="font-size:14px;font-weight:600" id="candidate-modal-title">Candidate</div><button onclick="closeCandidateModal()" style="background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer">✕</button></div>
+ <div id="candidate-modal-body"></div>
+ <div style="display:flex;gap:8px;margin-top:16px">
+ <button onclick="saveCandidate()" style="flex:1;padding:9px;background:var(--accent);border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer">Save</button>
+ <button id="candidate-onboard-btn" onclick="onboardCandidate()" style="flex:1;padding:9px;background:var(--duty);border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer">✅ Onboarded</button>
+ <button id="candidate-delete-btn" onclick="deleteCandidate()" style="padding:9px 14px;background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);border-radius:7px;color:var(--absent);font-size:12px;cursor:pointer">🗑</button>
+ </div>
  </div>
 </div>
 
@@ -1405,41 +1453,41 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 
 <!-- ── ADD CAREGIVER MODAL ── -->
 <div class="acg-modal-overlay" id="acg-modal-overlay">
-  <div class="acg-box">
-    <div class="acg-title">
-      <span>➕ Add Caregiver</span>
-      <button class="modal-x" onclick="closeAddCGModal()">✕</button>
-    </div>
-    <div class="acg-field">
-      <label class="acg-label">Full Name *</label>
-      <input class="acg-input" id="acg-name" type="text" placeholder="e.g. Maria Santos">
-    </div>
-    <div class="acg-field">
-      <label class="acg-label">Homecare Provider *</label>
-      <select class="acg-select" id="acg-hc">
-        <option value="">— Select Homecare —</option>
-      </select>
-    </div>
-    <div class="acg-field">
-      <label class="acg-label">Expertise</label>
-      <select class="acg-select" id="acg-expertise">
-        <option value="—">—</option>
-        <option value="Newborn/Infant">Newborn/Infant</option>
-        <option value="Toddler">Toddler</option>
-        <option value="Elderly Care">Elderly Care</option>
-        <option value="Post-Surgery">Post-Surgery</option>
-        <option value="All">All</option>
-      </select>
-    </div>
-    <div class="acg-field">
-      <label class="acg-label">Age</label>
-      <input class="acg-input" id="acg-age" type="number" min="18" max="70" placeholder="e.g. 35">
-    </div>
-    <div class="acg-actions">
-      <button class="acg-cancel" onclick="closeAddCGModal()">Cancel</button>
-      <button class="acg-save" onclick="saveManualCG()">Add to Calendar</button>
-    </div>
-  </div>
+ <div class="acg-box">
+ <div class="acg-title">
+ <span>➕ Add Caregiver</span>
+ <button class="modal-x" onclick="closeAddCGModal()">✕</button>
+ </div>
+ <div class="acg-field">
+ <label class="acg-label">Full Name *</label>
+ <input class="acg-input" id="acg-name" type="text" placeholder="e.g. Maria Santos">
+ </div>
+ <div class="acg-field">
+ <label class="acg-label">Homecare Provider *</label>
+ <select class="acg-select" id="acg-hc">
+ <option value="">— Select Homecare —</option>
+ </select>
+ </div>
+ <div class="acg-field">
+ <label class="acg-label">Expertise</label>
+ <select class="acg-select" id="acg-expertise">
+ <option value="—">—</option>
+ <option value="Newborn/Infant">Newborn/Infant</option>
+ <option value="Toddler">Toddler</option>
+ <option value="Elderly Care">Elderly Care</option>
+ <option value="Post-Surgery">Post-Surgery</option>
+ <option value="All">All</option>
+ </select>
+ </div>
+ <div class="acg-field">
+ <label class="acg-label">Age</label>
+ <input class="acg-input" id="acg-age" type="number" min="18" max="70" placeholder="e.g. 35">
+ </div>
+ <div class="acg-actions">
+ <button class="acg-cancel" onclick="closeAddCGModal()">Cancel</button>
+ <button class="acg-save" onclick="saveManualCG()">Add to Calendar</button>
+ </div>
+ </div>
 </div>
 
 <!-- ── CHATBOT ── -->
@@ -1469,147 +1517,147 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 
 <div class="page" id="page-fclead">
 <div style="padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-  <div style="font-size:15px;font-weight:700">💬 FC Lead Tracker</div>
-  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-    <span id="fcl-last-sync" style="font-size:11px;color:var(--text3)"></span>
-    <button onclick="loadFCLeads(true)" style="padding:6px 14px;background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">🔄 Refresh</button>
-    <button onclick="exportFCLeadsCSV()" style="padding:6px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">📥 Export CSV</button>
-  </div>
+ <div style="font-size:15px;font-weight:700">💬 FC Lead Tracker</div>
+ <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+ <span id="fcl-last-sync" style="font-size:11px;color:var(--text3)"></span>
+ <button onclick="loadFCLeads(true)" style="padding:6px 14px;background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">🔄 Refresh</button>
+ <button onclick="exportFCLeadsCSV()" style="padding:6px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">📥 Export CSV</button>
+ </div>
 </div>
 <div id="fcl-kpi-row" style="padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap"></div>
 <div style="padding:10px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;gap:8px">
-  <input id="fcl-search" type="text" placeholder="Search name / phone..." oninput="renderFCLeads()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:Inter,sans-serif;font-size:12px;padding:6px 10px;border-radius:6px;outline:none;width:200px">
-  <select id="fcl-filter-stage" onchange="renderFCLeads()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
-    <option value="">All Stages</option>
-    <option value="New Enquiry">🆕 New Enquiry</option>
-    <option value="Call Done">📞 Call Done</option>
-    <option value="Proposal Sent">📋 Proposal Sent</option>
-    <option value="Follow Up">⏳ Follow Up</option>
-    <option value="Converted">✅ Converted</option>
-    <option value="Lost — Price">💸 Lost — Price</option>
-    <option value="Lost — No Reply">👻 Lost — No Reply</option>
-    <option value="Lost — Not Interested">❌ Lost — Not Interested</option>
-  </select>
-  <select id="fcl-filter-agent" onchange="renderFCLeads()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
-    <option value="">All Agents</option>
-  </select>
-  <select id="fcl-filter-month" onchange="renderFCLeads()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
-    <option value="">All Months</option>
-  </select>
-  <select id="fcl-filter-week" onchange="renderFCLeads()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
-    <option value="">All Weeks</option>
-    <option value="W1">Week 1 (1-7)</option>
-    <option value="W2">Week 2 (8-14)</option>
-    <option value="W3">Week 3 (15-21)</option>
-    <option value="W4">Week 4 (22+)</option>
-  </select>
-  <button onclick="clearFCLFilters()" style="padding:6px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:11px;cursor:pointer;font-family:Inter,sans-serif">Clear</button>
+ <input id="fcl-search" type="text" placeholder="Search name / phone..." oninput="renderFCLeads()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:Inter,sans-serif;font-size:12px;padding:6px 10px;border-radius:6px;outline:none;width:200px">
+ <select id="fcl-filter-stage" onchange="renderFCLeads()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
+ <option value="">All Stages</option>
+ <option value="New Enquiry">🆕 New Enquiry</option>
+ <option value="Call Done">📞 Call Done</option>
+ <option value="Proposal Sent">📋 Proposal Sent</option>
+ <option value="Follow Up">⏳ Follow Up</option>
+ <option value="Converted">✅ Converted</option>
+ <option value="Lost — Price">💸 Lost — Price</option>
+ <option value="Lost — No Reply">👻 Lost — No Reply</option>
+ <option value="Lost — Not Interested">❌ Lost — Not Interested</option>
+ </select>
+ <select id="fcl-filter-agent" onchange="renderFCLeads()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
+ <option value="">All Agents</option>
+ </select>
+ <select id="fcl-filter-month" onchange="renderFCLeads()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
+ <option value="">All Months</option>
+ </select>
+ <select id="fcl-filter-week" onchange="renderFCLeads()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
+ <option value="">All Weeks</option>
+ <option value="W1">Week 1 (1-7)</option>
+ <option value="W2">Week 2 (8-14)</option>
+ <option value="W3">Week 3 (15-21)</option>
+ <option value="W4">Week 4 (22+)</option>
+ </select>
+ <button onclick="clearFCLFilters()" style="padding:6px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:11px;cursor:pointer;font-family:Inter,sans-serif">Clear</button>
 </div>
 <div style="overflow:auto;max-height:calc(100vh - 250px);padding:0 20px 20px">
-  <div id="fcl-table-wrap" style="margin-top:14px">
-    <div style="padding:40px;text-align:center;color:var(--text2)">Click Refresh to load FC leads</div>
-  </div>
+ <div id="fcl-table-wrap" style="margin-top:14px">
+ <div style="padding:40px;text-align:center;color:var(--text2)">Click Refresh to load FC leads</div>
+ </div>
 </div>
 <div id="fcl-modal" onclick="if(event.target===this)closeFCLModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:600;align-items:center;justify-content:center">
-  <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:22px;width:420px;max-width:95vw;max-height:90vh;overflow-y:auto">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <div style="font-size:14px;font-weight:600" id="fcl-modal-title">Lead</div>
-      <button onclick="closeFCLModal()" style="background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer">✕</button>
-    </div>
-    <div id="fcl-modal-body"></div>
-  </div>
+ <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:22px;width:420px;max-width:95vw;max-height:90vh;overflow-y:auto">
+ <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+ <div style="font-size:14px;font-weight:600" id="fcl-modal-title">Lead</div>
+ <button onclick="closeFCLModal()" style="background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer">✕</button>
+ </div>
+ <div id="fcl-modal-body"></div>
+ </div>
 </div>
 </div>
 
 <div class="page" id="page-penalty">
 <div id="sla-panel" style="background:var(--bg2);border-bottom:1px solid var(--border)">
-  <div onclick="toggleSLA()" style="padding:10px 20px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none">
-    <span style="font-size:12px;font-weight:600;color:var(--accent)">📋 Valeo SLA &amp; Penalty Reference — Applicable to All Homecare Partners — click to expand</span>
-    <span id="sla-arrow" style="color:var(--text2);font-size:13px">▼</span>
-  </div>
-  <div id="sla-body" style="display:none;padding:0 20px 16px">
-    <div style="padding:8px 0 12px;font-size:11px;color:var(--text2);line-height:1.6">
+ <div onclick="toggleSLA()" style="padding:10px 20px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none">
+ <span style="font-size:12px;font-weight:600;color:var(--accent)">📋 Valeo SLA &amp; Penalty Reference — Applicable to All Homecare Partners — click to expand</span>
+ <span id="sla-arrow" style="color:var(--text2);font-size:13px">▼</span>
+ </div>
+ <div id="sla-body" style="display:none;padding:0 20px 16px">
+ <div style="padding:8px 0 12px;font-size:11px;color:var(--text2);line-height:1.6">
       ℹ️ These SLA terms and penalty rates apply uniformly to <b style="color:var(--text)">all homecare partners</b> under the Valeo Health agreement.
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <div style="background:var(--bg3);border-radius:8px;overflow:hidden;border:1px solid var(--border)">
-        <div style="padding:8px 12px;background:var(--accent);color:#fff;font-size:11px;font-weight:700">SERVICE QUALITY &amp; ATTENDANCE</div>
-        <table style="width:100%;border-collapse:collapse;font-size:11px">
-          <thead><tr style="background:var(--bg4)">
-            <th style="padding:6px 10px;text-align:left;color:var(--text2);font-weight:600">Event</th>
-            <th style="padding:6px 10px;text-align:left;color:var(--text2);font-weight:600">Penalty / Refund</th>
-          </tr></thead>
-          <tbody>
-            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">SP late &lt;30 min</td><td style="padding:6px 10px;color:var(--text2)">AED 0</td></tr>
-            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">SP late 30–60 min</td><td style="padding:6px 10px;color:var(--sick)">100% Net Booking or AED 250 (min of two)</td></tr>
-            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">SP late &gt;60 min / No show</td><td style="padding:6px 10px;color:var(--absent)">100% Net Booking Amount</td></tr>
-            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">False show (marks started, not present)</td><td style="padding:6px 10px;color:var(--absent)">100% Net Booking Amount</td></tr>
-            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Customer unhappy with quality</td><td style="padding:6px 10px;color:var(--sick)">50% Net Booking Amount</td></tr>
-            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Same-day absenteeism</td><td style="padding:6px 10px;color:var(--sick)">AED 300/SP</td></tr>
-            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Absence on critical workday</td><td style="padding:6px 10px;color:var(--sick)">AED 200/SP/day</td></tr>
-            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Missed mandatory training session</td><td style="padding:6px 10px;color:var(--sick)">AED 250/SP</td></tr>
-            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Non-compliance with Valeo uniform</td><td style="padding:6px 10px;color:var(--text2)">AED 100/SP</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <div style="background:var(--bg3);border-radius:8px;overflow:hidden;border:1px solid var(--border)">
-        <div style="padding:8px 12px;background:var(--absent);color:#fff;font-size:11px;font-weight:700">CONDUCT &amp; COMPLIANCE</div>
-        <table style="width:100%;border-collapse:collapse;font-size:11px">
-          <thead><tr style="background:var(--bg4)">
-            <th style="padding:6px 10px;text-align:left;color:var(--text2);font-weight:600">Event</th>
-            <th style="padding:6px 10px;text-align:left;color:var(--text2);font-weight:600">Penalty Amount</th>
-          </tr></thead>
-          <tbody>
-            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Customer property damage/loss</td><td style="padding:6px 10px;color:var(--absent)">100% item value, max AED 10,000</td></tr>
-            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Disintermediation – 1st offence</td><td style="padding:6px 10px;color:var(--absent)">AED 5,000/customer (Liquidated)</td></tr>
-            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Continuing to serve after termination</td><td style="padding:6px 10px;color:var(--absent)">Per contract + AED 100/day</td></tr>
-            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">HC terminates without notice</td><td style="padding:6px 10px;color:var(--sick)">AED 250/SP</td></tr>
-            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Unapproved SP replacement</td><td style="padding:6px 10px;color:var(--absent)">AED 10,000/SP/day</td></tr>
-            <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Customer poaching</td><td style="padding:6px 10px;color:var(--absent)">Liquidated damages (per contract)</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-    <div style="margin-top:10px;padding:8px 12px;background:rgba(47,129,247,.08);border:1px solid rgba(47,129,247,.2);border-radius:6px;font-size:11px;color:var(--text2);line-height:1.6">
+ </div>
+ <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+ <div style="background:var(--bg3);border-radius:8px;overflow:hidden;border:1px solid var(--border)">
+ <div style="padding:8px 12px;background:var(--accent);color:#fff;font-size:11px;font-weight:700">SERVICE QUALITY &amp; ATTENDANCE</div>
+ <table style="width:100%;border-collapse:collapse;font-size:11px">
+ <thead><tr style="background:var(--bg4)">
+ <th style="padding:6px 10px;text-align:left;color:var(--text2);font-weight:600">Event</th>
+ <th style="padding:6px 10px;text-align:left;color:var(--text2);font-weight:600">Penalty / Refund</th>
+ </tr></thead>
+ <tbody>
+ <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">SP late &lt;30 min</td><td style="padding:6px 10px;color:var(--text2)">AED 0</td></tr>
+ <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">SP late 30–60 min</td><td style="padding:6px 10px;color:var(--sick)">100% Net Booking or AED 250 (min of two)</td></tr>
+ <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">SP late &gt;60 min / No show</td><td style="padding:6px 10px;color:var(--absent)">100% Net Booking Amount</td></tr>
+ <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">False show (marks started, not present)</td><td style="padding:6px 10px;color:var(--absent)">100% Net Booking Amount</td></tr>
+ <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Customer unhappy with quality</td><td style="padding:6px 10px;color:var(--sick)">50% Net Booking Amount</td></tr>
+ <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Same-day absenteeism</td><td style="padding:6px 10px;color:var(--sick)">AED 300/SP</td></tr>
+ <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Absence on critical workday</td><td style="padding:6px 10px;color:var(--sick)">AED 200/SP/day</td></tr>
+ <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Missed mandatory training session</td><td style="padding:6px 10px;color:var(--sick)">AED 250/SP</td></tr>
+ <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Non-compliance with Valeo uniform</td><td style="padding:6px 10px;color:var(--text2)">AED 100/SP</td></tr>
+ </tbody>
+ </table>
+ </div>
+ <div style="background:var(--bg3);border-radius:8px;overflow:hidden;border:1px solid var(--border)">
+ <div style="padding:8px 12px;background:var(--absent);color:#fff;font-size:11px;font-weight:700">CONDUCT &amp; COMPLIANCE</div>
+ <table style="width:100%;border-collapse:collapse;font-size:11px">
+ <thead><tr style="background:var(--bg4)">
+ <th style="padding:6px 10px;text-align:left;color:var(--text2);font-weight:600">Event</th>
+ <th style="padding:6px 10px;text-align:left;color:var(--text2);font-weight:600">Penalty Amount</th>
+ </tr></thead>
+ <tbody>
+ <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Customer property damage/loss</td><td style="padding:6px 10px;color:var(--absent)">100% item value, max AED 10,000</td></tr>
+ <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Disintermediation – 1st offence</td><td style="padding:6px 10px;color:var(--absent)">AED 5,000/customer (Liquidated)</td></tr>
+ <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Continuing to serve after termination</td><td style="padding:6px 10px;color:var(--absent)">Per contract + AED 100/day</td></tr>
+ <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">HC terminates without notice</td><td style="padding:6px 10px;color:var(--sick)">AED 250/SP</td></tr>
+ <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Unapproved SP replacement</td><td style="padding:6px 10px;color:var(--absent)">AED 10,000/SP/day</td></tr>
+ <tr style="border-top:1px solid var(--border)"><td style="padding:6px 10px">Customer poaching</td><td style="padding:6px 10px;color:var(--absent)">Liquidated damages (per contract)</td></tr>
+ </tbody>
+ </table>
+ </div>
+ </div>
+ <div style="margin-top:10px;padding:8px 12px;background:rgba(47,129,247,.08);border:1px solid rgba(47,129,247,.2);border-radius:6px;font-size:11px;color:var(--text2);line-height:1.6">
       ⚠️ <b style="color:var(--text)">Note:</b> Penalty amounts marked as percentage (%) are calculated on the <b>net booking amount</b> of the affected order. Fixed AED amounts apply per incident unless stated otherwise. All deductions require Valeo approval before processing.
-    </div>
-  </div>
+ </div>
+ </div>
 </div>
 <div style="padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-  <div style="font-size:15px;font-weight:700">⚠️ Penalty Tracker</div>
-  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-    <span id="penalty-total-badge" style="font-size:12px;font-weight:600;padding:5px 12px;background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);border-radius:6px;color:var(--absent)"></span>
-    <button onclick="openAddPenaltyModal()" style="padding:6px 14px;background:var(--absent);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">+ Add Penalty</button>
-    <button onclick="exportPenaltiesCSV()" style="padding:6px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">📥 Export CSV</button>
-  </div>
+ <div style="font-size:15px;font-weight:700">⚠️ Penalty Tracker</div>
+ <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+ <span id="penalty-total-badge" style="font-size:12px;font-weight:600;padding:5px 12px;background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);border-radius:6px;color:var(--absent)"></span>
+ <button onclick="openAddPenaltyModal()" style="padding:6px 14px;background:var(--absent);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">+ Add Penalty</button>
+ <button onclick="exportPenaltiesCSV()" style="padding:6px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">📥 Export CSV</button>
+ </div>
 </div>
 <div id="penalty-kpi-row" style="padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap"></div>
 <div style="padding:10px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;gap:8px">
-  <input id="penalty-search" type="text" placeholder="Search CG / Order ID..." oninput="renderPenaltyTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:Inter,sans-serif;font-size:12px;padding:6px 10px;border-radius:6px;outline:none;width:200px">
-  <select id="penalty-filter-hc" onchange="renderPenaltyTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All HC</option></select>
-  <select id="penalty-filter-reason" onchange="renderPenaltyTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Reasons</option></select>
-  <select id="penalty-filter-month" onchange="renderPenaltyTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Months</option></select>
-  <select id="penalty-filter-status" onchange="renderPenaltyTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Status</option><option value="pending">Pending</option><option value="paid">Paid</option><option value="waived">Waived</option></select>
-  <button onclick="clearPenaltyFilters()" style="padding:6px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:11px;cursor:pointer;font-family:Inter,sans-serif">Clear</button>
+ <input id="penalty-search" type="text" placeholder="Search CG / Order ID..." oninput="renderPenaltyTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:Inter,sans-serif;font-size:12px;padding:6px 10px;border-radius:6px;outline:none;width:200px">
+ <select id="penalty-filter-hc" onchange="renderPenaltyTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All HC</option></select>
+ <select id="penalty-filter-reason" onchange="renderPenaltyTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Reasons</option></select>
+ <select id="penalty-filter-month" onchange="renderPenaltyTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Months</option></select>
+ <select id="penalty-filter-status" onchange="renderPenaltyTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Status</option><option value="pending">Pending</option><option value="paid">Paid</option><option value="waived">Waived</option></select>
+ <button onclick="clearPenaltyFilters()" style="padding:6px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:11px;cursor:pointer;font-family:Inter,sans-serif">Clear</button>
 </div>
 <div style="overflow:auto;max-height:calc(100vh - 290px);padding:0 20px 20px">
-  <div id="penalty-table-wrap" style="margin-top:14px">
-    <div style="padding:40px;text-align:center;color:var(--text2)">Loading...</div>
-  </div>
+ <div id="penalty-table-wrap" style="margin-top:14px">
+ <div style="padding:40px;text-align:center;color:var(--text2)">Loading...</div>
+ </div>
 </div>
 <div id="penalty-modal" onclick="if(event.target===this)closePenaltyModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:600;align-items:center;justify-content:center">
-  <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:22px;width:500px;max-width:95vw;max-height:90vh;overflow-y:auto">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <div style="font-size:14px;font-weight:600" id="penalty-modal-title">Add Penalty</div>
-      <button onclick="closePenaltyModal()" style="background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer">✕</button>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px" id="penalty-modal-body"></div>
-    <div style="display:flex;gap:8px;margin-top:16px">
-      <button onclick="savePenalty()" style="flex:1;padding:9px;background:var(--absent);border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">Save Penalty</button>
-      <button id="penalty-delete-btn" onclick="deletePenalty()" style="display:none;padding:9px 14px;background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);border-radius:7px;color:var(--absent);font-size:12px;cursor:pointer;font-family:Inter,sans-serif">🗑 Delete</button>
-      <button onclick="closePenaltyModal()" style="padding:9px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text2);font-size:12px;cursor:pointer;font-family:Inter,sans-serif">Cancel</button>
-    </div>
-  </div>
+ <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:22px;width:500px;max-width:95vw;max-height:90vh;overflow-y:auto">
+ <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+ <div style="font-size:14px;font-weight:600" id="penalty-modal-title">Add Penalty</div>
+ <button onclick="closePenaltyModal()" style="background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer">✕</button>
+ </div>
+ <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px" id="penalty-modal-body"></div>
+ <div style="display:flex;gap:8px;margin-top:16px">
+ <button onclick="savePenalty()" style="flex:1;padding:9px;background:var(--absent);border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">Save Penalty</button>
+ <button id="penalty-delete-btn" onclick="deletePenalty()" style="display:none;padding:9px 14px;background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);border-radius:7px;color:var(--absent);font-size:12px;cursor:pointer;font-family:Inter,sans-serif">🗑 Delete</button>
+ <button onclick="closePenaltyModal()" style="padding:9px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text2);font-size:12px;cursor:pointer;font-family:Inter,sans-serif">Cancel</button>
+ </div>
+ </div>
 </div>
 </div>
 
@@ -1617,142 +1665,142 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 
 <div class="page" id="page-customleads">
 <div style="padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-  <div style="font-size:15px;font-weight:700">&#128204; Lead Tracker</div>
-  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-    <input id="cl-search" type="text" placeholder="Search name / phone..." oninput="clRender()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:Inter,sans-serif;font-size:12px;padding:6px 10px;border-radius:6px;outline:none;width:190px">
-    <select id="cl-filter-fs" onchange="clRender()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
-      <option value="">All Final Status</option><option>Converted</option><option>Ongoing</option><option>Lost</option>
-    </select>
-    <select id="cl-filter-heat" onchange="clRender()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
-      <option value="">All Classification</option>
-      <option value="hot">Hot</option><option value="warm">Warm</option><option value="cold">Cold</option><option value="dead">Dead</option>
-    </select>
-    <select id="cl-filter-channel" onchange="clRender()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
-      <option value="">All Channels</option>
-      <option>FC</option><option>Referral</option><option>Other</option>
-    </select>
-    <select id="cl-filter-month" onchange="clOnMonthFilter()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
-      <option value="">All Months</option>
-    </select>
-    <select id="cl-filter-week" onchange="clRender()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
-      <option value="">All Weeks</option>
-      <option value="W1">W1 (1–7)</option><option value="W2">W2 (8–14)</option>
-      <option value="W3">W3 (15–21)</option><option value="W4">W4 (22–31)</option>
-    </select>
-    <select id="cl-filter-agent" onchange="clRender()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
-      <option value="">All Agents</option><option>Nishant</option><option>Muaaz</option><option>Priyanka</option>
-    </select>
-    <input id="cl-filter-date" type="date" onchange="clRender()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:5px 8px;border-radius:6px;outline:none" title="Filter by lead date">
-    <button onclick="clExportCSV()" style="padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-weight:600;cursor:pointer">Export CSV</button>
-    <button onclick="clOpenModal()" style="padding:6px 14px;background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;cursor:pointer">+ Add Lead</button>
-  </div>
+ <div style="font-size:15px;font-weight:700">&#128204; Lead Tracker</div>
+ <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+ <input id="cl-search" type="text" placeholder="Search name / phone..." oninput="clRender()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:Inter,sans-serif;font-size:12px;padding:6px 10px;border-radius:6px;outline:none;width:190px">
+ <select id="cl-filter-fs" onchange="clRender()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
+ <option value="">All Final Status</option><option>Converted</option><option>Ongoing</option><option>Lost</option>
+ </select>
+ <select id="cl-filter-heat" onchange="clRender()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
+ <option value="">All Classification</option>
+ <option value="hot">Hot</option><option value="warm">Warm</option><option value="cold">Cold</option><option value="dead">Dead</option>
+ </select>
+ <select id="cl-filter-channel" onchange="clRender()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
+ <option value="">All Channels</option>
+ <option>FC</option><option>Referral</option><option>Other</option>
+ </select>
+ <select id="cl-filter-month" onchange="clOnMonthFilter()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
+ <option value="">All Months</option>
+ </select>
+ <select id="cl-filter-week" onchange="clRender()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
+ <option value="">All Weeks</option>
+ <option value="W1">W1 (1–7)</option><option value="W2">W2 (8–14)</option>
+ <option value="W3">W3 (15–21)</option><option value="W4">W4 (22–31)</option>
+ </select>
+ <select id="cl-filter-agent" onchange="clRender()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
+ <option value="">All Agents</option><option>Nishant</option><option>Muaaz</option><option>Priyanka</option>
+ </select>
+ <input id="cl-filter-date" type="date" onchange="clRender()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:5px 8px;border-radius:6px;outline:none" title="Filter by lead date">
+ <button onclick="clExportCSV()" style="padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-weight:600;cursor:pointer">Export CSV</button>
+ <button onclick="clOpenModal()" style="padding:6px 14px;background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;cursor:pointer">+ Add Lead</button>
+ </div>
 </div>
 <div id="cl-kpi-row" style="padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap"></div>
 <div id="cl-channel-strip" style="padding:8px 20px 12px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-  <span style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em">Channel Attribution: </span>
-  <span style="font-size:11px;color:var(--text2)">Loading...</span>
+ <span style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em">Channel Attribution: </span>
+ <span style="font-size:11px;color:var(--text2)">Loading...</span>
 </div>
 <div style="overflow:auto;max-height:calc(100vh - 250px);padding:0 20px 20px">
-  <div id="cl-table-wrap" style="margin-top:12px"></div>
+ <div id="cl-table-wrap" style="margin-top:12px"></div>
 </div>
 <!-- Add/Edit Modal -->
 <div id="cl-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9000;align-items:center;justify-content:center">
-  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:24px;width:640px;max-width:97vw;max-height:92vh;overflow-y:auto">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
-      <div style="font-size:15px;font-weight:700" id="cl-modal-title">Add Lead</div>
-      <button onclick="clCloseModal()" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer;line-height:1">&#x2715;</button>
-    </div>
-    <div id="cl-modal-body" style="display:grid;grid-template-columns:1fr 1fr;gap:12px"></div>
-    <div style="margin-top:18px;display:flex;gap:10px;justify-content:flex-end">
-      <button onclick="clCloseModal()" style="padding:9px 18px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text2);font-size:12px;cursor:pointer;font-family:Inter,sans-serif">Cancel</button>
-      <button onclick="clSaveLead()" style="padding:9px 24px;background:var(--accent);border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">Save Lead</button>
-    </div>
-  </div>
+ <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:24px;width:640px;max-width:97vw;max-height:92vh;overflow-y:auto">
+ <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+ <div style="font-size:15px;font-weight:700" id="cl-modal-title">Add Lead</div>
+ <button onclick="clCloseModal()" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer;line-height:1">&#x2715;</button>
+ </div>
+ <div id="cl-modal-body" style="display:grid;grid-template-columns:1fr 1fr;gap:12px"></div>
+ <div style="margin-top:18px;display:flex;gap:10px;justify-content:flex-end">
+ <button onclick="clCloseModal()" style="padding:9px 18px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text2);font-size:12px;cursor:pointer;font-family:Inter,sans-serif">Cancel</button>
+ <button onclick="clSaveLead()" style="padding:9px 24px;background:var(--accent);border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">Save Lead</button>
+ </div>
+ </div>
 </div>
 <!-- Delete Modal -->
 <div id="cl-del-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9100;align-items:center;justify-content:center">
-  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;width:340px;max-width:94vw;text-align:center">
-    <div style="font-size:28px;margin-bottom:8px">&#x1F5D1;</div>
-    <div style="font-size:14px;font-weight:700;margin-bottom:6px">Delete Lead?</div>
-    <div style="font-size:12px;color:var(--text2);margin-bottom:20px" id="cl-del-name"></div>
-    <div style="display:flex;gap:10px;justify-content:center">
-      <button onclick="document.getElementById('cl-del-modal').style.display='none'" style="padding:8px 18px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text2);font-size:12px;cursor:pointer;font-family:Inter,sans-serif">Cancel</button>
-      <button onclick="clConfirmDelete()" style="padding:8px 20px;background:#f85149;border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">Delete</button>
-    </div>
-  </div>
+ <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;width:340px;max-width:94vw;text-align:center">
+ <div style="font-size:28px;margin-bottom:8px">&#x1F5D1;</div>
+ <div style="font-size:14px;font-weight:700;margin-bottom:6px">Delete Lead?</div>
+ <div style="font-size:12px;color:var(--text2);margin-bottom:20px" id="cl-del-name"></div>
+ <div style="display:flex;gap:10px;justify-content:center">
+ <button onclick="document.getElementById('cl-del-modal').style.display='none'" style="padding:8px 18px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text2);font-size:12px;cursor:pointer;font-family:Inter,sans-serif">Cancel</button>
+ <button onclick="clConfirmDelete()" style="padding:8px 20px;background:#f85149;border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">Delete</button>
+ </div>
+ </div>
 </div>
 </div>
 
 <div class="page" id="page-expecting">
 <div style="padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-  <div style="font-size:15px;font-weight:700">🤰 Expecting Mothers</div>
-  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-    <input id="em-search" type="text" placeholder="Search name / phone..." oninput="emRender()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:Inter,sans-serif;font-size:12px;padding:6px 10px;border-radius:6px;outline:none;width:190px">
-    <select id="em-filter-status" onchange="emRender()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
-      <option value="">All Status</option>
-      <option>Expecting</option><option>Ready to Contact</option><option>Contacted</option><option>Converted</option><option>Lost</option>
-    </select>
-    <select id="em-filter-due" onchange="emRender()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
-      <option value="">All Due Months</option>
-    </select>
-    <select id="em-filter-city" onchange="emRender()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
-      <option value="">All Cities</option>
-      <option>Dubai</option><option>Abu Dhabi</option><option>Sharjah</option><option>Ajman</option><option>Al Ain</option><option>RAK</option><option>Fujairah</option>
-    </select>
-    <button onclick="emExportCSV()" style="padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-weight:600;cursor:pointer">Export CSV</button>
-    <button onclick="emOpenModal()" style="padding:6px 14px;background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;cursor:pointer">+ Add Mother</button>
-  </div>
+ <div style="font-size:15px;font-weight:700">🤰 Expecting Mothers</div>
+ <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+ <input id="em-search" type="text" placeholder="Search name / phone..." oninput="emRender()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:Inter,sans-serif;font-size:12px;padding:6px 10px;border-radius:6px;outline:none;width:190px">
+ <select id="em-filter-status" onchange="emRender()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
+ <option value="">All Status</option>
+ <option>Expecting</option><option>Ready to Contact</option><option>Contacted</option><option>Converted</option><option>Lost</option>
+ </select>
+ <select id="em-filter-due" onchange="emRender()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
+ <option value="">All Due Months</option>
+ </select>
+ <select id="em-filter-city" onchange="emRender()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
+ <option value="">All Cities</option>
+ <option>Dubai</option><option>Abu Dhabi</option><option>Sharjah</option><option>Ajman</option><option>Al Ain</option><option>RAK</option><option>Fujairah</option>
+ </select>
+ <button onclick="emExportCSV()" style="padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-weight:600;cursor:pointer">Export CSV</button>
+ <button onclick="emOpenModal()" style="padding:6px 14px;background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;cursor:pointer">+ Add Mother</button>
+ </div>
 </div>
 <div id="em-kpi-row" style="padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap"></div>
 
 <!-- ── DASHBOARD ── -->
 <div id="em-dashboard" style="padding:16px 20px;background:var(--bg);border-bottom:1px solid var(--border)">
-  <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-bottom:16px">
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px">
-      <div style="font-size:12px;font-weight:600;margin-bottom:4px;display:flex;align-items:center;gap:8px"><span style="width:3px;height:14px;background:var(--accent);border-radius:2px"></span>Delivery Pipeline — mothers by due month</div>
-      <div style="font-size:11px;color:var(--text3);margin-bottom:12px">Each bar = how many mothers are due that month. The next 2 months are your active call window.</div>
-      <div style="height:200px"><canvas id="em-chart-due"></canvas></div>
-    </div>
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px">
-      <div style="font-size:12px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px"><span style="width:3px;height:14px;background:var(--duty);border-radius:2px"></span>Status Breakdown</div>
-      <div style="height:200px"><canvas id="em-chart-status"></canvas></div>
-    </div>
-  </div>
-  <div style="display:grid;grid-template-columns:1fr 1.4fr;gap:16px">
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px">
-      <div style="font-size:12px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px"><span style="width:3px;height:14px;background:#e879f9;border-radius:2px"></span>Source Attribution</div>
-      <div id="em-source-bars"></div>
-      <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:11px;color:var(--text2)">Conversion Rate</span>
-        <span id="em-conv-rate" style="font-size:18px;font-weight:700;font-family:monospace;color:var(--duty)">—</span>
-      </div>
-    </div>
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px">
-      <div style="font-size:12px;font-weight:600;margin-bottom:4px;display:flex;align-items:center;gap:8px"><span style="width:3px;height:14px;background:#f97316;border-radius:2px"></span>🔔 Ready to Contact Now</div>
-      <div style="font-size:11px;color:var(--text3);margin-bottom:12px">Mothers due this month or earlier, not yet converted/lost — call these first.</div>
-      <div id="em-action-list" style="display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto"></div>
-    </div>
-  </div>
+ <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-bottom:16px">
+ <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px">
+ <div style="font-size:12px;font-weight:600;margin-bottom:4px;display:flex;align-items:center;gap:8px"><span style="width:3px;height:14px;background:var(--accent);border-radius:2px"></span>Delivery Pipeline — mothers by due month</div>
+ <div style="font-size:11px;color:var(--text3);margin-bottom:12px">Each bar = how many mothers are due that month. The next 2 months are your active call window.</div>
+ <div style="height:200px"><canvas id="em-chart-due"></canvas></div>
+ </div>
+ <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px">
+ <div style="font-size:12px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px"><span style="width:3px;height:14px;background:var(--duty);border-radius:2px"></span>Status Breakdown</div>
+ <div style="height:200px"><canvas id="em-chart-status"></canvas></div>
+ </div>
+ </div>
+ <div style="display:grid;grid-template-columns:1fr 1.4fr;gap:16px">
+ <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px">
+ <div style="font-size:12px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px"><span style="width:3px;height:14px;background:#e879f9;border-radius:2px"></span>Source Attribution</div>
+ <div id="em-source-bars"></div>
+ <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+ <span style="font-size:11px;color:var(--text2)">Conversion Rate</span>
+ <span id="em-conv-rate" style="font-size:18px;font-weight:700;font-family:monospace;color:var(--duty)">—</span>
+ </div>
+ </div>
+ <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px">
+ <div style="font-size:12px;font-weight:600;margin-bottom:4px;display:flex;align-items:center;gap:8px"><span style="width:3px;height:14px;background:#f97316;border-radius:2px"></span>🔔 Ready to Contact Now</div>
+ <div style="font-size:11px;color:var(--text3);margin-bottom:12px">Mothers due this month or earlier, not yet converted/lost — call these first.</div>
+ <div id="em-action-list" style="display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto"></div>
+ </div>
+ </div>
 </div>
 
 <div style="overflow:auto;max-height:calc(100vh - 230px);padding:0 20px 20px">
-  <div id="em-table-wrap" style="margin-top:12px"></div>
+ <div id="em-table-wrap" style="margin-top:12px"></div>
 </div>
 
 <!-- Add/Edit Modal -->
 <div id="em-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9000;align-items:center;justify-content:center">
-  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:24px;width:620px;max-width:97vw;max-height:92vh;overflow-y:auto">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
-      <div style="font-size:15px;font-weight:700" id="em-modal-title">Add Mother</div>
-      <button onclick="emCloseModal()" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer;line-height:1">&#x2715;</button>
-    </div>
-    <div id="em-modal-body" style="display:grid;grid-template-columns:1fr 1fr;gap:12px"></div>
-    <div style="margin-top:18px;display:flex;gap:10px;justify-content:flex-end">
-      <button id="em-delete-btn" onclick="emAskDelete()" style="display:none;padding:9px 16px;background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);border-radius:7px;color:#f85149;font-size:12px;cursor:pointer;font-family:Inter,sans-serif;margin-right:auto">🗑 Delete</button>
-      <button onclick="emCloseModal()" style="padding:9px 18px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text2);font-size:12px;cursor:pointer;font-family:Inter,sans-serif">Cancel</button>
-      <button onclick="emSave()" style="padding:9px 24px;background:var(--accent);border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">Save</button>
-    </div>
-  </div>
+ <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:24px;width:620px;max-width:97vw;max-height:92vh;overflow-y:auto">
+ <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+ <div style="font-size:15px;font-weight:700" id="em-modal-title">Add Mother</div>
+ <button onclick="emCloseModal()" style="background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer;line-height:1">&#x2715;</button>
+ </div>
+ <div id="em-modal-body" style="display:grid;grid-template-columns:1fr 1fr;gap:12px"></div>
+ <div style="margin-top:18px;display:flex;gap:10px;justify-content:flex-end">
+ <button id="em-delete-btn" onclick="emAskDelete()" style="display:none;padding:9px 16px;background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);border-radius:7px;color:#f85149;font-size:12px;cursor:pointer;font-family:Inter,sans-serif;margin-right:auto">🗑 Delete</button>
+ <button onclick="emCloseModal()" style="padding:9px 18px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text2);font-size:12px;cursor:pointer;font-family:Inter,sans-serif">Cancel</button>
+ <button onclick="emSave()" style="padding:9px 24px;background:var(--accent);border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">Save</button>
+ </div>
+ </div>
 </div>
 </div>
 
@@ -1761,66 +1809,66 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 
 <div class="page" id="page-complaints">
  <div class="cx-bar">
-  <div style="font-size:15px;font-weight:700">⚠️ Caregiver Complaint Tracker</div>
-  <input id="cx-search" class="cx-inp" type="text" placeholder="Search caregiver / client / order..." oninput="cxRenderAll()" style="width:220px">
-  <select id="cx-f-hc"  class="cx-inp" onchange="cxRenderAll()"><option value="">All homecares</option></select>
-  <select id="cx-f-sev" class="cx-inp" onchange="cxRenderAll()"><option value="">All severities</option></select>
-  <select id="cx-f-status" class="cx-inp" onchange="cxRenderAll()"><option value="">All statuses</option></select>
-  <select id="cx-f-cat" class="cx-inp" onchange="cxRenderAll()"><option value="">All categories</option></select>
-  <select id="cx-f-period" class="cx-inp" onchange="cxRenderAll()">
-   <option value="90">Last 90 days (scoring window)</option>
-   <option value="30">Last 30 days</option>
-   <option value="180">Last 180 days</option>
-   <option value="all">All time</option>
-  </select>
-  <button class="cx-btn" onclick="cxExportExcel('')">⬇ Excel</button>
-  <button class="cx-btn pri" id="cx-add-btn" onclick="cxOpenModal()">+ Log entry</button>
+ <div style="font-size:15px;font-weight:700">⚠️ Caregiver Complaint Tracker</div>
+ <input id="cx-search" class="cx-inp" type="text" placeholder="Search caregiver / client / order..." oninput="cxRenderAll()" style="width:220px">
+ <select id="cx-f-hc"  class="cx-inp" onchange="cxRenderAll()"><option value="">All homecares</option></select>
+ <select id="cx-f-sev" class="cx-inp" onchange="cxRenderAll()"><option value="">All severities</option></select>
+ <select id="cx-f-status" class="cx-inp" onchange="cxRenderAll()"><option value="">All statuses</option></select>
+ <select id="cx-f-cat" class="cx-inp" onchange="cxRenderAll()"><option value="">All categories</option></select>
+ <select id="cx-f-period" class="cx-inp" onchange="cxRenderAll()">
+ <option value="90">Last 90 days (scoring window)</option>
+ <option value="30">Last 30 days</option>
+ <option value="180">Last 180 days</option>
+ <option value="all">All time</option>
+ </select>
+ <button class="cx-btn" onclick="cxExportExcel('')">⬇ Excel</button>
+ <button class="cx-btn pri" id="cx-add-btn" onclick="cxOpenModal()">+ Log entry</button>
  </div>
 
  <div class="cx-policy">
-  <div class="cx-policy-h" onclick="cxTogglePolicy()">
-   <span style="font-size:12px;font-weight:600;color:var(--accent)">📖 Escalation policy — severity tiers, points and the action ladder — click to expand</span>
-   <span id="cx-policy-arrow" style="color:var(--text2);font-size:13px">▼</span>
-  </div>
-  <div class="cx-policy-b" id="cx-policy-body"></div>
+ <div class="cx-policy-h" onclick="cxTogglePolicy()">
+ <span style="font-size:12px;font-weight:600;color:var(--accent)">📖 Escalation policy — severity tiers, points and the action ladder — click to expand</span>
+ <span id="cx-policy-arrow" style="color:var(--text2);font-size:13px">▼</span>
+ </div>
+ <div class="cx-policy-b" id="cx-policy-body"></div>
  </div>
 
  <div class="cx-kpis" id="cx-kpi-row"></div>
 
  <div class="cx-page">
-  <div class="cx-card">
-   <div class="cx-card-h"><span>🎯 Caregiver risk — rolling <span id="cx-win-lbl">90</span>-day points</span>
-    <span style="font-size:10px;font-weight:400;color:var(--text3)">Badge only — no caregiver is blocked from assignment</span></div>
-   <div class="cx-scroll"><table class="cx-tbl" id="cx-risk-tbl"></table></div>
-  </div>
+ <div class="cx-card">
+ <div class="cx-card-h"><span>🎯 Caregiver risk — rolling <span id="cx-win-lbl">90</span>-day points</span>
+ <span style="font-size:10px;font-weight:400;color:var(--text3)">Badge only — no caregiver is blocked from assignment</span></div>
+ <div class="cx-scroll"><table class="cx-tbl" id="cx-risk-tbl"></table></div>
+ </div>
 
-  <div class="cx-card">
-   <div class="cx-card-h"><span>🏥 Homecare partner scorecard</span>
-    <span style="font-size:10px;font-weight:400;color:var(--text3)">Complaints per 100 duty shifts in the same window</span></div>
-   <table class="cx-tbl" id="cx-hc-tbl"></table>
-  </div>
+ <div class="cx-card">
+ <div class="cx-card-h"><span>🏥 Homecare partner scorecard</span>
+ <span style="font-size:10px;font-weight:400;color:var(--text3)">Complaints per 100 duty shifts in the same window</span></div>
+ <table class="cx-tbl" id="cx-hc-tbl"></table>
+ </div>
 
-  <div class="cx-card">
-   <div class="cx-card-h"><span>📋 Complaint log</span><span id="cx-log-count" style="font-size:10px;font-weight:400;color:var(--text3)"></span></div>
-   <div class="cx-scroll"><table class="cx-tbl" id="cx-log-tbl"></table></div>
-  </div>
+ <div class="cx-card">
+ <div class="cx-card-h"><span>📋 Complaint log</span><span id="cx-log-count" style="font-size:10px;font-weight:400;color:var(--text3)"></span></div>
+ <div class="cx-scroll"><table class="cx-tbl" id="cx-log-tbl"></table></div>
+ </div>
  </div>
 </div>
 
 <!-- ── COMPLAINT MODAL ── -->
 <div class="cx-modal" id="cx-modal" onclick="if(event.target===this)cxCloseModal()">
  <div class="cx-modal-box">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-   <div style="font-size:15px;font-weight:700" id="cx-modal-title">Log a complaint</div>
-   <button class="cx-x" style="font-size:20px" onclick="cxCloseModal()">&#x2715;</button>
-  </div>
-  <div style="font-size:11px;color:var(--text2);margin-bottom:14px">Points only apply once the finding is <b>Substantiated</b> or <b>Partly substantiated</b>.</div>
-  <div class="cx-form" id="cx-form"></div>
-  <div id="cx-modal-preview" style="background:var(--bg3);border-radius:8px;padding:10px 12px;font-size:11px;color:var(--text2);line-height:1.6;margin-top:14px">—</div>
-  <div style="display:flex;gap:8px;margin-top:14px">
-   <button class="cx-btn" style="flex:1" onclick="cxCloseModal()">Cancel</button>
-   <button class="cx-btn pri" style="flex:2" onclick="cxSave()">Save</button>
-  </div>
+ <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+ <div style="font-size:15px;font-weight:700" id="cx-modal-title">Log a complaint</div>
+ <button class="cx-x" style="font-size:20px" onclick="cxCloseModal()">&#x2715;</button>
+ </div>
+ <div style="font-size:11px;color:var(--text2);margin-bottom:14px">Points only apply once the finding is <b>Substantiated</b> or <b>Partly substantiated</b>.</div>
+ <div class="cx-form" id="cx-form"></div>
+ <div id="cx-modal-preview" style="background:var(--bg3);border-radius:8px;padding:10px 12px;font-size:11px;color:var(--text2);line-height:1.6;margin-top:14px">—</div>
+ <div style="display:flex;gap:8px;margin-top:14px">
+ <button class="cx-btn" style="flex:1" onclick="cxCloseModal()">Cancel</button>
+ <button class="cx-btn pri" style="flex:2" onclick="cxSave()">Save</button>
+ </div>
  </div>
 </div>
 
@@ -1829,152 +1877,152 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 <!-- ══ LEAVE APPLICATIONS ══ -->
 <div class="page" id="page-leave">
  <div class="tk-bar">
-  <div style="font-size:15px;font-weight:700">🏖 Leave Applications</div>
-  <input id="lv-search" class="tk-inp" type="text" placeholder="Search ref / caregiver / reason..." oninput="lvRenderLog()" style="width:230px">
-  <select id="lv-f-hc" class="tk-inp" onchange="lvRenderLog()"><option value="">All homecares</option></select>
-  <select id="lv-f-type" class="tk-inp" onchange="lvRenderLog()"><option value="">All leave types</option></select>
-  <select id="lv-f-status" class="tk-inp" onchange="lvRenderLog()"><option value="">All statuses</option></select>
-  <select id="lv-f-period" class="tk-inp" onchange="lvRenderLog()">
-   <option value="90">Last 90 days</option>
-   <option value="30">Last 30 days</option>
-   <option value="365">Last 12 months</option>
-   <option value="all">All time</option>
-  </select>
-  <button class="tk-btn" onclick="initLeave(true)">↻ Refresh</button>
-  <button class="tk-btn" id="lv-export" onclick="lvExportExcel()">⬇ Excel</button>
-  <button class="tk-btn pri" onclick="lvOpenModal()">+ Apply for leave</button>
+ <div style="font-size:15px;font-weight:700">🏖 Leave Applications</div>
+ <input id="lv-search" class="tk-inp" type="text" placeholder="Search ref / caregiver / reason..." oninput="lvRenderLog()" style="width:230px">
+ <select id="lv-f-hc" class="tk-inp" onchange="lvRenderLog()"><option value="">All homecares</option></select>
+ <select id="lv-f-type" class="tk-inp" onchange="lvRenderLog()"><option value="">All leave types</option></select>
+ <select id="lv-f-status" class="tk-inp" onchange="lvRenderLog()"><option value="">All statuses</option></select>
+ <select id="lv-f-period" class="tk-inp" onchange="lvRenderLog()">
+ <option value="90">Last 90 days</option>
+ <option value="30">Last 30 days</option>
+ <option value="365">Last 12 months</option>
+ <option value="all">All time</option>
+ </select>
+ <button class="tk-btn" onclick="initLeave(true)">↻ Refresh</button>
+ <button class="tk-btn" id="lv-export" onclick="lvExportExcel()">⬇ Excel</button>
+ <button class="tk-btn pri" onclick="lvOpenModal()">+ Apply for leave</button>
  </div>
 
  <div class="tk-kpis" id="lv-kpi-row"></div>
 
  <div class="tk-page">
-  <div class="tk-hero" id="lv-hc-hint">
-   <div>
-    <div class="tk-hero-t">Need time off for a caregiver? Apply here.</div>
-    <div class="tk-hero-s">Pick the caregiver and the dates, attach the medical certificate or supporting document, and Valeo reviews it.<br>
+ <div class="tk-hero" id="lv-hc-hint">
+ <div>
+ <div class="tk-hero-t">Need time off for a caregiver? Apply here.</div>
+ <div class="tk-hero-s">Pick the caregiver and the dates, attach the medical certificate or supporting document, and Valeo reviews it.<br>
      Once approved, those dates are marked on the calendar and roster automatically — you will see any booked shifts that need cover before you submit.</div>
-   </div>
-   <button class="tk-btn pri big" onclick="lvOpenModal()">+ Apply for leave</button>
-  </div>
+ </div>
+ <button class="tk-btn pri big" onclick="lvOpenModal()">+ Apply for leave</button>
+ </div>
 
-  <div class="tk-card">
-   <div class="tk-card-h"><span>📋 Applications</span><span id="lv-log-count" style="font-size:10px;font-weight:400;color:var(--text3)"></span></div>
-   <div class="tk-scroll"><table class="tk-tbl" id="lv-log-tbl"></table></div>
-  </div>
+ <div class="tk-card">
+ <div class="tk-card-h"><span>📋 Applications</span><span id="lv-log-count" style="font-size:10px;font-weight:400;color:var(--text3)"></span></div>
+ <div class="tk-scroll"><table class="tk-tbl" id="lv-log-tbl"></table></div>
+ </div>
  </div>
 </div>
 
 <!-- ── APPLY FOR LEAVE MODAL ── -->
 <div class="tk-modal" id="lv-modal" onclick="if(event.target===this)lvCloseModal()">
  <div class="tk-modal-box">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-   <div style="font-size:15px;font-weight:700">🏖 Apply for caregiver leave</div>
-   <button class="tk-x" style="font-size:20px" onclick="lvCloseModal()">&#x2715;</button>
-  </div>
-  <div style="font-size:11px;color:var(--text2);margin-bottom:14px">Valeo reviews every application — nothing is marked on the calendar until it is approved.</div>
-  <div class="tk-form" id="lv-form"></div>
-  <div id="lv-modal-preview" style="background:var(--bg3);border-radius:8px;padding:10px 12px;font-size:11px;color:var(--text2);line-height:1.6;margin-top:14px">—</div>
-  <div style="display:flex;gap:8px;margin-top:14px">
-   <button class="tk-btn" style="flex:1" onclick="lvCloseModal()">Cancel</button>
-   <button class="tk-btn pri" id="lv-save-btn" style="flex:2" onclick="lvSave()">Submit application</button>
-  </div>
+ <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+ <div style="font-size:15px;font-weight:700">🏖 Apply for caregiver leave</div>
+ <button class="tk-x" style="font-size:20px" onclick="lvCloseModal()">&#x2715;</button>
+ </div>
+ <div style="font-size:11px;color:var(--text2);margin-bottom:14px">Valeo reviews every application — nothing is marked on the calendar until it is approved.</div>
+ <div class="tk-form" id="lv-form"></div>
+ <div id="lv-modal-preview" style="background:var(--bg3);border-radius:8px;padding:10px 12px;font-size:11px;color:var(--text2);line-height:1.6;margin-top:14px">—</div>
+ <div style="display:flex;gap:8px;margin-top:14px">
+ <button class="tk-btn" style="flex:1" onclick="lvCloseModal()">Cancel</button>
+ <button class="tk-btn pri" id="lv-save-btn" style="flex:2" onclick="lvSave()">Submit application</button>
+ </div>
  </div>
 </div>
 
 <!-- ── LEAVE DETAIL ── -->
 <div class="tk-modal" id="lv-detail" onclick="if(event.target===this)lvCloseDetail()">
  <div class="tk-modal-box">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px">
-   <div style="font-size:14px;font-weight:700" id="lv-detail-title"></div>
-   <button class="tk-x" style="font-size:20px" onclick="lvCloseDetail()">&#x2715;</button>
-  </div>
-  <div id="lv-detail-body"></div>
-  <div style="display:flex;gap:8px;margin-top:16px">
-   <button class="tk-btn" style="flex:1" onclick="lvCloseDetail()">Close</button>
-  </div>
+ <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px">
+ <div style="font-size:14px;font-weight:700" id="lv-detail-title"></div>
+ <button class="tk-x" style="font-size:20px" onclick="lvCloseDetail()">&#x2715;</button>
+ </div>
+ <div id="lv-detail-body"></div>
+ <div style="display:flex;gap:8px;margin-top:16px">
+ <button class="tk-btn" style="flex:1" onclick="lvCloseDetail()">Close</button>
+ </div>
  </div>
 </div>
 
 <!-- ══ HC TICKET DESK ══ -->
 <div class="page" id="page-tickets">
  <div class="tk-bar">
-  <div style="font-size:15px;font-weight:700">🎫 HC Ticket Desk</div>
-  <input id="tk-search" class="tk-inp" type="text" placeholder="Search ticket / caregiver / client / order..." oninput="tkRenderLog()" style="width:250px">
-  <select id="tk-f-hc" class="tk-inp" onchange="tkRenderLog()"><option value="">All homecares</option></select>
-  <select id="tk-f-cat" class="tk-inp" onchange="tkRenderLog()"><option value="">All categories</option></select>
-  <select id="tk-f-status" class="tk-inp" onchange="tkRenderLog()"><option value="">All statuses</option></select>
-  <select id="tk-f-prio" class="tk-inp" onchange="tkRenderLog()"><option value="">All priorities</option></select>
-  <select id="tk-f-period" class="tk-inp" onchange="tkRenderLog()">
-   <option value="30">Last 30 days</option>
-   <option value="7">Last 7 days</option>
-   <option value="90">Last 90 days</option>
-   <option value="all">All time</option>
-  </select>
-  <button class="tk-btn" onclick="initTickets(true)">↻ Refresh</button>
-  <button class="tk-btn" id="tk-export" onclick="tkExportExcel()">⬇ Excel</button>
-  <button class="tk-btn pri" onclick="tkOpenModal()">+ Raise a ticket</button>
+ <div style="font-size:15px;font-weight:700">🎫 HC Ticket Desk</div>
+ <input id="tk-search" class="tk-inp" type="text" placeholder="Search ticket / caregiver / client / order..." oninput="tkRenderLog()" style="width:250px">
+ <select id="tk-f-hc" class="tk-inp" onchange="tkRenderLog()"><option value="">All homecares</option></select>
+ <select id="tk-f-cat" class="tk-inp" onchange="tkRenderLog()"><option value="">All categories</option></select>
+ <select id="tk-f-status" class="tk-inp" onchange="tkRenderLog()"><option value="">All statuses</option></select>
+ <select id="tk-f-prio" class="tk-inp" onchange="tkRenderLog()"><option value="">All priorities</option></select>
+ <select id="tk-f-period" class="tk-inp" onchange="tkRenderLog()">
+ <option value="30">Last 30 days</option>
+ <option value="7">Last 7 days</option>
+ <option value="90">Last 90 days</option>
+ <option value="all">All time</option>
+ </select>
+ <button class="tk-btn" onclick="initTickets(true)">↻ Refresh</button>
+ <button class="tk-btn" id="tk-export" onclick="tkExportExcel()">⬇ Excel</button>
+ <button class="tk-btn pri" onclick="tkOpenModal()">+ Raise a ticket</button>
  </div>
 
  <div class="tk-kpis" id="tk-kpi-row"></div>
 
  <div class="tk-page">
-  <div class="tk-hero" id="tk-hc-hint">
-   <div>
-    <div class="tk-hero-t">Something wrong with a shift? Tell Valeo here.</div>
-    <div class="tk-hero-s">Pick the caregiver and the booking, say what happened, and the right person at Valeo is tagged on Slack immediately.<br>
+ <div class="tk-hero" id="tk-hc-hint">
+ <div>
+ <div class="tk-hero-t">Something wrong with a shift? Tell Valeo here.</div>
+ <div class="tk-hero-s">Pick the caregiver and the booking, say what happened, and the right person at Valeo is tagged on Slack immediately.<br>
      Urgent issues — no-show, client not responding, no access, a caregiver unwell — are answered within <b>15 minutes</b>. You will see the status update on this page.</div>
-   </div>
-   <button class="tk-btn pri big" onclick="tkOpenModal()">+ Raise a ticket</button>
-  </div>
+ </div>
+ <button class="tk-btn pri big" onclick="tkOpenModal()">+ Raise a ticket</button>
+ </div>
 
-  <div class="tk-card">
-   <div class="tk-card-h"><span>📋 Tickets</span><span id="tk-log-count" style="font-size:10px;font-weight:400;color:var(--text3)"></span></div>
-   <div class="tk-scroll"><table class="tk-tbl" id="tk-log-tbl"></table></div>
-  </div>
+ <div class="tk-card">
+ <div class="tk-card-h"><span>📋 Tickets</span><span id="tk-log-count" style="font-size:10px;font-weight:400;color:var(--text3)"></span></div>
+ <div class="tk-scroll"><table class="tk-tbl" id="tk-log-tbl"></table></div>
+ </div>
  </div>
 </div>
 
 <!-- ── RAISE TICKET MODAL ── -->
 <div class="tk-modal" id="tk-modal" onclick="if(event.target===this)tkCloseModal()">
  <div class="tk-modal-box">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-   <div style="font-size:15px;font-weight:700">🎫 Raise a ticket</div>
-   <button class="tk-x" style="font-size:20px" onclick="tkCloseModal()">&#x2715;</button>
-  </div>
-  <div style="font-size:11px;color:var(--text2);margin-bottom:14px">Priority is set automatically from the issue — you do not need to choose it.</div>
-  <div class="tk-form" id="tk-form"></div>
-  <div id="tk-modal-preview" style="background:var(--bg3);border-radius:8px;padding:10px 12px;font-size:11px;color:var(--text2);line-height:1.6;margin-top:14px">—</div>
-  <div style="display:flex;gap:8px;margin-top:14px">
-   <button class="tk-btn" style="flex:1" onclick="tkCloseModal()">Cancel</button>
-   <button class="tk-btn pri" id="tk-save-btn" style="flex:2" onclick="tkSave()">Raise ticket</button>
-  </div>
+ <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+ <div style="font-size:15px;font-weight:700">🎫 Raise a ticket</div>
+ <button class="tk-x" style="font-size:20px" onclick="tkCloseModal()">&#x2715;</button>
+ </div>
+ <div style="font-size:11px;color:var(--text2);margin-bottom:14px">Priority is set automatically from the issue — you do not need to choose it.</div>
+ <div class="tk-form" id="tk-form"></div>
+ <div id="tk-modal-preview" style="background:var(--bg3);border-radius:8px;padding:10px 12px;font-size:11px;color:var(--text2);line-height:1.6;margin-top:14px">—</div>
+ <div style="display:flex;gap:8px;margin-top:14px">
+ <button class="tk-btn" style="flex:1" onclick="tkCloseModal()">Cancel</button>
+ <button class="tk-btn pri" id="tk-save-btn" style="flex:2" onclick="tkSave()">Raise ticket</button>
+ </div>
  </div>
 </div>
 
 <!-- ── TICKET DETAIL ── -->
 <div class="tk-modal" id="tk-detail" onclick="if(event.target===this)tkCloseDetail()">
  <div class="tk-modal-box">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px">
-   <div style="font-size:14px;font-weight:700" id="tk-detail-title"></div>
-   <button class="tk-x" style="font-size:20px" onclick="tkCloseDetail()">&#x2715;</button>
-  </div>
-  <div id="tk-detail-body"></div>
-  <div style="display:flex;gap:8px;margin-top:16px">
-   <button class="tk-btn" style="flex:1" onclick="tkCloseDetail()">Close</button>
-  </div>
+ <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px">
+ <div style="font-size:14px;font-weight:700" id="tk-detail-title"></div>
+ <button class="tk-x" style="font-size:20px" onclick="tkCloseDetail()">&#x2715;</button>
+ </div>
+ <div id="tk-detail-body"></div>
+ <div style="display:flex;gap:8px;margin-top:16px">
+ <button class="tk-btn" style="flex:1" onclick="tkCloseDetail()">Close</button>
+ </div>
  </div>
 </div>
 
 <!-- ── COMPLAINT DELETE CONFIRM ── -->
 <div class="cx-modal" id="cx-del-modal" onclick="if(event.target===this)cxCloseDelete()">
  <div class="cx-modal-box" style="width:380px;text-align:center">
-  <div style="font-size:26px;margin-bottom:8px">🗑️</div>
-  <div style="font-size:14px;font-weight:700;margin-bottom:6px">Delete this entry?</div>
-  <div style="font-size:12px;color:var(--text2);margin-bottom:18px" id="cx-del-name"></div>
-  <div style="display:flex;gap:10px;justify-content:center">
-   <button class="cx-btn" onclick="cxCloseDelete()">Cancel</button>
-   <button class="cx-btn warn" onclick="cxConfirmDelete()">Delete</button>
-  </div>
+ <div style="font-size:26px;margin-bottom:8px">🗑️</div>
+ <div style="font-size:14px;font-weight:700;margin-bottom:6px">Delete this entry?</div>
+ <div style="font-size:12px;color:var(--text2);margin-bottom:18px" id="cx-del-name"></div>
+ <div style="display:flex;gap:10px;justify-content:center">
+ <button class="cx-btn" onclick="cxCloseDelete()">Cancel</button>
+ <button class="cx-btn warn" onclick="cxConfirmDelete()">Delete</button>
+ </div>
  </div>
 </div>
 
@@ -2012,6 +2060,8 @@ const MONTHS= ['January','February','March','April','May','June','July','August'
 let rawData=[], allData=[], weekOffCfg={};
 // caregiver|date keys that have at least one B2B order (survives dedup)
 var _b2bDays={};
+// caregiver|date keys that have at least one Mumzworld order (survives dedup)
+var _mumzDays={};
 let overrides = {}; // key: "caregiver|date" or "order_id|date" -> override object
 let splitAssignments = {}; // key: order_id -> {cg2: name}
 let activeCG=null, calYear=new Date().getFullYear(), calMo=new Date().getMonth();
@@ -2129,6 +2179,22 @@ function pickB2B(r){
   return false;
 }
 
+// Detect Mumzworld orders. Scans all raw row values for the string "mumzworld"
+// (covers whichever column Metabase uses — client name, source, package, etc),
+// plus explicit checks on client_name/package once the row has been normalised.
+function pickMumzworld(r){
+  if(!r||typeof r!=='object') return false;
+  for(var k in r){
+    if(!Object.prototype.hasOwnProperty.call(r,k)) continue;
+    var v=r[k];
+    if(v==null) continue;
+    if(String(v).toLowerCase().indexOf('mumzworld')>=0) return true;
+  }
+  var cn=(r.client_name||r['User Name']||'').toLowerCase();
+  var pk=(r.package_type||r.package_raw||r['Package']||r['Parent_Package']||'').toLowerCase();
+  return cn.indexOf('mumzworld')>=0 || pk.indexOf('mumzworld')>=0;
+}
+
 function expandOrders(orders){
   // Build lookup of real Metabase orders for Customer Order > Week Off priority
   var realDutyLookup={};
@@ -2229,7 +2295,8 @@ async function loadData(force=false){
           package_type:String(r['package_type']||'').trim(),
           location:String(r['location']||'').trim(),
           type_of_user:String(r['type_of_user']||'').trim(),
-          is_b2b:pickB2B(r)
+          is_b2b:pickB2B(r),
+          is_mumzworld:pickMumzworld(r)
         };
       }
       const slot=String(r['Confirmed_DateTime']||r['Booked_Slot']||r['Order_Date']||'');
@@ -2269,6 +2336,7 @@ async function loadData(force=false){
         location:String(r['City']||'').trim(),
         type_of_user:String(r['Type_Of_User']||'').trim(),
         is_b2b:pickB2B(r),
+        is_mumzworld:pickMumzworld(r),
         final_price:parseFloat(r['Final_Price']||r['Order_Price']||0)||0
       };
     }).filter(Boolean);
@@ -2308,8 +2376,10 @@ async function loadData(force=false){
     });
     // Record B2B caregiver|date keys from the full expanded set, before dedup drops rows
     _b2bDays={};
+    _mumzDays={};
     expandedRaw.forEach(function(r){
       if(r.is_b2b && r.caregiver && r.date) _b2bDays[r.caregiver+'|'+r.date]=true;
+      if(r.is_mumzworld && r.caregiver && r.date) _mumzDays[r.caregiver+'|'+r.date]=true;
     });
     allData = Object.values(dedupMap);
     // Load overrides (also calls loadLocalCache which populates hiddenCGs)
@@ -2350,6 +2420,8 @@ async function loadData(force=false){
     var _lastSync=0;
 window.addEventListener('focus',function(){var now=Date.now();if(now-_lastSync>2*60*1000){_lastSync=now;syncFromSheet();}});
     if(document.getElementById('page-analytics').classList.contains('active'))renderAnalytics();
+    var _mzPg=document.getElementById('page-mumz');
+    if(_mzPg&&_mzPg.classList.contains('active'))switchToMumz();
     populateCGHCFilter();
     var _cntRows=rawData;
     if(_session&&_session.role==='hc'&&_session.homecare){
@@ -3231,11 +3303,15 @@ function renderAnalyticsData(){
 function switchTab(tab){
   // HC partner accounts: Calendar + Roster only
   if(_session&&_session.role==='hc'&&tab!=='calendar'&&tab!=='roster'&&tab!=='complaints'&&tab!=='tickets'&&tab!=='leave'){alert('Access restricted');return;}
+  // Client accounts (e.g. Mumzworld): their own order list + tickets only
+  if(_session&&_session.role==='client'&&tab!=='mumz'&&tab!=='tickets'){alert('Access restricted');return;}
   if(tab==='roster'){setTimeout(switchToRoster,80);}
   if(tab==='daily'){setTimeout(switchToDaily,80);}
+  if(tab==='mumz'){setTimeout(switchToMumz,80);}
   var _tabLbl={calendar:'calendar',analytics:'analytics',ops:'operations',planner:'schedule builder',roster:'roster',
     daily:'daily orders',leads:'sm lead',fclead:'fc lead',supply:'supply',customleads:'lead tracker',
-    complaints:'complaint',penalty:'penalty',expecting:'expecting',tickets:'hc tickets',leave:'leave applications'}[tab]||tab;
+    complaints:'complaint',penalty:'penalty',expecting:'expecting',tickets:'hc tickets',leave:'leave applications',
+    mumz:'mumzworld orders'}[tab]||tab;
   document.querySelectorAll('.main-tab').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase().includes(_tabLbl)));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   var _pg=document.getElementById('page-'+tab);if(_pg)_pg.classList.add('active');
@@ -4268,8 +4344,20 @@ var TK_SLACK = { channel: 'C0AF2GS4FNF' };
 
 // ── Small helpers ────────────────────────────────────────────────
 function tkEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function tkIsMaster(){ return !(_session && _session.role === 'hc'); }
-function tkSessionHC(){ return (_session && _session.role==='hc' && _session.homecare) ? _session.homecare : ''; }
+function tkIsMaster(){ return !(_session && (_session.role === 'hc' || _session.role === 'client')); }
+function tkSessionHC(){
+  if(!_session) return '';
+  if(_session.role==='hc' && _session.homecare) return _session.homecare;
+  if(_session.role==='client' && _session.client_tag) return _session.client_tag;
+  return '';
+}
+function tkIsClientRole(){ return !!(_session && _session.role==='client'); }
+// Caregivers with at least one order tagged for this client (e.g. Mumzworld)
+function tkMumzCaregivers(){
+  var set = {};
+  Object.keys(_mumzDays||{}).forEach(function(k){ set[k.split('|')[0]] = true; });
+  return Object.keys(set).sort();
+}
 function tkNorm(s){ return String(s||'').toLowerCase().replace(/[\s\u00a0]+/g,''); }
 function tkHCMatch(a,b){ return tkNorm(a) === tkNorm(b); }
 function tkCat(name){ return TK_CATS.find(function(x){ return x.c === name; }) || null; }
@@ -4292,6 +4380,7 @@ function tkRespMin(r){
 
 // ── Caregivers / orders available to the logged-in partner ───────
 function tkCaregiversFor(hc){
+  if(tkIsClientRole()) return tkMumzCaregivers();
   var pool = (rawData||[]).filter(function(x){ return x.caregiver; });
   var man  = Object.values(manualCGs||{}).map(function(c){ return {caregiver:c.name, homecare:c.homecare}; });
   var all  = pool.concat(man);
@@ -4308,16 +4397,18 @@ function tkHomecares(){
 function tkOrdersFor(cg, date, hc){
   if(!cg || !date) return [];
   var lock = hc || tkSessionHC();
+  var isClient = tkIsClientRole();
   var out = [], seen = {};
   var push = function(o){
-    if(lock && !tkHCMatch(o.homecare, lock)) return;
+    if(isClient){ if(!o.is_mumzworld) return; }
+    else if(lock && !tkHCMatch(o.homecare, lock)) return;
     var key = o.child_order_id || o.order_id || (o.client_name + '|' + o.time_start);
     if(!key || seen[key]) return; seen[key] = 1;
     out.push({
       order_id:o.order_id||'', child_order_id:o.child_order_id||'',
       client_name:o.client_name||'', time_start:o.time_start||'', time_end:o.time_end||'',
       package_raw:o.package_raw||o.package_type||'', location:o.location||'',
-      homecare:o.homecare||'', is_b2b:!!o.is_b2b, status:o.status||''
+      homecare:isClient?(_session.client_tag||'Mumzworld'):(o.homecare||''), is_b2b:!!o.is_b2b, status:o.status||''
     });
   };
   (allData||[]).forEach(function(o){ if(o.caregiver===cg && o.date===date) push(o); });
@@ -4380,6 +4471,19 @@ function tkSyncChrome(){
   });
   var hint = document.getElementById('tk-hc-hint');
   if(hint) hint.style.display = master ? 'none' : '';
+  // Client partners raise concerns from their own orders tab, not from here
+  if(tkIsClientRole()){
+    if(hint){
+      hint.style.display = '';
+      hint.innerHTML = '<div><div class="tk-hero-t">Your concerns and their status</div>'
+        + '<div class="tk-hero-s">Everything you have raised from the <b>Mumzworld Orders</b> tab shows here with its live status.<br>'
+        + 'To raise a new one, open the order on that tab and click <b>🚩 Raise</b>.</div></div>'
+        + '<button class="tk-btn pri big" onclick="switchTab(\'mumz\')">Go to my orders</button>';
+    }
+    document.querySelectorAll('#page-tickets .tk-btn.pri').forEach(function(b){
+      if((b.textContent||'').indexOf('Raise a ticket') >= 0) b.style.display = 'none';
+    });
+  }
 }
 
 function tkBadge(){
@@ -6116,6 +6220,8 @@ function reRenderAll(){
   if(op&&op.classList.contains('active')) renderOps();
   var dp=document.getElementById('page-daily');
   if(dp&&dp.classList.contains('active')) renderDailyOrders();
+  var mzp=document.getElementById('page-mumz');
+  if(mzp&&mzp.classList.contains('active')) renderMumzDaily();
 }
 
 function loadLocalCache(){
@@ -7297,6 +7403,14 @@ function renderRoster(){
   for(var d=1;d<=dim;d++) dates.push(year+'-'+String(month+1).padStart(2,'0')+'-'+String(d).padStart(2,'0'));
   var filterHC=document.getElementById('roster-hc-filter').value;
   var filterCity=(document.getElementById('roster-city-filter')||{}).value||'';
+  // Client accounts (e.g. Mumzworld) see only caregivers with a Mumzworld-tagged
+  // order, grouped under a single pseudo-homecare label — never the real HC name.
+  var isClientView = !!(_session && _session.role==='client');
+  var mumzCGSet = {};
+  if(isClientView){
+    Object.keys(_mumzDays||{}).forEach(function(k){ mumzCGSet[k.split('|')[0]] = true; });
+    filterHC=''; filterCity='';
+  }
   // City filter uses manually-set cgSettings city (not order location)
   // cgCityMap kept for backward compat but now reads from settings
   var cgCityMap={};
@@ -7318,6 +7432,7 @@ function renderRoster(){
   var cgMap={};
   rawData.forEach(function(r){
     if(!r.caregiver) return;
+    if(isClientView && !mumzCGSet[r.caregiver]) return;
     if(filterHC&&r.homecare!==filterHC) return;
     if(filterCity){var cgCity=(cgCityMap[r.caregiver]||{}).city||'';
       if(filterCity==='__unset'){if(cgCity)return;}else if(cgCity!==filterCity)return;}
@@ -7325,6 +7440,7 @@ function renderRoster(){
   });
   Object.entries(manualCGs).forEach(function(e){
     var v=e[1];
+    if(isClientView && !mumzCGSet[v.name]) return;
     if(filterHC&&v.homecare!==filterHC) return;
     if(filterCity){var mCity=(cgCityMap[v.name]||{}).city||'';
       if(filterCity==='__unset'){if(mCity)return;}else if(mCity!==filterCity)return;}
@@ -7337,7 +7453,7 @@ function renderRoster(){
   var hcGroups={};
   var exitedCount=0;
   Object.values(cgMap).forEach(function(cg){
-    var hc=cg.homecare||'Other';
+    var hc=isClientView?'Mumzworld':(cg.homecare||'Other');
     // Resigned / removed caregivers vanish from their exit month onward.
     // Earlier months still show them exactly as they were.
     if(!cgVisibleInMonth(cg.name,cg.homecare||'',year,month)){
@@ -7385,8 +7501,9 @@ function renderRoster(){
       var _exit=getCGExit(cgName,hcVal), _join=getCGJoin(cgName,hcVal);
       var _safeN0=cgName.replace(/'/g,"&#39;").replace(/"/g,'&quot;');
       var _safeH0=hcVal.replace(/'/g,"&#39;").replace(/"/g,'&quot;');
-      html+='<td class="col-info"><div class="r-name">'+cgName+'</div><div class="r-hc">'+hcVal+'</div>'
-        +'<div class="r-counts" title="From this roster — '+MNAMES[month]+' '+year+'">'
+      html+='<td class="col-info"><div class="r-name">'+cgName+'</div>'+(isClientView?'':'<div class="r-hc">'+hcVal+'</div>')
+        +(isClientView?'':
+          '<div class="r-counts" title="From this roster — '+MNAMES[month]+' '+year+'">'
           +'<span class="rc d" title="Duty '+_mc.duty+' + manual '+_mc.manual+'">D'+_mc.worked+'</span>'
           +'<span class="rc o" title="Day off '+_mc.dayoff+' + week off '+_mc.weekoff+'">O'+_mc.off+'</span>'
           +'<span class="rc s" title="Sick leave">S'+_mc.sick+'</span>'
@@ -7412,7 +7529,7 @@ function renderRoster(){
           return '<div><select class="r-city '+cls+'" onchange="setCGCity(\''+safeC+'\',\''+safeH+'\',this.value);this.className=\'r-city \'+cityCls(this.value)" onclick="event.stopPropagation()" title="Set location">'
             +opts
             +'</select></div>';
-        })()
+        })())
         +'</td>';
       dates.forEach(function(ds){
         var dow=new Date(ds+'T12:00:00').getDay();
@@ -7422,6 +7539,25 @@ function renderRoster(){
         var recs=dayMap[cgName+'|'+ds]||[];
         var st=rosterDay(cgName,hcVal,ds,dayMap,woLookup);
         function _lbl(t){return '<div class="rd-in"><div class="rd-cl">'+t+'</div></div>';}
+        if(isClientView){
+          clickable=false;
+          var isMumzCell=_mumzDays[cgName+'|'+ds]||recs.some(function(rr){return rr.is_mumzworld;});
+          if(isMumzCell&&(st.code==='duty'||st.code==='manual')){
+            var evM=st.rec||recs[0]||{};
+            cls+=' rd-mumz';
+            var tM=evM.time_start&&evM.time_end?evM.time_start+'-'+evM.time_end:(evM.time_start||'');
+            var oidM=evM.child_order_id||evM.order_id||'';
+            inner='<div class="rd-in">'+(tM?'<div class="rd-tm">'+tM+'</div>':'')+(oidM?'<div class="rd-od">#'+oidM+'</div>':'')+'</div>';
+            tip='Mumzworld order'+(oidM?' #'+oidM:'')+(tM?' · '+tM:'');
+          } else {
+            cls='rd'+(isWE?' col-weekend':'')+(isT?' rd-today':'')+' rd-empty';
+            inner=''; tip='';
+          }
+          var safeN=cgName.replace(/'/g,"&#39;").replace(/"/g,'&quot;');
+          var tipS=String(tip).replace(/"/g,'&quot;');
+          html+='<td class="'+cls+'" title="'+tipS+'">'+inner+'</td>';
+          return;
+        }
         if(st.code==='exited'){
           cls+=' rd-exited';clickable=false;tip=cgName+' left on '+_exit;
         } else if(st.code==='pre'){
@@ -7447,8 +7583,10 @@ function renderRoster(){
         } else if(st.code==='duty'){
           var ev=st.rec||recs[0]||{};
           var cl2=(ev.client_name||'').split(' ')[0];
+          var isMumz=_mumzDays[cgName+'|'+ds]||recs.some(function(rr){return rr.is_mumzworld;});
           var isB2B=_b2bDays[cgName+'|'+ds]||recs.some(function(rr){return rr.is_b2b;});
-          if(isB2B)cls+=' rd-b2b';
+          if(isMumz)cls+=' rd-mumz';
+          else if(isB2B)cls+=' rd-b2b';
           else if((ev.client_name||'').toLowerCase().includes('shady'))cls+=' rd-shady';
           else cls+=' rd-duty';
           var t3=ev.time_start&&ev.time_end?ev.time_start+'-'+ev.time_end:(ev.time_start||'');
@@ -7681,6 +7819,302 @@ function renderDailyOrders(){
   wrap.innerHTML = html;
 }
 
+// ══════════════════════════════════════════════════════════════════
+// 🛍️ MUMZWORLD — demand-side partner view
+// Daily order list (customer ↔ caregiver) plus per-order concern raising.
+// Concerns land in the same Firestore collection and Slack webhook as HC
+// tickets, so Valeo works them from the one HC Ticket Desk.
+// ══════════════════════════════════════════════════════════════════
+var _mzOrders = [], _mzActive = null, _mzBusy = false;
+
+// Topics written from the demand side — what Mumzworld would report about an
+// order they sent us, not what a homecare would report about a caregiver.
+var MZ_CATS = [
+  {c:'Wrong time',                g:'Booking details', p:'P1', team:'Ops',
+   r:['Shift time does not match the booking','Caregiver scheduled too early','Caregiver scheduled too late','Wrong duration / hours','Other (specify)']},
+  {c:'Cancelled',                 g:'Booking status',  p:'P1', team:'Ops',
+   r:['Customer cancelled','Customer no longer needs the service','Duplicate booking','Booked by mistake','Other (specify)']},
+  {c:'Rescheduled',               g:'Booking status',  p:'P1', team:'Ops',
+   r:['Customer wants a different date','Customer wants a different time','Customer travelling','Baby not delivered yet','Other (specify)']},
+  {c:'No caregiver assigned',     g:'Fulfilment',      p:'P1', team:'Ops',
+   r:['Order confirmed but nobody assigned','Assigned caregiver dropped','Shift starts soon and still open','Other (specify)']},
+  {c:'Caregiver did not arrive',  g:'Fulfilment',      p:'P1', team:'Ops',
+   r:['No-show','Arrived late','Went to the wrong address','Other (specify)']},
+  {c:'Order not showing',         g:'Fulfilment',      p:'P2', team:'Ops', nocg:true,
+   r:['Order placed but missing here','Order disappeared','Confirmation not received','Other (specify)']},
+  {c:'Wrong customer details',    g:'Booking details', p:'P2', team:'Ops',
+   r:['Wrong address','Wrong phone number','Wrong customer name','Wrong city / area','Other (specify)']},
+  {c:'Wrong package or hours',    g:'Booking details', p:'P2', team:'Category',
+   r:['Package does not match what was sold','Fewer hours than booked','More hours than booked','Other (specify)']},
+  {c:'Customer complaint',        g:'Service quality', p:'P2', team:'Category',
+   r:['Customer unhappy with the caregiver','Customer asked for a replacement','Service not as described','Other (specify)']},
+  {c:'Billing / invoice query',   g:'Commercial',      p:'P3', team:'Category', nocg:true,
+   r:['Amount does not match','Invoice missing','Refund pending','Other (specify)']}
+];
+function mzCat(name){ return MZ_CATS.find(function(x){ return x.c === name; }) || null; }
+
+function mzIsClient(){ return !!(_session && _session.role==='client'); }
+function mzTag(){ return (_session && _session.client_tag) || 'Mumzworld'; }
+
+function mzToday(){
+  var el = document.getElementById('mz-date');
+  if(el) el.value = new Date().toISOString().slice(0,10);
+  renderMumzDaily();
+}
+function mzShiftDate(delta){
+  var inp = document.getElementById('mz-date');
+  var d = inp && inp.value ? new Date(inp.value+'T12:00:00') : new Date();
+  d.setDate(d.getDate() + delta);
+  if(inp) inp.value = d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+  renderMumzDaily();
+}
+function switchToMumz(){
+  var inp = document.getElementById('mz-date');
+  if(inp && !inp.value) inp.value = new Date().toISOString().slice(0,10);
+  renderMumzDaily();
+}
+
+// Every Mumzworld order that lands on this date, one row per order
+function mzOrdersOn(ds){
+  if(!ds) return [];
+  var out = [], seen = {};
+  (allData||[]).forEach(function(r){
+    if(r.date !== ds) return;
+    var isMz = r.is_mumzworld || (r.caregiver && _mumzDays[r.caregiver+'|'+ds]);
+    if(!isMz) return;
+    var key = r.child_order_id || r.order_id || ((r.client_name||'')+'|'+(r.caregiver||'')+'|'+(r.time_start||''));
+    if(!key || seen[key]) return; seen[key] = 1;
+    var st = String(r.status||'').toLowerCase().replace(/\s+/g,'');
+    var label;
+    if(st==='cancelled') label='Cancelled';
+    else if(st==='removed') return;                      // deleted order, nothing to show
+    else if(st==='sick'||st==='off'||st==='weekoff'||st==='holiday'||st==='paid'||st==='unpaid') label='Needs cover';
+    else if(!r.caregiver) label='Unassigned';
+    else label='Assigned';
+    out.push({
+      order_id: r.child_order_id || r.order_id || '',
+      client_name: r.client_name || '',
+      caregiver: r.caregiver || '',
+      time_start: r.time_start || '', time_end: r.time_end || '',
+      package: r.package_type || r.package_raw || '',
+      city: r.location || '',
+      date: ds, status_label: label, raw_status: r.status || ''
+    });
+  });
+  out.sort(function(a,b){
+    return (a.time_start||'zz').localeCompare(b.time_start||'zz') || (a.client_name||'').localeCompare(b.client_name||'');
+  });
+  return out;
+}
+
+function mzBadge(label){
+  var cls = label==='Assigned' ? 'badge-assigned'
+          : label==='Unassigned' ? 'badge-unassigned'
+          : label==='Cancelled' ? 'badge-cancelled'
+          : label==='Needs cover' ? 'badge-unassigned' : 'badge-other';
+  return '<span class="daily-badge '+cls+'">'+tkEsc(label)+'</span>';
+}
+
+function renderMumzDaily(){
+  var wrap = document.getElementById('mz-wrap'); if(!wrap) return;
+  var summ = document.getElementById('mz-summary');
+  var ds = (document.getElementById('mz-date')||{}).value || '';
+  if(!ds){ wrap.innerHTML = '<div class="daily-empty">Pick a date to view orders</div>'; if(summ) summ.textContent=''; return; }
+  if(!allData || !allData.length){ wrap.innerHTML = '<div class="daily-empty">Loading orders…</div>'; return; }
+
+  var all = mzOrdersOn(ds);
+  _mzOrders = all;
+  var q = ((document.getElementById('mz-search')||{}).value||'').toLowerCase().trim();
+  var fs = (document.getElementById('mz-status-filter')||{}).value || '';
+  var rows = all.filter(function(o){
+    if(fs && o.status_label !== fs) return false;
+    if(q && [o.client_name,o.caregiver,o.order_id].join(' ').toLowerCase().indexOf(q) < 0) return false;
+    return true;
+  });
+
+  var assigned = all.filter(function(o){return o.status_label==='Assigned';}).length;
+  var unassigned = all.filter(function(o){return o.status_label==='Unassigned'||o.status_label==='Needs cover';}).length;
+  var cancelled = all.filter(function(o){return o.status_label==='Cancelled';}).length;
+  if(summ) summ.textContent = all.length+' orders · '+assigned+' assigned · '+unassigned+' need attention · '+cancelled+' cancelled';
+
+  if(!all.length){
+    wrap.innerHTML = '<div class="daily-empty">No Mumzworld orders on '+tkEsc(ds)+'.<br><br>'
+      + '<button class="tk-btn pri" onclick="mzOpenConcern(-1)">🚩 Report a missing order</button></div>';
+    return;
+  }
+
+  var html = '<div class="daily-kpi-row">'
+    + '<div class="daily-kpi"><div class="daily-kpi-val">'+all.length+'</div><div class="daily-kpi-lbl">Total Orders</div></div>'
+    + '<div class="daily-kpi"><div class="daily-kpi-val" style="color:#10b981">'+assigned+'</div><div class="daily-kpi-lbl">Assigned</div></div>'
+    + '<div class="daily-kpi"><div class="daily-kpi-val" style="color:#f59e0b">'+unassigned+'</div><div class="daily-kpi-lbl">Need Attention</div></div>'
+    + '<div class="daily-kpi"><div class="daily-kpi-val" style="color:#ef4444">'+cancelled+'</div><div class="daily-kpi-lbl">Cancelled</div></div>'
+    + '</div>';
+
+  html += '<div class="daily-hc-section">'
+    + '<div class="daily-hc-title" style="background:#ff2d95">'+tkEsc(mzTag())+' — '+new Date(ds+'T12:00:00').toDateString()+'</div>';
+
+  if(!rows.length){
+    html += '<div class="daily-empty">No orders match your search.</div></div>';
+    wrap.innerHTML = html; return;
+  }
+
+  html += '<table class="daily-table" style="table-layout:auto"><thead><tr>'
+    + '<th>Order ID</th><th>Customer</th><th>Caregiver Assigned</th><th>Timing</th>'
+    + '<th>Package</th><th>City</th><th>Status</th><th>Concern</th>'
+    + '</tr></thead><tbody>';
+
+  rows.forEach(function(o){
+    var i = all.indexOf(o);
+    var cg = o.caregiver ? tkEsc(o.caregiver)
+           : '<span style="color:var(--text3);font-style:italic">Not assigned</span>';
+    var tm = o.time_start ? tkEsc(o.time_start + (o.time_end ? ' – ' + o.time_end : ''))
+           : '<span style="color:var(--text3)">—</span>';
+    html += '<tr>'
+      + '<td><span class="daily-order-id">'+(o.order_id?'#'+tkEsc(o.order_id):'—')+'</span></td>'
+      + '<td style="font-weight:600">'+tkEsc(o.client_name||'—')+'</td>'
+      + '<td>'+cg+'</td>'
+      + '<td style="white-space:nowrap">'+tm+'</td>'
+      + '<td style="max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+tkEsc(o.package)+'">'+tkEsc(o.package||'—')+'</td>'
+      + '<td>'+tkEsc(o.city||'—')+'</td>'
+      + '<td>'+mzBadge(o.status_label)+'</td>'
+      + '<td><button class="tk-btn" style="padding:4px 10px;font-size:10px;white-space:nowrap" onclick="mzOpenConcern('+i+')">🚩 Raise</button></td>'
+      + '</tr>';
+  });
+  html += '</tbody></table></div>';
+  html += '<div style="padding:6px 2px 20px"><button class="tk-btn" onclick="mzOpenConcern(-1)">🚩 Report an order that is missing from this list</button></div>';
+  wrap.innerHTML = html;
+}
+
+// ── Concern modal ────────────────────────────────────────────────
+function mzOpenConcern(idx){
+  var o = (idx >= 0 && _mzOrders[idx]) ? _mzOrders[idx] : null;
+  _mzActive = o;
+  var ds = (document.getElementById('mz-date')||{}).value || new Date().toISOString().slice(0,10);
+
+  var card = document.getElementById('mz-order-card');
+  if(card){
+    card.innerHTML = o
+      ? '<b>Order '+(o.order_id?'#'+tkEsc(o.order_id):'—')+'</b><br>'
+        + 'Customer: <b>'+tkEsc(o.client_name||'—')+'</b> · Caregiver: <b>'+tkEsc(o.caregiver||'not assigned')+'</b><br>'
+        + 'Date: '+tkEsc(o.date)+(o.time_start?' · '+tkEsc(o.time_start+(o.time_end?' – '+o.time_end:'')):'')
+        + (o.package?'<br>Package: '+tkEsc(o.package):'')
+        + (o.city?' · '+tkEsc(o.city):'')
+      : '<b>No order linked</b><br>Use this to report an order that was placed on your side but is not showing on '+tkEsc(ds)+'.';
+  }
+
+  var groups = [...new Set(MZ_CATS.map(function(c){ return c.g; }))];
+  var catSel = '<select id="mzf-cat" onchange="mzOnCatChange()"><option value="">— choose what is wrong —</option>'
+    + groups.map(function(g){
+        return '<optgroup label="'+tkEsc(g)+'">' + MZ_CATS.filter(function(c){ return c.g===g; })
+          .map(function(c){ return '<option>'+tkEsc(c.c)+'</option>'; }).join('') + '</optgroup>';
+      }).join('') + '</select>';
+
+  document.getElementById('mz-form').innerHTML =
+      '<div class="tk-f span2"><label>What is wrong</label>'+catSel+'</div>'
+    + '<div class="tk-f"><label>Reason</label><select id="mzf-reason" onchange="mzOnReasonChange()"><option value="">—</option></select></div>'
+    + '<div class="tk-f" id="mzf-new-wrap" style="display:none"><label id="mzf-new-lbl">Correct date / time</label>'
+      + '<input id="mzf-new" type="text" placeholder="e.g. 14 Sep, 9:00 AM – 6:00 PM"></div>'
+    + '<div class="tk-f span2"><label>Details <span id="mzf-desc-req" style="color:var(--absent);display:none">· required</span></label>'
+      + '<textarea id="mzf-desc" rows="3" placeholder="What the customer told you, order reference, what needs to change…"></textarea></div>'
+    + '<div class="tk-f span2"><label>Your name / who to call back</label>'
+      + '<input id="mzf-by" placeholder="Name & number" value="'+tkEsc((_session&&_session.username)||'')+'"></div>';
+
+  mzOnCatChange();
+  document.getElementById('mz-modal').classList.add('show');
+}
+function mzCloseModal(){ document.getElementById('mz-modal').classList.remove('show'); _mzActive = null; }
+
+function mzOnCatChange(){
+  var name = (document.getElementById('mzf-cat')||{}).value || '';
+  var c = mzCat(name);
+  var rs = document.getElementById('mzf-reason');
+  if(rs) rs.innerHTML = '<option value="">— choose a reason —</option>'
+    + (c ? c.r.map(function(x){ return '<option>'+tkEsc(x)+'</option>'; }).join('') : '');
+  // "Wrong time" and "Rescheduled" need the corrected slot
+  var nw = document.getElementById('mzf-new-wrap');
+  var nl = document.getElementById('mzf-new-lbl');
+  var needsNew = (name === 'Wrong time' || name === 'Rescheduled');
+  if(nw) nw.style.display = needsNew ? '' : 'none';
+  if(nl) nl.textContent = (name === 'Rescheduled') ? 'New date / time requested' : 'Correct shift time';
+  mzOnReasonChange();
+}
+function mzOnReasonChange(){
+  var rv = (document.getElementById('mzf-reason')||{}).value || '';
+  var req = document.getElementById('mzf-desc-req');
+  if(req) req.style.display = /Other \(specify\)/.test(rv) ? '' : 'none';
+  mzPreview();
+}
+function mzPreview(){
+  var el = document.getElementById('mz-preview'); if(!el) return;
+  var c = mzCat((document.getElementById('mzf-cat')||{}).value || '');
+  if(!c){ el.innerHTML = 'Pick what is wrong and Valeo is notified on Slack straight away.'; return; }
+  var pc = TK_PRIO[c.p] || TK_PRIO.P2;
+  el.innerHTML = 'This goes out as <b style="color:'+pc.col+'">'+pc.lbl+'</b>'
+    + ' — Valeo aims to respond within <b>'+tkFmtAge(pc.sla)+'</b>.'
+    + (_mzActive
+        ? '<br>Linked order: <b>'+(_mzActive.order_id?'#'+tkEsc(_mzActive.order_id):'—')+' · '+tkEsc(_mzActive.client_name||'')+'</b>'
+        : '<br><span style="color:var(--sick)">No order linked — reported as a missing order</span>');
+}
+
+async function mzSaveConcern(){
+  if(_mzBusy) return;
+  var g = function(id){ var e = document.getElementById('mzf-'+id); return e ? String(e.value||'').trim() : ''; };
+  var cat = g('cat'), reason = g('reason'), desc = g('desc'), newSlot = g('new');
+  var c = mzCat(cat);
+  if(!cat){ alert('Choose what is wrong.'); return; }
+  if(!reason){ alert('Choose a reason.'); return; }
+  if(/Other \(specify\)/.test(reason) && !desc){ alert('You picked "Other" — please describe the issue.'); return; }
+  if((cat === 'Wrong time' || cat === 'Rescheduled') && !newSlot && !desc){
+    alert('Please give the correct date/time, or describe the change in Details.'); return;
+  }
+
+  var o = _mzActive || {};
+  var ds = (document.getElementById('mz-date')||{}).value || new Date().toISOString().slice(0,10);
+  var now = new Date();
+  var seq = String(_tkData.filter(function(r){ return (r.created_at||'').slice(0,10) === now.toISOString().slice(0,10); }).length + 1).padStart(3,'0');
+  var tid = 'MZW-' + now.toISOString().slice(2,10).replace(/-/g,'') + '-' + seq;
+
+  var fullDesc = desc;
+  if(newSlot) fullDesc = (cat === 'Rescheduled' ? 'Requested new slot: ' : 'Correct slot should be: ') + newSlot + (desc ? '\n' + desc : '');
+
+  var rec = {
+    ticket_id:tid, homecare:mzTag(), source_partner:mzTag(), partner_side:'demand',
+    caregiver:o.caregiver||'', shift_date:o.date||ds,
+    category:cat, group:c.g, reason:reason, requested_slot:newSlot||'',
+    delay_mins:0, description:fullDesc,
+    priority:c.p, team:c.team, sla_minutes:(TK_PRIO[c.p]||{}).sla || 60,
+    slack_channel:TK_SLACK.channel,
+    order_id:o.order_id||'', child_order_id:o.order_id||'',
+    client_name:o.client_name||'', shift_time:(o.time_start?o.time_start+(o.time_end?'–'+o.time_end:''):''),
+    package:o.package||'', city:o.city||'', is_b2b:false,
+    status:'Open', owner:'', resolution:'',
+    raised_by:g('by') || (_session && _session.username) || mzTag(),
+    raised_role:'client',
+    created_at:now.toISOString(), updated_at:now.toISOString(),
+    timeline:[{t:now.toISOString(), by:(g('by') || (_session&&_session.username) || mzTag()), note:'Concern raised by '+mzTag(), to:'Open'}]
+  };
+
+  _mzBusy = true;
+  var btn = document.getElementById('mz-save-btn');
+  if(btn){ btn.disabled = true; btn.textContent = 'Sending…'; }
+  try{
+    if(!_db) await initFirebase();
+    if(!_db) throw new Error('Firebase not connected');
+    var ref = await _db.collection(_TK_COLL).add(rec);
+    _tkData.unshift(Object.assign({_id:ref.id}, rec));
+    tkNotify('created', Object.assign({_id:ref.id}, rec));
+    mzCloseModal();
+    tkBadge();
+    if(document.getElementById('page-tickets').classList.contains('active')) tkRenderAll();
+    tkToast('Concern ' + tid + ' sent to Valeo — Slack notified');
+  }catch(e){
+    alert('Could not send the concern: ' + e.message);
+  }finally{
+    _mzBusy = false;
+    if(btn){ btn.disabled = false; btn.textContent = 'Submit concern'; }
+  }
+}
+
 // ── Auth ──────────────────────────────────────────────────────────
 var _session=null;
 async function doLogin(){
@@ -7699,13 +8133,15 @@ async function doLogin(){
       {username:'bayti',password:'bayti2026',role:'hc',homecare:'Bayti Dubai and Abudhabi Caregiver'},
       {username:'mahara',password:'mahara2026',role:'hc',homecare:'Mahara HC AD'},
       {username:'caresynch',password:'caresynch2026',role:'hc',homecare:'Caresynq'},
+      {username:'mumzworld',password:'mumzworld123',role:'client',homecare:null,client_tag:'Mumzworld'},
     ];
     var match=ALL_USERS.find(function(u){return u.username===user&&u.password===pass;});
     if(!match)throw new Error('invalid');
-    _session={username:match.username,role:match.role,homecare:match.homecare||null};
+    _session={username:match.username,role:match.role,homecare:match.homecare||null,client_tag:match.client_tag||null};
     sessionStorage.setItem('valeo_session',JSON.stringify(_session));
     document.getElementById('login-screen').style.display='none';
     applySessionUI();loadData();
+    if(_session.role==='client')setTimeout(function(){switchTab('mumz');},150);
   }catch(e){err.style.display='block';btn.disabled=false;btn.textContent='Sign In';}
 }
 function applySessionUI(){
@@ -7714,13 +8150,21 @@ function applySessionUI(){
   if(header){
     var badge=document.createElement('div');
     badge.style.cssText='display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text2);margin-right:8px';
-    badge.innerHTML=(_session.role==='master'?'👑':'🏥')+' <b style="color:var(--text)">'+_session.username+'</b> <button onclick="doLogout()" style="background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);border-radius:5px;color:var(--absent);font-size:10px;padding:2px 8px;cursor:pointer;font-family:Inter,sans-serif">Sign out</button>';
+    badge.innerHTML=(_session.role==='master'?'👑':_session.role==='client'?'🛍️':'🏥')+' <b style="color:var(--text)">'+_session.username+'</b> <button onclick="doLogout()" style="background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);border-radius:5px;color:var(--absent);font-size:10px;padding:2px 8px;cursor:pointer;font-family:Inter,sans-serif">Sign out</button>';
     header.insertBefore(badge,header.firstChild);
   }
   if(_session.role==='hc'){
     document.querySelectorAll('.main-tab').forEach(function(t){var txt=t.textContent.trim();if(!txt.includes('Calendar')&&!txt.includes('Roster')&&!txt.includes('Complaint')&&!txt.includes('Tickets')&&!txt.includes('Leave Applications'))t.style.display='none';});
     // hide "Add Caregiver" but keep the Leave Report / Complaint exports available
     document.querySelectorAll('.add-cg-btn').forEach(function(ab){ if(!ab.classList.contains('lr-open-btn')) ab.style.display='none'; });
+  }
+  if(_session.role==='client'){
+    // Client accounts (e.g. Mumzworld): their own daily orders + tickets only
+    document.querySelectorAll('.main-tab').forEach(function(t){var txt=t.textContent.trim();if(!txt.includes('Mumzworld')&&!txt.includes('Tickets'))t.style.display='none';});
+    document.querySelectorAll('.add-cg-btn,.show-hidden-btn,.avail-bar').forEach(function(el){el.style.display='none';});
+    document.querySelectorAll('.roster-hc-filter').forEach(function(el){ if(el.id!=='mz-status-filter') el.style.display='none'; });
+    var _tkTab=document.querySelector('.main-tab[onclick*="tickets"]');
+    if(_tkTab) _tkTab.innerHTML='🎫 My Tickets<span id="tk-tab-badge" style="font-weight:800"></span>';
   }
 }
 function doLogout(){sessionStorage.removeItem('valeo_session');_session=null;location.reload();}
@@ -10066,6 +10510,7 @@ if(checkExistingSession()){
   setTimeout(function(){ try{ initComplaints(); }catch(e){ console.warn('[complaints] preload', e); } }, 1200);
   setTimeout(function(){ try{ tkPreload(); }catch(e){ console.warn('[tickets] preload', e); } }, 1600);
   setTimeout(function(){ try{ lvPreload(); }catch(e){ console.warn('[leave] preload', e); } }, 2000);
+  if(_session&&_session.role==='client')setTimeout(function(){switchTab('mumz');},400);
 }
 </script>
 </body>
