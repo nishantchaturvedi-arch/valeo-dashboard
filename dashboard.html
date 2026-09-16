@@ -6,7 +6,7 @@
 <link rel="icon" href="data:image/svg+xml,&lt;svg xmlns=&#39;http://www.w3.org/2000/svg&#39; viewBox=&#39;0 0 100 100&#39;&gt;&lt;rect width=&#39;100&#39; height=&#39;100&#39; rx=&#39;20&#39; fill=&#39;%2327ae60&#39;/&gt;&lt;text y=&#39;.9em&#39; font-size=&#39;70&#39; font-weight=&#39;800&#39; fill=&#39;white&#39; x=&#39;15&#39;&gt;V&lt;/text&gt;&lt;/svg&gt;">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Valeo Health — Caregiver Operations</title>
-<link href="./Valeo Health — Caregiver Operations_files/css2" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 /* ── Theme variables ── */
 [data-theme="dark"]{
@@ -749,11 +749,11 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 .ck-col-badge.started{background:rgba(210,153,34,.15);color:var(--sick)}
 
 </style>
-<script src="./Valeo Health — Caregiver Operations_files/firebase-app-compat.js.download"></script>
-<script src="./Valeo Health — Caregiver Operations_files/firebase-firestore-compat.js.download"></script>
-<script src="./Valeo Health — Caregiver Operations_files/firebase-storage-compat.js.download"></script>
-<script src="./Valeo Health — Caregiver Operations_files/chart.umd.min.js.download"></script>
-<script src="./Valeo Health — Caregiver Operations_files/xlsx.full.min.js.download"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
 
@@ -15014,6 +15014,8 @@ var ovCG='', ovDate='', ovType='';
 var _db=null;
 
 async function initFirebase(){
+  if(_db) return;
+  if(typeof firebase==='undefined'){ console.warn('[fb] Firebase SDK did not load — check the <script> tags near the top of the page'); return; }
   try{
     var fa=firebase.initializeApp({apiKey:"AIzaSyDL_cSwxL8x90rDVLHaj9fPE1cTcdEEmII",authDomain:"valeo-dashboard.firebaseapp.com",projectId:"valeo-dashboard",storageBucket:"valeo-dashboard.firebasestorage.app",messagingSenderId:"892578266142",appId:"1:892578266142:web:115b3b677c4d53c8c5020f"});
     _db=firebase.firestore(fa);console.log('[fb] connected');
