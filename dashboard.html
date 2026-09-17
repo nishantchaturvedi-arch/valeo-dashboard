@@ -10903,6 +10903,9 @@ const DAYS  = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Satu
 const MONTHS= ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
 let rawData=[], allData=[], weekOffCfg={};
+// allData before any override is applied. applyOverrides() rebuilds from this every time,
+// so clearing/editing an override (yours or a teammate's) actually undoes the old one.
+var _allDataBase=null;
 // caregiver|date keys that have at least one B2B order (survives dedup)
 var _b2bDays={};
 // caregiver|date keys that have at least one Mumzworld order (survives dedup)
@@ -11244,6 +11247,7 @@ async function loadData(force=false){
         return ![...hiddenCGs].some(function(hk){return hk.toLowerCase().startsWith(cgL+'|');});
       });
     }
+    _allDataBase = allData.map(function(r){ return Object.assign({}, r); });
     applyOverrides();
     // ── Debug helper — call debugCG('name') in browser console ──
     window.debugCG=function(frag){
@@ -11263,9 +11267,7 @@ async function loadData(force=false){
     buildChatData();
     renderHCGrid();
     syncFromSheet();
-    setInterval(syncFromSheet,5*60*1000);
-    var _lastSync=0;
-window.addEventListener('focus',function(){var now=Date.now();if(now-_lastSync>2*60*1000){_lastSync=now;syncFromSheet();}});
+    startLiveSync();
     if(document.getElementById('page-analytics').classList.contains('active'))renderAnalytics();
     var _mzPg=document.getElementById('page-mumz');
     if(_mzPg&&_mzPg.classList.contains('active'))switchToMumz();
@@ -11650,7 +11652,7 @@ async function applyWo(){
   var rec=rawData.find(function(r){return r.caregiver===activeCG&&['monthly','weekly'].includes(pkgType(r.package_type));});
   var woKey=(rec&&(rec.child_order_id||rec.order_id))||activeCG;
   weekOffCfg[woKey]=sel;saveLocalCache();
-  allData=expandOrders(rawData);closeWoModal();renderCalendar();
+  allData=expandOrders(rawData);_allDataBase=allData.map(function(r){return Object.assign({},r);});applyOverrides();closeWoModal();renderCalendar();
   await persistWrite('weekoff',woKey,sel);
 }
 function closeWoModal(){document.getElementById('wo-modal').classList.remove('show');}
@@ -11694,7 +11696,8 @@ function checkAvail(){
     });
     if(!busy)busy=Object.entries(overrides).some(function(e){
       var k=e[0],ov=e[1];
-      if(!k.startsWith(cg+'|')||ov.type!=='manual')return false;
+      if(!k.startsWith(cg+'|')||(ov.type!=='manual'&&ov.type!=='manual_list'))return false;
+      if(ov.type==='manual_list'){ var _d=ov.date||k.split('|')[1]; return !!_d && _d>=from && _d<=to; }
       var ovDate=ov.date||k.split('|')[1];
       if(!ovDate||ovDate<from||ovDate>to)return false;
       if(reqStart!==null&&ov.time_start&&ov.time_end){
@@ -14572,7 +14575,7 @@ function renderIdleCGs(){
     if(hasActiveInAllData) return false;
     // Also directly check overrides for manual bookings (belt-and-suspenders)
     var hasManualOverride = Object.values(overrides).some(function(ov){
-      return ov.caregiver===cg.caregiver && ov.type==='manual'
+      return ov.caregiver===cg.caregiver && (ov.type==='manual'||ov.type==='manual_list')
         && ov.date>=todayStr && ov.date<=in14Str;
     });
     return !hasManualOverride;
@@ -15023,28 +15026,55 @@ async function initFirebase(){
 }
 
 var _writeQueue={},_writeTimer=null;
+function _stateDocId(dt,dk){ return dt+'__'+String(dk).replace(/[^a-zA-Z0-9_-]/g,'_'); }
+function persistToast(msg, bad){
+  try{
+    var d=document.createElement('div');
+    d.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--bg3);border:1px solid '+(bad?'#f85149':'var(--duty)')+';color:var(--text);padding:10px 18px;border-radius:9px;font-size:12px;font-weight:600;z-index:10000;box-shadow:0 6px 24px rgba(0,0,0,.4)';
+    d.textContent=(bad?'⚠️ ':'✅ ')+msg;
+    document.body.appendChild(d);
+    setTimeout(function(){ d.remove(); }, bad?6000:2500);
+  }catch(e){}
+}
 async function persistWrite(dt,dk,dv){
-  if(!_db)return;
-  var id=dt+'__'+dk.replace(/[^a-zA-Z0-9_-]/g,'_');
-  _writeQueue[id]={type:dt,key:dk,value:JSON.stringify(dv),updated_at:new Date().toISOString()};
+  if(!_db) await initFirebase();
+  if(!_db){ persistToast('Not connected to the server — this change is only saved on this device', true); return; }
+  var id=_stateDocId(dt,dk);
+  _writeQueue[id]={type:dt,key:dk,value:JSON.stringify(dv),updated_at:new Date().toISOString(),
+                   updated_by:(typeof _session!=='undefined'&&_session&&_session.username)||''};
   if(_writeTimer)clearTimeout(_writeTimer);
-  _writeTimer=setTimeout(flushWriteQueue,3000);
+  _writeTimer=setTimeout(flushWriteQueue,300);   // tiny batch window, then straight to Firestore
 }
 async function flushWriteQueue(){
+  _writeTimer=null;
   if(!_db||!Object.keys(_writeQueue).length)return;
-  var batch=_db.batch(),count=0;
-  Object.entries(_writeQueue).forEach(function(e){batch.set(_db.collection('valeo_state').doc(e[0]),e[1]);count++;});
-  _writeQueue={};
-  try{await batch.commit();}catch(e){console.warn('[persist]',e);}
-}
-
-async function persistDelete(dt,dk){
-  if(!_db) return;
+  var pending=_writeQueue; _writeQueue={};
+  var batch=_db.batch();
+  Object.entries(pending).forEach(function(e){batch.set(_db.collection('valeo_state').doc(e[0]),e[1]);});
   try{
-    var id=dt+'__'+dk.replace(/[^a-zA-Z0-9_-]/g,'_');
-    await _db.collection('valeo_state').doc(id).delete();
-  }catch(e){console.warn('[persist] delete failed:',e);}
+    await batch.commit();
+  }catch(e){
+    console.warn('[persist]',e);
+    // put them back so the next change retries them
+    Object.keys(pending).forEach(function(k){ if(!_writeQueue[k]) _writeQueue[k]=pending[k]; });
+    persistToast('Could not save to the server ('+(e.code||e.message||'error')+') — others will not see this change yet', true);
+  }
 }
+async function persistDelete(dt,dk){
+  if(!_db) await initFirebase();
+  if(!_db){ persistToast('Not connected to the server — this change is only saved on this device', true); return; }
+  var id=_stateDocId(dt,dk);
+  delete _writeQueue[id];
+  try{
+    await _db.collection('valeo_state').doc(id).delete();
+  }catch(e){
+    console.warn('[persist] delete failed:',e);
+    persistToast('Could not delete on the server ('+(e.code||e.message||'error')+')', true);
+  }
+}
+// don't lose a change made right before closing or switching tabs
+window.addEventListener('beforeunload', function(){ if(Object.keys(_writeQueue).length) flushWriteQueue(); });
+document.addEventListener('visibilitychange', function(){ if(document.hidden && Object.keys(_writeQueue).length) flushWriteQueue(); });
 
 function saveLocalCache(){
   try{
@@ -15084,29 +15114,88 @@ function loadLocalCache(){
   }catch(e){overrides={};splitAssignments={};manualCGs={};hiddenCGs=new Set();weekOffCfg={};}
 }
 
+// Turn the valeo_state collection into local state
+function _applyStateSnapshot(snap){
+  var no={},nm={},nh=new Set(),nw={},ns={},ncs={};
+  var take=function(dt,dk,dv){
+    if(dt==='override') no[dk]=dv;
+    else if(dt==='manual_cg') nm[dk]=dv;
+    else if(dt==='hidden_cg') nh.add(dk);
+    else if(dt==='weekoff') nw[dk]=dv;
+    else if(dt==='split') ns[dk]=dv;
+    else if(dt==='cg_setting' && dv && typeof dv==='object') ncs[dk]=dv;
+  };
+  snap.forEach(function(doc){
+    var d=doc.data(),dt=(d.type||'').toLowerCase().trim(),dk=d.key,dv;
+    try{dv=JSON.parse(d.value);}catch(e){dv=d.value;}
+    if(!dk) return;
+    take(dt,dk,dv);
+  });
+  // changes typed on this screen that have not reached the server yet win
+  Object.values(_writeQueue).forEach(function(q){
+    var v; try{v=JSON.parse(q.value);}catch(e){v=q.value;}
+    take((q.type||'').toLowerCase(), q.key, v);
+  });
+  overrides=no;manualCGs=nm;hiddenCGs=nh;weekOffCfg=nw;splitAssignments=ns;
+  if(Object.keys(ncs).length){ Object.keys(ncs).forEach(function(k){ cgSettings[k]=ncs[k]; }); saveCGSettings(); }
+  saveLocalCache();
+  reRenderAll();
+}
+
 async function syncFromSheet(){
   if(!_db){await initFirebase();if(!_db)return;}
-  if(document.hidden)return;
   try{
     var snap=await _db.collection('valeo_state').get();
     if(snap.empty) return;
-    var no={},nm={},nh=new Set(),nw={},ns={},ncs={};
-    snap.forEach(function(doc){
-      var d=doc.data(),dt=(d.type||'').toLowerCase().trim(),dk=d.key,dv;
-      try{dv=JSON.parse(d.value);}catch(e){dv=d.value;}
-      if(!dk) return;
-      if(dt==='override') no[dk]=dv;
-      else if(dt==='manual_cg') nm[dk]=dv;
-      else if(dt==='hidden_cg') nh.add(dk);
-      else if(dt==='weekoff') nw[dk]=dv;
-      else if(dt==='split') ns[dk]=dv;
-      else if(dt==='cg_setting' && dv && typeof dv==='object') ncs[dk]=dv;
-    });
-    overrides=no;manualCGs=nm;hiddenCGs=nh;weekOffCfg=nw;splitAssignments=ns;
-    if(Object.keys(ncs).length){ Object.keys(ncs).forEach(function(k){ cgSettings[k]=ncs[k]; }); saveCGSettings(); }
-    saveLocalCache();reRenderAll();
+    _applyStateSnapshot(snap);
     console.log('[sync] synced',snap.size,'docs');
   }catch(e){console.warn('[sync] failed:',e);}
+}
+
+// One-off rescue: changes made while the server connection was broken were only kept
+// in this browser. Run pushLocalChanges() in the console on that computer to upload
+// the ones the server does not have. It never overwrites what is already on the server.
+async function pushLocalChanges(){
+  if(!_db){ await initFirebase(); if(!_db){ alert('Still not connected to Firebase.'); return; } }
+  var local={}; try{ local=JSON.parse(localStorage.getItem('valeo_overrides')||'{}'); }catch(e){}
+  var snap=await _db.collection('valeo_state').get(), have={};
+  snap.forEach(function(d){ have[d.id]=true; });
+  var batch=_db.batch(), n=0;
+  Object.keys(local).forEach(function(k){
+    var id=_stateDocId('override',k); if(have[id]) return;
+    batch.set(_db.collection('valeo_state').doc(id),{type:'override',key:k,value:JSON.stringify(local[k]),updated_at:new Date().toISOString(),updated_by:'local-rescue'});
+    n++;
+  });
+  if(!n){ alert('Nothing to upload — the server already has every change from this device.'); return; }
+  if(!confirm('Upload '+n+' change(s) that only exist on this device?')) return;
+  await batch.commit(); alert('Uploaded '+n+' change(s).');
+}
+
+// Real-time listener — replaces the old 5-minute poll
+var _liveSyncOn=false, _liveSyncTimer=null;
+async function startLiveSync(){
+  if(_liveSyncOn) return;
+  if(!_db){ await initFirebase(); if(!_db) return; }
+  _liveSyncOn=true;
+  _db.collection('valeo_state').onSnapshot(function(snap){
+    // our own write echoing back is already on screen
+    if(snap.metadata && snap.metadata.hasPendingWrites) return;
+    if(_liveSyncTimer) clearTimeout(_liveSyncTimer);
+    var apply=function(){
+      // don't redraw under someone who is filling in the booking form
+      var m=document.getElementById('override-modal');
+      if(m && m.classList.contains('show')){ _liveSyncTimer=setTimeout(apply, 1500); return; }
+      if(snap.empty) return;
+      _applyStateSnapshot(snap);
+      console.log('[live-sync]', snap.size, 'docs');
+    };
+    _liveSyncTimer=setTimeout(apply, 400);
+  }, function(err){
+    console.warn('[live-sync] listener failed, falling back to polling:', err);
+    _liveSyncOn=false;
+    persistToast('Live sync unavailable ('+(err.code||'error')+') — refreshing every minute instead', true);
+    setInterval(syncFromSheet, 60*1000);
+  });
 }
 
 async function loadOverrides(){
@@ -15115,6 +15204,7 @@ async function loadOverrides(){
 }
 
 function applyOverrides(){
+  if(_allDataBase) allData = _allDataBase.map(function(r){ return Object.assign({}, r); });
   // Priority: Customer Order > Override > Week Off
   // Rule: if a real Duty order exists for CG+date, overrides cannot change its status.
   // Removed/cancelled days do NOT extend or shift the package — they are simply gone.
@@ -15145,25 +15235,26 @@ function applyOverrides(){
   });
   invalidateRosterIndex();
 
-  // Inject manual bookings — only if no real Duty order exists that day
-  Object.values(overrides).forEach(function(ov){
-    if(ov.type !== 'manual') return;
-    if(!ov.caregiver || !ov.date) return;
-    var hasRealDuty = allData.some(function(r){
-      return r.caregiver===ov.caregiver && r.date===ov.date && !r._manual;
-    });
-    var alreadyInjected = allData.some(function(r){
-      return r.caregiver===ov.caregiver && r.date===ov.date && r._manual;
-    });
-    if(!hasRealDuty && !alreadyInjected){
+  // Inject manual bookings (one or several per day) — only if no real Duty order exists that day
+  var _hcOf = {};
+  (rawData||[]).forEach(function(r){ if(r.caregiver && !_hcOf[r.caregiver]) _hcOf[r.caregiver] = r.homecare||''; });
+  Object.keys(overrides).forEach(function(key){
+    var ov = overrides[key];
+    if(!ov || (ov.type !== 'manual' && ov.type !== 'manual_list')) return;
+    var cg = ov.caregiver || key.split('|')[0], dt = ov.date || key.split('|')[1];
+    if(!cg || !dt) return;
+    var hasRealDuty = allData.some(function(r){ return r.caregiver===cg && r.date===dt && !r._manual; });
+    if(hasRealDuty) return;
+    getManualBookings(cg, dt).forEach(function(b){
       allData.push({
-        caregiver: ov.caregiver, date: ov.date, status: 'Manual',
-        client_name: ov.client_name||'', time_start: ov.time_start||'', time_end: ov.time_end||'',
-        homecare:(function(){ var r=rawData.find(function(r2){return r2.caregiver===ov.caregiver;}); return r?r.homecare:''; })(),
-        order_id:'', child_order_id:'', package_type:'Manual', end_date:ov.date, _manual:true
+        caregiver: cg, date: dt, status: 'Manual',
+        client_name: b.client_name||'', time_start: b.time_start||'', time_end: b.time_end||'',
+        homecare: _hcOf[cg] || '',
+        order_id:'', child_order_id:'', package_type:'Manual', end_date:dt, _manual:true
       });
-    }
+    });
   });
+  invalidateRosterIndex();
 }
 
 function openOvModal(cg,date,orderId){
@@ -16504,9 +16595,10 @@ async function onDayDrop(e,targetCG,targetDate){
   var payload={caregiver:targetCG,date:targetDate,type:p.type,note:p.note||'',
     client_name:p.client_name||'',time_start:p.time_start||'',time_end:p.time_end||'',
     saved_at:new Date().toISOString()};
+  if(p.type==='manual_list') payload.bookings=(p.bookings||[]).map(function(b){ return Object.assign({}, b, {caregiver:targetCG, date:targetDate}); });
   overrides[targetCG+'|'+targetDate]=payload;
   saveLocalCache();
-  applyOverrides();renderCalendar();renderHCGrid();
+  reRenderAll();
   var rp=document.getElementById('page-roster');
   if(rp&&rp.classList.contains('active')) renderRoster();
   await persistWrite('override',targetCG+'|'+targetDate,payload);
@@ -18773,6 +18865,10 @@ function rosterDay(cg, hc, ds, idx, wo){
     if(ov.type==='unpaid')    return {code:'unpaid',    ov:ov};
     if(ov.type==='cancelled') return {code:'cancelled', ov:ov};
     if(ov.type==='manual')    return {code:'manual',    ov:ov, rec:recs[0], recs:recs};
+    if(ov.type==='manual_list'){
+      var _bk = (ov.bookings||[]);
+      if(_bk.length) return {code:'manual', ov:Object.assign({}, _bk[0], {client_name:(_bk[0].client_name||'Manual')+(_bk.length>1?' +'+(_bk.length-1):'')}), rec:recs[0], recs:recs};
+    }
     if(ov.type==='removed')   return {code:'empty'};
   }
   if(recs.length){
