@@ -15025,30 +15025,6 @@ async function initFirebase(){
   }catch(e){try{_db=firebase.firestore(firebase.app());}catch(e2){console.warn('[fb] failed:',e2);}}
 }
 
-// ── Slack alerts for roster edits on selected homecares (via n8n) ──
-var HC_ALERT_WEBHOOK='https://feelvaleo.app.n8n.cloud/webhook/shifa-order-updates';
-var HC_ALERT_MATCH=/shifa/i;   // add more with /shifa|mahara/i
-function _hcOfCaregiver(cg){
-  var r=(rawData||[]).find(function(x){ return x.caregiver===cg && x.homecare; });
-  if(r) return r.homecare;
-  var m=Object.values(manualCGs||{}).find(function(c){ return c && c.name===cg; });
-  return m ? (m.homecare||'') : '';
-}
-function hcAlert(action, key, ov){
-  try{
-    var p=String(key||'').split('|'), cg=(ov&&ov.caregiver)||p[0], date=(ov&&ov.date)||p[1]||'';
-    var hc=_hcOfCaregiver(cg);
-    if(!HC_ALERT_MATCH.test(hc||'')) return;
-    ov=ov||{};
-    fetch(HC_ALERT_WEBHOOK,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-      action:action, homecare:hc, caregiver:cg, date:date, type:ov.type||'',
-      client_name:ov.client_name||'', time_start:ov.time_start||'', time_end:ov.time_end||'',
-      bookings:ov.bookings||null, child_order_id:ov.child_order_id||'', note:ov.note||'',
-      updated_by:(typeof _session!=='undefined'&&_session&&_session.username)||''
-    })}).catch(function(e){ console.warn('[hc-alert]',e); });
-  }catch(e){ console.warn('[hc-alert]',e); }
-}
-
 var _writeQueue={},_writeTimer=null;
 function _stateDocId(dt,dk){ return dt+'__'+String(dk).replace(/[^a-zA-Z0-9_-]/g,'_'); }
 function persistToast(msg, bad){
@@ -15063,7 +15039,6 @@ function persistToast(msg, bad){
 async function persistWrite(dt,dk,dv){
   if(!_db) await initFirebase();
   if(!_db){ persistToast('Not connected to the server — this change is only saved on this device', true); return; }
-  if(dt==='override') hcAlert('saved', dk, dv);
   var id=_stateDocId(dt,dk);
   _writeQueue[id]={type:dt,key:dk,value:JSON.stringify(dv),updated_at:new Date().toISOString(),
                    updated_by:(typeof _session!=='undefined'&&_session&&_session.username)||''};
@@ -15088,7 +15063,6 @@ async function flushWriteQueue(){
 async function persistDelete(dt,dk){
   if(!_db) await initFirebase();
   if(!_db){ persistToast('Not connected to the server — this change is only saved on this device', true); return; }
-  if(dt==='override') hcAlert('cleared', dk, null);
   var id=_stateDocId(dt,dk);
   delete _writeQueue[id];
   try{
