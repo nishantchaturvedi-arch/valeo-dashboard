@@ -424,6 +424,31 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .roster-nav-btn{background:var(--accent);color:#fff;border:none;border-radius:6px;width:30px;height:30px;font-size:20px;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center;}
 .roster-month-label{font-size:15px;font-weight:700;color:var(--text);min-width:140px;text-align:center;}
 .roster-hc-filter{background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-size:13px;}
+/* ── Availability search ── */
+.av-wrap{padding:16px;max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.av-fresh{font-size:11px;color:var(--text2);background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px 10px}
+.av-box{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px}
+.av-step{font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.av-num{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px}
+.av-dows{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.av-dow{padding:6px 12px;border:1px solid var(--border);border-radius:16px;font-size:11px;cursor:pointer;color:var(--text2);user-select:none}
+.av-dow:hover{border-color:var(--accent)}
+.av-dow.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.av-preview{font-size:11px;color:var(--text2);margin-top:8px;line-height:1.7}
+.av-head{font-size:13px;color:var(--text);background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 12px}
+.av-rules{font-size:10.5px;color:var(--text2);padding:6px 2px;line-height:1.6}
+.av-h{font-size:13px;margin:14px 0 8px;color:var(--text)}
+.av-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;font-size:12px}
+.av-card.ok{border-color:var(--duty)}
+.av-card.part{border-color:var(--sick)}
+.av-card.bad{border-color:var(--absent)}
+.av-name{font-weight:700;font-size:13px;margin-bottom:4px}
+.av-sub{font-size:11px;color:var(--text2);line-height:1.7}
+.av-count{float:right;font-size:11px;color:var(--sick)}
+.av-why{margin:4px 0 0 16px;padding:0;font-size:11px;color:var(--text2);line-height:1.7}
+.av-warn{font-size:11px;color:var(--sick);margin-top:4px}
+@media(max-width:768px){.av-wrap{padding:10px}.av-card{padding:10px}}
+
 .roster-legend{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text2);margin-left:auto;flex-wrap:wrap;}
 .rl-dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:2px;}
 .roster-wrap{overflow:auto;max-height:calc(100vh - 160px);}
@@ -798,6 +823,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <button class="main-tab" onclick="switchTab(&#39;ops&#39;)">⚡ Operations</button>
  <button class="main-tab" onclick="switchTab(&#39;planner&#39;)">📋 Schedule Builder</button>
  <button class="main-tab" onclick="switchTab(&#39;roster&#39;)">🗓 Roster View</button>
+ <button class="main-tab" onclick="switchTab(&#39;avail&#39;)">🔎 Availability Search</button>
  <button class="main-tab" onclick="switchTab(&#39;mumz&#39;)">🛍️ Mumzworld Orders</button>
  <button class="main-tab" onclick="switchTab(&#39;tickets&#39;)">🎫 HC Tickets<span id="tk-tab-badge" style="font-weight:800"></span></button>
  <button class="main-tab" onclick="switchTab(&#39;leave&#39;)">🏖 Leave Applications<span id="lv-tab-badge" style="font-weight:800"></span></button>
@@ -10720,6 +10746,60 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 
 
 <!-- ══ LEAVE APPLICATIONS ══ -->
+<div class="page" id="page-avail">
+ <div class="av-wrap">
+  <div id="av-fresh" class="av-fresh"></div>
+  <div class="av-box">
+   <div class="av-step"><span class="av-num">1</span> Location</div>
+   <select class="planner-select" id="av-city" onchange="avOnCity()" style="max-width:260px"><option value="">— Choose location —</option></select>
+  </div>
+  <div class="av-box" id="av-step2" style="display:none">
+   <div class="av-step"><span class="av-num">2</span> Package</div>
+   <select class="planner-select" id="av-pkg" onchange="avOnPkg()" style="max-width:340px">
+    <option value="">— Choose package —</option>
+    <option value="hourly">Hourly booking</option>
+    <option value="w5">Weekly · 5 days / week · 1 week</option>
+    <option value="w6">Weekly · 6 days / week · 1 week</option>
+    <option value="m5">Monthly · 5 days / week · 4 weeks</option>
+    <option value="m6">Monthly · 6 days / week · 4 weeks</option>
+    <option value="m7">Monthly · 7 days / week · 4 weeks</option>
+   </select>
+  </div>
+  <div class="av-box" id="av-step3" style="display:none">
+   <div class="av-step"><span class="av-num">3</span> Shift details</div>
+   <div id="av-hourly" style="display:none;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px">
+    <div class="planner-field"><span class="planner-label">Date</span><input class="planner-input" id="av-date" type="date"></div>
+    <div class="planner-field"><span class="planner-label">Start time</span><input class="planner-input" id="av-time" type="time" value="09:00"></div>
+    <div class="planner-field"><span class="planner-label">Hours</span><input class="planner-input" id="av-hours" type="number" min="1" max="12" step="0.5" value="6"></div>
+   </div>
+   <div id="av-plan" style="display:none">
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px">
+     <div class="planner-field"><span class="planner-label">Start date</span><input class="planner-input" id="av-start-date" type="date" onchange="avPreview()"></div>
+     <div class="planner-field"><span class="planner-label">Daily start time</span><input class="planner-input" id="av-plan-time" type="time" value="09:00"></div>
+     <div class="planner-field"><span class="planner-label">Shift length (hours)</span><input class="planner-input" id="av-plan-hours" type="number" min="1" max="12" step="0.5" value="6"></div>
+    </div>
+    <div style="margin-top:12px"><span class="planner-label">Service weekdays</span>
+     <div class="av-dows">
+      <div class="av-dow" data-dow="1" onclick="avToggleDow(this)">Mon</div>
+      <div class="av-dow" data-dow="2" onclick="avToggleDow(this)">Tue</div>
+      <div class="av-dow" data-dow="3" onclick="avToggleDow(this)">Wed</div>
+      <div class="av-dow" data-dow="4" onclick="avToggleDow(this)">Thu</div>
+      <div class="av-dow" data-dow="5" onclick="avToggleDow(this)">Fri</div>
+      <div class="av-dow" data-dow="6" onclick="avToggleDow(this)">Sat</div>
+      <div class="av-dow" data-dow="0" onclick="avToggleDow(this)">Sun</div>
+     </div>
+     <div class="av-sub" id="av-dpw-note"></div>
+     <div class="av-preview" id="av-preview"></div>
+    </div>
+   </div>
+   <div style="display:flex;gap:8px;margin-top:14px">
+    <button class="planner-btn" onclick="avSearch()" style="margin:0">🔎 Search availability</button>
+    <button class="planner-btn" onclick="avReset()" style="margin:0;background:var(--bg3);color:var(--text);border:1px solid var(--border)">Reset</button>
+   </div>
+  </div>
+  <div id="av-results"></div>
+ </div>
+</div>
 <div class="page" id="page-leave">
  <div class="tk-bar">
  <div style="font-size:15px;font-weight:700">🏖 Leave Applications</div>
@@ -10903,6 +10983,7 @@ const DAYS  = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Satu
 const MONTHS= ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
 let rawData=[], allData=[], weekOffCfg={};
+var _avLoadAt=0, _avLoadError='', _avSyncAt=0;   // when order data and roster changes were last read
 // allData before any override is applied. applyOverrides() rebuilds from this every time,
 // so clearing/editing an override (yours or a teammate's) actually undoes the old one.
 var _allDataBase=null;
@@ -11247,6 +11328,7 @@ async function loadData(force=false){
         return ![...hiddenCGs].some(function(hk){return hk.toLowerCase().startsWith(cgL+'|');});
       });
     }
+    _avLoadAt=Date.now(); _avLoadError='';
     _allDataBase = allData.map(function(r){ return Object.assign({}, r); });
     applyOverrides();
     // ── Debug helper — call debugCG('name') in browser console ──
@@ -11279,7 +11361,9 @@ async function loadData(force=false){
     }
     document.getElementById('cg-result-count').textContent = [...new Set(_cntRows.map(r=>r.caregiver)).values()].filter(Boolean).length + ' caregivers';
   }catch(e){
+    _avLoadError=e.message||'unknown error';
     setSyncState('err','Error — click to retry');
+    if(typeof avRenderFreshness==='function') avRenderFreshness();
     document.getElementById('hc-grid-wrap').innerHTML=`<div class="loading-wrap" style="color:var(--absent)">Failed: ${e.message}<br><br>Check Metabase credentials or CORS settings.</div>`;
   }
 }
@@ -12152,7 +12236,7 @@ function renderAnalyticsData(){
 // ── Tab switching ────────────────────────────────────────────────
 function switchTab(tab){
   // HC partner accounts: Calendar + Roster only
-  if(_session&&_session.role==='hc'&&tab!=='calendar'&&tab!=='roster'&&tab!=='complaints'&&tab!=='tickets'&&tab!=='leave'){alert('Access restricted');return;}
+  if(_session&&_session.role==='hc'&&tab!=='calendar'&&tab!=='roster'&&tab!=='complaints'&&tab!=='tickets'&&tab!=='leave'&&tab!=='avail'){alert('Access restricted');return;}
   // Client accounts (e.g. Mumzworld): their own order list + tickets only
   if(_session&&_session.role==='client'&&tab!=='mumz'&&tab!=='tickets'){alert('Access restricted');return;}
   if(tab==='roster'){setTimeout(switchToRoster,80);}
@@ -12161,11 +12245,12 @@ function switchTab(tab){
   var _tabLbl={calendar:'calendar',analytics:'analytics',ops:'operations',planner:'schedule builder',roster:'roster',
     daily:'daily orders',leads:'sm lead',fclead:'fc lead',supply:'supply',customleads:'lead tracker',
     complaints:'complaint',penalty:'penalty',expecting:'expecting',tickets:'hc tickets',leave:'leave applications',
-    mumz:'mumzworld orders'}[tab]||tab;
+    mumz:'mumzworld orders', avail:'availability search'}[tab]||tab;
   document.querySelectorAll('.main-tab').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase().includes(_tabLbl)));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   var _pg=document.getElementById('page-'+tab);if(_pg)_pg.classList.add('active');
   document.getElementById('avail-bar').style.display=tab==='calendar'?'flex':'none';
+  if(tab==='avail')avInit();
   if(tab==='analytics')renderAnalytics();
   if(tab==='ops')renderOps();
   if(tab==='planner')renderPlanner();
@@ -15025,6 +15110,316 @@ async function initFirebase(){
   }catch(e){try{_db=firebase.firestore(firebase.app());}catch(e2){console.warn('[fb] failed:',e2);}}
 }
 
+// ══════════════════════════════════════════════════════════════════
+// CAREGIVER AVAILABILITY SEARCH
+// Reads the same live data as the roster (rawData / allData / overrides /
+// cgSettings / weekOffCfg). It never writes, so searching reserves nothing.
+// Precedence follows rosterDay(): lifecycle → override → order record.
+// ══════════════════════════════════════════════════════════════════
+var AV_MIN_REST_MIN  = 600;   // 10 h uninterrupted rest between shifts
+var AV_MAX_DAY_MIN   = 720;   // 12 working hours per calendar day
+var AV_MAX_WEEK_DAYS = 6;     // 6 working days per week (Mon–Sun)
+var AV_TZ = 'Asia/Dubai';
+var AV_DAY_BLOCK = {sick:'Sick leave', off:'Day off', holiday:'Holiday', paid:'Paid leave',
+  unpaid:'Unpaid leave', weekoff:'Week off (package)', pause:'On pause / vacation',
+  exited:'Left the homecare', pre:'Not joined yet'};
+
+function avToday(){ return new Intl.DateTimeFormat('en-CA',{timeZone:AV_TZ,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()); }
+function avNowMins(){ var p=new Intl.DateTimeFormat('en-GB',{timeZone:AV_TZ,hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date()).split(':'); return (+p[0])*60+(+p[1]); }
+function avDayNum(ds){ var p=String(ds).split('-'); return Math.floor(Date.UTC(+p[0],+p[1]-1,+p[2])/864e5); }   // whole days since epoch
+function avAbs(ds, mins){ return avDayNum(ds)*1440 + mins; }                                                    // absolute minutes
+function avWeekKey(ds){ var n=avDayNum(ds); return Math.floor((n+3)/7); }                                       // ISO weeks (Mon start)
+function avFmtMins(m){ m=((m%1440)+1440)%1440; var h=Math.floor(m/60), mi=m%60, ap=h>=12?'PM':'AM'; h=h%12||12; return h+':'+pad(mi)+' '+ap; }
+function avFmtDate(ds){ var d=new Date(ds+'T12:00:00'); return isNaN(d)?ds:d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}); }
+function avDur(m){ m=Math.round(m); var h=Math.floor(m/60), mi=m%60; return h+' h'+(mi?' '+mi+' m':''); }
+function avBlocked(st){ return ['sick','off','holiday','paid','unpaid'].indexOf(st)>=0; }
+
+// ── Busy time for one caregiver ────────────────────────────────────
+// Returns real date-time intervals (absolute minutes) plus whole-day blocks.
+function avBusy(cg, hc, fromDs, toDs){
+  var intervals=[], dayBlocks={}, notes=[];
+  var from=avDayNum(fromDs), to=avDayNum(toDs);
+  var add=function(ds, s, e, label){
+    if(e<=s) e+=1440;                                   // crosses midnight
+    intervals.push({date:ds, s:avAbs(ds,s), e:avAbs(ds,e), label:label});
+  };
+  // Lifecycle: joined / exited / paused
+  for(var n=from; n<=to; n++){
+    var d=new Date(n*864e5), ds=d.toISOString().slice(0,10);
+    var state=(typeof cgDayState==='function') ? cgDayState(cg, hc, ds) : 'active';
+    if(state!=='active') dayBlocks[ds]={reason:AV_DAY_BLOCK[state]||state, src:'caregiver record'};
+  }
+  // Confirmed / recurring / manual orders, as the roster shows them
+  (allData||[]).forEach(function(r){
+    if(r.caregiver!==cg || !r.date || r.date<fromDs || r.date>toDs) return;
+    var st=String(r.status||'').toLowerCase().replace(/\s+/g,'');
+    if(['cancelled','absent','removed'].indexOf(st)>=0) return;          // not happening
+    if(avBlocked(st)){ dayBlocks[r.date]={reason:AV_DAY_BLOCK[st], src:'order record'}; return; }
+    if(st==='weekoff') return;                                           // free day inside a package
+    var who=(r.client_name||'Booking')+(r.child_order_id?' · '+r.child_order_id:'');
+    if(!r.time_start){ add(r.date,0,1439,who+' (no time on record)'); notes.push(r.date+': booking with no time — whole day treated as busy'); return; }
+    var s=timeToMins12(r.time_start), e=r.time_end?timeToMins12(r.time_end):s+720;
+    add(r.date, s, e, who);
+  });
+  // Roster changes: leave, days off, manual bookings
+  Object.keys(overrides||{}).forEach(function(k){
+    var p=k.split('|'), ov=overrides[k]; if(p[0]!==cg) return;
+    var ds=(ov&&ov.date)||p[1]; if(!ds || ds<fromDs || ds>toDs) return;
+    var t=ov.type;
+    if(avBlocked(t)){ dayBlocks[ds]={reason:AV_DAY_BLOCK[t]+(ov.leave_id?' ('+ov.leave_id+')':''), src:'roster change'}; return; }
+    if(t==='manual'||t==='manual_list'){
+      var list=(t==='manual_list') ? (ov.bookings||[]) : [ov];
+      list.forEach(function(b){
+        var who='Manual · '+(b.client_name||'booking');
+        if(!b.time_start){ add(ds,0,1439,who+' (no time set)'); notes.push(ds+': manual booking with no time — whole day treated as busy'); return; }
+        add(ds, timeToMins12(b.time_start), b.time_end?timeToMins12(b.time_end):timeToMins12(b.time_start)+720, who);
+      });
+    }
+  });
+  // Drop duplicates (same caregiver, same span, recorded twice)
+  var seen={};
+  intervals=intervals.filter(function(i){ var k=i.s+'-'+i.e+'-'+i.label; if(seen[k]) return false; seen[k]=1; return true; });
+  intervals.sort(function(a,b){ return a.s-b.s; });
+  return {intervals:intervals, dayBlocks:dayBlocks, notes:notes};
+}
+
+// ── Can this caregiver cover these shifts? ─────────────────────────
+// shifts: [{date:'YYYY-MM-DD', start:<minutes>, len:<minutes>}]
+// Each accepted shift is added to the caregiver's load before the next is checked.
+function avCheckShifts(cg, hc, shifts, busy){
+  if(!shifts.length) return {ok:false, days:[], covered:0};
+  var dates=shifts.map(function(s){ return s.date; }).sort();
+  busy = busy || avBusy(cg, hc, addDays(dates[0],-2), addDays(dates[dates.length-1],2));
+  var iv=busy.intervals.slice();
+  var dayMin={}, weekDays={};
+  iv.forEach(function(i){
+    dayMin[i.date]=(dayMin[i.date]||0)+(i.e-i.s);
+    (weekDays[avWeekKey(i.date)]=weekDays[avWeekKey(i.date)]||{})[i.date]=1;
+  });
+  var days=[], covered=0;
+  shifts.forEach(function(sh){
+    var s=avAbs(sh.date, sh.start), e=s+sh.len, why=[];
+    var blk=busy.dayBlocks[sh.date];
+    if(blk) why.push(blk.reason+' (from '+blk.src+')');
+    iv.forEach(function(i){
+      if(i.s<e && s<i.e) why.push('Clashes with '+i.label+' '+avFmtMins(i.s%1440)+'–'+avFmtMins(i.e%1440)+' on '+avFmtDate(i.date));
+      else if(i.e<=s && s-i.e<AV_MIN_REST_MIN) why.push('Only '+avDur(s-i.e)+' rest after '+i.label+' (ends '+avFmtMins(i.e%1440)+' on '+avFmtDate(i.date)+'), '+avDur(AV_MIN_REST_MIN)+' needed');
+      else if(e<=i.s && i.s-e<AV_MIN_REST_MIN) why.push('Only '+avDur(i.s-e)+' rest before '+i.label+' (starts '+avFmtMins(i.s%1440)+' on '+avFmtDate(i.date)+'), '+avDur(AV_MIN_REST_MIN)+' needed');
+    });
+    var mins=(dayMin[sh.date]||0)+sh.len;
+    if(mins>AV_MAX_DAY_MIN) why.push('Over the '+(AV_MAX_DAY_MIN/60)+' h daily limit ('+(mins/60).toFixed(1)+' h)');
+    var wk=avWeekKey(sh.date), wd=Object.assign({}, weekDays[wk]||{}); wd[sh.date]=1;
+    if(Object.keys(wd).length>AV_MAX_WEEK_DAYS) why.push('Over the '+AV_MAX_WEEK_DAYS+'-day working week ('+Object.keys(wd).length+' days that week)');
+    var ok=!why.length;
+    if(ok){
+      iv.push({date:sh.date, s:s, e:e, label:'this plan'});
+      iv.sort(function(a,b){ return a.s-b.s; });
+      dayMin[sh.date]=mins; weekDays[wk]=wd; covered++;
+    }
+    days.push({date:sh.date, start:sh.start, len:sh.len, ok:ok, reasons:why});
+  });
+  return {ok:covered===shifts.length, days:days, covered:covered, total:shifts.length};
+}
+
+// ── Who can we even consider? ──────────────────────────────────────
+function avCandidates(city){
+  var seen={}, out=[];
+  (rawData||[]).forEach(function(r){
+    if(!r.caregiver) return; var k=r.caregiver+'|'+(r.homecare||'');
+    if(!seen[k]){ seen[k]=1; out.push({cg:r.caregiver, hc:r.homecare||''}); }
+  });
+  Object.values(manualCGs||{}).forEach(function(c){
+    if(!c || !c.name) return; var k=c.name+'|'+(c.homecare||'');
+    if(!seen[k]){ seen[k]=1; out.push({cg:c.name, hc:c.homecare||''}); }
+  });
+  out.forEach(function(p){ p.city=(typeof getCGCity==='function') ? getCGCity(p.cg,p.hc) : ''; });
+  if(hiddenCGs && hiddenCGs.size){
+    var hid=[...hiddenCGs].map(function(k){ return String(k).toLowerCase(); });
+    out=out.filter(function(p){ var c=p.cg.toLowerCase(); return !hid.some(function(h){ return h===c || h.startsWith(c+'|'); }); });
+  }
+  var eligible=out.filter(function(p){ return p.city===city; });
+  var noCity=out.filter(function(p){ return !p.city; });
+  return {eligible:eligible, noCity:noCity, all:out};
+}
+
+// ── Plan dates ─────────────────────────────────────────────────────
+// weekly = 1 week, monthly = 4 weeks, counted from the start date.
+// Service weekdays are chosen by the user; the rest of the week is the week off.
+function avPlanDates(startDs, weeks, weekdays){
+  var out=[], d=avDayNum(startDs), end=d+weeks*7-1;
+  for(var n=d; n<=end; n++){
+    var ds=new Date(n*864e5).toISOString().slice(0,10);
+    var dow=new Date(ds+'T12:00:00').getDay();
+    if(weekdays.indexOf(dow)>=0) out.push(ds);
+  }
+  return out;
+}
+
+// ── Primary + reliever cover for a 7-day plan ──────────────────────
+function avPairSearch(cands, shifts, busyMap){
+  var singles=cands.map(function(p){
+    return {p:p, per:shifts.map(function(sh){ return avCheckShifts(p.cg,p.hc,[sh],busyMap[p.cg+'|'+p.hc]).days[0]; })};
+  });
+  var pairs=[];
+  for(var i=0;i<singles.length;i++) for(var j=i+1;j<singles.length;j++){
+    var A=singles[i], B=singles[j];
+    var assign={A:[], B:[], gaps:[]}, loadA=[], loadB=[];
+    var trial=function(who, list, sh){ return avCheckShifts(who.p.cg, who.p.hc, list.concat([sh]), busyMap[who.p.cg+'|'+who.p.hc]).ok; };
+    shifts.forEach(function(sh, idx){
+      var canA=A.per[idx].ok && trial(A, loadA, sh), canB=B.per[idx].ok && trial(B, loadB, sh);
+      // both free → give it to whoever has fewer days so far, so the split stays even
+      var toA = canA && (!canB || loadA.length<=loadB.length);
+      if(toA){ loadA.push(sh); assign.A.push(sh.date); }
+      else if(canB){ loadB.push(sh); assign.B.push(sh.date); }
+      else assign.gaps.push(sh.date);
+    });
+    if(assign.gaps.length===0) pairs.push({a:A.p, b:B.p, aDates:assign.A, bDates:assign.B});
+    if(pairs.length>=5) return pairs;
+  }
+  return pairs;
+}
+
+// ── How fresh is the data? ─────────────────────────────────────────
+function avDataState(){
+  var s={ok:true, problems:[]};
+  if(!Array.isArray(rawData) || !rawData.length) { s.ok=false; s.problems.push('Order data has not loaded'); }
+  if(_avLoadError) { s.ok=false; s.problems.push('Last order refresh failed: '+_avLoadError); }
+  if(!_db) { s.ok=false; s.problems.push('Not connected to Firebase, so leave and roster changes could not be verified'); }
+  s.orders=_avLoadAt ? new Date(_avLoadAt).toLocaleString('en-GB',{timeZone:AV_TZ}) : 'never';
+  s.state=_avSyncAt ? new Date(_avSyncAt).toLocaleString('en-GB',{timeZone:AV_TZ}) : 'never';
+  return s;
+}
+
+// ══ UI ════════════════════════════════════════════════════════════
+var _avShifts=[], _avCity='', _avPkg='';
+var AV_PKGS={
+  hourly:{label:'Hourly booking', weeks:0, dpw:0},
+  w5:{label:'Weekly · 5 days / week · 1 week', weeks:1, dpw:5},
+  w6:{label:'Weekly · 6 days / week · 1 week', weeks:1, dpw:6},
+  m5:{label:'Monthly · 5 days / week · 4 weeks', weeks:4, dpw:5},
+  m6:{label:'Monthly · 6 days / week · 4 weeks', weeks:4, dpw:6},
+  m7:{label:'Monthly · 7 days / week · 4 weeks', weeks:4, dpw:7}
+};
+function avInit(){
+  var loc=document.getElementById('av-city');
+  if(loc && loc.options.length<2){
+    loc.innerHTML='<option value="">— Choose location —</option>'+CITY_CODES.map(function(c){ return '<option value="'+c+'">'+CITY_LABELS[c]+'</option>'; }).join('');
+  }
+  var dt=document.getElementById('av-date'); if(dt && !dt.value) dt.value=avToday();
+  var sd=document.getElementById('av-start-date'); if(sd && !sd.value) sd.value=avToday();
+  avRenderFreshness();
+}
+function avRenderFreshness(){
+  var el=document.getElementById('av-fresh'); if(!el) return;
+  var s=avDataState();
+  el.innerHTML='<b>Data:</b> orders from the Metabase API, last refreshed '+s.orders
+    +' · roster changes and leave from Firebase, last synced '+s.state
+    +(s.ok?'':'<div style="color:var(--absent);margin-top:4px">⚠️ '+s.problems.join(' · ')+'</div>');
+}
+function avOnCity(){ _avCity=document.getElementById('av-city').value; document.getElementById('av-step2').style.display=_avCity?'block':'none'; avOnPkg(); }
+function avOnPkg(){
+  _avPkg=document.getElementById('av-pkg').value;
+  var show=!!(_avCity&&_avPkg);
+  document.getElementById('av-step3').style.display=show?'block':'none';
+  document.getElementById('av-hourly').style.display=(show&&_avPkg==='hourly')?'grid':'none';
+  document.getElementById('av-plan').style.display=(show&&_avPkg&&_avPkg!=='hourly')?'block':'none';
+  if(show&&_avPkg!=='hourly'){
+    var dpw=AV_PKGS[_avPkg].dpw;
+    document.getElementById('av-dpw-note').textContent='Pick exactly '+dpw+' service weekday'+(dpw>1?'s':'')+'. The other '+(7-dpw)+' day'+((7-dpw)===1?' is':'s are')+' the week off.';
+    if(dpw===7) document.querySelectorAll('.av-dow').forEach(function(b){ b.classList.add('on'); });
+    avPreview();
+  }
+  document.getElementById('av-results').innerHTML='';
+}
+function avToggleDow(el){ el.classList.toggle('on'); avPreview(); }
+function avPickedDows(){ return [...document.querySelectorAll('.av-dow.on')].map(function(b){ return +b.dataset.dow; }); }
+function avPreview(){
+  var el=document.getElementById('av-preview'); if(!el||_avPkg==='hourly'||!_avPkg) return;
+  var start=document.getElementById('av-start-date').value, dows=avPickedDows(), dpw=AV_PKGS[_avPkg].dpw;
+  if(!start||dows.length!==dpw){ el.innerHTML='<span style="color:var(--text2)">'+(!start?'Pick a start date':'Pick '+dpw+' weekdays ('+dows.length+' selected)')+'</span>'; return; }
+  var dates=avPlanDates(start, AV_PKGS[_avPkg].weeks, dows);
+  el.innerHTML='<b>'+dates.length+' service days:</b> '+dates.map(avFmtDate).join(' · ');
+}
+function avSearch(){
+  var box=document.getElementById('av-results');
+  var s=avDataState();
+  if(!s.ok){ box.innerHTML='<div class="av-card" style="border-color:var(--absent)"><b>⚠️ Availability unverified</b><div style="margin-top:6px;color:var(--text2)">'+s.problems.join('<br>')+'</div><div style="margin-top:6px">Press Sync and try again. No caregiver is shown as available while the data behind the check is missing.</div></div>'; return; }
+  var shifts=[], label='';
+  if(_avPkg==='hourly'){
+    var d=document.getElementById('av-date').value, t=document.getElementById('av-time').value, h=parseFloat(document.getElementById('av-hours').value||'0');
+    if(!d||!t||!h){ box.innerHTML='<div class="av-card">Pick a date, a start time and how many hours.</div>'; return; }
+    if(h>AV_MAX_DAY_MIN/60){ box.innerHTML='<div class="av-card" style="border-color:var(--absent)">A single shift cannot be longer than '+(AV_MAX_DAY_MIN/60)+' hours.</div>'; return; }
+    shifts=[{date:d, start:timeToMins24(t), len:Math.round(h*60)}];
+    label=avFmtDate(d)+' · '+avFmtMins(timeToMins24(t))+'–'+avFmtMins(timeToMins24(t)+h*60)+' ('+h+' h)';
+  }else{
+    var start=document.getElementById('av-start-date').value, t2=document.getElementById('av-plan-time').value,
+        h2=parseFloat(document.getElementById('av-plan-hours').value||'0'), dows=avPickedDows(), cfg=AV_PKGS[_avPkg];
+    if(!start||!t2||!h2){ box.innerHTML='<div class="av-card">Fill in the start date, daily start time and shift length.</div>'; return; }
+    if(dows.length!==cfg.dpw){ box.innerHTML='<div class="av-card">Pick exactly '+cfg.dpw+' service weekdays.</div>'; return; }
+    if(h2>AV_MAX_DAY_MIN/60){ box.innerHTML='<div class="av-card" style="border-color:var(--absent)">A daily shift cannot be longer than '+(AV_MAX_DAY_MIN/60)+' hours.</div>'; return; }
+    shifts=avPlanDates(start, cfg.weeks, dows).map(function(ds){ return {date:ds, start:timeToMins24(t2), len:Math.round(h2*60)}; });
+    label=cfg.label+' · from '+avFmtDate(start)+' · '+avFmtMins(timeToMins24(t2))+'–'+avFmtMins(timeToMins24(t2)+h2*60)+' · '+shifts.length+' service days';
+  }
+  _avShifts=shifts;
+  var cands=avCandidates(_avCity);
+  if(!cands.eligible.length){
+    box.innerHTML='<div class="av-card">No caregiver is set to work in '+(CITY_LABELS[_avCity]||_avCity)+'.'
+      +(cands.noCity.length?'<div style="margin-top:6px;color:var(--text2)">'+cands.noCity.length+' caregiver(s) have no location set on the roster, so they were not considered. Set their location in the roster to include them.</div>':'')+'</div>';
+    return;
+  }
+  var from=addDays(shifts[0].date,-2), to=addDays(shifts[shifts.length-1].date,2), busyMap={}, full=[], partial=[];
+  cands.eligible.forEach(function(p){
+    var busy=avBusy(p.cg,p.hc,from,to); busyMap[p.cg+'|'+p.hc]=busy;
+    var res=avCheckShifts(p.cg,p.hc,shifts,busy);
+    (res.ok?full:partial).push({p:p, res:res, notes:busy.notes});
+  });
+  partial.sort(function(a,b){ return b.res.covered-a.res.covered; });
+  var html='<div class="av-head"><b>'+label+'</b> · '+(CITY_LABELS[_avCity]||_avCity)+'</div>';
+  html+='<div class="av-rules">Rules applied: caregiver location · joined / not exited / not paused · sick, leave, holiday, days off and roster changes · existing bookings and manual bookings, including overnight shifts · '
+    +(AV_MIN_REST_MIN/60)+' h rest before and after each shift · max '+(AV_MAX_DAY_MIN/60)+' h per day · max '+AV_MAX_WEEK_DAYS+' working days per week</div>';
+
+  html+='<h3 class="av-h">✅ Fully available ('+full.length+')</h3>';
+  html+= full.length ? full.map(function(f){
+    return '<div class="av-card ok"><div class="av-name">'+f.p.cg+' <span class="av-sub">'+(f.p.hc||'—')+' · '+(CITY_LABELS[f.p.city]||f.p.city)+'</span></div>'
+      +'<div class="av-sub">Covers all '+f.res.total+' shift'+(f.res.total>1?'s':'')+': '+f.res.days.map(function(d){ return avFmtDate(d.date); }).join(' · ')+'</div>'
+      +'<div class="av-sub">'+avFmtMins(shifts[0].start)+'–'+avFmtMins(shifts[0].start+shifts[0].len)+' each day</div>'
+      +(f.notes.length?'<div class="av-warn">Note: '+f.notes.join('; ')+'</div>':'')+'</div>';
+  }).join('') : '<div class="av-card">None. See partial coverage below.</div>';
+
+  if(_avPkg==='m7'){
+    var pairs=avPairSearch(cands.eligible, shifts, busyMap);
+    html+='<h3 class="av-h">👥 Primary + reliever ('+pairs.length+' option'+(pairs.length===1?'':'s')+')</h3>';
+    html+='<div class="av-rules">A 7-day plan cannot be one caregiver: the '+AV_MAX_WEEK_DAYS+'-day working week applies.</div>';
+    html+= pairs.length ? pairs.map(function(pr){
+      return '<div class="av-card ok"><div class="av-name">'+pr.a.cg+' + '+pr.b.cg+'</div>'
+        +'<div class="av-sub"><b>'+pr.a.cg+'</b> ('+pr.a.hc+') · '+pr.aDates.length+' days: '+pr.aDates.map(avFmtDate).join(' · ')+'</div>'
+        +'<div class="av-sub"><b>'+pr.b.cg+'</b> ('+pr.b.hc+') · '+pr.bDates.length+' days: '+pr.bDates.map(avFmtDate).join(' · ')+'</div></div>';
+    }).join('') : '<div class="av-card bad"><b>No complete coverage found.</b><div class="av-sub">No pair of caregivers in this location can cover all '+shifts.length+' days. Uncovered days are listed under partial coverage.</div></div>';
+  }
+
+  html+='<h3 class="av-h">⚠️ Partial coverage ('+partial.length+')</h3>';
+  html+= partial.length ? partial.slice(0,25).map(function(f){
+    var bad=f.res.days.filter(function(d){ return !d.ok; });
+    return '<div class="av-card part"><div class="av-name">'+f.p.cg+' <span class="av-sub">'+(f.p.hc||'—')+'</span> <span class="av-count">'+f.res.covered+'/'+f.res.total+' days</span></div>'
+      +(f.res.covered?'<div class="av-sub"><b>Can cover:</b> '+f.res.days.filter(function(d){return d.ok;}).map(function(d){ return avFmtDate(d.date); }).join(' · ')+'</div>':'')
+      +'<div class="av-sub"><b>Cannot cover:</b></div><ul class="av-why">'+bad.map(function(d){ return '<li>'+avFmtDate(d.date)+' — '+d.reasons.join('; ')+'</li>'; }).join('')+'</ul></div>';
+  }).join('') : '<div class="av-card">None.</div>';
+
+  var uncovered=shifts.map(function(s){ return s.date; }).filter(function(ds){
+    return !full.length && !partial.some(function(f){ return f.res.days.some(function(d){ return d.date===ds && d.ok; }); });
+  });
+  if(!full.length && uncovered.length) html+='<div class="av-card bad"><b>No complete coverage found.</b><div class="av-sub">Still uncovered by anyone in this location: '+uncovered.map(avFmtDate).join(' · ')+'</div></div>';
+  if(cands.noCity.length) html+='<div class="av-card"><span class="av-sub">'+cands.noCity.length+' caregiver(s) were skipped because no location is set for them on the roster.</span></div>';
+  box.innerHTML=html;
+  avRenderFreshness();
+}
+function avReset(){
+  ['av-city','av-pkg'].forEach(function(id){ var e=document.getElementById(id); if(e) e.value=''; });
+  document.querySelectorAll('.av-dow').forEach(function(b){ b.classList.remove('on'); });
+  document.getElementById('av-results').innerHTML='';
+  avOnCity();
+}
+
 var _writeQueue={},_writeTimer=null;
 function _stateDocId(dt,dk){ return dt+'__'+String(dk).replace(/[^a-zA-Z0-9_-]/g,'_'); }
 function persistToast(msg, bad){
@@ -15137,6 +15532,7 @@ function _applyStateSnapshot(snap){
     take((q.type||'').toLowerCase(), q.key, v);
   });
   overrides=no;manualCGs=nm;hiddenCGs=nh;weekOffCfg=nw;splitAssignments=ns;
+  _avSyncAt=Date.now();
   if(Object.keys(ncs).length){ Object.keys(ncs).forEach(function(k){ cgSettings[k]=ncs[k]; }); saveCGSettings(); }
   saveLocalCache();
   reRenderAll();
