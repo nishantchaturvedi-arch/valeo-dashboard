@@ -447,6 +447,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .av-count{float:right;font-size:11px;color:var(--sick)}
 .av-why{margin:4px 0 0 16px;padding:0;font-size:11px;color:var(--text2);line-height:1.7}
 .av-warn{font-size:11px;color:var(--sick);margin-top:4px}
+.av-weeks{width:100%;border-collapse:collapse;margin-top:8px;font-size:11px}
+.av-weeks th{text-align:left;color:var(--text2);font-weight:600;padding:4px 6px;border-bottom:1px solid var(--border)}
+.av-weeks td{padding:4px 6px;border-bottom:1px solid var(--border);color:var(--text2)}
+.av-weeks td:first-child{color:var(--text);font-weight:600;width:70px}
 @media(max-width:768px){.av-wrap{padding:10px}.av-card{padding:10px}}
 
 .roster-legend{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text2);margin-left:auto;flex-wrap:wrap;}
@@ -15256,27 +15260,39 @@ function avPlanDates(startDs, weeks, weekdays){
 }
 
 // ── Primary + reliever cover for a 7-day plan ──────────────────────
+// A 7-day plan is one primary caregiver on up to 6 days a week, with a
+// reliever taking the primary's week-off day. Primary keeps every day it can.
 function avPairSearch(cands, shifts, busyMap){
   var singles=cands.map(function(p){
-    return {p:p, per:shifts.map(function(sh){ return avCheckShifts(p.cg,p.hc,[sh],busyMap[p.cg+'|'+p.hc]).days[0]; })};
+    return {p:p, per:shifts.map(function(sh){ return avCheckShifts(p.cg,p.hc,[sh],busyMap[p.cg+'|'+p.hc]).days[0].ok; })};
   });
-  var pairs=[];
-  for(var i=0;i<singles.length;i++) for(var j=i+1;j<singles.length;j++){
-    var A=singles[i], B=singles[j];
-    var assign={A:[], B:[], gaps:[]}, loadA=[], loadB=[];
-    var trial=function(who, list, sh){ return avCheckShifts(who.p.cg, who.p.hc, list.concat([sh]), busyMap[who.p.cg+'|'+who.p.hc]).ok; };
+  // best primaries first: whoever can work the most days of the plan
+  singles.sort(function(x,y){ return y.per.filter(Boolean).length - x.per.filter(Boolean).length; });
+  var out=[];
+  for(var i=0;i<singles.length;i++){
+    var A=singles[i], loadA=[], aDates=[], left=[];
     shifts.forEach(function(sh, idx){
-      var canA=A.per[idx].ok && trial(A, loadA, sh), canB=B.per[idx].ok && trial(B, loadB, sh);
-      // both free → give it to whoever has fewer days so far, so the split stays even
-      var toA = canA && (!canB || loadA.length<=loadB.length);
-      if(toA){ loadA.push(sh); assign.A.push(sh.date); }
-      else if(canB){ loadB.push(sh); assign.B.push(sh.date); }
-      else assign.gaps.push(sh.date);
+      if(A.per[idx] && avCheckShifts(A.p.cg,A.p.hc,loadA.concat([sh]),busyMap[A.p.cg+'|'+A.p.hc]).ok){ loadA.push(sh); aDates.push(sh.date); }
+      else left.push(sh);
     });
-    if(assign.gaps.length===0) pairs.push({a:A.p, b:B.p, aDates:assign.A, bDates:assign.B});
-    if(pairs.length>=5) return pairs;
+    if(!left.length) continue;                       // impossible on a 7-day plan, but never pair someone with nothing to do
+    for(var j=0;j<singles.length;j++){
+      if(j===i) continue;
+      var B=singles[j];
+      if(!left.every(function(sh){ return B.per[shifts.indexOf(sh)]; })) continue;
+      if(!avCheckShifts(B.p.cg,B.p.hc,left,busyMap[B.p.cg+'|'+B.p.hc]).ok) continue;
+      var byWeek={};
+      shifts.forEach(function(sh){
+        var w=avWeekKey(sh.date); byWeek[w]=byWeek[w]||{a:[],b:[]};
+        (aDates.indexOf(sh.date)>=0 ? byWeek[w].a : byWeek[w].b).push(sh.date);
+      });
+      out.push({a:A.p, b:B.p, aDates:aDates, bDates:left.map(function(sh){ return sh.date; }),
+                weeks:Object.keys(byWeek).sort().map(function(w){ return byWeek[w]; })});
+      break;                                          // one reliever per primary is enough to show
+    }
+    if(out.length>=5) break;
   }
-  return pairs;
+  return out;
 }
 
 // ── How fresh is the data? ─────────────────────────────────────────
@@ -15391,9 +15407,13 @@ function avSearch(){
     html+='<h3 class="av-h">👥 Primary + reliever ('+pairs.length+' option'+(pairs.length===1?'':'s')+')</h3>';
     html+='<div class="av-rules">A 7-day plan cannot be one caregiver: the '+AV_MAX_WEEK_DAYS+'-day working week applies.</div>';
     html+= pairs.length ? pairs.map(function(pr){
-      return '<div class="av-card ok"><div class="av-name">'+pr.a.cg+' + '+pr.b.cg+'</div>'
-        +'<div class="av-sub"><b>'+pr.a.cg+'</b> ('+pr.a.hc+') · '+pr.aDates.length+' days: '+pr.aDates.map(avFmtDate).join(' · ')+'</div>'
-        +'<div class="av-sub"><b>'+pr.b.cg+'</b> ('+pr.b.hc+') · '+pr.bDates.length+' days: '+pr.bDates.map(avFmtDate).join(' · ')+'</div></div>';
+      return '<div class="av-card ok"><div class="av-name">'+pr.a.cg+' <span class="av-sub">+ reliever</span> '+pr.b.cg+'</div>'
+        +'<div class="av-sub"><b>👤 Primary · '+pr.a.cg+'</b> ('+(pr.a.hc||'—')+') — '+pr.aDates.length+' days, up to '+AV_MAX_WEEK_DAYS+' a week</div>'
+        +'<div class="av-sub"><b>🔁 Reliever · '+pr.b.cg+'</b> ('+(pr.b.hc||'—')+') — '+pr.bDates.length+' days (the primary\'s week off)</div>'
+        +'<table class="av-weeks"><tr><th>Week</th><th>'+pr.a.cg.split(' ')[0]+'</th><th>'+pr.b.cg.split(' ')[0]+'</th></tr>'
+        +pr.weeks.map(function(w,i){ return '<tr><td>Week '+(i+1)+'</td><td>'+(w.a.length?w.a.length+' days · '+w.a.map(avFmtDate).join(', '):'—')
+          +'</td><td>'+(w.b.length?w.b.length+' day'+(w.b.length>1?'s':'')+' · '+w.b.map(avFmtDate).join(', '):'—')+'</td></tr>'; }).join('')
+        +'</table></div>';
     }).join('') : '<div class="av-card bad"><b>No complete coverage found.</b><div class="av-sub">No pair of caregivers in this location can cover all '+shifts.length+' days. Uncovered days are listed under partial coverage.</div></div>';
   }
 
