@@ -526,6 +526,7 @@
   .pricing-head.mp-head{ display:block; max-width:640px; margin-bottom:22px; }
   .pricing-head.mp-head h2{ margin:12px 0 8px; }
   .pricing-head.mp-head p{ max-width:560px; }
+  .mp-opt[hidden]{ display:none; }
 </style>
 </head>
 <body>
@@ -1235,11 +1236,23 @@
   /* Monthly plan pricing: single source of truth.
      Each entry is the price per month (4 weeks) for [1 month, 2 months, 3 months].
      A package with one entry is offered as a 1-month plan only. */
-  const MONTHLY_PLANS = {
-    5: { 6:[6600,6500,6450], 7:[7000,6700,6500], 8:[7040,6750,6550], 9:[7200,6850,6600], 10:[7400,7000,6650], 11:[7700,7300,6900], 12:[8400,7950,7550], 24:[14400,13700,13200] },
-    6: { 6:[7650], 7:[7900], 8:[8448,8100,7850], 9:[8640,8200,7900], 10:[8800,8350,7950], 11:[9000,8550,8100], 12:[9200,8700,8250], 24:[17280,16450,15850] },
-    7: { 6:[8950], 7:[8950], 8:[8950], 9:[8950], 10:[8960], 11:[9390,9200,9050], 12:[9471,9250,9100], 24:[17900] }
+  /* Monthly pricing: single source of truth (Pricing Logic sheet, "Copy of Price Grid" tab).
+     MONTHLY_LIST = list price per month (4 weeks), by days per week and hours per day. Not shown to customers.
+     MONTHLY_DISCOUNT = AED off each month: 1 month 200, 2 months 400, 3 months 600.
+     6 days x 12 hours list is 9,400 so the 1-month price is AED 9,200 (agreed override; sheet had 9,792).
+     7 days a week is offered from 8 hours a day (6 and 7 hours removed). */
+  const MONTHLY_LIST = {
+    5: { 6:6600, 7:7000, 8:7040, 9:7200, 10:7400, 11:7700, 12:8400, 24:14400 },
+    6: { 6:7600, 7:7900, 8:8448, 9:8640, 10:8880, 11:9240, 12:9400, 24:17280 },
+    7: { 8:8736, 9:8820, 10:8960, 11:9390, 12:9471, 24:17718 }
   };
+  const MONTHLY_DISCOUNT = [200, 400, 600];
+  const MONTHLY_PLANS = {};
+  Object.keys(MONTHLY_LIST).forEach(d => {
+    MONTHLY_PLANS[d] = {};
+    Object.keys(MONTHLY_LIST[d]).forEach(h => { MONTHLY_PLANS[d][h] = MONTHLY_DISCOUNT.map(off => MONTHLY_LIST[d][h] - off); });
+  });
+  const DEFAULT_HOURS = 8; /* used when the chosen hours are not offered on a schedule (7 days starts at 8 hours) */
   const WEEKS_PER_MONTH = 4;
   const POPULAR_HOURS = 12; /* every 12-hour monthly plan is tagged Popular */
   const WA_NUMBER = '971549965988';
@@ -1253,7 +1266,7 @@
       daysLabel: d => d + ' days',
       per: 'per month',
       total: (x, w) => x + ' total for ' + w + ' weeks',
-      save: x => 'Save ' + x,
+      save: (perMonth, total, m) => m === 1 ? 'Save ' + perMonth : 'Save ' + perMonth + ' a month (' + total + ' total)',
       standard: 'Standard monthly rate',
       hr: x => 'About ' + x + ' per hour',
       unavailable: 'Not offered for this schedule',
@@ -1268,7 +1281,7 @@
       daysLabel: d => d + ' أيام',
       per: 'شهرياً',
       total: (x, w) => 'الإجمالي ' + x + ' لمدة ' + arWeeks(w),
-      save: x => 'وفّري ' + x,
+      save: (perMonth, total, m) => m === 1 ? 'وفّري ' + perMonth : 'وفّري ' + perMonth + ' شهرياً (' + total + ' إجمالاً)',
       standard: 'السعر الشهري القياسي',
       hr: x => 'حوالي ' + x + ' في الساعة',
       unavailable: 'غير متاح لهذا الجدول',
@@ -1324,8 +1337,19 @@
     const T = MP_TEXT[mpLang()];
     const days = mpVal('mp-days');
     const hours = mpVal('mp-hours');
-    const prices = MONTHLY_PLANS[days][hours];
-    const base = prices[0];
+    let hoursNow = hours;
+    const offered = MONTHLY_PLANS[days];
+    mpRoot.querySelectorAll('input[name="mp-hours"]').forEach(inp => {
+      const ok = !!offered[inp.value];
+      inp.disabled = !ok;
+      inp.closest('.mp-opt').hidden = !ok;
+    });
+    if(!offered[hoursNow]){
+      hoursNow = offered[DEFAULT_HOURS] ? DEFAULT_HOURS : Number(Object.keys(offered)[0]);
+      mpRoot.querySelector('input[name="mp-hours"][value="' + hoursNow + '"]').checked = true;
+    }
+    const prices = offered[hoursNow];
+    const list = MONTHLY_LIST[days][hoursNow];
 
     let dur = mpVal('mp-dur');
     if(!prices[dur - 1]){
@@ -1350,31 +1374,32 @@
       }
       f('price').classList.remove('is-na');
       const total = price * m;
-      const saving = base * m - total;
+      const offMonth = list - price;
+      const saving = offMonth * m;
       f('price').textContent = T.money(price);
       f('per').textContent = T.per;
       f('total').textContent = T.total(T.money(total), m * WEEKS_PER_MONTH);
-      f('save').textContent = saving > 0 ? T.save(T.money(saving)) : T.standard;
+      f('save').textContent = saving > 0 ? T.save(T.money(offMonth), T.money(saving), m) : T.standard;
       f('save').classList.toggle('muted', saving <= 0);
-      f('hr').textContent = T.hr(T.money(Math.round(price / (days * WEEKS_PER_MONTH * hours))));
+      f('hr').textContent = T.hr(T.money(Math.round(price / (days * WEEKS_PER_MONTH * hoursNow))));
     });
 
     const oneMonthOnly = prices.length === 1;
     document.getElementById('mpEdge').hidden = !oneMonthOnly;
 
-    const isPopular = hours === POPULAR_HOURS;
+    const isPopular = hoursNow === POPULAR_HOURS;
     document.getElementById('mpHoursPop').hidden = false;
     document.getElementById('mpSumPop').hidden = !isPopular;
 
     const price = prices[dur - 1];
     const total = price * dur;
     const weeks = dur * WEEKS_PER_MONTH;
-    document.getElementById('mpSumPlan').textContent = T.plan(days, hours, T.months(dur));
+    document.getElementById('mpSumPlan').textContent = T.plan(days, hoursNow, T.months(dur));
     document.getElementById('mpSumTotal').textContent = T.money(total);
     document.getElementById('mpSumSub').textContent = T.sumSub(weeks);
 
     const msg = "Hi Valeo Health, I'd like to book a monthly newborn care plan: " +
-      days + ' days a week, ' + hours + ' hours a day, ' + (dur === 1 ? '1 month' : dur + ' months') + ' (' + weeks + ' weeks). ' +
+      days + ' days a week, ' + hoursNow + ' hours a day, ' + (dur === 1 ? '1 month' : dur + ' months') + ' (' + weeks + ' weeks). ' +
       'Price: AED ' + price.toLocaleString('en-US') + ' per month, AED ' + total.toLocaleString('en-US') + ' total. ' +
       "Baby's age: __. Area: __.";
     document.getElementById('mpCta').href = 'https://wa.me/' + WA_NUMBER + '?text=' + encodeURIComponent(msg);
