@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <!-- saved from url=(0071)https://nishantchaturvedi-arch.github.io/valeo-dashboard/dashboard.html -->
 <html lang="en" data-theme="dark"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
@@ -12022,6 +12023,43 @@ function renderAnalyticsData(){
   window._cgS_full = cgS;
   const maxCG = MAX_MONTH_HRS;
 
+  // ── Homecare & Caregiver-wise Utilisation ─────────────────────
+  // One row per caregiver: homecare, exclusive flag, location, hours
+  // worked vs pro-rata hours available. Rendered by renderHCCGUtil().
+  var _cgShifts = {}, _cgClients = {}, _cgLocVotes = {};
+  data.forEach(function(r){
+    if(!r.caregiver) return;
+    var loc = normCity(r.location || r.city || r.City || '');
+    if(loc){
+      _cgLocVotes[r.caregiver] = _cgLocVotes[r.caregiver] || {};
+      _cgLocVotes[r.caregiver][loc] = (_cgLocVotes[r.caregiver][loc] || 0) + 1;
+    }
+    if(!isActiveShift(r)) return;
+    _cgShifts[r.caregiver] = (_cgShifts[r.caregiver] || 0) + 1;
+    if(r.client_name){
+      _cgClients[r.caregiver] = _cgClients[r.caregiver] || {};
+      _cgClients[r.caregiver][r.client_name.trim().toLowerCase()] = 1;
+    }
+  });
+  window._hcuRows = cgS.filter(function(e){ return (e[5] ? e[5].days : 1) > 0; }).map(function(e){
+    var cg = e[0], hc = e[4] || 'Unassigned', pr = e[5] || {full:true, days:0, span:0};
+    // Location: the city set on the caregiver card wins; otherwise the city
+    // most of their bookings in this period were in
+    var set = (cgSettings[cg + '|' + (e[4] || '')] || {}).city;
+    var city = normCity(set || ''), src = city ? 'card' : '';
+    if(!city && _cgLocVotes[cg]){
+      city = Object.keys(_cgLocVotes[cg]).sort(function(x,y){ return _cgLocVotes[cg][y] - _cgLocVotes[cg][x]; })[0];
+      src = 'bookings';
+    }
+    return {
+      cg:cg, hc:hc, excl:isExclusiveCG(cg, e[4]), city:city || '', citySrc:src,
+      hrs:Math.round(e[1] * 10) / 10, max:Math.round(e[2]), pct:e[3],
+      days:pr.days, span:pr.span, full:!!pr.full,
+      shifts:_cgShifts[cg] || 0, clients:Object.keys(_cgClients[cg] || {}).length
+    };
+  });
+  window._hcuPeriod = periodLabel;
+
   // New vs Repeat — unique clients by type
   const clientTypeMap = {};
   data.forEach(r => {
@@ -12144,6 +12182,28 @@ function renderAnalyticsData(){
       </div>
     </div>
 
+    <!-- ── Homecare & Caregiver-wise Utilisation ── -->
+    <div class="a-card" style="grid-column:1/-1">
+      <div class="a-title"><div class="a-title-bar" style="background:#14b8a6"></div>🏥 Utilisation by Homecare &amp; Caregiver</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.6">
+        📌 <b style="color:var(--text2)">What this shows:</b> Every caregiver with their homecare, whether they are 👑 exclusive, their location, and how many of their available hours were worked. Each homecare has a subtotal row.<br>
+        <b>Utilisation</b> = hours worked ÷ hours available (pro-rata, same basis as the bars below). <b>Location</b> comes from the city set on the caregiver card; if none is set it uses where most of their bookings were (shown in grey with ⓑ).<br>
+        <span style="color:var(--accent)">Use the filters to compare exclusive vs non-exclusive, or one city against another. Click a homecare row to collapse it.</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px">
+        <input id="hcu-search" placeholder="Search caregiver…" oninput="renderHCCGUtil()" style="padding:5px 9px;font-size:11px;border-radius:5px;border:1px solid var(--border);background:var(--bg3);color:var(--text);min-width:160px">
+        <select id="hcu-f-hc" onchange="renderHCCGUtil()" style="padding:5px 8px;font-size:11px;border-radius:5px;border:1px solid var(--border);background:var(--bg3);color:var(--text)"><option value="">All homecares</option></select>
+        <select id="hcu-f-city" onchange="renderHCCGUtil()" style="padding:5px 8px;font-size:11px;border-radius:5px;border:1px solid var(--border);background:var(--bg3);color:var(--text)"><option value="">All locations</option></select>
+        <select id="hcu-f-type" onchange="renderHCCGUtil()" style="padding:5px 8px;font-size:11px;border-radius:5px;border:1px solid var(--border);background:var(--bg3);color:var(--text)">
+          <option value="">Exclusive + non-exclusive</option><option value="excl">👑 Exclusive only</option><option value="non">👥 Non-exclusive only</option></select>
+        <select id="hcu-f-band" onchange="renderHCCGUtil()" style="padding:5px 8px;font-size:11px;border-radius:5px;border:1px solid var(--border);background:var(--bg3);color:var(--text)">
+          <option value="">All utilisation levels</option><option value="g">🟢 70%+</option><option value="b">🔵 40–69%</option><option value="r">🔴 Below 40%</option></select>
+        <button onclick="exportHCCGUtil()" style="margin-left:auto;padding:5px 12px;font-size:11px;font-weight:600;border-radius:5px;cursor:pointer;background:var(--bg3);color:var(--text);border:1px solid var(--border)">⬇ Excel</button>
+      </div>
+      <div id="hcu-summary" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px"></div>
+      <div id="hcu-table"></div>
+    </div>
+
     <!-- ── Chart 3: CG Utilisation ── -->
     <div class="a-card" style="grid-column:1/-1">
       <div class="a-title"><div class="a-title-bar" style="background:var(--duty)"></div>Caregiver Utilisation — Hours Worked</div>
@@ -12193,6 +12253,7 @@ function renderAnalyticsData(){
     </div>
 
 `;
+  renderHCCGUtil();
   // ── Post-render: avg badges + comparison table ──
   (function(){
     var eP=[],nP=[],eH=[],nH=[],eM=[],nM=[];
@@ -12235,6 +12296,172 @@ function renderAnalyticsData(){
       +row('Overall Utilization %',oE,oN,false)
       +'</tbody></table>';
   })();
+}
+
+// ── Homecare & Caregiver-wise Utilisation (Analytics) ───────────
+var _hcuCollapsed = {};
+function _hcuCol(p){ return p >= 70 ? 'var(--duty)' : p >= 40 ? 'var(--accent)' : 'var(--sick)'; }
+function _hcuEsc(v){ return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function _hcuPct(h, m){ return m ? Math.min(Math.round(h / m * 100), 100) : 0; }
+
+function _hcuFiltered(){
+  var g = function(id){ var e = document.getElementById(id); return e ? e.value : ''; };
+  var q = (g('hcu-search') || '').toLowerCase().trim();
+  var fhc = g('hcu-f-hc'), fc = g('hcu-f-city'), ft = g('hcu-f-type'), fb = g('hcu-f-band');
+  return (window._hcuRows || []).filter(function(r){
+    if(fhc && r.hc !== fhc) return false;
+    if(fc && (r.city || 'none') !== fc) return false;
+    if(ft === 'excl' && !r.excl) return false;
+    if(ft === 'non' && r.excl) return false;
+    if(fb === 'g' && r.pct < 70) return false;
+    if(fb === 'b' && (r.pct < 40 || r.pct >= 70)) return false;
+    if(fb === 'r' && r.pct >= 40) return false;
+    if(q && r.cg.toLowerCase().indexOf(q) < 0) return false;
+    return true;
+  });
+}
+
+function _hcuFillSelect(id, values, first, labelFn){
+  var el = document.getElementById(id); if(!el) return;
+  var cur = el.value;
+  el.innerHTML = '<option value="">' + first + '</option>' + values.map(function(v){
+    return '<option value="' + _hcuEsc(v) + '">' + _hcuEsc(labelFn ? labelFn(v) : v) + '</option>';
+  }).join('');
+  if(cur && values.indexOf(cur) >= 0) el.value = cur;
+}
+
+function toggleHCUGroup(hc){ _hcuCollapsed[hc] = !_hcuCollapsed[hc]; renderHCCGUtil(); }
+
+function renderHCCGUtil(){
+  var box = document.getElementById('hcu-table'); if(!box) return;
+  var all = window._hcuRows || [];
+  _hcuFillSelect('hcu-f-hc', [...new Set(all.map(function(r){ return r.hc; }))].sort(), 'All homecares');
+  var cities = [...new Set(all.map(function(r){ return r.city || 'none'; }))].sort();
+  _hcuFillSelect('hcu-f-city', cities, 'All locations', function(c){ return c === 'none' ? 'No location' : c; });
+
+  var rows = _hcuFiltered();
+  var sum = function(a, k){ return a.reduce(function(s, r){ return s + r[k]; }, 0); };
+
+  // ── Summary chips: overall, exclusive vs non-exclusive, by location ──
+  var sm = document.getElementById('hcu-summary');
+  if(sm){
+    var chip = function(label, list, col){
+      var h = sum(list, 'hrs'), m = sum(list, 'max'), p = _hcuPct(h, m);
+      return '<div style="border:1px solid var(--border);border-radius:6px;padding:5px 10px;background:var(--bg3);font-size:11px">'
+        + '<span style="color:' + (col || 'var(--text2)') + ';font-weight:600">' + label + '</span> '
+        + '<b style="font-family:monospace;color:' + _hcuCol(p) + '">' + p + '%</b>'
+        + '<span style="color:var(--text3);font-size:10px;margin-left:5px">' + list.length + ' CGs · ' + Math.round(h).toLocaleString() + '/' + m.toLocaleString() + 'h</span></div>';
+    };
+    var byCity = {};
+    rows.forEach(function(r){ var c = r.city || 'No location'; (byCity[c] = byCity[c] || []).push(r); });
+    sm.innerHTML = rows.length ? chip('Overall', rows)
+      + chip('👑 Exclusive', rows.filter(function(r){ return r.excl; }), '#f59e0b')
+      + chip('👥 Non-exclusive', rows.filter(function(r){ return !r.excl; }), '#8b5cf6')
+      + Object.keys(byCity).sort().map(function(c){ return chip('📍 ' + c, byCity[c]); }).join('') : '';
+  }
+
+  if(!rows.length){ box.innerHTML = '<div style="color:var(--text2);font-size:12px;padding:10px">No caregivers match these filters</div>'; return; }
+
+  // ── Group by homecare ──
+  var groups = {};
+  rows.forEach(function(r){ (groups[r.hc] = groups[r.hc] || []).push(r); });
+  var hcs = Object.keys(groups).map(function(hc){
+    var l = groups[hc], h = sum(l, 'hrs'), m = sum(l, 'max');
+    l.sort(function(a, b){ return b.pct - a.pct || b.hrs - a.hrs; });
+    return {hc:hc, list:l, hrs:h, max:m, pct:_hcuPct(h, m), shifts:sum(l, 'shifts'),
+            excl:l.filter(function(r){ return r.excl; }).length,
+            cities:[...new Set(l.map(function(r){ return r.city; }).filter(Boolean))].sort()};
+  }).sort(function(a, b){ return b.pct - a.pct || b.hrs - a.hrs; });
+
+  var th = 'padding:8px 10px;font-size:10px;font-weight:600;text-transform:uppercase;color:var(--text2);border-bottom:2px solid var(--border);white-space:nowrap;text-align:left';
+  var td = 'padding:6px 10px;font-size:12px;border-bottom:1px solid var(--border);white-space:nowrap';
+  var bar = function(p, h){
+    return '<div style="display:flex;align-items:center;gap:8px;min-width:170px">'
+      + '<div class="bar-track" style="height:' + (h || 6) + 'px"><div class="bar-fill" style="width:' + p + '%;background:' + _hcuCol(p) + ';min-width:' + (p > 0 ? '3px' : '0') + '"></div></div>'
+      + '<span style="font-family:monospace;font-weight:700;color:' + _hcuCol(p) + ';min-width:36px;text-align:right">' + p + '%</span></div>';
+  };
+
+  var html = '<div style="overflow-x:auto;border:1px solid var(--border);border-radius:8px">'
+    + '<table style="width:100%;border-collapse:collapse;min-width:900px"><thead><tr style="background:var(--bg3)">'
+    + '<th style="' + th + '">Caregiver</th><th style="' + th + '">Type</th><th style="' + th + '">Homecare</th>'
+    + '<th style="' + th + '">Location</th><th style="' + th + '">Utilisation</th>'
+    + '<th style="' + th + ';text-align:right">Hours worked</th><th style="' + th + ';text-align:right">Days available</th>'
+    + '<th style="' + th + ';text-align:right">Duty shifts</th><th style="' + th + ';text-align:right">Clients</th>'
+    + '</tr></thead><tbody>';
+
+  hcs.forEach(function(g){
+    var closed = !!_hcuCollapsed[g.hc];
+    var hcArg = _hcuEsc(JSON.stringify(g.hc));
+    html += '<tr style="background:var(--bg2);cursor:pointer" onclick="toggleHCUGroup(' + hcArg + ')">'
+      + '<td style="' + td + ';font-weight:700" colspan="3"><span style="display:inline-block;width:12px;color:var(--text3)">' + (closed ? '▸' : '▾') + '</span>'
+      + '<span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:' + hcColor(g.hc) + ';margin-right:6px"></span>' + _hcuEsc(g.hc)
+      + ' <span style="font-size:10px;font-weight:400;color:var(--text3)">' + g.list.length + ' CG' + (g.list.length === 1 ? '' : 's')
+      + (g.excl ? ' · <span style="color:#f59e0b">' + g.excl + ' 👑</span>' : '') + '</span></td>'
+      + '<td style="' + td + ';font-size:11px;color:var(--text2)">' + (g.cities.join(', ') || '—') + '</td>'
+      + '<td style="' + td + '">' + bar(g.pct, 8) + '</td>'
+      + '<td style="' + td + ';text-align:right;font-family:monospace;font-weight:700">' + Math.round(g.hrs).toLocaleString() + '<span style="color:var(--text3);font-weight:400">/' + g.max.toLocaleString() + 'h</span></td>'
+      + '<td style="' + td + '"></td>'
+      + '<td style="' + td + ';text-align:right;font-family:monospace;font-weight:700">' + g.shifts + '</td><td style="' + td + '"></td></tr>';
+    if(closed) return;
+    g.list.forEach(function(r){
+      var type = r.excl
+        ? '<span style="font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(245,158,11,.18);color:#f59e0b;font-weight:600">👑 Exclusive</span>'
+        : '<span style="font-size:10px;padding:2px 6px;border-radius:4px;background:rgba(139,92,246,.15);color:#8b5cf6;font-weight:600">👥 Non-excl</span>';
+      var loc = r.city
+        ? (r.citySrc === 'bookings' ? '<span style="color:var(--text3)" title="No city set on the caregiver card — taken from where most bookings were">' + r.city + ' ⓑ</span>' : '<b style="font-weight:600">' + r.city + '</b>')
+        : '<span style="color:var(--text3)">—</span>';
+      var pr = r.full ? '' : ' <span style="font-size:9px;padding:1px 4px;border-radius:3px;background:rgba(210,153,34,.2);color:var(--sick)" title="Pro-rata">pro-rata</span>';
+      html += '<tr>'
+        + '<td style="' + td + ';padding-left:30px">' + _hcuEsc(r.cg) + '</td>'
+        + '<td style="' + td + '">' + type + '</td>'
+        + '<td style="' + td + ';font-size:11px;color:var(--text2)">' + _hcuEsc(r.hc) + '</td>'
+        + '<td style="' + td + ';font-size:11px">' + loc + '</td>'
+        + '<td style="' + td + '">' + bar(r.pct) + '</td>'
+        + '<td style="' + td + ';text-align:right;font-family:monospace">' + r.hrs + '<span style="color:var(--text3)">/' + r.max + 'h</span></td>'
+        + '<td style="' + td + ';text-align:right;font-family:monospace;font-size:11px">' + r.days + '/' + r.span + pr + '</td>'
+        + '<td style="' + td + ';text-align:right;font-family:monospace">' + (r.shifts || '—') + '</td>'
+        + '<td style="' + td + ';text-align:right;font-family:monospace">' + (r.clients || '—') + '</td></tr>';
+    });
+  });
+
+  var tH = sum(rows, 'hrs'), tM = sum(rows, 'max');
+  html += '<tr style="background:var(--bg3)"><td style="' + td + ';font-weight:700" colspan="4">Total (' + rows.length + ' CGs)</td>'
+    + '<td style="' + td + '">' + bar(_hcuPct(tH, tM), 8) + '</td>'
+    + '<td style="' + td + ';text-align:right;font-family:monospace;font-weight:700">' + Math.round(tH).toLocaleString() + '<span style="color:var(--text3);font-weight:400">/' + tM.toLocaleString() + 'h</span></td>'
+    + '<td style="' + td + '"></td><td style="' + td + ';text-align:right;font-family:monospace;font-weight:700">' + sum(rows, 'shifts') + '</td><td style="' + td + '"></td></tr>'
+    + '</tbody></table></div>';
+  box.innerHTML = html;
+}
+
+function exportHCCGUtil(){
+  var rows = _hcuFiltered();
+  if(!rows.length){ alert('Nothing to export with these filters.'); return; }
+  var head = ['Homecare','Caregiver','Type','Location','Location source','Hours worked','Hours available','Utilisation %','Days available','Days in period','Duty shifts','Clients'];
+  var aoa = [head].concat(rows.slice().sort(function(a,b){ return a.hc.localeCompare(b.hc) || b.pct - a.pct; }).map(function(r){
+    return [r.hc, r.cg, r.excl ? 'Exclusive' : 'Non-exclusive', r.city || '', r.citySrc === 'card' ? 'Caregiver card' : r.citySrc === 'bookings' ? 'Bookings' : '',
+            r.hrs, r.max, r.pct, r.days, r.span, r.shifts, r.clients];
+  }));
+  var fname = 'Valeo_Utilisation_HC_CG_' + String(window._hcuPeriod || '').replace(/[^A-Za-z0-9]+/g,'_');
+  if(typeof XLSX === 'undefined'){
+    var csv = aoa.map(function(rr){ return rr.map(function(c){ var v = String(c==null?'':c); return /[",\n]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v; }).join(','); }).join('\r\n');
+    _lrDownload(new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8'}), fname + '.csv');
+    return;
+  }
+  var byHC = {};
+  rows.forEach(function(r){ (byHC[r.hc] = byHC[r.hc] || []).push(r); });
+  var sumA = [['Homecare','Caregivers','Exclusive','Non-exclusive','Locations','Hours worked','Hours available','Utilisation %','Duty shifts']];
+  Object.keys(byHC).sort().forEach(function(hc){
+    var l = byHC[hc], h = l.reduce(function(a,r){return a+r.hrs;},0), m = l.reduce(function(a,r){return a+r.max;},0);
+    var ex = l.filter(function(r){return r.excl;}).length;
+    sumA.push([hc, l.length, ex, l.length-ex, [...new Set(l.map(function(r){return r.city;}).filter(Boolean))].join(', '),
+               Math.round(h*10)/10, m, _hcuPct(h,m), l.reduce(function(a,r){return a+r.shifts;},0)]);
+  });
+  var wb = XLSX.utils.book_new();
+  var ws1 = XLSX.utils.aoa_to_sheet(sumA); ws1['!cols'] = [{wch:30},{wch:11},{wch:10},{wch:14},{wch:20},{wch:13},{wch:15},{wch:13},{wch:11}];
+  var ws2 = XLSX.utils.aoa_to_sheet(aoa);  ws2['!cols'] = [{wch:30},{wch:26},{wch:14},{wch:10},{wch:15},{wch:13},{wch:15},{wch:13},{wch:14},{wch:14},{wch:11},{wch:9}];
+  XLSX.utils.book_append_sheet(wb, ws1, 'Homecare summary');
+  XLSX.utils.book_append_sheet(wb, ws2, 'Caregivers');
+  XLSX.writeFile(wb, fname + '.xlsx');
 }
 
 // ── Tab switching ────────────────────────────────────────────────
@@ -19923,3 +20150,4 @@ if(checkExistingSession()){
 
 
 </body></html>
+
