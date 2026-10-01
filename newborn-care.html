@@ -641,6 +641,21 @@
   .area-card h3{ font-size:20px; color:var(--navy); margin-bottom:4px; }
   .area-card p{ font-size:13.5px; color:var(--muted); }
   html[dir="rtl"] .svc-card .btn{ align-self:flex-end; }
+
+  /* compact layout + hero heading fix */
+  section{ padding:44px 0; }
+  @media(max-width:720px){ section{ padding:30px 0; } }
+  .hero-grid{ padding:20px 0 16px; gap:36px; }
+  @media(max-width:960px){ .hero-grid{ padding:20px 0 16px; gap:24px; } }
+  .hero h1{ font-size:clamp(30px,3.6vw,46px); margin:10px 0 14px; line-height:1.08; }
+  .hero h1 em{ display:block; }
+  @media(max-width:520px){ .hero h1{ font-size:6.4vw; } }
+  .hero-photo-wrap img{ aspect-ratio:4/5; }
+  .hero-ctas{ margin-bottom:18px; }
+  .svc-head, .why-head, .flex-head, .faq-head, .videos-head, .greviews-head{ margin-bottom:22px !important; }
+  .svc-head h2, .why-head h2, .videos-head h2{ margin:8px 0 8px; }
+  .areas{ padding-top:20px; }
+  .badge-row{ padding-bottom:12px; }
 </style>
 </head>
 <body>
