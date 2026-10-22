@@ -37,7 +37,7 @@ function configured() {
       return data;
     }
   });
-  dependencies = { service, sessions: createAdminSessions(db, process.env.VALEO_ADMIN_PASSWORD_HASH) };
+  dependencies = { service, sessions: createAdminSessions(db, process.env.VALEO_ADMIN_PASSWORD_HASH, Date.now, process.env.VALEO_ADMIN_PASSWORD) };
   return dependencies;
 }
 

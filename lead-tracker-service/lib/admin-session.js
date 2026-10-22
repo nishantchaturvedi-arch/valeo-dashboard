@@ -8,10 +8,20 @@ export async function passwordHash(password, salt = randomBytes(16).toString('he
   if (typeof password !== 'string' || password.length < 12 || password.length > 256) throw new Error('Use a new password of 12–256 characters.');
   return salt + ':' + (await derive(password, salt, 32, options)).toString('hex');
 }
-export function createAdminSessions(db, encodedPassword, clock = Date.now) {
+export function createAdminSessions(db, encodedPassword, clock = Date.now, privatePassword) {
   const sessions = db.collection('adminSessions');
-  function configured() {
+  const usePrivatePassword = typeof privatePassword === 'string' && privatePassword.length > 0;
+  const passwordVersion = digest(usePrivatePassword ? 'private:' + privatePassword : encodedPassword || '');
+  let derivedPassword;
+  async function configured() {
+    if (usePrivatePassword) {
+      if (privatePassword.length < 12 || privatePassword.length > 256) throw new HttpError(503, 'Admin password must be 12–256 characters.');
+      // Derive once per instance; only the version fingerprint is stored in sessions.
+      derivedPassword ||= passwordHash(privatePassword);
+      return derivedPassword;
+    }
     if (!/^[a-f0-9]{32}:[a-f0-9]{64}$/.test(encodedPassword || '')) throw new HttpError(503, 'Admin sign-in is not configured.');
+    return encodedPassword;
   }
   function refFor(header) {
     const match = /^Bearer ([a-f0-9]{64})$/.exec(header || '');
@@ -19,9 +29,9 @@ export function createAdminSessions(db, encodedPassword, clock = Date.now) {
     return sessions.doc(digest(match[1]));
   }
   async function authorize(header) {
-    configured();
+    await configured();
     const ref = refFor(header), record = (await ref.get()).data();
-    if (!record || record.username !== 'valeo_admin' || record.expiresAt <= clock() || record.passwordVersion !== digest(encodedPassword)) {
+    if (!record || record.username !== 'valeo_admin' || record.expiresAt <= clock() || record.passwordVersion !== passwordVersion) {
       throw new HttpError(401, 'Your dashboard session has expired. Please sign in again.');
     }
     return ref;
@@ -29,7 +39,7 @@ export function createAdminSessions(db, encodedPassword, clock = Date.now) {
   return {
     authorize,
     async login(body) {
-      configured();
+      const hash = await configured();
       if (body?.username !== 'valeo_admin' || typeof body.password !== 'string' || body.password.length < 12 || body.password.length > 256) throw new HttpError(401, 'Invalid username or password.');
       // Shared transactional limit persists across serverless instances.
       const rate = db.collection('system').doc('adminLoginRate');
@@ -39,11 +49,11 @@ export function createAdminSessions(db, encodedPassword, clock = Date.now) {
         if (record.count >= 20) throw new HttpError(429, 'Too many sign-in attempts. Try again in 15 minutes.');
         tx.set(rate, { ...record, count: record.count + 1 });
       });
-      const [salt, expected] = encodedPassword.split(':');
+      const [salt, expected] = hash.split(':');
       const actual = await derive(body.password, salt, 32, options);
       if (!timingSafeEqual(actual, Buffer.from(expected, 'hex'))) throw new HttpError(401, 'Invalid username or password.');
       const token = randomBytes(32).toString('hex'), expiresAt = clock() + 8 * 60 * 60 * 1000;
-      await sessions.doc(digest(token)).set({ username: 'valeo_admin', expiresAt, passwordVersion: digest(encodedPassword) });
+      await sessions.doc(digest(token)).set({ username: 'valeo_admin', expiresAt, passwordVersion: passwordVersion });
       return { token, expiresAt };
     },
     async logout(header) { const ref = await authorize(header); await ref.delete(); }

@@ -36,3 +36,14 @@ test('admin login fails closed without configuration and enforces a shared attem
   const auth = createAdminSessions(db, 'a'.repeat(32) + ':' + 'b'.repeat(64));
   await assert.rejects(auth.login({username: 'valeo_admin', password: 'some-test-password'}), { status: 429 });
 });
+
+test('private environment password works across instances and rotation revokes sessions', async () => {
+  const db = memoryDb();
+  const secret = 'synthetic-private-password';
+  const first = createAdminSessions(db, '', Date.now, secret);
+  await assert.rejects(first.login({ username: 'valeo_admin', password: 'incorrect-password' }), { status: 401 });
+  const session = await first.login({ username: 'valeo_admin', password: secret });
+  await createAdminSessions(db, '', Date.now, secret).authorize('Bearer ' + session.token);
+  await assert.rejects(createAdminSessions(db, '', Date.now, 'different-private-password').authorize('Bearer ' + session.token), { status: 401 });
+  await assert.rejects(createAdminSessions(db, '', Date.now, 'short').login({}), { status: 503 });
+});
