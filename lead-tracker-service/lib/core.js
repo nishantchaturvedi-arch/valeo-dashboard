@@ -12,6 +12,16 @@ export class HttpError extends Error {
   constructor(status, message) { super(message); this.status = status; }
 }
 
+// A default database is allowed only in an explicitly selected, separate project.
+export function validateDatabaseTarget(credentials, projectId, databaseId) {
+  if (!projectId || credentials?.project_id !== projectId || !databaseId) {
+    throw new HttpError(503, 'The private lead database is not configured.');
+  }
+  if (databaseId === '(default)' && projectId === 'valeo-dashboard') {
+    throw new HttpError(503, 'Use a separate Firebase project for the default lead database.');
+  }
+}
+
 const text = value => String(value ?? '').trim();
 const hash = value => createHash('sha256').update(value).digest('hex');
 export const validId = id => typeof id === 'string' && /^[a-f0-9]{64}$/.test(id);

@@ -2,17 +2,18 @@ import { cert, getApp, getApps, initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { GoogleAuth } from 'google-auth-library';
-import { authorizeAdmin, authorizeSync, DASHBOARD_ORIGIN, HttpError, SOURCE_ID, SOURCE_RANGE } from '../lib/core.js';
+import { authorizeAdmin, authorizeSync, validateDatabaseTarget, DASHBOARD_ORIGIN, HttpError, SOURCE_ID, SOURCE_RANGE } from '../lib/core.js';
 import { createService } from '../lib/service.js';
 
 let dependencies;
 function configured() {
   if (dependencies) return dependencies;
   if (!/^[A-Za-z0-9_-]{20,200}$/.test(SOURCE_ID)) throw new HttpError(503, 'The lead source is not configured.');
-  if (!process.env.FIREBASE_SERVICE_ACCOUNT_JSON || !process.env.FIRESTORE_DATABASE_ID || process.env.FIRESTORE_DATABASE_ID === '(default)') {
+  if (!process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
     throw new HttpError(503, 'The private lead database is not configured.');
   }
   const credentials = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+  validateDatabaseTarget(credentials, process.env.LEAD_FIREBASE_PROJECT_ID, process.env.FIRESTORE_DATABASE_ID);
   const app = getApps().some(a => a.name === 'uae-leads-backend') ? getApp('uae-leads-backend') : initializeApp({ credential: cert(credentials) }, 'uae-leads-backend');
   const db = getFirestore(app, process.env.FIRESTORE_DATABASE_ID);
   const google = new GoogleAuth({ credentials: JSON.parse(process.env.SHEETS_SERVICE_ACCOUNT_JSON || process.env.FIREBASE_SERVICE_ACCOUNT_JSON), scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'] });

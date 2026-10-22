@@ -19,17 +19,19 @@ The existing dashboard checks its login credentials in public browser code. That
 
 The lead tracker requests a separate admin verification using Firebase Authentication. Create or choose the one Firebase account that represents `valeo_admin` and set its UID on the server. Use a new private password, not the password embedded in the current dashboard. This change does not replace the existing dashboard's login or alter partner accounts.
 
-All new lead records must be in a **separate named Firestore database**, `uae-leads`, with the included deny-all client rules. The backend deliberately refuses `(default)`. Do not replace the existing default database's rules with this file. The server uses IAM through the Admin SDK. Client scripts never receive service-account credentials, Slack tokens, or sync secrets.
+All new lead records use the **default database in a separate Firebase project** on Spark. Set `LEAD_FIREBASE_PROJECT_ID` to that new project's exact ID and `FIRESTORE_DATABASE_ID` to `(default)`. The backend checks that the service-account project matches and refuses the existing `valeo-dashboard` default database. Apply deny-all client rules only to the new database. Server access uses IAM through the Admin SDK; browser scripts never receive credentials.
+
+Spark has usage limits, not unlimited free capacity. The one-minute full-sheet scan performs reads proportional to the total imported rows; adjust polling as the sheet grows and monitor Firestore usage. Named databases require billing and are not the chosen setup.
 
 ## Deployment sequence
 
-1. In the existing Firebase project, enable email/password Authentication if needed and identify the admin UID. Configure the GitHub Pages hostname as an authorized domain. Keep password entry in Firebase's own account setup/reset flow.
-2. Create the named Firestore database `uae-leads` and apply `lead-tracker-service/firestore.rules` to that database only. Enable the Google Sheets API in the service account's project.
+1. Create a separate Firebase project on Spark, enable email/password Authentication and identify the admin UID. Configure the GitHub Pages hostname as an authorized domain. Keep password entry in Firebase's own account setup/reset flow.
+2. Create its `(default)` Firestore database in production mode and apply `lead-tracker-service/firestore.rules` to that new project only. Enable the Google Sheets API in the service account's project.
 3. Give the backend service account viewer access to the exact source spreadsheet. Set its ID privately as `LEAD_SOURCE_SPREADSHEET_ID` on the backend; do not commit the ID. A separate Sheets service account may be supplied if desired.
 4. Deploy `lead-tracker-service` as the root directory of a Node.js Vercel project. Install with `npm ci`; no frontend framework or build command is needed. Use the tested lockfile. Set the variables listed in `.env.example` through the host's environment settings.
 5. Select the intended Slack channel and a bot with `chat:write`. Invite the bot to that channel. Set `SLACK_CHANNEL_ID` and `SLACK_BOT_TOKEN` on the backend. Do not use a personal session cookie or place a token in the repository.
 6. Generate a random sync secret of at least 32 bytes. Store it as `LEAD_SYNC_SECRET` on the backend and as an n8n Header Auth credential: name `Authorization`, value `Bearer <secret>`.
-7. Set only the verified deployed API URL in `assets/uae-leads-config.js`, ending in `/api/uae-leads`. Keep Firebase public config null to reuse the current dashboard project, or set the public web-app config if a separate Authentication project was chosen.
+7. Set only the verified deployed API URL in `assets/uae-leads-config.js`, ending in `/api/uae-leads`. Register a web app in the new Firebase project and set its public web-app config in the same file; do not leave Firebase config null for this setup.
 8. Import `automation/uae-babysitting-leads.n8n.json`. Replace its example endpoint and select the Header Auth credential. Run it once manually to establish the quiet baseline. Check the returned source count and the tracker before enabling the schedule.
 9. Complete a controlled new-lead test in the real integration, including the chosen Slack channel, the deep link, admin-only read/write access, a saved status, and a reload. Then publish the dashboard changes and activate the workflow. Do not describe this as live before that test passes.
 
