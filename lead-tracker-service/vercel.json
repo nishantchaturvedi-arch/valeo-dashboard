@@ -1,0 +1,3 @@
+{
+  "functions": { "api/uae-leads.js": { "maxDuration": 60 } }
+}

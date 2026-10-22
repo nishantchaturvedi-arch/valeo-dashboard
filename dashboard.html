@@ -783,6 +783,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="stylesheet" href="assets/uae-leads.css">
 </head>
 <body>
 
@@ -822,6 +823,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 
 <!-- ── Tabs ── -->
 <div class="main-tabs">
+ <button class="main-tab" id="uae-leads-tab" hidden onclick="switchTab('uae-leads')">UAE Babysitting Leads</button>
  <button class="main-tab active" onclick="switchTab(&#39;calendar&#39;)">📅 Calendar</button>
  <button class="main-tab" onclick="switchTab(&#39;analytics&#39;)">📊 Analytics</button>
  <button class="main-tab" onclick="switchTab(&#39;ops&#39;)">⚡ Operations</button>
@@ -10955,6 +10957,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  </div>
 </div>
 
+<section class="page" id="page-uae-leads" aria-label="UAE Babysitting Leads"><div id="uae-lead-root"></div></section>
 <script>
 // ── CONFIG ──────────────────────────────────────────────────────
 
@@ -12239,6 +12242,7 @@ function renderAnalyticsData(){
 
 // ── Tab switching ────────────────────────────────────────────────
 function switchTab(tab){
+  if(tab==='uae-leads'&&!(_session&&_session.username==='valeo_admin'&&_session.role==='master')){alert('Access restricted');return;}
   // HC partner accounts: Calendar + Roster only
   if(_session&&_session.role==='hc'&&tab!=='calendar'&&tab!=='roster'&&tab!=='complaints'&&tab!=='tickets'&&tab!=='leave'&&tab!=='avail'){alert('Access restricted');return;}
   // Client accounts (e.g. Mumzworld): their own order list + tickets only
@@ -12247,13 +12251,14 @@ function switchTab(tab){
   if(tab==='daily'){setTimeout(switchToDaily,80);}
   if(tab==='mumz'){setTimeout(switchToMumz,80);}
   var _tabLbl={calendar:'calendar',analytics:'analytics',ops:'operations',planner:'schedule builder',roster:'roster',
-    daily:'daily orders',leads:'sm lead',fclead:'fc lead',supply:'supply',customleads:'lead tracker',
+    'uae-leads':'uae babysitting',daily:'daily orders',leads:'sm lead',fclead:'fc lead',supply:'supply',customleads:'lead tracker',
     complaints:'complaint',penalty:'penalty',expecting:'expecting',tickets:'hc tickets',leave:'leave applications',
     mumz:'mumzworld orders', avail:'availability search'}[tab]||tab;
   document.querySelectorAll('.main-tab').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase().includes(_tabLbl)));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   var _pg=document.getElementById('page-'+tab);if(_pg)_pg.classList.add('active');
   document.getElementById('avail-bar').style.display=tab==='calendar'?'flex':'none';
+  if(tab==='uae-leads'&&window.UAELeads)window.UAELeads.open();
   if(tab==='avail')avInit();
   if(tab==='analytics')renderAnalytics();
   if(tab==='ops')renderOps();
@@ -17532,6 +17537,7 @@ async function doLogin(){
   }catch(e){err.style.display='block';btn.disabled=false;btn.textContent='Sign In';}
 }
 function applySessionUI(){
+  if(window.UAELeads)window.UAELeads.syncSession();
   if(!_session)return;
   var header=document.querySelector('.header-right');
   if(header){
@@ -17554,7 +17560,7 @@ function applySessionUI(){
     if(_tkTab) _tkTab.innerHTML='🎫 My Tickets<span id="tk-tab-badge" style="font-weight:800"></span>';
   }
 }
-function doLogout(){sessionStorage.removeItem('valeo_session');_session=null;location.reload();}
+function doLogout(){if(window.UAELeads)window.UAELeads.clearSession();sessionStorage.removeItem('valeo_session');_session=null;location.reload();}
 function checkExistingSession(){try{var s=JSON.parse(sessionStorage.getItem('valeo_session')||'null');if(s&&s.username&&s.role){_session=s;return true;}}catch(e){}return false;}
 
 // ── Schedule Builder ──────────────────────────────────────────────
@@ -19922,4 +19928,6 @@ if(checkExistingSession()){
 
 
 
+<script src="assets/uae-leads-config.js"></script>
+<script src="assets/uae-leads.js"></script>
 </body></html>
