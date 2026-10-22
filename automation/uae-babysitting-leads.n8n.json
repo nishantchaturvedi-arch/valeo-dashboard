@@ -1,0 +1,38 @@
+{
+  "name": "UAE babysitting - sheet sync and Slack alerts",
+  "active": false,
+  "nodes": [
+    {
+      "id": "uae-lead-minute-trigger",
+      "name": "Check every minute",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [260, 300],
+      "parameters": { "rule": { "interval": [{ "field": "minutes", "minutesInterval": 1 }] } }
+    },
+    {
+      "id": "uae-lead-secure-sync",
+      "name": "Sync UAE_babysitting and send queued alerts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [560, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "https://CONFIGURE-YOUR-LEAD-SERVICE.example/api/uae-leads?action=sync",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": { "timeout": 70000 }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000,
+      "notes": "Set the deployed endpoint. Select an HTTP Header Auth credential named Authorization with value Bearer <LEAD_SYNC_SECRET>. Keep the secret in credentials, never in this workflow JSON."
+    }
+  ],
+  "connections": {
+    "Check every minute": { "main": [[{ "node": "Sync UAE_babysitting and send queued alerts", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1", "timezone": "Asia/Dubai" },
+  "pinData": {},
+  "tags": []
+}

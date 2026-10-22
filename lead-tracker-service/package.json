@@ -1,0 +1,15 @@
+{
+  "name": "valeo-uae-lead-tracker-service",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "firebase-admin": "13.10.0",
+    "google-auth-library": "10.9.1"
+  }
+}
