@@ -6,7 +6,7 @@
   const statuses = ['New', 'Contacted', 'No answer', 'Follow-up', 'Profile shared', 'Trial booked', 'Converted', 'Lost', 'Invalid', 'Duplicate'];
   const heats = ['', 'Hot', 'Warm', 'Cold', 'Dead'];
   const config = window.UAELeadsConfig || {};
-  let auth, authLoading, rows = [], nextCursor = null, sync = {}, dialog, editing, busy = false, pageReady = false;
+  let rows = [], nextCursor = null, sync = {}, dialog, editing, busy = false, pageReady = false;
   let refreshTimer, generation = 0;
   const filters = { search: '', status: '', heat: '', due: false };
   const sessionAllowed = () => typeof _session !== 'undefined' && _session && _session.username === 'valeo_admin' && _session.role === 'master';
@@ -33,7 +33,9 @@
   function clearSession() {
     generation++; rows = []; nextCursor = null; pageReady = false; busy = false;
     clearInterval(refreshTimer); refreshTimer = null; closeDialog(); root.replaceChildren();
-    if (auth) return auth.signOut();
+    const token = sessionStorage.getItem('valeo_admin_token');
+    sessionStorage.removeItem('valeo_admin_token');
+    if (token && config.apiUrl) { const url = new URL(config.apiUrl); url.searchParams.set('action', 'logout'); fetch(url, { method: 'POST', headers: { Authorization: 'Bearer ' + token }, keepalive: true }).catch(() => {}); }
   }
   function syncSession() {
     tab.hidden = !sessionAllowed();
@@ -41,34 +43,26 @@
     if (location.hash.startsWith('#uae-leads/')) window.switchTab('uae-leads');
   }
 
-  async function initAuth() {
-    if (auth) return auth;
-    if (authLoading) return authLoading;
-    authLoading = (async () => {
-      if (!window.firebase) throw new Error('Sign-in could not load. Check your connection and refresh.');
-      if (!firebase.auth) await new Promise((resolve, reject) => {
-        const script = document.createElement('script');
-        script.src = 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js';
-        script.onload = resolve; script.onerror = () => reject(new Error('Unable to load secure sign-in.'));
-        document.head.append(script);
-      });
-      const options = config.firebase || firebase.app().options;
-      const app = firebase.apps.find(item => item.name === 'uae-lead-tracker') || firebase.initializeApp(options, 'uae-lead-tracker');
-      auth = firebase.auth(app);
-      // Lead access is independent of the legacy, browser-only dashboard session.
-      await auth.setPersistence(firebase.auth.Auth.Persistence.NONE);
-      return auth;
-    })();
-    try { return await authLoading; } finally { authLoading = null; }
+  async function login(username, password) {
+    if (!config.apiUrl) throw new Error('Admin sign-in setup is pending.');
+    const url = new URL(config.apiUrl);
+    if (url.protocol !== 'https:' || url.username || url.password) throw new Error('A secure service address is required.');
+    url.searchParams.set('action', 'login');
+    const response = await fetch(url, { method: 'POST', cache: 'no-store', signal: AbortSignal.timeout(20000),
+      headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password }) });
+    const data = await response.json();
+    if (!response.ok || !/^[a-f0-9]{64}$/.test(data.token || '')) throw new Error(data.message || 'Unable to sign in.');
+    sessionStorage.setItem('valeo_admin_token', data.token);
   }
+  const hasToken = () => !!sessionStorage.getItem('valeo_admin_token');
 
   async function request(action, { method = 'GET', body, params = {} } = {}) {
-    if (!sessionAllowed() || !auth || !auth.currentUser) throw new Error('Sign in to the lead tracker.');
+    if (!sessionAllowed() || !hasToken()) throw new Error('Please sign in to the dashboard.');
     const url = new URL(config.apiUrl);
     if (url.protocol !== 'https:' || url.username || url.password) throw new Error('A secure service address is required.');
     url.searchParams.set('action', action);
     for (const [key, value] of Object.entries(params)) if (value) url.searchParams.set(key, value);
-    const token = await auth.currentUser.getIdToken();
+    const token = sessionStorage.getItem('valeo_admin_token');
     const response = await fetch(url.toString(), { method, cache: 'no-store', signal: AbortSignal.timeout(20000),
       headers: { Authorization: 'Bearer ' + token, ...(body ? { 'Content-Type': 'application/json' } : {}) }, body: body ? JSON.stringify(body) : undefined });
     let data;
@@ -88,24 +82,8 @@
   }
   function renderLogin() {
     pageReady = false;
-    const box = state('Sign in to your lead tracker', 'This workspace is reserved for valeo_admin. Verify your admin account to view lead details.');
-    const email = el('input', { type: 'email', required: true, autocomplete: 'username', placeholder: 'Your admin email', 'aria-label': 'Admin email' });
-    const password = el('input', { type: 'password', required: true, autocomplete: 'current-password', 'aria-label': 'Admin password' });
-    const submit = el('button', { type: 'submit', class: 'ual-primary' }, 'Verify admin access');
-    const form = el('form', {}, el('label', {}, 'Admin email', email), el('label', {}, 'Password', password), submit, el('div', { id: 'ual-message', role: 'status', 'aria-live': 'polite' }));
-    form.addEventListener('submit', async event => {
-      event.preventDefault(); submit.disabled = true; message('Signing in…');
-      try {
-        const current = await initAuth();
-        await current.signInWithEmailAndPassword(email.value.trim(), password.value);
-        password.value = '';
-        await load(false);
-        if (pageReady) await openHashLead();
-      } catch (error) {
-        message(error.code && error.code.startsWith('auth/') ? 'Unable to verify your admin account. Check your email and password.' : error.message, true);
-      } finally { submit.disabled = false; }
-    });
-    box.append(form);
+    const box = state('Dashboard session expired', 'Please sign in again using the main dashboard login.');
+    box.append(button('Return to dashboard login', () => window.doLogout(), 'ual-primary'));
   }
 
   async function open() {
@@ -115,7 +93,7 @@
       state('Lead connection setup pending', 'The tracker is prepared. Connect the private lead service and Slack channel to start receiving new UAE babysitting leads.');
       return;
     }
-    if (!auth || !auth.currentUser) { renderLogin(); return; }
+    if (!hasToken()) { renderLogin(); return; }
     if (!pageReady) await load(false);
     if (pageReady) await openHashLead();
   }
@@ -134,7 +112,7 @@
     dueInput.checked = filters.due;
     root.replaceChildren(
       el('div', { class: 'ual-top' }, el('div', {}, el('div', { class: 'ual-eyebrow' }, 'Snapchat · UAE_babysitting'), el('h2', {}, 'UAE Babysitting Leads'), el('div', { class: 'ual-muted' }, 'Call, record the outcome, and keep the next follow-up clear.')),
-        el('div', { class: 'ual-actions' }, button('Refresh', () => load(false)), button('Lock tracker', async () => { await clearSession(); renderLogin(); }))),
+        el('div', { class: 'ual-actions' }, button('Refresh', () => load(false)), button('Sign out', () => window.doLogout()))),
       el('div', { id: 'ual-sync', class: 'ual-muted' }), el('div', { id: 'ual-message', role: 'status', 'aria-live': 'polite' }),
       el('div', { id: 'ual-kpis', class: 'ual-kpis' }),
       el('div', { class: 'ual-controls' }, el('label', { class: 'ual-search' }, 'Find a lead', search),
@@ -146,7 +124,7 @@
     );
     pageReady = true; renderTable();
     if (!refreshTimer) refreshTimer = setInterval(() => {
-      if (isActive() && !document.hidden && !dialog && !busy && auth?.currentUser) load(false, true);
+      if (isActive() && !document.hidden && !dialog && !busy && hasToken()) load(false, true);
     }, 30000);
   }
 
@@ -208,7 +186,7 @@
     message('Opening lead…');
     try {
       const result = await request('lead', { params: { id } });
-      if (!sessionAllowed() || !auth?.currentUser || currentGeneration !== generation) return;
+      if (!sessionAllowed() || !hasToken() || currentGeneration !== generation) return;
       closeDialog(); editing = result.lead;
       const source = editing.source, tracking = editing.tracking;
       const title = el('h3', { id: 'ual-dialog-title', dir: 'auto' }, source.name);
@@ -256,6 +234,6 @@
     if (location.hash.startsWith('#uae-leads/') && safeId(id) && !dialog) await showLead(id);
   }
   window.addEventListener('hashchange', () => { if (sessionAllowed() && location.hash.startsWith('#uae-leads/')) window.switchTab('uae-leads'); });
-  window.UAELeads = Object.freeze({ open, syncSession, clearSession });
+  window.UAELeads = Object.freeze({ open, syncSession, clearSession, login });
   syncSession();
 })();

@@ -1,8 +1,8 @@
+import { createAdminSessions } from '../lib/admin-session.js';
 import { cert, getApp, getApps, initializeApp } from 'firebase-admin/app';
-import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { GoogleAuth } from 'google-auth-library';
-import { authorizeAdmin, authorizeSync, validateDatabaseTarget, DASHBOARD_ORIGIN, HttpError, SOURCE_ID, SOURCE_RANGE } from '../lib/core.js';
+import { authorizeSync, validateDatabaseTarget, DASHBOARD_ORIGIN, HttpError, SOURCE_ID, SOURCE_RANGE } from '../lib/core.js';
 import { createService } from '../lib/service.js';
 
 let dependencies;
@@ -37,7 +37,7 @@ function configured() {
       return data;
     }
   });
-  dependencies = { service, auth: getAuth(app) };
+  dependencies = { service, sessions: createAdminSessions(db, process.env.VALEO_ADMIN_PASSWORD_HASH) };
   return dependencies;
 }
 
@@ -59,9 +59,18 @@ export default async function handler(req, res) {
       if (!process.env.SLACK_BOT_TOKEN) throw new HttpError(503, 'Configure Slack before initializing sync.');
       return res.status(200).json(await configured().service.sync());
     }
+    const { service, sessions } = configured();
+    if (action === 'login' && req.method === 'POST') {
+      if (Number(req.headers['content-length'] || 0) > 2048) throw new HttpError(413, 'Request is too large.');
+      const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+      return res.status(200).json(await sessions.login(body));
+    }
+    if (action === 'logout' && req.method === 'POST') {
+      await sessions.logout(req.headers.authorization);
+      return res.status(200).json({ ok: true });
+    }
     if (!['GET', 'PATCH'].includes(req.method)) throw new HttpError(405, 'Method not allowed.');
-    const { service, auth } = configured();
-    await authorizeAdmin(req.headers.authorization, (token, revoked) => auth.verifyIdToken(token, revoked), process.env.VALEO_ADMIN_UID);
+    await sessions.authorize(req.headers.authorization);
     if (req.method === 'GET' && action === 'list') return res.status(200).json(await service.list(url.searchParams.get('cursor')));
     if (req.method === 'GET' && action === 'lead') return res.status(200).json(await service.get(url.searchParams.get('id')));
     if (req.method === 'PATCH' && action === 'update') {
