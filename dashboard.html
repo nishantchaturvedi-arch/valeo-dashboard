@@ -14595,7 +14595,13 @@ var BS_COLMAP = {
 };
 function bsDetectCols(head){
   var col = {};
+  // lead date: the form's submit time wins over any derived / pretty date column
+  var dPref = [/time\s*submitted|submitted\s*(at|on|time)?$|submission/i, /created|timestamp/i];
+  for(var di=0; di<dPref.length && col.date == null; di++){
+    for(var dj=0; dj<head.length; dj++){ if(dPref[di].test(head[dj]||'')){ col.date = dj; break; } }
+  }
   Object.keys(BS_COLMAP).forEach(function(k){
+    if(col[k] != null) return;
     for(var i=0; i<head.length; i++){
       var h = head[i] || '';
       if(BS_COLMAP[k].test(h) && !Object.values(col).includes(i)){
