@@ -642,6 +642,29 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .rd-cl{font-weight:700;font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .rd-tm{font-size:8px;opacity:.85;}
 .rd-od{font-size:8px;opacity:.65;}
+.bs-in{background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:Inter,sans-serif;font-size:12px;padding:6px 10px;border-radius:6px;outline:none;}
+.bs-wrap{overflow:auto;max-height:calc(100vh - 330px);border:1px solid var(--border);border-radius:8px;}
+.bs-empty{padding:40px;text-align:center;color:var(--text2);}
+.bs-tbl{width:100%;border-collapse:collapse;font-size:11.5px;}
+.bs-tbl th{position:sticky;top:0;z-index:2;background:var(--bg3);padding:7px 10px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--text2);border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;}
+.bs-tbl th:hover{color:var(--text);}
+.bs-tbl td{padding:6px 10px;border-bottom:1px solid var(--border);white-space:nowrap;vertical-align:top;}
+.bs-tbl tbody tr:hover td{background:var(--bg3);}
+.bs-call-th{background:rgba(47,129,247,.14)!important;color:var(--accent)!important;}
+.bs-call-td{background:rgba(47,129,247,.04);}
+.bs-call{font-family:Inter,sans-serif;font-size:11px;font-weight:600;padding:4px 6px;border-radius:6px;border:1px solid var(--border);outline:none;cursor:pointer;min-width:118px;}
+.bs-call option{background:var(--bg2);color:var(--text);}
+.bs-call-meta{font-size:9px;color:var(--text3);margin-top:2px;}
+.bs-remark{background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:Inter,sans-serif;font-size:11px;padding:5px 8px;border-radius:6px;outline:none;width:220px;}
+.bs-remark:focus{border-color:var(--accent);}
+.bs-saved{box-shadow:0 0 0 2px #3fb950!important;transition:box-shadow .2s;}
+.bs-tbl tbody tr.bs-focus td{background:rgba(47,129,247,.22)!important;transition:background .4s;}
+.bs-tbl tbody tr.bs-focus td:first-child{box-shadow:inset 3px 0 0 var(--accent);}
+.bs-chip{font-size:11px;padding:3px 9px;border-radius:12px;cursor:pointer;user-select:none;}
+.rd-multi{display:flex;flex-direction:column;gap:2px;}
+.rd-bk{display:flex;flex-direction:column;gap:0;padding-bottom:2px;border-bottom:1px dashed rgba(0,0,0,.35);overflow:hidden;}
+.rd-bk:last-child{border-bottom:none;padding-bottom:0;}
+.rd-cnt{align-self:flex-start;font-size:8px;font-weight:800;line-height:1;padding:1px 3px;border-radius:4px;background:rgba(0,0,0,.28);color:#fff;margin-bottom:1px;}
 
 /* ── Drag Override ─────────────────────────────────────────────── */
 .cal-cell.drag-source .cal-ev{opacity:.5;}
@@ -831,10 +854,9 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <button class="main-tab" onclick="switchTab(&#39;mumz&#39;)">🛍️ Mumzworld Orders</button>
  <button class="main-tab" onclick="switchTab(&#39;tickets&#39;)">🎫 HC Tickets<span id="tk-tab-badge" style="font-weight:800"></span></button>
  <button class="main-tab" onclick="switchTab(&#39;leave&#39;)">🏖 Leave Applications<span id="lv-tab-badge" style="font-weight:800"></span></button>
- <button class="main-tab" onclick="switchTab(&#39;leads&#39;)">🎯 SM Lead Tracker</button>
- <button class="main-tab" onclick="switchTab(&#39;fclead&#39;)">💬 FC Lead Tracker</button>
  <button class="main-tab" onclick="switchTab(&#39;supply&#39;)">👥 Supply Tracker</button>
  <button class="main-tab" onclick="switchTab(&#39;customleads&#39;)">📌 Lead Tracker</button>
+ <button class="main-tab" onclick="switchTab(&#39;bsleads&#39;)">👶 UAE Babysitting Leads</button>
  <button class="main-tab" onclick="switchTab(&#39;complaints&#39;)">🚩 Complaint Tracker</button>
  <button class="main-tab" onclick="switchTab(&#39;penalty&#39;)">⚠️ Penalty Tracker</button>
  <button class="main-tab" onclick="switchTab(&#39;expecting&#39;)">🤰 Expecting Mothers</button>
@@ -10218,31 +10240,6 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <div id="sched-modal-body"></div>
  </div>
 </div>
-<div class="page" id="page-leads">
-<div style="padding:16px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
- <div style="font-size:15px;font-weight:700">🎯 SM Lead Tracker</div>
- <div style="display:flex;gap:8px;flex-wrap:wrap">
- <button onclick="loadLeads(true)" style="padding:6px 14px;background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;cursor:pointer">🔄 Refresh</button>
- <button onclick="exportLeadsCSV()" style="padding:6px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-weight:600;cursor:pointer">📥 Export CSV</button>
- <button onclick="openAddLeadModal()" style="padding:6px 14px;background:var(--duty);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;cursor:pointer">+ Add Lead</button>
- <label style="padding:6px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:11px;cursor:pointer">📤 Upload CSV<input type="file" accept=".csv" id="leads-upload" style="display:none" onchange="uploadLeadsCSV(this)"></label>
- </div>
-</div>
-<div id="leads-kpi-row" style="padding:14px 20px;background:var(--bg2);border-bottom:1px solid var(--border)"></div>
-<div style="padding:10px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;gap:8px">
- <input id="lead-search" type="text" placeholder="🔍 Search name / phone..." style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:Inter,sans-serif;font-size:12px;padding:6px 10px;border-radius:6px;outline:none;width:200px" oninput="renderLeadsTable()">
- <select id="lead-filter-status" onchange="renderLeadsTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Status</option><option value="no answer">No Answer</option><option value="connected">Connected</option><option value="hung up">Hung Up</option><option value="disconnected while ringing">Disconnected While Ringing</option><option value="unreachable">Unreachable</option><option value="on fc">On FC</option><option value="international number">International Number</option><option value="busy">Busy</option><option value="voice mail">Voice Mail</option><option value="invalid">INVALID</option><option value="switched off">Switched Off</option><option value="not in use">Not In Use</option><option value="call back">Call Back</option><option value="incorrect no">Incorrect No</option><option value="not available">Not Available</option><option value="duplicate">Duplicate</option><option value="cancelled">Cancelled</option><option value="out of service">Out Of Service</option><option value="test account">Test Account</option><option value="others">Others</option><option value="converted">Converted</option><option value="ongoing">Ongoing</option><option value="lost">Lost</option></select>
- <select id="lead-filter-heat" onchange="renderLeadsTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Classifications</option><option value="hot">🔥 Hot</option><option value="warm">🌤 Warm</option><option value="cold">❄️ Cold</option><option value="dead">💀 Dead</option></select>
- <select id="lead-filter-city" onchange="renderLeadsTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Cities</option></select>
- <select id="lead-filter-month" onchange="renderLeadsTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Months</option></select>
- <select id="lead-filter-week" onchange="renderLeadsTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Weeks</option><option value="1">Week 1</option><option value="2">Week 2</option><option value="3">Week 3</option><option value="4">Week 4</option></select>
- <select id="lead-filter-agent" onchange="renderLeadsTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none"><option value="">All Agents</option><option>Nishant</option><option>Muaaz</option><option>Priyanka</option></select>
- <input id="lead-filter-date" type="date" onchange="renderLeadsTable()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:5px 8px;border-radius:6px;outline:none" title="Filter by specific date">
- <button onclick="clearLeadFilters()" style="padding:6px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:11px;cursor:pointer">Clear</button>
-</div>
-<div style="overflow:auto;max-height:calc(100vh - 260px);padding:0 20px 20px"><div id="leads-table-wrap" style="margin-top:14px"></div></div>
-</div>
-
 <div class="page" id="page-supply">
 <div style="padding:16px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
  <div style="font-size:15px;font-weight:700">👥 Supply Tracker</div>
@@ -10273,34 +10270,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 <div style="overflow:auto;max-height:calc(100vh - 260px);padding:0 20px 20px"><div id="supply-table-wrap" style="margin-top:14px"></div></div>
 </div>
 
-<div id="lead-modal" onclick="if(event.target===this)closeLeadModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:600;align-items:center;justify-content:center">
- <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:22px;width:480px;max-width:95vw;max-height:90vh;overflow-y:auto">
- <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div style="font-size:14px;font-weight:600" id="lead-modal-title">Lead</div><button onclick="closeLeadModal()" style="background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer">✕</button></div>
- <div id="lead-modal-body"></div>
- <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
- <button onclick="saveLeadEdit()" style="flex:1;padding:9px;background:var(--accent);border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer">Save</button>
- <button onclick="convertLead()" id="lead-convert-btn" style="flex:1;padding:9px;background:var(--duty);border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer">✅ Converted</button>
- <button onclick="deleteLead()" style="padding:9px 14px;background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);border-radius:7px;color:var(--absent);font-size:12px;cursor:pointer">🗑</button>
- </div>
- </div>
-</div>
 
-<div id="add-lead-modal" onclick="if(event.target===this)this.style.display=&#39;none&#39;" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:700;align-items:center;justify-content:center">
- <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:22px;width:440px;max-width:95vw;max-height:90vh;overflow-y:auto">
- <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div style="font-size:14px;font-weight:600">➕ Add New Lead</div><button onclick="document.getElementById(&#39;add-lead-modal&#39;).style.display=&#39;none&#39;" style="background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer">✕</button></div>
- <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
- <div><div style="font-size:10px;color:var(--text2);margin-bottom:4px">FULL NAME *</div><input id="nl-name" class="login-input" type="text" placeholder="Name"></div>
- <div><div style="font-size:10px;color:var(--text2);margin-bottom:4px">PHONE *</div><input id="nl-phone" class="login-input" type="text" placeholder="+971..."></div>
- <div><div style="font-size:10px;color:var(--text2);margin-bottom:4px">EMAIL</div><input id="nl-email" class="login-input" type="text" placeholder="email@..."></div>
- <div><div style="font-size:10px;color:var(--text2);margin-bottom:4px">CITY</div><input id="nl-city" class="login-input" type="text" placeholder="Dubai"></div>
- <div style="grid-column:1/-1"><div style="font-size:10px;color:var(--text2);margin-bottom:4px">PACKAGE</div><input id="nl-pkg" class="login-input" type="text" placeholder="Package"></div>
- <div><div style="font-size:10px;color:var(--text2);margin-bottom:4px">STATUS</div><select id="nl-status" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:10px;border-radius:8px;outline:none"><option>connected</option><option>no answer</option><option>hung up</option><option>on fc</option></select></div>
- <div><div style="font-size:10px;color:var(--text2);margin-bottom:4px">CLASSIFICATION</div><select id="nl-heat" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:10px;border-radius:8px;outline:none"><option value="warm">🌤 Warm</option><option value="hot">🔥 Hot</option><option value="cold">❄️ Cold</option><option value="dead">💀 Dead</option></select></div>
- <div style="grid-column:1/-1"><div style="font-size:10px;color:var(--text2);margin-bottom:4px">NOTES</div><textarea id="nl-notes" rows="2" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:Inter,sans-serif;font-size:12px;padding:8px;border-radius:8px;outline:none;resize:vertical"></textarea></div>
- </div>
- <button onclick="saveNewLead()" style="width:100%;margin-top:14px;padding:10px;background:var(--accent);border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:600;cursor:pointer">Add Lead</button>
- </div>
-</div>
 
 <div id="candidate-modal" onclick="if(event.target===this)closeCandidateModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:600;align-items:center;justify-content:center">
  <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:22px;width:560px;max-width:95vw;max-height:90vh;overflow-y:auto">
@@ -10389,60 +10359,6 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  </div>
 </div>
 
-
-<div class="page" id="page-fclead">
-<div style="padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
- <div style="font-size:15px;font-weight:700">💬 FC Lead Tracker</div>
- <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
- <span id="fcl-last-sync" style="font-size:11px;color:var(--text3)"></span>
- <button onclick="loadFCLeads(true)" style="padding:6px 14px;background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">🔄 Refresh</button>
- <button onclick="exportFCLeadsCSV()" style="padding:6px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">📥 Export CSV</button>
- </div>
-</div>
-<div id="fcl-kpi-row" style="padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap"></div>
-<div style="padding:10px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;gap:8px">
- <input id="fcl-search" type="text" placeholder="Search name / phone..." oninput="renderFCLeads()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:Inter,sans-serif;font-size:12px;padding:6px 10px;border-radius:6px;outline:none;width:200px">
- <select id="fcl-filter-stage" onchange="renderFCLeads()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
- <option value="">All Stages</option>
- <option value="New Enquiry">🆕 New Enquiry</option>
- <option value="Call Done">📞 Call Done</option>
- <option value="Proposal Sent">📋 Proposal Sent</option>
- <option value="Follow Up">⏳ Follow Up</option>
- <option value="Converted">✅ Converted</option>
- <option value="Lost — Price">💸 Lost — Price</option>
- <option value="Lost — No Reply">👻 Lost — No Reply</option>
- <option value="Lost — Not Interested">❌ Lost — Not Interested</option>
- </select>
- <select id="fcl-filter-agent" onchange="renderFCLeads()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
- <option value="">All Agents</option>
- </select>
- <select id="fcl-filter-month" onchange="renderFCLeads()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
- <option value="">All Months</option>
- </select>
- <select id="fcl-filter-week" onchange="renderFCLeads()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 10px;border-radius:6px;outline:none">
- <option value="">All Weeks</option>
- <option value="W1">Week 1 (1-7)</option>
- <option value="W2">Week 2 (8-14)</option>
- <option value="W3">Week 3 (15-21)</option>
- <option value="W4">Week 4 (22+)</option>
- </select>
- <button onclick="clearFCLFilters()" style="padding:6px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:11px;cursor:pointer;font-family:Inter,sans-serif">Clear</button>
-</div>
-<div style="overflow:auto;max-height:calc(100vh - 250px);padding:0 20px 20px">
- <div id="fcl-table-wrap" style="margin-top:14px">
- <div style="padding:40px;text-align:center;color:var(--text2)">Click Refresh to load FC leads</div>
- </div>
-</div>
-<div id="fcl-modal" onclick="if(event.target===this)closeFCLModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:600;align-items:center;justify-content:center">
- <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:22px;width:420px;max-width:95vw;max-height:90vh;overflow-y:auto">
- <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
- <div style="font-size:14px;font-weight:600" id="fcl-modal-title">Lead</div>
- <button onclick="closeFCLModal()" style="background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer">✕</button>
- </div>
- <div id="fcl-modal-body"></div>
- </div>
-</div>
-</div>
 
 <div class="page" id="page-penalty">
 <div id="sla-panel" style="background:var(--bg2);border-bottom:1px solid var(--border)">
@@ -10603,6 +10519,40 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <button onclick="clConfirmDelete()" style="padding:8px 20px;background:#f85149;border:none;border-radius:7px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">Delete</button>
  </div>
  </div>
+</div>
+</div>
+<div class="page" id="page-bsleads">
+<div style="padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+ <div>
+  <div style="font-size:15px;font-weight:700">👶 UAE Babysitting Leads</div>
+  <div id="bs-sync" style="font-size:11px;color:var(--text3);margin-top:2px">Live from Google Sheet · UAE_Babysitting</div>
+ </div>
+ <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+  <button onclick="bsLoad(true)" style="padding:6px 14px;background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:600;cursor:pointer">🔄 Refresh</button>
+  <button onclick="bsExportCSV()" style="padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-weight:600;cursor:pointer">Export CSV</button>
+  <a id="bs-open-sheet" target="_blank" rel="noopener" style="padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-weight:600;cursor:pointer;text-decoration:none">📄 Open sheet</a>
+ </div>
+</div>
+<div id="bs-kpi-row" style="padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap"></div>
+<div id="bs-status-strip" style="padding:8px 20px 0;display:flex;gap:6px;flex-wrap:wrap"></div>
+<div id="bs-filters" style="padding:10px 20px;display:none;gap:8px;flex-wrap:wrap;align-items:center">
+ <input id="bs-search" type="text" placeholder="🔍 Search any field..." oninput="bsRender()" class="bs-in" style="width:210px">
+ <select id="bs-f-call" onchange="bsRender()" class="bs-in"><option value="">All call statuses</option><option value="__none">Not called yet</option><option>Connected</option><option>No answer</option><option>Disconnected</option><option>Switched off</option><option>Other</option></select>
+ <select id="bs-f-status" onchange="bsRender()" class="bs-in"></select>
+ <select id="bs-f-source" onchange="bsRender()" class="bs-in"></select>
+ <select id="bs-f-agent" onchange="bsRender()" class="bs-in"></select>
+ <select id="bs-f-city" onchange="bsRender()" class="bs-in"></select>
+ <select id="bs-f-month" onchange="bsRender()" class="bs-in"></select>
+ <span id="bs-date-wrap" style="display:inline-flex;gap:4px;align-items:center">
+  <input id="bs-f-from" type="date" onchange="bsRender()" class="bs-in" title="Lead date from">
+  <span style="color:var(--text3)">–</span>
+  <input id="bs-f-to" type="date" onchange="bsRender()" class="bs-in" title="Lead date to">
+ </span>
+ <button onclick="bsClearFilters()" style="padding:6px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:11px;cursor:pointer">Clear</button>
+</div>
+<div style="padding:0 20px 20px">
+ <div id="bs-count" style="font-size:11px;color:var(--text2);margin-bottom:8px"></div>
+ <div id="bs-table-wrap" class="bs-wrap"><div class="bs-empty">Open this tab to load leads from the sheet</div></div>
 </div>
 </div>
 
@@ -12247,7 +12197,7 @@ function switchTab(tab){
   if(tab==='daily'){setTimeout(switchToDaily,80);}
   if(tab==='mumz'){setTimeout(switchToMumz,80);}
   var _tabLbl={calendar:'calendar',analytics:'analytics',ops:'operations',planner:'schedule builder',roster:'roster',
-    daily:'daily orders',leads:'sm lead',fclead:'fc lead',supply:'supply',customleads:'lead tracker',
+    daily:'daily orders',supply:'supply',customleads:'lead tracker',bsleads:'babysitting leads',
     complaints:'complaint',penalty:'penalty',expecting:'expecting',tickets:'hc tickets',leave:'leave applications',
     mumz:'mumzworld orders', avail:'availability search'}[tab]||tab;
   document.querySelectorAll('.main-tab').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase().includes(_tabLbl)));
@@ -12258,8 +12208,8 @@ function switchTab(tab){
   if(tab==='analytics')renderAnalytics();
   if(tab==='ops')renderOps();
   if(tab==='planner')renderPlanner();
-  if(tab==='leads'){if(_session&&_session.role!=='master'){alert('Master access only');return;}loadLeads();}
   if(tab==='customleads'){initCustomLeads();}
+  if(tab==='bsleads'){bsLoad();}
   if(tab==='complaints'){initComplaints();}
   if(tab==='tickets'){initTickets();}
   if(tab==='leave'){initLeave();}
@@ -14501,6 +14451,579 @@ function lvExportExcel(){
   });
   XLSX.writeFile(wb, fname + '.xlsx');
 }
+
+// ══════════════════════════════════════════════════════════════════
+// UAE BABYSITTING LEADS — read live from the Google Sheet tab
+// "UAE_Babysitting". Columns are detected from the header row, so
+// adding / renaming columns in the sheet needs no code change.
+// The sheet must be shared "Anyone with the link — Viewer".
+// ══════════════════════════════════════════════════════════════════
+var BS_SHEET_ID  = '1-AlIkcy1-0bEzBmWglHTEBQ6IKUxIg_ul0ThOYHzNzU';
+var BS_SHEET_TAB = 'UAE_Babysitting';
+var BS_STALE_MS  = 5 * 60 * 1000;   // re-fetch on tab open if older than this
+var BS_PAGE      = 200;             // rows rendered before "show more"
+
+var _bs = {head:[], rows:[], col:{}, loaded:0, busy:false, sort:{i:-1, dir:-1}, limit:BS_PAGE, dmy:true, ov:{}};
+
+// ── Call log (saved in Firestore — the sheet itself stays untouched) ──
+var BS_CALL_COLL = 'bs_lead_calls';
+var BS_CALL_OPTS = ['Connected','No answer','Disconnected','Switched off','Other'];
+var BS_CALL_STYLE = {
+  'Connected':    {bg:'rgba(63,185,80,.16)',   col:'#3fb950'},
+  'No answer':    {bg:'rgba(210,153,34,.16)',  col:'#d29922'},
+  'Disconnected': {bg:'rgba(248,81,73,.14)',   col:'#f85149'},
+  'Switched off': {bg:'rgba(139,148,158,.18)', col:'#8b949e'},
+  'Other':        {bg:'rgba(47,129,247,.14)',  col:'#2f81f7'}
+};
+// One stable key per lead: last 9 digits of the phone, else name + date
+function bsKey(r){
+  var c = _bs.col;
+  var ph = c.phone != null ? String(r[c.phone]||'').replace(/[^0-9]/g,'') : '';
+  if(ph.length >= 7) return 'p' + ph.slice(-9);
+  var nm = c.name != null ? String(r[c.name]||'') : '';
+  var raw = (nm + '_' + (c.date != null ? r[c.date] : '') ) || ('row' + r._n);
+  return 'n' + raw.toLowerCase().replace(/[^a-z0-9]+/g,'_').slice(0,120) || ('row' + r._n);
+}
+function bsOv(r){ return _bs.ov[bsKey(r)] || {}; }
+async function bsLoadCalls(){
+  try{
+    if(!_db) await initFirebase();
+    if(!_db) return;
+    var snap = await _db.collection(BS_CALL_COLL).get();
+    var m = {}; snap.forEach(function(d){ m[d.id] = d.data(); });
+    _bs.ov = m;
+  }catch(e){ console.warn('[bs-leads] call log', e); }
+}
+async function bsSaveCall(key, field, value, el){
+  var o = _bs.ov[key] = Object.assign({}, _bs.ov[key] || {});
+  if((o[field]||'') === value) return;
+  o[field] = value;
+  o.updated_at = new Date().toISOString();
+  o.updated_by = (_session && _session.username) || 'Valeo';
+  if(field === 'call_status' && value){
+    o.history = (o.history || []).concat([{t:o.updated_at, by:o.updated_by, status:value}]).slice(-30);
+  }
+  // reflect it straight away, without redrawing the table
+  var td = el && el.closest('td');
+  if(field === 'call_status' && el){
+    var st = BS_CALL_STYLE[value];
+    el.style.background = st ? st.bg : 'var(--bg3)';
+    el.style.color = st ? st.col : 'var(--text2)';
+    el.style.borderColor = st ? st.col : 'var(--border)';
+  }
+  var meta = td && td.parentNode && td.parentNode.querySelector('.bs-call-meta');
+  if(meta) meta.textContent = bsCallMeta(o);
+  if(el) el.title = 'Last updated ' + new Date(o.updated_at).toLocaleString() + ' by ' + o.updated_by;
+  bsRenderKPIs();
+  try{
+    if(!_db) await initFirebase();
+    if(!_db) throw new Error('Firebase not connected');
+    var patch = {updated_at:o.updated_at, updated_by:o.updated_by};
+    patch[field] = value;
+    if(o.history) patch.history = o.history;
+    await _db.collection(BS_CALL_COLL).doc(key).set(patch, {merge:true});
+    if(el){ el.classList.add('bs-saved'); setTimeout(function(){ el.classList.remove('bs-saved'); }, 900); }
+  }catch(e){
+    console.warn('[bs-leads] save', e);
+    alert('Could not save the call update: ' + e.message);
+  }
+}
+function bsCallMeta(o){
+  if(!o || !o.updated_at) return '';
+  var d = new Date(o.updated_at);
+  return (o.updated_by || '') + ' · ' + d.toLocaleDateString([], {day:'2-digit', month:'short'}) + ' ' + d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+}
+function bsCallCells(r){
+  var key = bsKey(r), o = bsOv(r), v = o.call_status || '', st = BS_CALL_STYLE[v];
+  var kAttr = bsEsc(key);
+  var sel = '<select class="bs-call" data-k="' + kAttr + '" onchange="bsSaveCall(this.dataset.k,\'call_status\',this.value,this)"'
+    + ' style="background:' + (st ? st.bg : 'var(--bg3)') + ';color:' + (st ? st.col : 'var(--text2)') + ';border-color:' + (st ? st.col : 'var(--border)') + '"'
+    + (o.updated_at ? ' title="Last updated ' + bsEsc(new Date(o.updated_at).toLocaleString()) + ' by ' + bsEsc(o.updated_by||'') + '"' : '') + '>'
+    + '<option value="">— Not called —</option>'
+    + BS_CALL_OPTS.map(function(x){ return '<option' + (x === v ? ' selected' : '') + '>' + x + '</option>'; }).join('')
+    + '</select><div class="bs-call-meta">' + bsEsc(bsCallMeta(o)) + '</div>';
+  var rm = '<input class="bs-remark" data-k="' + kAttr + '" value="' + bsEsc(o.remarks || '') + '" placeholder="Add remark…"'
+    + ' onchange="bsSaveCall(this.dataset.k,\'remarks\',this.value.trim(),this)" onkeydown="if(event.key===\'Enter\')this.blur()"'
+    + (o.remarks ? ' title="' + bsEsc(o.remarks) + '"' : '') + '>';
+  return '<td class="bs-call-td">' + sel + '</td><td class="bs-call-td">' + rm + '</td>';
+}
+// where the two call columns sit: right after the phone column
+function bsCallPos(){
+  var c = _bs.col;
+  if(c.phone != null) return c.phone;
+  if(c.name != null) return c.name;
+  return _bs.head.length - 1;
+}
+
+function bsEsc(v){ return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function bsSheetCSVUrl(){
+  return 'https://docs.google.com/spreadsheets/d/' + BS_SHEET_ID + '/gviz/tq?tqx=out:csv&headers=1&sheet='
+    + encodeURIComponent(BS_SHEET_TAB) + '&_=' + Date.now();
+}
+function bsSheetEditUrl(){ return 'https://docs.google.com/spreadsheets/d/' + BS_SHEET_ID + '/edit'; }
+
+// RFC-4180 CSV → array of rows (handles quotes, commas and newlines inside cells)
+function bsParseCSV(txt){
+  var rows = [], row = [], cell = '', q = false;
+  txt = String(txt||'').replace(/^\ufeff/, '');
+  for(var i=0; i<txt.length; i++){
+    var c = txt[i];
+    if(q){
+      if(c === '"'){ if(txt[i+1] === '"'){ cell += '"'; i++; } else q = false; }
+      else cell += c;
+    } else if(c === '"') q = true;
+    else if(c === ','){ row.push(cell); cell = ''; }
+    else if(c === '\n' || c === '\r'){
+      if(c === '\r' && txt[i+1] === '\n') i++;
+      row.push(cell); rows.push(row); row = []; cell = '';
+    } else cell += c;
+  }
+  if(cell !== '' || row.length){ row.push(cell); rows.push(row); }
+  return rows;
+}
+
+// Find the columns that matter by their header text
+var BS_COLMAP = {
+  date:   /(^|\b)(lead\s*)?(date|created|timestamp|enquiry\s*date|inquiry\s*date|received)/i,
+  name:   /(full\s*)?name|parent|customer|client/i,
+  phone:  /phone|mobile|contact\s*(no|number)|whats\s*app|number/i,
+  email:  /e-?mail/i,
+  status: /final\s*status|status|stage|outcome|disposition/i,
+  source: /source|channel|platform|medium|campaign|utm/i,
+  agent:  /agent|owner|assigned|sales\s*(person|rep)|handled\s*by|caller/i,
+  city:   /city|emirate|location|area/i
+};
+function bsDetectCols(head){
+  var col = {};
+  Object.keys(BS_COLMAP).forEach(function(k){
+    for(var i=0; i<head.length; i++){
+      var h = head[i] || '';
+      if(BS_COLMAP[k].test(h) && !Object.values(col).includes(i)){
+        if(k==='name' && /user\s*name|file|campaign/i.test(h)) continue;
+        if(k==='phone' && /e-?mail/i.test(h)) continue;
+        col[k] = i; break;
+      }
+    }
+  });
+  return col;
+}
+
+// Dates: decide once per sheet whether a/b/yyyy means day-first (UAE) or month-first
+function bsDetectDMY(rows, i){
+  if(i == null) return true;
+  var dmy = 0, mdy = 0;
+  rows.forEach(function(r){
+    var m = String(r[i]||'').match(/^\s*(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/);
+    if(!m) return;
+    if(+m[1] > 12) dmy++; else if(+m[2] > 12) mdy++;
+  });
+  return mdy > dmy ? false : true;
+}
+function bsParseDate(v){
+  v = String(v||'').trim(); if(!v) return null;
+  var m = v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if(m) return new Date(+m[1], +m[2]-1, +m[3]);
+  m = v.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/);
+  if(m){
+    var y = +m[3]; if(y < 100) y += 2000;
+    var a = +m[1], b = +m[2];
+    var dd = _bs.dmy ? a : b, mm = _bs.dmy ? b : a;
+    if(mm < 1 || mm > 12 || dd < 1 || dd > 31) return null;
+    return new Date(y, mm-1, dd);
+  }
+  var t = Date.parse(v);
+  if(!isNaN(t)){ var d = new Date(t); return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+  return null;
+}
+function bsYMD(d){ return d ? d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0') : ''; }
+
+// Status → bucket, for KPIs and colour
+function bsBucket(s){
+  s = String(s||'').toLowerCase().trim();
+  if(!s) return 'new';
+  if(/convert|won|booked|confirm|paid|closed\s*won|onboard|success/.test(s)) return 'won';
+  if(/lost|not\s*interest|dead|invalid|wrong|junk|spam|cancel|closed\s*lost|duplicate|no\s*budget|reject|dnd|not\s*relevant/.test(s)) return 'lost';
+  if(/new|fresh|not\s*contacted|pending|^open$/.test(s)) return 'new';
+  return 'open';
+}
+var BS_BUCKET_STYLE = {
+  won:  {bg:'rgba(63,185,80,.16)',  col:'#3fb950', lbl:'Converted'},
+  lost: {bg:'rgba(248,81,73,.14)',  col:'#f85149', lbl:'Lost'},
+  open: {bg:'rgba(210,153,34,.15)', col:'#d29922', lbl:'In progress'},
+  new:  {bg:'rgba(47,129,247,.14)', col:'#2f81f7', lbl:'New'}
+};
+
+// ── Fetch the sheet ──────────────────────────────────────────────
+// Route 1: Google Visualization JSONP (a <script> tag — no CORS, and it
+// carries the viewer's Google login, so a sheet shared with them works too).
+// Route 2: plain CSV fetch, for when the script route is blocked.
+function bsJSONP(){
+  return new Promise(function(resolve, reject){
+    var cb = 'bsCb_' + Date.now() + '_' + Math.floor(Math.random()*1e6);
+    var el = document.createElement('script');
+    var done = false;
+    var cleanup = function(){ done = true; try{ delete window[cb]; }catch(e){ window[cb] = undefined; } if(el.parentNode) el.parentNode.removeChild(el); clearTimeout(t); };
+    var t = setTimeout(function(){ if(!done){ cleanup(); reject(new Error('Google Sheets did not answer in time')); } }, 15000);
+    window[cb] = function(resp){
+      cleanup();
+      if(!resp || resp.status === 'error'){
+        var m = resp && resp.errors && resp.errors[0];
+        var why = m ? (m.detailed_message || m.message || m.reason) : 'unknown error';
+        if(/sheet|range|invalid_query/i.test(String(m && (m.reason+' '+m.message)))) why = 'Tab "' + BS_SHEET_TAB + '" was not found in the sheet';
+        return reject(new Error(why));
+      }
+      var tb = resp.table || {cols:[], rows:[]};
+      var head = tb.cols.map(function(c){ return (c && c.label) || ''; });
+      var rows = (tb.rows||[]).map(function(r){
+        return (r.c||[]).map(function(c){
+          if(!c) return '';
+          if(c.f != null) return String(c.f);
+          return c.v == null ? '' : String(c.v);
+        });
+      });
+      resolve([head].concat(rows));
+    };
+    el.onerror = function(){ if(!done){ cleanup(); reject(new Error('NO_ACCESS')); } };
+    el.src = 'https://docs.google.com/spreadsheets/d/' + BS_SHEET_ID + '/gviz/tq?headers=1&sheet='
+      + encodeURIComponent(BS_SHEET_TAB) + '&tqx=' + encodeURIComponent('out:json;responseHandler:' + cb) + '&_=' + Date.now();
+    document.head.appendChild(el);
+  });
+}
+async function bsCSV(){
+  var res;
+  try{ res = await fetch(bsSheetCSVUrl(), {cache:'no-store'}); }
+  catch(e){ throw new Error('NO_ACCESS'); }
+  if(!res.ok) throw new Error(res.status === 404 ? 'Sheet not found — check the sheet link' : 'Google Sheets replied ' + res.status);
+  var txt = await res.text();
+  if(/^\s*<(!doctype|html)/i.test(txt)) throw new Error('NO_ACCESS');
+  return bsParseCSV(txt);
+}
+async function bsFetchTable(){
+  try{ return await bsJSONP(); }
+  catch(e1){
+    if(e1.message !== 'NO_ACCESS' && !/did not answer/.test(e1.message)) throw e1;
+    try{ return await bsCSV(); }
+    catch(e2){ throw e2.message === 'NO_ACCESS' ? e1 : e2; }
+  }
+}
+
+// ── Load ─────────────────────────────────────────────────────────
+async function bsLoad(force){
+  var open = document.getElementById('bs-open-sheet'); if(open) open.href = bsSheetEditUrl();
+  if(_bs.busy) return;
+  if(!force && _bs.loaded && (Date.now() - _bs.loaded) < BS_STALE_MS){ bsRender(); bsApplyFocus(); return; }
+  var wrap = document.getElementById('bs-table-wrap');
+  var sync = document.getElementById('bs-sync');
+  if(!_bs.rows.length && wrap) wrap.innerHTML = '<div class="bs-empty">Loading leads from the sheet…</div>';
+  if(sync) sync.textContent = 'Syncing with Google Sheet…';
+  _bs.busy = true;
+  try{
+    var all = (await bsFetchTable()).filter(function(r){ return r.some(function(c){ return String(c).trim() !== ''; }); });
+    if(!all.length) throw new Error('The ' + BS_SHEET_TAB + ' tab is empty');
+    // if Google did not pick up a header row, use the first row as headers
+    if(all[0].every(function(h){ return !String(h).trim(); }) && all.length > 1) all.shift();
+    var head = all[0].map(function(h, i){ return String(h).trim() || ('Column ' + (i+1)); });
+    var rows = all.slice(1);
+    // drop columns that are blank all the way down
+    var keep = head.map(function(_, i){ return rows.some(function(r){ return String(r[i]||'').trim() !== ''; }); });
+    _bs.head = head.filter(function(_, i){ return keep[i]; });
+    _bs.rows = rows.map(function(r){ return head.map(function(_, i){ return r[i]==null ? '' : String(r[i]).trim(); }).filter(function(_, i){ return keep[i]; }); });
+    _bs.col = bsDetectCols(_bs.head);
+    _bs.dmy = bsDetectDMY(_bs.rows, _bs.col.date);
+    _bs.rows.forEach(function(r, i){ r._d = _bs.col.date != null ? bsParseDate(r[_bs.col.date]) : null; r._n = i + 2; });
+    if(_bs.sort.i < 0 && _bs.col.date != null) _bs.sort = {i:_bs.col.date, dir:-1};
+    await bsLoadCalls();
+    _bs.loaded = Date.now();
+    _bs.limit = BS_PAGE;
+    if(sync) sync.textContent = 'Live from Google Sheet · ' + BS_SHEET_TAB + ' · synced ' + new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    var fb = document.getElementById('bs-filters'); if(fb) fb.style.display = 'flex';
+    bsPopulateFilters();
+    bsRender();
+    bsApplyFocus();
+  }catch(e){
+    console.warn('[bs-leads]', e);
+    var noAccess = e.message === 'NO_ACCESS';
+    if(sync) sync.textContent = 'Could not sync — ' + (noAccess ? 'no access to the sheet' : e.message);
+    if(!_bs.rows.length && wrap){
+      wrap.innerHTML = '<div class="bs-empty" style="color:var(--absent)"><div style="font-size:14px;font-weight:600;margin-bottom:8px">'
+        + (noAccess ? 'The dashboard is not allowed to read this sheet' : 'Could not load the sheet') + '</div>'
+        + '<div style="font-size:12px;color:var(--text2);line-height:1.8;margin-bottom:12px;text-align:left;display:inline-block">'
+        + (noAccess
+            ? 'In Google Sheets click <b>Share</b> → under <b>General access</b> choose <b>Anyone with the link</b> → role <b>Viewer</b> → <b>Done</b>.<br>'
+              + 'Then press <b>Try again</b> here. (Your organisation may block public sharing — if so, ask your Google admin.)'
+            : bsEsc(e.message) + '<br>Check the sheet is shared as <b>Anyone with the link → Viewer</b> and the tab is named <b>' + bsEsc(BS_SHEET_TAB) + '</b>.')
+        + '</div><br>'
+        + '<button onclick="bsLoad(true)" style="padding:8px 20px;background:var(--accent);border:none;border-radius:6px;color:#fff;cursor:pointer">Try again</button></div>';
+    }
+  }finally{ _bs.busy = false; }
+}
+
+// ── Filters ──────────────────────────────────────────────────────
+function bsUniq(i){
+  if(i == null) return [];
+  var m = {}; _bs.rows.forEach(function(r){ var v = r[i]; if(v) m[v] = (m[v]||0) + 1; });
+  return Object.keys(m).sort(function(a, b){ return m[b] - m[a] || a.localeCompare(b); });
+}
+function bsPopulateFilters(){
+  var set = function(id, key, first){
+    var el = document.getElementById(id); if(!el) return;
+    var i = _bs.col[key];
+    if(i == null){ el.style.display = 'none'; el.value = ''; return; }
+    el.style.display = '';
+    var cur = el.value;
+    el.innerHTML = '<option value="">' + first + '</option>' + bsUniq(i).map(function(v){ return '<option>' + bsEsc(v) + '</option>'; }).join('');
+    el.value = cur;
+  };
+  set('bs-f-status', 'status', 'All statuses');
+  set('bs-f-source', 'source', 'All sources');
+  set('bs-f-agent',  'agent',  'All agents');
+  set('bs-f-city',   'city',   'All locations');
+  var ms = document.getElementById('bs-f-month');
+  var dw = document.getElementById('bs-date-wrap');
+  var hasDate = _bs.col.date != null && _bs.rows.some(function(r){ return r._d; });
+  if(dw) dw.style.display = hasDate ? 'inline-flex' : 'none';
+  if(ms){
+    if(!hasDate){ ms.style.display = 'none'; ms.value = ''; }
+    else{
+      ms.style.display = '';
+      var cur = ms.value, seen = {};
+      _bs.rows.forEach(function(r){ if(r._d) seen[bsYMD(r._d).slice(0,7)] = 1; });
+      var MN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      ms.innerHTML = '<option value="">All months</option>' + Object.keys(seen).sort().reverse().map(function(k){
+        return '<option value="' + k + '">' + MN[+k.slice(5)-1] + ' ' + k.slice(0,4) + '</option>'; }).join('');
+      ms.value = cur;
+    }
+  }
+}
+function bsClearFilters(){
+  ['bs-search','bs-f-call','bs-f-status','bs-f-source','bs-f-agent','bs-f-city','bs-f-month','bs-f-from','bs-f-to'].forEach(function(id){
+    var el = document.getElementById(id); if(el) el.value = ''; });
+  _bs.bucket = '';
+  bsRender();
+}
+function bsSetBucket(b){ _bs.bucket = (_bs.bucket === b) ? '' : b; bsRender(); }
+
+function bsFiltered(){
+  var g = function(id){ var e = document.getElementById(id); return e ? e.value : ''; };
+  var q = g('bs-search').toLowerCase().trim();
+  var f = {status:g('bs-f-status'), source:g('bs-f-source'), agent:g('bs-f-agent'), city:g('bs-f-city')};
+  var mo = g('bs-f-month'), from = g('bs-f-from'), to = g('bs-f-to'), c = _bs.col;
+  var fc = g('bs-f-call');
+  var qDigits = q.replace(/[^0-9]/g, '');
+  if(qDigits.length >= 9) qDigits = qDigits.slice(-9);   // 050…, +971 50…, 00971 50… all match
+  return _bs.rows.filter(function(r){
+    for(var k in f){ if(f[k] && c[k] != null && r[c[k]] !== f[k]) return false; }
+    if(_bs.bucket && c.status != null && bsBucket(r[c.status]) !== _bs.bucket) return false;
+    var o = bsOv(r);
+    if(fc){ if(fc === '__none'){ if(o.call_status) return false; } else if(o.call_status !== fc) return false; }
+    var ds = bsYMD(r._d);
+    if(mo && ds.slice(0,7) !== mo) return false;
+    if(from && (!ds || ds < from)) return false;
+    if(to && (!ds || ds > to)) return false;
+    if(q){
+      var hay = (r.join(' ') + ' ' + (o.remarks||'') + ' ' + (o.call_status||'')).toLowerCase();
+      if(hay.indexOf(q) < 0){
+        if(!(qDigits.length >= 4 && r.join(' ').replace(/[^0-9]/g, '').indexOf(qDigits) >= 0)) return false;
+      }
+    }
+    return true;
+  });
+}
+
+// ── Render ───────────────────────────────────────────────────────
+function bsRenderKPIs(){
+  var el = document.getElementById('bs-kpi-row'); if(!el) return;
+  var rows = _bs.rows, c = _bs.col;
+  var now = new Date(); now.setHours(0,0,0,0);
+  var mStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  var wStart = new Date(now); wStart.setDate(wStart.getDate() - 6);
+  var tod = 0, wk = 0, mo = 0, b = {won:0, lost:0, open:0, new:0};
+  rows.forEach(function(r){
+    if(r._d){ if(+r._d === +now) tod++; if(r._d >= wStart) wk++; if(r._d >= mStart) mo++; }
+    if(c.status != null) b[bsBucket(r[c.status])]++;
+  });
+  var card = function(v, l, col, click){
+    return '<div class="tk-kpi"' + (click ? ' style="cursor:pointer" onclick="' + click + '"' : '') + '><div class="tk-kpi-v"' + (col ? ' style="color:' + col + '"' : '') + '>' + v + '</div><div class="tk-kpi-l">' + l + '</div></div>';
+  };
+  var decided = b.won + b.lost;
+  var html = card(rows.length, 'Total leads');
+  if(c.date != null) html += card(tod, 'Today', tod ? '#2f81f7' : '') + card(wk, 'Last 7 days') + card(mo, 'This month');
+  if(c.status != null){
+    html += card(b.won, 'Converted', '#3fb950', "bsSetBucket('won')")
+      + card(b.open + b.new, 'Open / in progress', '#d29922', "bsSetBucket('open')")
+      + card(b.lost, 'Lost', '#f85149', "bsSetBucket('lost')")
+      + card(rows.length ? Math.round(b.won / rows.length * 100) + '%' : '—', 'Conversion rate', '#3fb950')
+      + (decided ? card(Math.round(b.won / decided * 100) + '%', 'Win rate (decided)') : '');
+  }
+  var called = 0, conn = 0, na = 0;
+  rows.forEach(function(r){ var cs = bsOv(r).call_status; if(cs){ called++; if(cs === 'Connected') conn++; if(cs === 'No answer') na++; } });
+  html += card(rows.length - called, 'Not called yet', (rows.length - called) ? '#2f81f7' : '', "bsPickCall('__none')")
+    + card(conn, 'Connected', '#3fb950', "bsPickCall('Connected')")
+    + card(na, 'No answer', '#d29922', "bsPickCall('No answer')");
+  el.innerHTML = html;
+
+  var strip = document.getElementById('bs-status-strip'); if(!strip) return;
+  if(c.status == null){ strip.innerHTML = ''; return; }
+  var cur = (document.getElementById('bs-f-status')||{}).value || '';
+  strip.innerHTML = bsUniq(c.status).map(function(v){
+    var st = BS_BUCKET_STYLE[bsBucket(v)], n = rows.filter(function(r){ return r[c.status] === v; }).length;
+    var on = cur === v;
+    return '<span class="bs-chip" style="background:' + st.bg + ';color:' + st.col + (on ? ';outline:2px solid ' + st.col : '') + '" onclick="bsPickStatus(this.dataset.v)" data-v="' + bsEsc(v) + '">' + bsEsc(v) + ' <b>' + n + '</b></span>';
+  }).join('') + (_bs.bucket ? '<span class="bs-chip" style="background:var(--bg3);color:var(--text2)" onclick="bsSetBucket(\'\')">Showing: ' + BS_BUCKET_STYLE[_bs.bucket === 'open' ? 'open' : _bs.bucket].lbl + ' ✕</span>' : '');
+}
+function bsPickCall(v){
+  var el = document.getElementById('bs-f-call'); if(!el) return;
+  el.value = el.value === v ? '' : v; bsRender();
+}
+function bsPickStatus(v){
+  var el = document.getElementById('bs-f-status'); if(!el) return;
+  el.value = el.value === v ? '' : v; _bs.bucket = ''; bsRender();
+}
+
+function bsCell(r, i){
+  var v = r[i], c = _bs.col;
+  if(!v) return '<span style="color:var(--text3)">—</span>';
+  if(i === c.phone){
+    var digits = v.replace(/[^0-9]/g, '');
+    if(digits.length >= 8){
+      if(digits.indexOf('00') === 0) digits = digits.slice(2);
+      else if(digits.indexOf('0') === 0 && digits.length <= 10) digits = '971' + digits.slice(1);
+      return '<a href="tel:+' + digits + '" style="color:var(--text);text-decoration:none;font-family:monospace">' + bsEsc(v) + '</a>'
+        + ' <a href="https://wa.me/' + digits + '" target="_blank" rel="noopener" title="WhatsApp" style="text-decoration:none">💬</a>';
+    }
+  }
+  if(i === c.email) return '<a href="mailto:' + bsEsc(v) + '" style="color:var(--accent);text-decoration:none">' + bsEsc(v) + '</a>';
+  if(i === c.status){ var st = BS_BUCKET_STYLE[bsBucket(v)]; return '<span class="tk-pill" style="background:' + st.bg + ';color:' + st.col + '">' + bsEsc(v) + '</span>'; }
+  if(i === c.name) return '<b>' + bsEsc(v) + '</b>';
+  if(/^https?:\/\//i.test(v)) return '<a href="' + bsEsc(v) + '" target="_blank" rel="noopener" style="color:var(--accent)">link</a>';
+  return v.length > 80 ? '<span title="' + bsEsc(v) + '">' + bsEsc(v.slice(0, 78)) + '…</span>' : bsEsc(v);
+}
+
+function bsSortBy(i){
+  if(i === 'cs' || i === 'rm'){
+    if(_bs.sort.i === i) _bs.sort.dir *= -1; else _bs.sort = {i:i, dir:1};
+    return bsRender();
+  }
+  if(_bs.sort.i === i) _bs.sort.dir *= -1; else _bs.sort = {i:i, dir: i === _bs.col.date ? -1 : 1};
+  bsRender();
+}
+function bsMore(){ _bs.limit += BS_PAGE; bsRender(); }
+
+function bsRender(){
+  var wrap = document.getElementById('bs-table-wrap'); if(!wrap) return;
+  if(!_bs.head.length){ return; }
+  bsRenderKPIs();
+  var rows = bsFiltered(), s = _bs.sort;
+  if(s.i === 'cs' || s.i === 'rm'){
+    var fld = s.i === 'cs' ? 'call_status' : 'remarks';
+    rows = rows.slice().sort(function(a, b){
+      var p = bsOv(a)[fld] || '', q = bsOv(b)[fld] || '';
+      if(!p && q) return 1; if(p && !q) return -1;
+      return p.localeCompare(q) * s.dir || (a._n - b._n);
+    });
+  } else if(s.i >= 0){
+    var isDate = s.i === _bs.col.date;
+    rows = rows.slice().sort(function(a, b){
+      if(isDate){ var x = a._d ? +a._d : 0, y = b._d ? +b._d : 0; return (x - y) * s.dir || (a._n - b._n) * s.dir; }
+      var p = a[s.i] || '', q = b[s.i] || '';
+      if(!p && q) return 1; if(p && !q) return -1;
+      var np = parseFloat(p), nq = parseFloat(q);
+      if(!isNaN(np) && !isNaN(nq) && /^[\d.,\s-]+$/.test(p + q)) return (np - nq) * s.dir;
+      return p.localeCompare(q, undefined, {numeric:true, sensitivity:'base'}) * s.dir;
+    });
+  }
+  var cnt = document.getElementById('bs-count');
+  if(cnt) cnt.textContent = 'Showing ' + Math.min(rows.length, _bs.limit) + ' of ' + rows.length + ' matching · ' + _bs.rows.length + ' leads in the sheet';
+  if(!rows.length){ wrap.innerHTML = '<div class="bs-empty">No leads match these filters</div>'; return; }
+  var pos = bsCallPos();
+  var html = '<table class="bs-tbl"><thead><tr><th style="width:36px">#</th>';
+  _bs.head.forEach(function(h, i){
+    var arrow = s.i === i ? (s.dir > 0 ? ' ▲' : ' ▼') : '';
+    html += '<th onclick="bsSortBy(' + i + ')" title="Sort">' + bsEsc(h) + arrow + '</th>';
+    if(i === pos){
+      html += '<th class="bs-call-th" onclick="bsSortBy(\'cs\')" title="Editable — saved to the dashboard">📞 Call Status' + (s.i === 'cs' ? (s.dir > 0 ? ' ▲' : ' ▼') : '') + '</th>'
+        + '<th class="bs-call-th" onclick="bsSortBy(\'rm\')" title="Editable — saved to the dashboard">📝 Remarks' + (s.i === 'rm' ? (s.dir > 0 ? ' ▲' : ' ▼') : '') + '</th>';
+    }
+  });
+  html += '</tr></thead><tbody>';
+  rows.slice(0, _bs.limit).forEach(function(r){
+    html += '<tr data-n="' + r._n + '"><td style="color:var(--text3);font-family:monospace;font-size:10px" title="Sheet row ' + r._n + '">' + r._n + '</td>';
+    _bs.head.forEach(function(_, i){ html += '<td>' + bsCell(r, i) + '</td>'; if(i === pos) html += bsCallCells(r); });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  if(rows.length > _bs.limit) html += '<div style="text-align:center;padding:12px"><button onclick="bsMore()" style="padding:7px 18px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;cursor:pointer">Show ' + Math.min(BS_PAGE, rows.length - _bs.limit) + ' more</button></div>';
+  wrap.innerHTML = html;
+}
+
+// ── Export ───────────────────────────────────────────────────────
+function bsExportCSV(){
+  var rows = bsFiltered();
+  if(!rows.length){ alert('No leads to export.'); return; }
+  var q = function(v){ v = String(v==null?'':v); return /[",\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+  var extra = ['Call Status','Remarks','Call updated by','Call updated at'];
+  var csv = [_bs.head.concat(extra).map(q).join(',')].concat(rows.map(function(r){
+    var o = bsOv(r);
+    return _bs.head.map(function(_, i){ return q(r[i]); })
+      .concat([q(o.call_status), q(o.remarks), q(o.updated_by), q(o.updated_at ? new Date(o.updated_at).toLocaleString() : '')]).join(',');
+  })).join('\r\n');
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\ufeff' + csv], {type:'text/csv;charset=utf-8'}));
+  a.download = 'UAE_Babysitting_leads_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+}
+// ── Deep links — e.g. from the Slack alert ───────────────────────
+//   dashboard.html#bsleads                → opens this tab
+//   dashboard.html#bsleads=0501234567     → opens it and jumps to that lead
+function bsDeepLink(){
+  var h = decodeURIComponent((location.hash || '').replace(/^#/, ''));
+  if(!/^bsleads\b/i.test(h)) return false;
+  if(!_session) return false;                       // login first — called again after sign-in
+  if(_session.role === 'hc' || _session.role === 'client') return false;
+  var target = h.split('=').slice(1).join('=').trim();
+  _bs.focus = target || '';
+  _bs.focusDone = false;
+  switchTab('bsleads');
+  bsLoad(!!target);                                 // a fresh lead → always pull the latest sheet
+  return true;
+}
+function bsFocusMatch(r){
+  var t = _bs.focus; if(!t) return false;
+  var digits = t.replace(/[^0-9]/g, '');
+  if(digits.length >= 7){
+    var ph = _bs.col.phone != null ? String(r[_bs.col.phone]||'').replace(/[^0-9]/g, '') : '';
+    return !!ph && ph.slice(-9) === digits.slice(-9);
+  }
+  if(/^row\d+$/i.test(t)) return r._n === parseInt(t.slice(3), 10);
+  return _bs.col.name != null && String(r[_bs.col.name]||'').toLowerCase().trim() === t.toLowerCase();
+}
+function bsApplyFocus(){
+  if(!_bs.focus || _bs.focusDone || !_bs.rows.length) return;
+  var hit = _bs.rows.find(bsFocusMatch);
+  _bs.focusDone = true;
+  if(!hit){ bsToast('That lead is not in the sheet yet — it may take a moment to appear'); return; }
+  bsClearFilters();
+  setTimeout(function(){
+    var tr = document.querySelector('.bs-tbl tr[data-n="' + hit._n + '"]');
+    if(!tr){ // outside the first page of rows → narrow the table to it
+      var sb = document.getElementById('bs-search');
+      if(sb){ sb.value = _bs.col.phone != null ? (hit[_bs.col.phone] || '') : (hit[_bs.col.name] || ''); bsRender(); }
+      tr = document.querySelector('.bs-tbl tr[data-n="' + hit._n + '"]');
+    }
+    if(tr){
+      tr.classList.add('bs-focus');
+      tr.scrollIntoView({block:'center', behavior:'smooth'});
+      var sel = tr.querySelector('select.bs-call'); if(sel) setTimeout(function(){ sel.focus(); }, 500);
+      setTimeout(function(){ tr.classList.remove('bs-focus'); }, 8000);
+    }
+  }, 60);
+}
+function bsToast(msg){
+  if(typeof tkToast === 'function') return tkToast(msg);
+  alert(msg);
+}
+window.addEventListener('hashchange', function(){ bsDeepLink(); });
+// END UAE BABYSITTING LEADS
 
 // ── Theme toggle ─────────────────────────────────────────────────
 function toggleTheme(){
@@ -16909,11 +17432,16 @@ function renderRoster(){
           var isMumzCell=_mumzDays[cgName+'|'+ds]||recs.some(mzTagged);
           if(isMumzCell&&(st.code==='duty'||st.code==='manual')){
             var evM=st.rec||recs[0]||{};
+            var _mzB=rosterActiveRecs(recs).filter(mzTagged);
             cls+=' rd-mumz';
             var tM=evM.time_start&&evM.time_end?evM.time_start+'-'+evM.time_end:(evM.time_start||'');
             var oidM=evM.child_order_id||evM.order_id||'';
             inner='<div class="rd-in">'+(tM?'<div class="rd-tm">'+tM+'</div>':'')+(oidM?'<div class="rd-od">#'+oidM+'</div>':'')+'</div>';
             tip='Mumzworld order'+(oidM?' #'+oidM:'')+(tM?' · '+tM:'');
+            if(_mzB.length>1){
+              inner=rosterBookingsHTML(_mzB.map(function(b){return Object.assign({},b,{client_name:''});}),true);
+              tip=_mzB.length+' Mumzworld orders'+_mzB.map(function(b){var t=b.time_start&&b.time_end?b.time_start+'-'+b.time_end:(b.time_start||'');var id=b.child_order_id||b.order_id||'';return '\n• '+(id?'#'+id:'Order')+(t?' · '+t:'');}).join('');
+            }
           } else {
             cls='rd'+(isWE?' col-weekend':'')+(isT?' rd-today':'')+' rd-empty';
             inner=''; tip='';
@@ -16944,17 +17472,24 @@ function renderRoster(){
           cls+=' rd-manual';
           var ovm=st.ov||{};
           var t2=ovm.time_start&&ovm.time_end?ovm.time_start+'-'+ovm.time_end:(ovm.time_start||'');
-          inner='<div class="rd-in"><div class="rd-cl">'+(ovm.client_name||'Manual')+'</div>'+(t2?'<div class="rd-tm">'+t2+'</div>':'')+'</div>';
+          if(st.bookings&&st.bookings.length>1){
+            var _mb=st.bookings.map(function(b){return Object.assign({},b,{client_name:b.client_name||'Manual'});});
+            inner=rosterBookingsHTML(_mb,false); tip=rosterBookingsTip(cgName,ds,_mb);
+          } else {
+            inner='<div class="rd-in"><div class="rd-cl">'+(ovm.client_name||'Manual')+'</div>'+(t2?'<div class="rd-tm">'+t2+'</div>':'')+'</div>';
+          }
         } else if(st.code==='duty'){
           var ev=st.rec||recs[0]||{};
+          var _bks=st.active&&st.active.length?st.active:[ev];
           var cl2=(ev.client_name||'').split(' ')[0];
           var isMumz=_mumzDays[cgName+'|'+ds]||recs.some(mzTagged);
-          if(isMumz){cls+=' rd-mumz';tip=cgName+' | '+ds+' · Mumzworld order';}
+          if(_bks.length>1) tip=rosterBookingsTip(cgName,ds,_bks);
+          if(isMumz){cls+=' rd-mumz';tip=(_bks.length>1?tip+'\n':cgName+' | '+ds+' · ')+'Mumzworld order';}
           else if((ev.client_name||'').toLowerCase().includes('shady'))cls+=' rd-shady';
           else cls+=' rd-duty';
           var t3=ev.time_start&&ev.time_end?ev.time_start+'-'+ev.time_end:(ev.time_start||'');
           var oid=ev.child_order_id||ev.order_id||'';
-          inner='<div class="rd-in">'+(cl2?'<div class="rd-cl">'+cl2+'</div>':'')+(t3?'<div class="rd-tm">'+t3+'</div>':'')+(oid?'<div class="rd-od">#'+oid+'</div>':'')+'</div>';
+          inner=_bks.length>1?rosterBookingsHTML(_bks,false):'<div class="rd-in">'+(cl2?'<div class="rd-cl">'+cl2+'</div>':'')+(t3?'<div class="rd-tm">'+t3+'</div>':'')+(oid?'<div class="rd-od">#'+oid+'</div>':'')+'</div>';
         }
         var safeN=cgName.replace(/'/g,"&#39;").replace(/"/g,'&quot;');
         var tipS=String(tip).replace(/"/g,'&quot;');
@@ -17529,6 +18064,7 @@ async function doLogin(){
     document.getElementById('login-screen').style.display='none';
     applySessionUI();loadData();
     if(_session.role==='client')setTimeout(function(){switchTab('mumz');},150);
+    else setTimeout(function(){ try{ bsDeepLink(); }catch(e){ console.warn('[deeplink]', e); } },300);
   }catch(e){err.style.display='block';btn.disabled=false;btn.textContent='Sign In';}
 }
 function applySessionUI(){
@@ -19261,6 +19797,48 @@ function rosterWoLookup(){
   _woCache = wo; return wo;
 }
 
+// Every live booking for one caregiver on one day — de-duplicated, earliest first
+var _RD_NONWORK = {weekoff:1,sick:1,holiday:1,paid:1,unpaid:1,off:1,removed:1,cancelled:1,absent:1};
+function rosterActiveRecs(recs){
+  var seen = {}, out = [];
+  (recs||[]).forEach(function(r){
+    var st = (r.status||'').toLowerCase().replace(/\s+/g,'');
+    if(_RD_NONWORK[st]) return;
+    var key = r.child_order_id || r.order_id || ((r.client_name||'')+'|'+(r.time_start||''));
+    if(seen[key]) return; seen[key] = 1;
+    out.push(r);
+  });
+  out.sort(function(a,b){
+    var ta = a.time_start ? toMins(a.time_start) : 9999, tb = b.time_start ? toMins(b.time_start) : 9999;
+    return ta - tb;
+  });
+  return out;
+}
+function rosterBookingsHTML(list, showOid){
+  var multi = list.length > 1;
+  var h = '<div class="rd-in'+(multi?' rd-multi':'')+'">';
+  if(multi) h += '<span class="rd-cnt">×'+list.length+'</span>';
+  list.forEach(function(b){
+    var cl = (b.client_name||'').split(' ')[0];
+    var t  = b.time_start&&b.time_end ? b.time_start+'-'+b.time_end : (b.time_start||'');
+    var id = b.child_order_id || b.order_id || '';
+    h += '<div class="'+(multi?'rd-bk':'')+'">'
+      + (cl?'<div class="rd-cl">'+cl+'</div>':'')
+      + (t?'<div class="rd-tm">'+t+'</div>':'')
+      + (id&&(showOid||!multi)?'<div class="rd-od">#'+id+'</div>':'')
+      + '</div>';
+  });
+  return h + '</div>';
+}
+function rosterBookingsTip(cg, ds, list){
+  return cg+' | '+ds+(list.length>1?' · '+list.length+' bookings':'')
+    + list.map(function(b){
+        var t = b.time_start&&b.time_end ? b.time_start+'-'+b.time_end : (b.time_start||'');
+        var id = b.child_order_id || b.order_id || '';
+        return '\n• '+(b.client_name||'Client')+(t?' · '+t:'')+(id?' · #'+id:'');
+      }).join('');
+}
+
 var _RD_DFULL = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
 // What the roster shows for one caregiver on one day.
@@ -19283,11 +19861,13 @@ function rosterDay(cg, hc, ds, idx, wo){
     if(ov.type==='manual')    return {code:'manual',    ov:ov, rec:recs[0], recs:recs};
     if(ov.type==='manual_list'){
       var _bk = (ov.bookings||[]);
-      if(_bk.length) return {code:'manual', ov:Object.assign({}, _bk[0], {client_name:(_bk[0].client_name||'Manual')+(_bk.length>1?' +'+(_bk.length-1):'')}), rec:recs[0], recs:recs};
+      if(_bk.length) return {code:'manual', ov:Object.assign({}, _bk[0], {client_name:(_bk[0].client_name||'Manual')+(_bk.length>1?' +'+(_bk.length-1):'')}), bookings:_bk, rec:recs[0], recs:recs};
     }
     if(ov.type==='removed')   return {code:'empty'};
   }
   if(recs.length){
+    var _act = rosterActiveRecs(recs);
+    if(_act.length) return {code:'duty', rec:_act[0], recs:recs, active:_act};
     var ev = recs[0], st = (ev.status||'').toLowerCase().replace(/\s+/g,'');
     if(st==='weekoff')                  return {code:'weekoff',   rec:ev, recs:recs};
     if(st==='sick')                     return {code:'sick',      rec:ev, recs:recs};
@@ -19902,6 +20482,7 @@ if(checkExistingSession()){
   setTimeout(function(){ try{ tkPreload(); }catch(e){ console.warn('[tickets] preload', e); } }, 1600);
   setTimeout(function(){ try{ lvPreload(); }catch(e){ console.warn('[leave] preload', e); } }, 2000);
   if(_session&&_session.role==='client')setTimeout(function(){switchTab('mumz');},400);
+  else setTimeout(function(){ try{ bsDeepLink(); }catch(e){ console.warn('[deeplink]', e); } },500);
 } else {
   var _ls=document.getElementById('login-screen');
   if(_ls) _ls.style.display='flex';
