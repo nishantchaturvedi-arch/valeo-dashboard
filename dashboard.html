@@ -661,6 +661,31 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .bs-tbl tbody tr.bs-focus td{background:rgba(47,129,247,.22)!important;transition:background .4s;}
 .bs-tbl tbody tr.bs-focus td:first-child{box-shadow:inset 3px 0 0 var(--accent);}
 .bs-chip{font-size:11px;padding:3px 9px;border-radius:12px;cursor:pointer;user-select:none;}
+.rd{position:relative;}
+.qt-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9100;align-items:center;justify-content:center;padding:16px}
+.qt-modal.show{display:flex}
+.qt-box{background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:14px;width:100%;max-width:440px;max-height:calc(100vh - 32px);overflow:auto;padding:20px 22px 18px;box-shadow:0 20px 60px rgba(0,0,0,.45);font-family:Inter,sans-serif}
+.qt-title{font-size:20px;font-weight:800;letter-spacing:-.01em}
+.qt-x{background:none;border:none;color:var(--text2);font-size:22px;line-height:1;cursor:pointer;padding:0 2px}
+.qt-x:hover{color:var(--text)}
+.qt-sub{font-size:13px;color:var(--text2);margin:6px 0 14px;line-height:1.5}
+.qt-summary{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:14px}
+.qt-dup{background:rgba(248,81,73,.10);border:1px solid rgba(248,81,73,.35);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--sick);margin:-6px 0 14px;line-height:1.5}
+.qt-dup a{color:var(--sick);font-weight:700}
+.qt-lbl{display:block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);margin:0 0 6px}
+.qt-input{width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:Inter,sans-serif;font-size:14px;padding:10px 12px;outline:none;margin-bottom:14px;resize:vertical}
+.qt-input:focus{border-color:#f5c542;box-shadow:0 0 0 3px rgba(245,197,66,.35)}
+.qt-seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:14px}
+.qt-seg button{padding:9px 6px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:Inter,sans-serif;font-size:14px;font-weight:600;cursor:pointer}
+.qt-seg button.on{background:var(--text);color:var(--bg);border-color:var(--text)}
+.qt-seg button[data-p="P1"].on{background:#f85149;border-color:#f85149;color:#fff}
+.qt-send{width:100%;padding:13px;border:none;border-radius:8px;background:var(--text);color:var(--bg);font-family:Inter,sans-serif;font-size:15px;font-weight:700;cursor:pointer}
+.qt-send:disabled{opacity:.6;cursor:default}
+.qt-foot{font-size:11px;color:var(--text3);text-align:center;margin-top:8px}
+.ov-ticket-btn{padding:11px;border-radius:8px;border:1px dashed rgba(47,129,247,.6);background:rgba(47,129,247,.10);color:var(--accent);font-size:13px;font-weight:600;text-align:center;cursor:pointer;transition:background .15s;}
+.ov-ticket-btn:hover{background:rgba(47,129,247,.22);}
+.rd-tk{position:absolute;top:1px;right:1px;font-size:9px;line-height:1;filter:drop-shadow(0 0 1px #000);pointer-events:none;}
+.rd-bk[data-oid]:hover{outline:1px solid rgba(255,255,255,.6);border-radius:3px;}
 .rd-multi{display:flex;flex-direction:column;gap:2px;}
 .rd-bk{display:flex;flex-direction:column;gap:0;padding-bottom:2px;border-bottom:1px dashed rgba(0,0,0,.35);overflow:hidden;}
 .rd-bk:last-child{border-bottom:none;padding-bottom:0;}
@@ -9961,6 +9986,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <div class="ov-type-btn cancelled" onclick="selectOvType(&#39;cancelled&#39;,this)">❌ Cancelled</div>
  <div class="ov-type-btn removed" onclick="selectOvType(&#39;removed&#39;,this)">🗑 Remove Booking</div>
  <div class="ov-type-btn manual selected" onclick="selectOvType(&#39;manual&#39;,this)" style="grid-column:1/-1">➕ Add Manual Booking</div>
+ <div id="ov-ticket-btn" class="ov-ticket-btn" onclick="ovRaiseTicket()" style="grid-column:1/-1">🎫 Open a ticket for this booking</div>
  </div>
  <!-- Manual booking fields - shown only when manual selected -->
  <div id="ov-manual-fields" style="display: block; margin-bottom: 10px;">
@@ -10116,7 +10142,9 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <span class="rl-dot" style="background:#0891b2"></span>Paid Leave
  <span class="rl-dot" style="background:#7c3aed"></span>Pause / Vacation
  <span class="rl-dot" style="background:rgba(248,81,73,.35)"></span>Exited
+ <span style="margin-left:6px">⚠️ Open ticket</span>
  </span>
+ <span id="roster-hc-hint" style="display:none;font-size:11px;color:var(--accent);font-weight:600;margin-left:8px">👆 Click a booked shift to report an issue</span>
  </div>
  <div class="roster-wrap" id="roster-wrap"><table class="roster-table"><thead><tr><th class="col-photo">Photo</th><th class="col-info">Staff</th><th class="" style="padding:5px 2px;text-align:center;">Tue<br><b>1</b></th><th class="" style="padding:5px 2px;text-align:center;">Wed<br><b>2</b></th><th class="" style="padding:5px 2px;text-align:center;">Thu<br><b>3</b></th><th class="" style="padding:5px 2px;text-align:center;">Fri<br><b>4</b></th><th class="col-weekend" style="padding:5px 2px;text-align:center;">Sat<br><b>5</b></th><th class="col-weekend" style="padding:5px 2px;text-align:center;">Sun<br><b>6</b></th><th class="" style="padding:5px 2px;text-align:center;">Mon<br><b>7</b></th><th class="" style="padding:5px 2px;text-align:center;">Tue<br><b>8</b></th><th class="" style="padding:5px 2px;text-align:center;">Wed<br><b>9</b></th><th class=" rd-today" style="padding:5px 2px;text-align:center;">Thu<br><b>10</b></th><th class="" style="padding:5px 2px;text-align:center;">Fri<br><b>11</b></th><th class="col-weekend" style="padding:5px 2px;text-align:center;">Sat<br><b>12</b></th><th class="col-weekend" style="padding:5px 2px;text-align:center;">Sun<br><b>13</b></th><th class="" style="padding:5px 2px;text-align:center;">Mon<br><b>14</b></th><th class="" style="padding:5px 2px;text-align:center;">Tue<br><b>15</b></th><th class="" style="padding:5px 2px;text-align:center;">Wed<br><b>16</b></th><th class="" style="padding:5px 2px;text-align:center;">Thu<br><b>17</b></th><th class="" style="padding:5px 2px;text-align:center;">Fri<br><b>18</b></th><th class="col-weekend" style="padding:5px 2px;text-align:center;">Sat<br><b>19</b></th><th class="col-weekend" style="padding:5px 2px;text-align:center;">Sun<br><b>20</b></th><th class="" style="padding:5px 2px;text-align:center;">Mon<br><b>21</b></th><th class="" style="padding:5px 2px;text-align:center;">Tue<br><b>22</b></th><th class="" style="padding:5px 2px;text-align:center;">Wed<br><b>23</b></th><th class="" style="padding:5px 2px;text-align:center;">Thu<br><b>24</b></th><th class="" style="padding:5px 2px;text-align:center;">Fri<br><b>25</b></th><th class="col-weekend" style="padding:5px 2px;text-align:center;">Sat<br><b>26</b></th><th class="col-weekend" style="padding:5px 2px;text-align:center;">Sun<br><b>27</b></th><th class="" style="padding:5px 2px;text-align:center;">Mon<br><b>28</b></th><th class="" style="padding:5px 2px;text-align:center;">Tue<br><b>29</b></th><th class="" style="padding:5px 2px;text-align:center;">Wed<br><b>30</b></th></tr></thead><tbody><tr class="roster-hc-hdr"><td colspan="32">Unicare — 5 caregivers</td></tr><tr><td class="col-photo"><div class="r-photo">CD</div></td><td class="col-info"><div class="r-name">Christine Dimaano</div><div class="r-hc">Unicare</div><div class="r-counts" title="From this roster — September 2026"><span class="rc d" title="Duty 10 + manual 0">D10</span><span class="rc o" title="Day off 0 + week off 2">O2</span><span class="rc s" title="Sick leave">S1</span><span class="rc p" title="Paid leave">P0</span><span class="rc u" title="Unpaid leave">U0</span><span class="rc h" title="Public holiday">H0</span></div><div class="r-row-acts"><button class="r-exit-btn" onclick="event.stopPropagation();offboardCG(&#39;Christine Dimaano&#39;,&#39;Unicare&#39;)" title="Caregiver resigned / removed — set the date they leave from">✕ Remove</button></div><div><select class="r-city dubai" onchange="setCGCity(&#39;Christine Dimaano&#39;,&#39;Unicare&#39;,this.value);this.className=&#39;r-city &#39;+cityCls(this.value)" onclick="event.stopPropagation()" title="Set location"><option value="">+ City</option><option value="DXB" selected="">🏙 DXB — Dubai</option><option value="AUH">🕌 AUH — Abu Dhabi</option><option value="SHJ">🏗 SHJ — Sharjah</option><option value="RAK">⛰ RAK — Ras Al Khaimah</option><option value="Alain">🌵 Alain — Al Ain</option><option value="Other">📍 Other</option></select></div></td><td class="rd rd-mumz" title="Christine Dimaano | 2026-09-01" data-cg="Christine Dimaano" data-ds="2026-09-01" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Mayasa</div><div class="rd-tm">9:00 PM-9:00 AM</div><div class="rd-od">#198860</div></div></td><td class="rd rd-mumz" title="Christine Dimaano | 2026-09-02" data-cg="Christine Dimaano" data-ds="2026-09-02" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Mayasa</div><div class="rd-tm">9:00 PM-9:00 AM</div><div class="rd-od">#198861</div></div></td><td class="rd rd-mumz" title="Christine Dimaano | 2026-09-03" data-cg="Christine Dimaano" data-ds="2026-09-03" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Mayasa</div><div class="rd-tm">9:00 PM-9:00 AM</div><div class="rd-od">#198862</div></div></td><td class="rd rd-sick" title="Christine Dimaano | 2026-09-04" data-cg="Christine Dimaano" data-ds="2026-09-04" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Sick</div></div></td><td class="rd col-weekend rd-mumz" title="Christine Dimaano | 2026-09-05" data-cg="Christine Dimaano" data-ds="2026-09-05" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Mayasa</div><div class="rd-tm">9:00 PM-9:00 AM</div><div class="rd-od">#198864</div></div></td><td class="rd col-weekend rd-mumz" title="Christine Dimaano | 2026-09-06" data-cg="Christine Dimaano" data-ds="2026-09-06" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Mayasa</div><div class="rd-tm">9:00 PM-9:00 AM</div><div class="rd-od">#198868</div></div></td><td class="rd" title="Christine Dimaano | 2026-09-07" data-cg="Christine Dimaano" data-ds="2026-09-07" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd rd-mumz" title="Christine Dimaano | 2026-09-08" data-cg="Christine Dimaano" data-ds="2026-09-08" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Mayasa</div><div class="rd-tm">9:00 PM-9:00 AM</div><div class="rd-od">#198870</div></div></td><td class="rd rd-mumz" title="Christine Dimaano | 2026-09-09" data-cg="Christine Dimaano" data-ds="2026-09-09" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Mayasa</div><div class="rd-tm">9:00 PM-9:00 AM</div><div class="rd-od">#198871</div></div></td><td class="rd rd-today rd-mumz" title="Christine Dimaano | 2026-09-10" data-cg="Christine Dimaano" data-ds="2026-09-10" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Mayasa</div><div class="rd-tm">9:00 PM-9:00 AM</div><div class="rd-od">#198872</div></div></td><td class="rd rd-mumz" title="Christine Dimaano | 2026-09-11" data-cg="Christine Dimaano" data-ds="2026-09-11" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Mayasa</div><div class="rd-tm">9:00 PM-9:00 AM</div><div class="rd-od">#198873</div></div></td><td class="rd col-weekend rd-mumz" title="Christine Dimaano | 2026-09-12" data-cg="Christine Dimaano" data-ds="2026-09-12" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Mayasa</div><div class="rd-tm">9:00 PM-9:00 AM</div><div class="rd-od">#198874</div></div></td><td class="rd col-weekend" title="Christine Dimaano | 2026-09-13" data-cg="Christine Dimaano" data-ds="2026-09-13" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd" title="Christine Dimaano | 2026-09-14" data-cg="Christine Dimaano" data-ds="2026-09-14" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd" title="Christine Dimaano | 2026-09-15" data-cg="Christine Dimaano" data-ds="2026-09-15" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd" title="Christine Dimaano | 2026-09-16" data-cg="Christine Dimaano" data-ds="2026-09-16" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd rd-wo" title="Christine Dimaano | 2026-09-17" data-cg="Christine Dimaano" data-ds="2026-09-17" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Week Off</div></div></td><td class="rd" title="Christine Dimaano | 2026-09-18" data-cg="Christine Dimaano" data-ds="2026-09-18" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd col-weekend" title="Christine Dimaano | 2026-09-19" data-cg="Christine Dimaano" data-ds="2026-09-19" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd col-weekend" title="Christine Dimaano | 2026-09-20" data-cg="Christine Dimaano" data-ds="2026-09-20" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd" title="Christine Dimaano | 2026-09-21" data-cg="Christine Dimaano" data-ds="2026-09-21" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd" title="Christine Dimaano | 2026-09-22" data-cg="Christine Dimaano" data-ds="2026-09-22" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd" title="Christine Dimaano | 2026-09-23" data-cg="Christine Dimaano" data-ds="2026-09-23" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd rd-wo" title="Christine Dimaano | 2026-09-24" data-cg="Christine Dimaano" data-ds="2026-09-24" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Week Off</div></div></td><td class="rd" title="Christine Dimaano | 2026-09-25" data-cg="Christine Dimaano" data-ds="2026-09-25" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd col-weekend" title="Christine Dimaano | 2026-09-26" data-cg="Christine Dimaano" data-ds="2026-09-26" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd col-weekend" title="Christine Dimaano | 2026-09-27" data-cg="Christine Dimaano" data-ds="2026-09-27" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd" title="Christine Dimaano | 2026-09-28" data-cg="Christine Dimaano" data-ds="2026-09-28" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd" title="Christine Dimaano | 2026-09-29" data-cg="Christine Dimaano" data-ds="2026-09-29" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd" title="Christine Dimaano | 2026-09-30" data-cg="Christine Dimaano" data-ds="2026-09-30" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td></tr><tr><td class="col-photo"><div class="r-photo">JK</div></td><td class="col-info"><div class="r-name">Jancy Kanappakan</div><div class="r-hc">Unicare</div><div class="r-counts" title="From this roster — September 2026"><span class="rc d" title="Duty 18 + manual 0">D18</span><span class="rc o" title="Day off 0 + week off 0">O0</span><span class="rc s" title="Sick leave">S0</span><span class="rc p" title="Paid leave">P0</span><span class="rc u" title="Unpaid leave">U0</span><span class="rc h" title="Public holiday">H0</span></div><div class="r-row-acts"><button class="r-exit-btn" onclick="event.stopPropagation();offboardCG(&#39;Jancy Kanappakan&#39;,&#39;Unicare&#39;)" title="Caregiver resigned / removed — set the date they leave from">✕ Remove</button></div><div><select class="r-city dubai" onchange="setCGCity(&#39;Jancy Kanappakan&#39;,&#39;Unicare&#39;,this.value);this.className=&#39;r-city &#39;+cityCls(this.value)" onclick="event.stopPropagation()" title="Set location"><option value="">+ City</option><option value="DXB" selected="">🏙 DXB — Dubai</option><option value="AUH">🕌 AUH — Abu Dhabi</option><option value="SHJ">🏗 SHJ — Sharjah</option><option value="RAK">⛰ RAK — Ras Al Khaimah</option><option value="Alain">🌵 Alain — Al Ain</option><option value="Other">📍 Other</option></select></div></td><td class="rd rd-duty" title="Jancy Kanappakan | 2026-09-01" data-cg="Jancy Kanappakan" data-ds="2026-09-01" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Eric</div><div class="rd-tm">8:00 PM-8:00 AM</div><div class="rd-od">#196243</div></div></td><td class="rd rd-duty" title="Jancy Kanappakan | 2026-09-02" data-cg="Jancy Kanappakan" data-ds="2026-09-02" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Eric</div><div class="rd-tm">8:00 PM-8:00 AM</div><div class="rd-od">#196244</div></div></td><td class="rd rd-duty" title="Jancy Kanappakan | 2026-09-03" data-cg="Jancy Kanappakan" data-ds="2026-09-03" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Eric</div><div class="rd-tm">8:00 PM-8:00 AM</div><div class="rd-od">#196245</div></div></td><td class="rd" title="Jancy Kanappakan | 2026-09-04" data-cg="Jancy Kanappakan" data-ds="2026-09-04" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd col-weekend" title="Jancy Kanappakan | 2026-09-05" data-cg="Jancy Kanappakan" data-ds="2026-09-05" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd col-weekend rd-duty" title="Jancy Kanappakan | 2026-09-06" data-cg="Jancy Kanappakan" data-ds="2026-09-06" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Eric</div><div class="rd-tm">8:00 PM-8:00 AM</div><div class="rd-od">#196248</div></div></td><td class="rd rd-duty" title="Jancy Kanappakan | 2026-09-07" data-cg="Jancy Kanappakan" data-ds="2026-09-07" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Eric</div><div class="rd-tm">8:00 PM-8:00 AM</div><div class="rd-od">#196249</div></div></td><td class="rd rd-duty" title="Jancy Kanappakan | 2026-09-08" data-cg="Jancy Kanappakan" data-ds="2026-09-08" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Eric</div><div class="rd-tm">8:00 PM-8:00 AM</div><div class="rd-od">#196250</div></div></td><td class="rd rd-duty" title="Jancy Kanappakan | 2026-09-09" data-cg="Jancy Kanappakan" data-ds="2026-09-09" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Eric</div><div class="rd-tm">8:00 PM-8:00 AM</div><div class="rd-od">#196251</div></div></td><td class="rd rd-today rd-duty" title="Jancy Kanappakan | 2026-09-10" data-cg="Jancy Kanappakan" data-ds="2026-09-10" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Eric</div><div class="rd-tm">8:00 PM-8:00 AM</div><div class="rd-od">#196252</div></div></td><td class="rd" title="Jancy Kanappakan | 2026-09-11" data-cg="Jancy Kanappakan" data-ds="2026-09-11" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd col-weekend" title="Jancy Kanappakan | 2026-09-12" data-cg="Jancy Kanappakan" data-ds="2026-09-12" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd col-weekend rd-duty" title="Jancy Kanappakan | 2026-09-13" data-cg="Jancy Kanappakan" data-ds="2026-09-13" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Eric</div><div class="rd-tm">8:00 PM-8:00 AM</div><div class="rd-od">#196255</div></div></td><td class="rd rd-duty" title="Jancy Kanappakan | 2026-09-14" data-cg="Jancy Kanappakan" data-ds="2026-09-14" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Eric</div><div class="rd-tm">8:00 PM-8:00 AM</div><div class="rd-od">#196256</div></div></td><td class="rd rd-duty" title="Jancy Kanappakan | 2026-09-15" data-cg="Jancy Kanappakan" data-ds="2026-09-15" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Eric</div><div class="rd-tm">8:00 PM-8:00 AM</div><div class="rd-od">#196257</div></div></td><td class="rd rd-duty" title="Jancy Kanappakan | 2026-09-16" data-cg="Jancy Kanappakan" data-ds="2026-09-16" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Eric</div><div class="rd-tm">8:00 PM-8:00 AM</div><div class="rd-od">#196258</div></div></td><td class="rd rd-duty" title="Jancy Kanappakan | 2026-09-17" data-cg="Jancy Kanappakan" data-ds="2026-09-17" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Eric</div><div class="rd-tm">8:00 PM-8:00 AM</div><div class="rd-od">#196259</div></div></td><td class="rd" title="Jancy Kanappakan | 2026-09-18" data-cg="Jancy Kanappakan" data-ds="2026-09-18" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd col-weekend" title="Jancy Kanappakan | 2026-09-19" data-cg="Jancy Kanappakan" data-ds="2026-09-19" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd col-weekend rd-duty" title="Jancy Kanappakan | 2026-09-20" data-cg="Jancy Kanappakan" data-ds="2026-09-20" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Eric</div><div class="rd-tm">8:00 PM-8:00 AM</div><div class="rd-od">#196262</div></div></td><td class="rd rd-duty" title="Jancy Kanappakan | 2026-09-21" data-cg="Jancy Kanappakan" data-ds="2026-09-21" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Eric</div><div class="rd-tm">8:00 PM-8:00 AM</div><div class="rd-od">#196263</div></div></td><td class="rd rd-duty" title="Jancy Kanappakan | 2026-09-22" data-cg="Jancy Kanappakan" data-ds="2026-09-22" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Eric</div><div class="rd-tm">8:00 PM-8:00 AM</div><div class="rd-od">#196264</div></div></td><td class="rd rd-duty" title="Jancy Kanappakan | 2026-09-23" data-cg="Jancy Kanappakan" data-ds="2026-09-23" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Eric</div><div class="rd-tm">8:00 PM-8:00 AM</div><div class="rd-od">#196265</div></div></td><td class="rd rd-duty" title="Jancy Kanappakan | 2026-09-24" data-cg="Jancy Kanappakan" data-ds="2026-09-24" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Eric</div><div class="rd-tm">8:00 PM-8:00 AM</div><div class="rd-od">#196266</div></div></td><td class="rd" title="Jancy Kanappakan | 2026-09-25" data-cg="Jancy Kanappakan" data-ds="2026-09-25" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd col-weekend" title="Jancy Kanappakan | 2026-09-26" data-cg="Jancy Kanappakan" data-ds="2026-09-26" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd col-weekend" title="Jancy Kanappakan | 2026-09-27" data-cg="Jancy Kanappakan" data-ds="2026-09-27" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd" title="Jancy Kanappakan | 2026-09-28" data-cg="Jancy Kanappakan" data-ds="2026-09-28" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd" title="Jancy Kanappakan | 2026-09-29" data-cg="Jancy Kanappakan" data-ds="2026-09-29" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd" title="Jancy Kanappakan | 2026-09-30" data-cg="Jancy Kanappakan" data-ds="2026-09-30" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td></tr><tr><td class="col-photo"><div class="r-photo">MA</div></td><td class="col-info"><div class="r-name">Maribel Agtang Maddela</div><div class="r-hc">Unicare</div><div class="r-counts" title="From this roster — September 2026"><span class="rc d" title="Duty 3 + manual 0">D3</span><span class="rc o" title="Day off 2 + week off 0">O2</span><span class="rc s" title="Sick leave">S0</span><span class="rc p" title="Paid leave">P0</span><span class="rc u" title="Unpaid leave">U0</span><span class="rc h" title="Public holiday">H0</span></div><div class="r-row-acts"><button class="r-exit-btn" onclick="event.stopPropagation();offboardCG(&#39;Maribel Agtang Maddela&#39;,&#39;Unicare&#39;)" title="Caregiver resigned / removed — set the date they leave from">✕ Remove</button></div><div><select class="r-city dubai" onchange="setCGCity(&#39;Maribel Agtang Maddela&#39;,&#39;Unicare&#39;,this.value);this.className=&#39;r-city &#39;+cityCls(this.value)" onclick="event.stopPropagation()" title="Set location"><option value="">+ City</option><option value="DXB" selected="">🏙 DXB — Dubai</option><option value="AUH">🕌 AUH — Abu Dhabi</option><option value="SHJ">🏗 SHJ — Sharjah</option><option value="RAK">⛰ RAK — Ras Al Khaimah</option><option value="Alain">🌵 Alain — Al Ain</option><option value="Other">📍 Other</option></select></div></td><td class="rd" title="Maribel Agtang Maddela | 2026-09-01" data-cg="Maribel Agtang Maddela" data-ds="2026-09-01" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd rd-off" title="Maribel Agtang Maddela | 2026-09-02" data-cg="Maribel Agtang Maddela" data-ds="2026-09-02" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Off</div></div></td><td class="rd rd-b2b" title="Maribel Agtang Maddela | 2026-09-03" data-cg="Maribel Agtang Maddela" data-ds="2026-09-03" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Noora</div><div class="rd-tm">9:00 AM-1:00 PM</div><div class="rd-od">#200119</div></div></td><td class="rd rd-mumz" title="Maribel Agtang Maddela | 2026-09-04" data-cg="Maribel Agtang Maddela" data-ds="2026-09-04" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Mayasa</div><div class="rd-tm">9:00 PM-9:00 AM</div><div class="rd-od">#198863</div></div></td><td class="rd col-weekend" title="Maribel Agtang Maddela | 2026-09-05" data-cg="Maribel Agtang Maddela" data-ds="2026-09-05" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd col-weekend" title="Maribel Agtang Maddela | 2026-09-06" data-cg="Maribel Agtang Maddela" data-ds="2026-09-06" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd rd-mumz" title="Maribel Agtang Maddela | 2026-09-07" data-cg="Maribel Agtang Maddela" data-ds="2026-09-07" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Mayasa</div><div class="rd-tm">9:00 PM-9:00 AM</div><div class="rd-od">#198869</div></div></td><td class="rd rd-off" title="Maribel Agtang Maddela | 2026-09-08" data-cg="Maribel Agtang Maddela" data-ds="2026-09-08" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Off</div></div></td><td class="rd" title="Maribel Agtang Maddela | 2026-09-09" data-cg="Maribel Agtang Maddela" data-ds="2026-09-09" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd rd-today" title="Maribel Agtang Maddela | 2026-09-10" data-cg="Maribel Agtang Maddela" data-ds="2026-09-10" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd" title="Maribel Agtang Maddela | 2026-09-11" data-cg="Maribel Agtang Maddela" data-ds="2026-09-11" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd col-weekend" title="Maribel Agtang Maddela | 2026-09-12" data-cg="Maribel Agtang Maddela" data-ds="2026-09-12" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd col-weekend" title="Maribel Agtang Maddela | 2026-09-13" data-cg="Maribel Agtang Maddela" data-ds="2026-09-13" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd" title="Maribel Agtang Maddela | 2026-09-14" data-cg="Maribel Agtang Maddela" data-ds="2026-09-14" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd" title="Maribel Agtang Maddela | 2026-09-15" data-cg="Maribel Agtang Maddela" data-ds="2026-09-15" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd" title="Maribel Agtang Maddela | 2026-09-16" data-cg="Maribel Agtang Maddela" data-ds="2026-09-16" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd" title="Maribel Agtang Maddela | 2026-09-17" data-cg="Maribel Agtang Maddela" data-ds="2026-09-17" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd" title="Maribel Agtang Maddela | 2026-09-18" data-cg="Maribel Agtang Maddela" data-ds="2026-09-18" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd col-weekend" title="Maribel Agtang Maddela | 2026-09-19" data-cg="Maribel Agtang Maddela" data-ds="2026-09-19" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd col-weekend" title="Maribel Agtang Maddela | 2026-09-20" data-cg="Maribel Agtang Maddela" data-ds="2026-09-20" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd" title="Maribel Agtang Maddela | 2026-09-21" data-cg="Maribel Agtang Maddela" data-ds="2026-09-21" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd" title="Maribel Agtang Maddela | 2026-09-22" data-cg="Maribel Agtang Maddela" data-ds="2026-09-22" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd" title="Maribel Agtang Maddela | 2026-09-23" data-cg="Maribel Agtang Maddela" data-ds="2026-09-23" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd" title="Maribel Agtang Maddela | 2026-09-24" data-cg="Maribel Agtang Maddela" data-ds="2026-09-24" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd" title="Maribel Agtang Maddela | 2026-09-25" data-cg="Maribel Agtang Maddela" data-ds="2026-09-25" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd col-weekend" title="Maribel Agtang Maddela | 2026-09-26" data-cg="Maribel Agtang Maddela" data-ds="2026-09-26" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd col-weekend" title="Maribel Agtang Maddela | 2026-09-27" data-cg="Maribel Agtang Maddela" data-ds="2026-09-27" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd" title="Maribel Agtang Maddela | 2026-09-28" data-cg="Maribel Agtang Maddela" data-ds="2026-09-28" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd" title="Maribel Agtang Maddela | 2026-09-29" data-cg="Maribel Agtang Maddela" data-ds="2026-09-29" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd" title="Maribel Agtang Maddela | 2026-09-30" data-cg="Maribel Agtang Maddela" data-ds="2026-09-30" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td></tr><tr><td class="col-photo"><div class="r-photo">NR</div></td><td class="col-info"><div class="r-name">Normita Rabena</div><div class="r-hc">Unicare</div><div class="r-counts" title="From this roster — September 2026"><span class="rc d" title="Duty 13 + manual 0">D13</span><span class="rc o" title="Day off 3 + week off 2">O5</span><span class="rc s" title="Sick leave">S0</span><span class="rc p" title="Paid leave">P0</span><span class="rc u" title="Unpaid leave">U0</span><span class="rc h" title="Public holiday">H0</span></div><div class="r-row-acts"><button class="r-exit-btn" onclick="event.stopPropagation();offboardCG(&#39;Normita Rabena&#39;,&#39;Unicare&#39;)" title="Caregiver resigned / removed — set the date they leave from">✕ Remove</button></div><div><select class="r-city dubai" onchange="setCGCity(&#39;Normita Rabena&#39;,&#39;Unicare&#39;,this.value);this.className=&#39;r-city &#39;+cityCls(this.value)" onclick="event.stopPropagation()" title="Set location"><option value="">+ City</option><option value="DXB" selected="">🏙 DXB — Dubai</option><option value="AUH">🕌 AUH — Abu Dhabi</option><option value="SHJ">🏗 SHJ — Sharjah</option><option value="RAK">⛰ RAK — Ras Al Khaimah</option><option value="Alain">🌵 Alain — Al Ain</option><option value="Other">📍 Other</option></select></div></td><td class="rd rd-off" title="Normita Rabena | 2026-09-01" data-cg="Normita Rabena" data-ds="2026-09-01" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Off</div></div></td><td class="rd rd-duty" title="Normita Rabena | 2026-09-02" data-cg="Normita Rabena" data-ds="2026-09-02" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Nadin</div><div class="rd-tm">8:00 PM-8:00 AM</div><div class="rd-od">#192093</div></div></td><td class="rd rd-duty" title="Normita Rabena | 2026-09-03" data-cg="Normita Rabena" data-ds="2026-09-03" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Nadin</div><div class="rd-tm">8:00 PM-8:00 AM</div><div class="rd-od">#192094</div></div></td><td class="rd rd-duty" title="Normita Rabena | 2026-09-04" data-cg="Normita Rabena" data-ds="2026-09-04" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Nadin</div><div class="rd-tm">8:00 PM-8:00 AM</div><div class="rd-od">#192095</div></div></td><td class="rd col-weekend rd-duty" title="Normita Rabena | 2026-09-05" data-cg="Normita Rabena" data-ds="2026-09-05" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Nadin</div><div class="rd-tm">8:00 PM-8:00 AM</div><div class="rd-od">#192096</div></div></td><td class="rd col-weekend rd-duty" title="Normita Rabena | 2026-09-06" data-cg="Normita Rabena" data-ds="2026-09-06" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Nadin</div><div class="rd-tm">8:00 PM-8:00 AM</div><div class="rd-od">#192097</div></div></td><td class="rd rd-duty" title="Normita Rabena | 2026-09-07" data-cg="Normita Rabena" data-ds="2026-09-07" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Nadin</div><div class="rd-tm">8:00 PM-8:00 AM</div><div class="rd-od">#192098</div></div></td><td class="rd rd-off" title="Normita Rabena | 2026-09-08" data-cg="Normita Rabena" data-ds="2026-09-08" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Off</div></div></td><td class="rd rd-duty" title="Normita Rabena | 2026-09-09" data-cg="Normita Rabena" data-ds="2026-09-09" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Nadin</div><div class="rd-tm">8:00 PM-8:00 AM</div><div class="rd-od">#192100</div></div></td><td class="rd rd-today rd-duty" title="Normita Rabena | 2026-09-10" data-cg="Normita Rabena" data-ds="2026-09-10" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Nadin</div><div class="rd-tm">8:00 PM-8:00 AM</div><div class="rd-od">#192101</div></div></td><td class="rd rd-duty" title="Normita Rabena | 2026-09-11" data-cg="Normita Rabena" data-ds="2026-09-11" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Nadin</div><div class="rd-tm">8:00 PM-8:00 AM</div><div class="rd-od">#192102</div></div></td><td class="rd col-weekend rd-duty" title="Normita Rabena | 2026-09-12" data-cg="Normita Rabena" data-ds="2026-09-12" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Nadin</div><div class="rd-tm">8:00 PM-8:00 AM</div><div class="rd-od">#192103</div></div></td><td class="rd col-weekend rd-duty" title="Normita Rabena | 2026-09-13" data-cg="Normita Rabena" data-ds="2026-09-13" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Nadin</div><div class="rd-tm">8:00 PM-8:00 AM</div><div class="rd-od">#192104</div></div></td><td class="rd rd-duty" title="Normita Rabena | 2026-09-14" data-cg="Normita Rabena" data-ds="2026-09-14" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Nadin</div><div class="rd-tm">8:00 PM-8:00 AM</div><div class="rd-od">#192105</div></div></td><td class="rd rd-off" title="Normita Rabena | 2026-09-15" data-cg="Normita Rabena" data-ds="2026-09-15" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Off</div></div></td><td class="rd rd-duty" title="Normita Rabena | 2026-09-16" data-cg="Normita Rabena" data-ds="2026-09-16" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Nadin</div><div class="rd-tm">8:00 PM-8:00 AM</div><div class="rd-od">#192107</div></div></td><td class="rd" title="Normita Rabena | 2026-09-17" data-cg="Normita Rabena" data-ds="2026-09-17" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd" title="Normita Rabena | 2026-09-18" data-cg="Normita Rabena" data-ds="2026-09-18" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd col-weekend" title="Normita Rabena | 2026-09-19" data-cg="Normita Rabena" data-ds="2026-09-19" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd col-weekend" title="Normita Rabena | 2026-09-20" data-cg="Normita Rabena" data-ds="2026-09-20" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd rd-wo" title="Normita Rabena | 2026-09-21" data-cg="Normita Rabena" data-ds="2026-09-21" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Week Off</div></div></td><td class="rd" title="Normita Rabena | 2026-09-22" data-cg="Normita Rabena" data-ds="2026-09-22" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd" title="Normita Rabena | 2026-09-23" data-cg="Normita Rabena" data-ds="2026-09-23" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd" title="Normita Rabena | 2026-09-24" data-cg="Normita Rabena" data-ds="2026-09-24" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd" title="Normita Rabena | 2026-09-25" data-cg="Normita Rabena" data-ds="2026-09-25" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd col-weekend" title="Normita Rabena | 2026-09-26" data-cg="Normita Rabena" data-ds="2026-09-26" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd col-weekend" title="Normita Rabena | 2026-09-27" data-cg="Normita Rabena" data-ds="2026-09-27" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd rd-wo" title="Normita Rabena | 2026-09-28" data-cg="Normita Rabena" data-ds="2026-09-28" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Week Off</div></div></td><td class="rd" title="Normita Rabena | 2026-09-29" data-cg="Normita Rabena" data-ds="2026-09-29" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd" title="Normita Rabena | 2026-09-30" data-cg="Normita Rabena" data-ds="2026-09-30" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td></tr><tr><td class="col-photo"><div class="r-photo">SS</div></td><td class="col-info"><div class="r-name">Soe Soe</div><div class="r-hc">Unicare</div><div class="r-counts" title="From this roster — September 2026"><span class="rc d" title="Duty 15 + manual 1">D16</span><span class="rc o" title="Day off 0 + week off 4">O4</span><span class="rc s" title="Sick leave">S0</span><span class="rc p" title="Paid leave">P0</span><span class="rc u" title="Unpaid leave">U0</span><span class="rc h" title="Public holiday">H0</span></div><div class="r-row-acts"><button class="r-exit-btn" onclick="event.stopPropagation();offboardCG(&#39;Soe Soe&#39;,&#39;Unicare&#39;)" title="Caregiver resigned / removed — set the date they leave from">✕ Remove</button></div><div><select class="r-city dubai" onchange="setCGCity(&#39;Soe Soe&#39;,&#39;Unicare&#39;,this.value);this.className=&#39;r-city &#39;+cityCls(this.value)" onclick="event.stopPropagation()" title="Set location"><option value="">+ City</option><option value="DXB" selected="">🏙 DXB — Dubai</option><option value="AUH">🕌 AUH — Abu Dhabi</option><option value="SHJ">🏗 SHJ — Sharjah</option><option value="RAK">⛰ RAK — Ras Al Khaimah</option><option value="Alain">🌵 Alain — Al Ain</option><option value="Other">📍 Other</option></select></div></td><td class="rd rd-duty" title="Soe Soe | 2026-09-01" data-cg="Soe Soe" data-ds="2026-09-01" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Angam</div><div class="rd-tm">10:00 AM-2:00 PM</div><div class="rd-od">#199334</div></div></td><td class="rd rd-manual" title="Soe Soe | 2026-09-02" data-cg="Soe Soe" data-ds="2026-09-02" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Michael</div><div class="rd-tm">11:00AM-3:00PM</div></div></td><td class="rd" title="Soe Soe | 2026-09-03" data-cg="Soe Soe" data-ds="2026-09-03" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd" title="Soe Soe | 2026-09-04" data-cg="Soe Soe" data-ds="2026-09-04" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd col-weekend rd-wo" title="Soe Soe | 2026-09-05" data-cg="Soe Soe" data-ds="2026-09-05" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Week Off</div></div></td><td class="rd col-weekend" title="Soe Soe | 2026-09-06" data-cg="Soe Soe" data-ds="2026-09-06" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd rd-duty" title="Soe Soe | 2026-09-07" data-cg="Soe Soe" data-ds="2026-09-07" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Angam</div><div class="rd-tm">1:00 PM-6:00 PM</div><div class="rd-od">#200211</div></div></td><td class="rd rd-duty" title="Soe Soe | 2026-09-08" data-cg="Soe Soe" data-ds="2026-09-08" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Angam</div><div class="rd-tm">1:00 PM-6:00 PM</div><div class="rd-od">#200212</div></div></td><td class="rd rd-duty" title="Soe Soe | 2026-09-09" data-cg="Soe Soe" data-ds="2026-09-09" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Angam</div><div class="rd-tm">1:00 PM-6:00 PM</div><div class="rd-od">#200213</div></div></td><td class="rd rd-today rd-duty" title="Soe Soe | 2026-09-10" data-cg="Soe Soe" data-ds="2026-09-10" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Angam</div><div class="rd-tm">1:00 PM-6:00 PM</div><div class="rd-od">#200214</div></div></td><td class="rd" title="Soe Soe | 2026-09-11" data-cg="Soe Soe" data-ds="2026-09-11" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd col-weekend rd-wo" title="Soe Soe | 2026-09-12" data-cg="Soe Soe" data-ds="2026-09-12" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Week Off</div></div></td><td class="rd col-weekend" title="Soe Soe | 2026-09-13" data-cg="Soe Soe" data-ds="2026-09-13" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd rd-duty" title="Soe Soe | 2026-09-14" data-cg="Soe Soe" data-ds="2026-09-14" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Angam</div><div class="rd-tm">1:00 PM-6:00 PM</div><div class="rd-od">#200216</div></div></td><td class="rd rd-duty" title="Soe Soe | 2026-09-15" data-cg="Soe Soe" data-ds="2026-09-15" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Angam</div><div class="rd-tm">1:00 PM-6:00 PM</div><div class="rd-od">#200217</div></div></td><td class="rd" title="Soe Soe | 2026-09-16" data-cg="Soe Soe" data-ds="2026-09-16" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd rd-duty" title="Soe Soe | 2026-09-17" data-cg="Soe Soe" data-ds="2026-09-17" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Angam</div><div class="rd-tm">1:00 PM-6:00 PM</div><div class="rd-od">#200215</div></div></td><td class="rd" title="Soe Soe | 2026-09-18" data-cg="Soe Soe" data-ds="2026-09-18" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd col-weekend rd-wo" title="Soe Soe | 2026-09-19" data-cg="Soe Soe" data-ds="2026-09-19" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Week Off</div></div></td><td class="rd col-weekend" title="Soe Soe | 2026-09-20" data-cg="Soe Soe" data-ds="2026-09-20" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd rd-duty" title="Soe Soe | 2026-09-21" data-cg="Soe Soe" data-ds="2026-09-21" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Angam</div><div class="rd-tm">1:00 PM-6:00 PM</div><div class="rd-od">#200218</div></div></td><td class="rd rd-duty" title="Soe Soe | 2026-09-22" data-cg="Soe Soe" data-ds="2026-09-22" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Angam</div><div class="rd-tm">1:00 PM-6:00 PM</div><div class="rd-od">#200219</div></div></td><td class="rd rd-duty" title="Soe Soe | 2026-09-23" data-cg="Soe Soe" data-ds="2026-09-23" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Angam</div><div class="rd-tm">1:00 PM-6:00 PM</div><div class="rd-od">#200220</div></div></td><td class="rd rd-duty" title="Soe Soe | 2026-09-24" data-cg="Soe Soe" data-ds="2026-09-24" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Angam</div><div class="rd-tm">1:00 PM-6:00 PM</div><div class="rd-od">#200222</div></div></td><td class="rd" title="Soe Soe | 2026-09-25" data-cg="Soe Soe" data-ds="2026-09-25" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd col-weekend rd-wo" title="Soe Soe | 2026-09-26" data-cg="Soe Soe" data-ds="2026-09-26" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Week Off</div></div></td><td class="rd col-weekend" title="Soe Soe | 2026-09-27" data-cg="Soe Soe" data-ds="2026-09-27" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"></td><td class="rd rd-duty" title="Soe Soe | 2026-09-28" data-cg="Soe Soe" data-ds="2026-09-28" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Angam</div><div class="rd-tm">1:00 PM-6:00 PM</div><div class="rd-od">#200223</div></div></td><td class="rd rd-duty" title="Soe Soe | 2026-09-29" data-cg="Soe Soe" data-ds="2026-09-29" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Angam</div><div class="rd-tm">1:00 PM-6:00 PM</div><div class="rd-od">#200224</div></div></td><td class="rd rd-duty" title="Soe Soe | 2026-09-30" data-cg="Soe Soe" data-ds="2026-09-30" onclick="openOvModal(this.dataset.cg,this.dataset.ds)"><div class="rd-in"><div class="rd-cl">Angam</div><div class="rd-tm">1:00 PM-6:00 PM</div><div class="rd-od">#200225</div></div></td></tr></tbody></table></div>
 </div>
@@ -10862,6 +10890,29 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 </div>
 
 <!-- ── RAISE TICKET MODAL ── -->
+<div class="qt-modal" id="qt-modal" onclick="if(event.target===this)qtClose()">
+ <div class="qt-box">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+   <div class="qt-title">Open a ticket</div>
+   <button class="qt-x" onclick="qtClose()" aria-label="Close">×</button>
+  </div>
+  <div class="qt-sub">Sends this straight to the ops team on Slack — no WhatsApp needed.</div>
+  <div class="qt-summary" id="qt-summary"></div>
+  <div id="qt-dup"></div>
+  <label class="qt-lbl" for="qt-scenario">Scenario</label>
+  <select id="qt-scenario" class="qt-input" onchange="qtOnScenario()"></select>
+  <label class="qt-lbl">Priority</label>
+  <div class="qt-seg" id="qt-prio">
+   <button type="button" data-p="P3" onclick="qtSetPrio('P3')">Low</button>
+   <button type="button" data-p="P2" onclick="qtSetPrio('P2')">Normal</button>
+   <button type="button" data-p="P1" onclick="qtSetPrio('P1')">Urgent</button>
+  </div>
+  <label class="qt-lbl" for="qt-details">Details <span id="qt-req" style="color:var(--absent);display:none;text-transform:none;letter-spacing:0">· required</span></label>
+  <textarea id="qt-details" class="qt-input" rows="4" placeholder="Describe what's happening..."></textarea>
+  <button class="qt-send" id="qt-send" onclick="qtSave()">Send ticket to ops</button>
+  <div class="qt-foot" id="qt-foot"></div>
+ </div>
+</div>
 <div class="tk-modal" id="tk-modal" onclick="if(event.target===this)tkCloseModal()">
  <div class="tk-modal-box">
  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
@@ -11222,7 +11273,12 @@ async function loadData(force=false){
         type_of_user:String(r['Type_Of_User']||'').trim(),
         is_b2b:pickB2B(r),
         is_mumzworld:pickMumzworld(r),
-        final_price:parseFloat(r['Final_Price']||r['Order_Price']||0)||0
+        final_price:parseFloat(r['Final_Price']||r['Order_Price']||0)||0,
+        // temp order = "temp"/"temporary" in any status / type / package / category field
+        is_temp:Object.keys(r).some(function(k){
+          return /status|type|package|category|order|kind|tag/i.test(k) && !/user|name|price|id$/i.test(k)
+            && /(^|[^a-z])temp(orary)?([^a-z]|$)/i.test(String(r[k]==null?'':r[k]));
+        })
       };
     }).filter(Boolean);
 
@@ -11989,12 +12045,25 @@ function renderAnalyticsData(){
   // Build revenue map: sum final_price from rawData orders for CGs active in this period
   var revMap = {};
   var seenOrders = new Set();
+  var _revSkip = {cancelled:0, temp:0, unassigned:0, cAmt:0, tAmt:0, uAmt:0, seen:new Set()};
   rawData.forEach(function(r){
-    if(!r.caregiver || !r.final_price) return;
+    if(!r.final_price) return;
+    // Only assigned orders count; cancelled and temp orders never count
+    var _why = revenueExcludeReason(r);
     // Only include orders that overlap with the analytics period
     var startOk = r.date && r.date <= (anaWk!=='all'&&anaWkEnd ? anaWkEnd : anaYr+'-'+String(anaMo+2).padStart(2,'0')+'-00');
     var endOk   = (r.end_date||r.date) >= (anaWk!=='all'&&anaWkStart ? anaWkStart : anaYr+'-'+String(anaMo+1).padStart(2,'0')+'-01');
     if(!startOk||!endOk) return;
+    if(_why){
+      var _sk = _why+'|'+(r.child_order_id||r.order_id||r.caregiver+r.date);
+      if(!_revSkip.seen.has(_sk)){
+        _revSkip.seen.add(_sk);
+        if(_why==='cancelled'){ _revSkip.cancelled++; _revSkip.cAmt += parseFloat(r.final_price)||0; }
+        else if(_why==='unassigned'){ _revSkip.unassigned++; _revSkip.uAmt += parseFloat(r.final_price)||0; }
+        else { _revSkip.temp++; _revSkip.tAmt += parseFloat(r.final_price)||0; }
+      }
+      return;
+    }
     // Deduplicate by order_id
     var oid = r.child_order_id||r.order_id||'';
     var deKey = r.caregiver+'|'+oid;
@@ -12010,6 +12079,28 @@ function renderAnalyticsData(){
     var rph = hrs>0 ? Math.round(rev/hrs) : 0;
     return [cg, hrs, rev, rph, hc];
   }).sort(function(a,b){return b[3]-a[3];});
+
+  // ── Per-homecare (HC) revenue + utilisation ──────────────────
+  // Same sources as the caregiver cards: hours / pro-rata capacity from cgS,
+  // revenue from revMap, shifts from the roster-visible records.
+  var _hcAgg = {};
+  (window._cgS_full||[]).forEach(function(e){
+    var pr = e[5] || {days:1};
+    if(pr.days <= 0) return;                       // not available at all this period
+    var hc = e[4] || 'Unassigned';
+    var a = _hcAgg[hc] || (_hcAgg[hc] = {hc:hc, cgs:0, hrs:0, cap:0, rev:0, shifts:0, busy:0, idle:0});
+    a.cgs++; a.hrs += e[1]; a.cap += e[2]; a.rev += (revMap[e[0]]||0);
+    if(e[3] >= 70) a.busy++; else if(e[3] < 40) a.idle++;
+  });
+  data.filter(isActiveShift).forEach(function(r){ var a=_hcAgg[r.homecare||'Unassigned']; if(a) a.shifts++; });
+  window._revSkip = _revSkip;
+  window._hcPerf = Object.values(_hcAgg).map(function(a){
+    a.util = a.cap ? Math.min(Math.round(a.hrs / a.cap * 100), 100) : 0;
+    a.rph  = a.hrs ? Math.round(a.rev / a.hrs) : 0;
+    a.rpc  = a.cgs ? Math.round(a.rev / a.cgs) : 0;
+    a.hrs  = Math.round(a.hrs); a.cap = Math.round(a.cap); a.rev = Math.round(a.rev);
+    return a;
+  });
 
   var maxRph = rphData.length ? rphData[0][3] : 1;
   var _revPerHrHTML = rphData.length ? rphData.map(function(e){
@@ -12043,6 +12134,20 @@ function renderAnalyticsData(){
           </div>
           <div class="bar-val" style="font-size:11px">${v} <span style="color:var(--text3)">shifts</span></div>
         </div>`).join('') : '<div style="color:var(--text2);font-size:12px;padding:10px">No data for this period</div>'}
+    </div>
+
+    <!-- ── Revenue & Utilisation per HC ── -->
+    <div class="a-card" style="grid-column:1/-1">
+      <div class="a-title"><div class="a-title-bar" style="background:#22c55e"></div>🏢 Revenue &amp; Utilisation — by Homecare (HC)</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.6">
+        📌 <b style="color:var(--text2)">What this shows:</b> For each homecare provider — how much revenue its caregivers brought in, and how much of their available time was actually booked.<br>
+        💰 <b style="color:var(--text2)">Revenue</b> = value of the orders its caregivers worked in this period, only assigned orders, excluding cancelled and temp (same basis as Revenue per Hour below).
+        ⏱️ <b style="color:var(--text2)">Utilisation</b> = hours worked ÷ hours its caregivers were available (pro-rata for joining, exit and pauses).<br>
+        🟢 70%+ well utilised · 🔵 40–70% room to fill · 🔴 below 40% under-used. Click a column header to sort.
+      </div>
+      <div id="hc-perf-kpis" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px"></div>
+      <div id="hc-perf-table" style="overflow-x:auto;border:1px solid var(--border);border-radius:8px"></div>
+      <div id="rev-excl-note"></div>
     </div>
 
     <!-- ── Exclusive vs Non-Exclusive ── -->
@@ -12134,15 +12239,17 @@ function renderAnalyticsData(){
     <div class="a-card" style="grid-column:1/-1">
       <div class="a-title"><div class="a-title-bar" style="background:#e879f9"></div>💰 Revenue per Hour — by Caregiver</div>
       <div style="font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.6">
-        📌 <b style="color:var(--text2)">What this shows:</b> How much revenue each caregiver generates per hour worked, based on order value ÷ hours in period.<br>
+        📌 <b style="color:var(--text2)">What this shows:</b> How much revenue each caregiver generates per hour worked, based on order value ÷ hours in period. Only assigned orders count — cancelled and temp orders are left out.<br>
         <span style="color:var(--accent)">Higher = more revenue-dense bookings. Use this to identify top-earning caregivers and optimise assignment.</span>
       </div>
       <div id="rev-per-hr-bars" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:4px 20px">
         ${_revPerHrHTML}
       </div>
+      ${'<div style="font-size:10px;color:var(--text3);margin-top:8px">🚫 Not counted as revenue: <b style="color:var(--text2)">'+((window._revSkip||{}).cancelled||0)+' cancelled</b> (AED '+Math.round((window._revSkip||{}).cAmt||0).toLocaleString()+') · <b style="color:var(--text2)">'+((window._revSkip||{}).temp||0)+' temp</b> (AED '+Math.round((window._revSkip||{}).tAmt||0).toLocaleString()+') · <b style="color:var(--text2)">'+((window._revSkip||{}).unassigned||0)+' unassigned</b> (AED '+Math.round((window._revSkip||{}).uAmt||0).toLocaleString()+') orders</div>'}
     </div>
 
 `;
+  renderHCPerf();
   // ── Post-render: avg badges + comparison table ──
   (function(){
     var eP=[],nP=[],eH=[],nH=[],eM=[],nM=[];
@@ -12185,6 +12292,105 @@ function renderAnalyticsData(){
       +row('Overall Utilization %',oE,oN,false)
       +'</tbody></table>';
   })();
+}
+
+// ── What counts as revenue ──────────────────────────────────────
+// Returns '' if the order counts, else why it is left out.
+function isAssignedCG(name){
+  var n = String(name||'').trim().toLowerCase();
+  if(!n) return false;
+  return !/^(-+|—|n\/?a|na|none|null|nil|tbd|tba|pending|unassigned|not\s*assigned|to\s*be\s*assigned|no\s*(nurse|caregiver|cg))$/.test(n);
+}
+function revenueExcludeReason(r){
+  if(!isAssignedCG(r.caregiver)) return 'unassigned';
+  var st  = (r.status||'').toLowerCase().replace(/\s+/g,'');
+  var raw = (r.order_status_raw||'').toLowerCase();
+  if(st === 'cancelled' || /cancel/.test(raw)) return 'cancelled';
+  if(r.is_temp) return 'temp';
+  var hay = [r.order_status_raw, r.package_type, r.package_raw, r.child_package].join(' ');
+  if(/(^|[^a-z])temp(orary)?([^a-z]|$)/i.test(hay)) return 'temp';
+  return '';
+}
+
+// ── Revenue & Utilisation per HC table ──────────────────────────
+var _hcPerfSort = {k:'rev', dir:-1};
+function sortHCPerf(k){
+  if(_hcPerfSort.k === k) _hcPerfSort.dir *= -1;
+  else _hcPerfSort = {k:k, dir: k === 'hc' ? 1 : -1};
+  renderHCPerf();
+}
+function renderHCPerf(){
+  var box = document.getElementById('hc-perf-table'); if(!box) return;
+  var kp  = document.getElementById('hc-perf-kpis');
+  var rows = (window._hcPerf||[]).slice();
+  if(!rows.length){
+    box.innerHTML = '<div style="color:var(--text2);font-size:12px;padding:14px">No data for this period</div>';
+    if(kp) kp.innerHTML = ''; return;
+  }
+  var S = _hcPerfSort;
+  rows.sort(function(a,b){
+    if(S.k === 'hc') return a.hc.localeCompare(b.hc) * S.dir;
+    return ((a[S.k]||0) - (b[S.k]||0)) * S.dir || b.rev - a.rev;
+  });
+  var T = rows.reduce(function(t,a){ t.cgs+=a.cgs; t.hrs+=a.hrs; t.cap+=a.cap; t.rev+=a.rev; t.shifts+=a.shifts; t.busy+=a.busy; t.idle+=a.idle; return t; },
+                      {cgs:0,hrs:0,cap:0,rev:0,shifts:0,busy:0,idle:0});
+  T.util = T.cap ? Math.min(Math.round(T.hrs/T.cap*100),100) : 0;
+  T.rph  = T.hrs ? Math.round(T.rev/T.hrs) : 0;
+  T.rpc  = T.cgs ? Math.round(T.rev/T.cgs) : 0;
+  var maxRev = Math.max.apply(null, rows.map(function(a){ return a.rev; }).concat([1]));
+  var aed = function(n){ return 'AED ' + Math.round(n||0).toLocaleString(); };
+  var uc  = function(p){ return p>=70?'var(--duty)':p>=40?'var(--accent)':'var(--sick)'; };
+  var ue  = function(p){ return p>=70?'🟢':p>=40?'🔵':'🔴'; };
+
+  if(kp){
+    var top = rows.slice().sort(function(a,b){ return b.rev-a.rev; })[0];
+    var best = rows.filter(function(a){ return a.cgs>0; }).sort(function(a,b){ return b.util-a.util; })[0];
+    var card = function(v,l,c,sub){ return '<div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 14px;min-width:130px">'
+      + '<div style="font-size:17px;font-weight:700;font-family:monospace;color:'+(c||'var(--text)')+'">'+v+'</div>'
+      + '<div style="font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.03em">'+l+'</div>'
+      + (sub?'<div style="font-size:10px;color:var(--text3);margin-top:2px">'+sub+'</div>':'')+'</div>'; };
+    kp.innerHTML = card(aed(T.rev),'Total revenue','#22c55e', rows.length+' HCs · '+T.cgs+' CGs')
+      + card(T.util+'%','Overall utilisation',uc(T.util), T.hrs.toLocaleString()+' of '+T.cap.toLocaleString()+'h')
+      + card(aed(T.rph)+'/h','Revenue per hour','#e879f9')
+      + (top ? card(top.hc.split(' ')[0],'Top revenue HC','var(--text)', aed(top.rev)) : '')
+      + (best ? card(best.hc.split(' ')[0],'Best utilised HC',uc(best.util), best.util+'%') : '');
+  }
+
+  var th = function(k,l,al){ var a = S.k===k ? (S.dir>0?' ▲':' ▼') : '';
+    return '<th onclick="sortHCPerf(\''+k+'\')" style="padding:8px 12px;text-align:'+(al||'right')+';font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:'+(S.k===k?'var(--text)':'var(--text2)')+';cursor:pointer;white-space:nowrap;user-select:none">'+l+a+'</th>'; };
+  var td = 'padding:8px 12px;text-align:right;font-family:monospace;font-size:12px;white-space:nowrap';
+  var h = '<table style="width:100%;border-collapse:collapse"><thead><tr style="background:var(--bg3);border-bottom:2px solid var(--border)">'
+    + th('hc','Homecare','left') + th('rev','Revenue') + th('rev','Share','left') + th('rph','Rev / hour') + th('rpc','Rev / CG')
+    + th('util','Utilisation','left') + th('hrs','Hours worked') + th('cap','Hours available') + th('cgs','CGs') + th('shifts','Shifts')
+    + '<th style="padding:8px 12px;text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text2);white-space:nowrap">🟢 / 🔴 CGs</th>'
+    + '</tr></thead><tbody>';
+  rows.forEach(function(a){
+    var share = T.rev ? Math.round(a.rev/T.rev*100) : 0;
+    h += '<tr style="border-bottom:1px solid var(--border)">'
+      + '<td style="padding:8px 12px;font-size:12px;font-weight:600;white-space:nowrap"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:'+(typeof hcColor==='function'?hcColor(a.hc):'var(--accent)')+';margin-right:6px"></span>'+a.hc+'</td>'
+      + '<td style="'+td+';color:#22c55e;font-weight:700">'+aed(a.rev)+'</td>'
+      + '<td style="padding:8px 12px;min-width:110px"><div style="display:flex;align-items:center;gap:6px"><div style="flex:1;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden"><div style="height:100%;width:'+Math.round(a.rev/maxRev*100)+'%;background:#22c55e"></div></div><span style="font-size:10px;color:var(--text3);font-family:monospace;min-width:28px">'+share+'%</span></div></td>'
+      + '<td style="'+td+';color:#e879f9">'+(a.rph?aed(a.rph):'—')+'</td>'
+      + '<td style="'+td+'">'+(a.rpc?aed(a.rpc):'—')+'</td>'
+      + '<td style="padding:8px 12px;min-width:140px"><div style="display:flex;align-items:center;gap:6px"><div style="flex:1;height:8px;background:var(--bg3);border-radius:4px;overflow:hidden"><div style="height:100%;width:'+a.util+'%;background:'+uc(a.util)+'"></div></div><span style="font-size:11px;font-weight:700;font-family:monospace;color:'+uc(a.util)+';min-width:44px">'+ue(a.util)+' '+a.util+'%</span></div></td>'
+      + '<td style="'+td+'">'+a.hrs.toLocaleString()+'h</td>'
+      + '<td style="'+td+';color:var(--text3)">'+a.cap.toLocaleString()+'h</td>'
+      + '<td style="'+td+'">'+a.cgs+'</td>'
+      + '<td style="'+td+'">'+a.shifts+'</td>'
+      + '<td style="'+td+';text-align:center"><span style="color:var(--duty)" title="CGs at 70%+">'+a.busy+'</span> / <span style="color:var(--sick)" title="CGs below 40%">'+a.idle+'</span></td>'
+      + '</tr>';
+  });
+  h += '<tr style="background:var(--bg3);font-weight:700">'
+    + '<td style="padding:8px 12px;font-size:12px">Total</td>'
+    + '<td style="'+td+';color:#22c55e">'+aed(T.rev)+'</td><td style="padding:8px 12px;font-size:10px;color:var(--text3)">100%</td>'
+    + '<td style="'+td+';color:#e879f9">'+(T.rph?aed(T.rph):'—')+'</td>'
+    + '<td style="'+td+'">'+(T.rpc?aed(T.rpc):'—')+'</td>'
+    + '<td style="padding:8px 12px;font-family:monospace;font-size:11px;color:'+uc(T.util)+'">'+ue(T.util)+' '+T.util+'%</td>'
+    + '<td style="'+td+'">'+T.hrs.toLocaleString()+'h</td><td style="'+td+';color:var(--text3)">'+T.cap.toLocaleString()+'h</td>'
+    + '<td style="'+td+'">'+T.cgs+'</td><td style="'+td+'">'+T.shifts+'</td>'
+    + '<td style="'+td+';text-align:center"><span style="color:var(--duty)">'+T.busy+'</span> / <span style="color:var(--sick)">'+T.idle+'</span></td></tr>';
+  box.innerHTML = h + '</tbody></table>';
+  var nt = document.getElementById('rev-excl-note'); if(nt) nt.innerHTML = '<div style="font-size:10px;color:var(--text3);margin-top:8px">🚫 Not counted as revenue: <b style="color:var(--text2)">'+((window._revSkip||{}).cancelled||0)+' cancelled</b> (AED '+Math.round((window._revSkip||{}).cAmt||0).toLocaleString()+') · <b style="color:var(--text2)">'+((window._revSkip||{}).temp||0)+' temp</b> (AED '+Math.round((window._revSkip||{}).tAmt||0).toLocaleString()+') · <b style="color:var(--text2)">'+((window._revSkip||{}).unassigned||0)+' unassigned</b> (AED '+Math.round((window._revSkip||{}).uAmt||0).toLocaleString()+') orders</div>';
 }
 
 // ── Tab switching ────────────────────────────────────────────────
@@ -13496,6 +13702,224 @@ function tkRenderLog(){
 }
 
 // ── Raise-ticket modal ───────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════
+// QUICK TICKET — "Open a ticket" sheet opened from a roster booking.
+// Saves into the same tickets collection as the HC Tickets tab, so
+// Slack alerts, SLAs, the log and the ⚠️ roster badges all keep working.
+// ══════════════════════════════════════════════════════════════════
+var QT_SCENARIOS = [
+  {s:'Client not answering / no access', p:'P1', g:'At the client location', team:'Ops'},
+  {s:'Address or location issue',        p:'P2', g:'At the client location', team:'Ops'},
+  {s:'Caregiver running late',           p:'P2', g:'Shift at risk',          team:'Ops'},
+  {s:'Caregiver no-show / unavailable',  p:'P1', g:'Shift at risk',          team:'Ops'},
+  {s:'Client requested early end',       p:'P2', g:'At the client location', team:'Ops'},
+  {s:'Client complaint',                 p:'P2', g:'Client experience',      team:'Ops'},
+  {s:'Safety concern',                   p:'P1', g:'Caregiver welfare',      team:'Ops', req:true},
+  {s:'Schedule change request',          p:'P3', g:'Schedule mismatch',      team:'Ops'},
+  {s:'Payment / collection issue',       p:'P2', g:'Outside the agreement',  team:'Category'},
+  {s:'Other',                            p:'P2', g:'Other',                  team:'Ops', req:true}
+];
+var _qt = {cg:'', ds:'', hc:'', orders:[], o:null, prio:'P2', busy:false};
+
+function qtOpen(cg, ds, oid){
+  var hc = tkSessionHC() || tkHCOfCaregiver(cg, ds);
+  var orders = tkOrdersFor(cg, ds, hc);
+  var o = null;
+  if(oid) o = orders.find(function(x){ return x.child_order_id === oid || x.order_id === oid; }) || null;
+  if(!o) o = orders.find(function(x){ return !/cancel/i.test(x.status||''); }) || orders[0] || null;
+  _qt = {cg:cg, ds:ds, hc:(o && o.homecare) || hc, orders:orders, o:o, prio:'P2', busy:false};
+
+  var sc = document.getElementById('qt-scenario');
+  sc.innerHTML = QT_SCENARIOS.map(function(x, i){ return '<option value="'+i+'">'+tkEsc(x.s)+'</option>'; }).join('');
+  sc.value = '0';
+  document.getElementById('qt-details').value = '';
+  qtRenderSummary();
+  qtOnScenario();
+  var btn = document.getElementById('qt-send'); btn.disabled = false; btn.textContent = 'Send ticket to ops';
+  document.getElementById('qt-modal').classList.add('show');
+  setTimeout(function(){ sc.focus(); }, 60);
+}
+function qtClose(){ document.getElementById('qt-modal').classList.remove('show'); }
+
+function qtFmtDate(ds){
+  var p = String(ds||'').split('-'); return p.length === 3 ? p[2] + '-' + p[1] + '-' + p[0] : ds;
+}
+function qtRenderSummary(){
+  var o = _qt.o, bits = [];
+  if(o && (o.child_order_id || o.order_id)) bits.push('Order ' + (o.child_order_id || o.order_id));
+  bits.push(_qt.cg);
+  if(o && o.client_name) bits.push(o.client_name);
+  bits.push((o && o.time_start ? o.time_start + (o.time_end ? '–' + o.time_end : '') + ' ' : '') + qtFmtDate(_qt.ds));
+  if(_qt.hc) bits.push(_qt.hc);
+  if(o && o.location) bits.push(typeof normCity === 'function' ? (normCity(o.location) || o.location) : o.location);
+  var html = tkEsc(bits.join(' · '));
+  if(_qt.orders.length > 1){
+    html += '<select class="qt-input" style="margin-top:8px;padding:6px 8px;font-size:12px" onchange="qtPickOrder(this.value)">'
+      + _qt.orders.map(function(x, i){ return '<option value="'+i+'"'+(x === o ? ' selected' : '')+'>'+tkEsc(tkOrderLabel(x))+'</option>'; }).join('')
+      + '</select>';
+  } else if(!_qt.orders.length){
+    html += '<div style="margin-top:4px;color:var(--sick)">No booking found on the roster for this day</div>';
+  }
+  document.getElementById('qt-summary').innerHTML = html;
+
+  var open = tkOpenTicketsFor(_qt.cg, _qt.ds);
+  document.getElementById('qt-dup').innerHTML = open.length
+    ? '<div class="qt-dup">⚠️ Already open on this shift: ' + open.map(function(t){
+        return '<a href="#" onclick="event.preventDefault();qtClose();switchTab(\'tickets\');setTimeout(function(){tkOpenDetail(\''+tkEsc(t._id)+'\')},300)">'+tkEsc(t.ticket_id||'ticket')+'</a> ('+tkEsc(t.category||'')+')';
+      }).join(', ') + '</div>' : '';
+}
+function qtPickOrder(i){ _qt.o = _qt.orders[+i] || null; qtRenderSummary(); }
+function qtOnScenario(){
+  var x = QT_SCENARIOS[+document.getElementById('qt-scenario').value] || QT_SCENARIOS[0];
+  qtSetPrio(x.p);
+  document.getElementById('qt-req').style.display = x.req ? '' : 'none';
+}
+function qtSetPrio(p){
+  _qt.prio = p;
+  [].forEach.call(document.querySelectorAll('#qt-prio button'), function(b){ b.classList.toggle('on', b.getAttribute('data-p') === p); });
+  var pc = TK_PRIO[p] || TK_PRIO.P2;
+  document.getElementById('qt-foot').textContent = 'Valeo aims to respond within ' + tkFmtAge(pc.sla) + '.';
+}
+
+async function qtSave(){
+  if(_qt.busy) return;
+  var x = QT_SCENARIOS[+document.getElementById('qt-scenario').value];
+  var desc = document.getElementById('qt-details').value.trim();
+  if(!x){ alert('Choose a scenario.'); return; }
+  if(x.req && !desc){ alert('Please describe what happened.'); document.getElementById('qt-details').focus(); return; }
+  var sessHC = tkSessionHC();
+  if(sessHC && !tkHCMatch(_qt.hc, sessHC)){ alert('This booking does not belong to your homecare.'); return; }
+  if(!_qt.hc){ alert('Could not find the homecare for this caregiver.'); return; }
+
+  var o = _qt.o, now = new Date(), who = (_session && _session.username) || 'HC';
+  var seq = String((_tkData||[]).filter(function(r){ return (r.created_at||'').slice(0,10) === now.toISOString().slice(0,10); }).length + 1).padStart(3,'0');
+  var tid = 'TKT-' + now.toISOString().slice(2,10).replace(/-/g,'') + '-' + seq;
+  var rec = {
+    ticket_id:tid, homecare:_qt.hc, caregiver:_qt.cg, shift_date:_qt.ds,
+    category:x.s, group:x.g, reason:x.s, delay_mins:0,
+    description:desc, priority:_qt.prio, team:x.team,
+    sla_minutes:(TK_PRIO[_qt.prio]||{}).sla || 60,
+    slack_channel:TK_SLACK.channel,
+    order_id:o ? o.order_id : '', child_order_id:o ? o.child_order_id : '',
+    client_name:o ? o.client_name : '', shift_time:o ? (o.time_start + (o.time_end ? '–' + o.time_end : '')) : '',
+    package:o ? o.package_raw : '', city:o ? (typeof normCity==='function' ? normCity(o.location) : o.location) : '',
+    is_b2b:o ? !!o.is_b2b : false,
+    status:'Open', owner:'', resolution:'',
+    raised_by:who, raised_role:(_session && _session.role) || 'unknown', source:'roster',
+    created_at:now.toISOString(), updated_at:now.toISOString(),
+    timeline:[{t:now.toISOString(), by:who, note:'Ticket raised from the roster', to:'Open'}]
+  };
+  _qt.busy = true;
+  var btn = document.getElementById('qt-send'); btn.disabled = true; btn.textContent = 'Sending…';
+  try{
+    if(!_db) await initFirebase();
+    if(!_db) throw new Error('Firebase not connected');
+    var ref = await _db.collection(_TK_COLL).add(rec);
+    (_tkData = _tkData || []).unshift(Object.assign({_id:ref.id}, rec));
+    tkNotify('created', Object.assign({_id:ref.id}, rec));
+    qtClose();
+    try{ tkPopulateFilters(); tkRenderAll(); }catch(_e){}
+    try{ if(document.getElementById('page-roster').classList.contains('active')) renderRoster(); }catch(_e){}
+    tkToast('Ticket ' + tid + ' sent to ops — Slack notified');
+  }catch(e){
+    alert('Could not send the ticket: ' + e.message);
+    btn.disabled = false; btn.textContent = 'Send ticket to ops';
+  }finally{ _qt.busy = false; }
+}
+// END QUICK TICKET
+
+// ── Roster → ticket ─────────────────────────────────────────────
+// HC users: clicking a booked shift opens "Raise a ticket" already filled in.
+// Everyone else (and HC on empty / week-off days): the usual day editor.
+function rosterCellClick(cg, ds, ev){
+  var isHC = !!(_session && _session.role === 'hc');
+  if(isHC){
+    var bk = ev && ev.target && ev.target.closest ? ev.target.closest('[data-oid]') : null;
+    var orders = tkOrdersFor(cg, ds, tkSessionHC());
+    var live = orders.filter(function(o){ return !/cancel/i.test(o.status||''); });
+    if(live.length || orders.length) return qtOpen(cg, ds, bk ? bk.getAttribute('data-oid') : '');
+  }
+  openOvModal(cg, ds);
+}
+function tkOpenTicketsFor(cg, ds){
+  return (_tkData||[]).filter(function(t){
+    return t.caregiver === cg && t.shift_date === ds && t.status !== 'Resolved';
+  });
+}
+function rosterTicketBadge(cg, ds){
+  if(_session && _session.role === 'client') return '';
+  var n = tkOpenTicketsFor(cg, ds).length;
+  return n ? '<span class="rd-tk" title="'+n+' open ticket'+(n>1?'s':'')+' on this shift">⚠️'+(n>1?n:'')+'</span>' : '';
+}
+function ovRaiseTicket(){
+  var cg = ovCG, ds = ovDate, oid = window._ovOrderId || '';
+  if(typeof closeOvModal === 'function') closeOvModal();
+  else { var m = document.getElementById('ov-modal'); if(m) m.classList.remove('show'); }
+  qtOpen(cg, ds, oid);
+}
+function tkHCOfCaregiver(cg, ds){
+  var hit = (rawData||[]).find(function(r){ return r.caregiver === cg && ds >= r.date && ds <= (r.end_date||r.date); })
+         || (allData||[]).find(function(r){ return r.caregiver === cg; })
+         || (rawData||[]).find(function(r){ return r.caregiver === cg; });
+  if(hit && hit.homecare) return hit.homecare;
+  var man = Object.values(manualCGs||{}).find(function(c){ return c.name === cg; });
+  return man ? man.homecare : '';
+}
+function tkRaiseFromRoster(cg, ds, oid){
+  tkOpenModal();
+  var d = document.getElementById('tkf-date'); if(d) d.value = ds;
+  // admin users pick a homecare in the form — set it to this caregiver's homecare
+  var hs = document.getElementById('tkf-hc');
+  if(hs && hs.tagName === 'SELECT'){
+    var h = tkHCOfCaregiver(cg, ds);
+    if(h){
+      var opt = [].find.call(hs.options, function(o){ return tkHCMatch(o.value || o.textContent, h); });
+      if(!opt){ opt = document.createElement('option'); opt.textContent = h; hs.appendChild(opt); }
+      hs.value = opt.value || opt.textContent;
+      tkOnHCChange();
+    }
+  }
+  var sel = document.getElementById('tkf-cg');
+  if(sel){
+    if(![].some.call(sel.options, function(o){ return o.value === cg; })){
+      var op = document.createElement('option'); op.textContent = cg; op.value = cg; sel.appendChild(op);
+    }
+    sel.value = cg;
+  }
+  tkOnCGChange();
+  // pick the exact booking that was clicked (or the first live one)
+  var os = document.getElementById('tkf-order');
+  if(os && _tkOrderOpts.length){
+    var idx = -1;
+    if(oid) idx = _tkOrderOpts.findIndex(function(o){ return o.child_order_id === oid || o.order_id === oid; });
+    if(idx < 0) idx = _tkOrderOpts.findIndex(function(o){ return !/cancel/i.test(o.status||''); });
+    if(idx >= 0) os.value = String(idx);
+  }
+  tkPreview();
+
+  // context strip: what was clicked + any ticket already open on this shift
+  var form = document.getElementById('tk-form');
+  if(form){
+    var oi = os ? os.value : '';
+    var o  = (oi !== '' && _tkOrderOpts[oi]) ? _tkOrderOpts[oi] : null;
+    var open = tkOpenTicketsFor(cg, ds);
+    var dLbl = new Date(ds + 'T00:00:00').toLocaleDateString([], {weekday:'short', day:'2-digit', month:'short'});
+    var box = document.createElement('div');
+    box.className = 'tk-f span2';
+    box.innerHTML = '<div style="background:rgba(47,129,247,.10);border:1px solid rgba(47,129,247,.35);border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.6">'
+      + '📅 <b>' + tkEsc(dLbl) + '</b> · 👤 <b>' + tkEsc(cg) + '</b>'
+      + (o ? '<br>📦 ' + tkEsc(tkOrderLabel(o)) : '')
+      + (open.length ? '<div style="margin-top:6px;color:var(--sick)">⚠️ Already open on this shift: '
+          + open.map(function(t){ return '<a href="#" onclick="event.preventDefault();tkCloseModal();switchTab(\'tickets\');setTimeout(function(){tkOpenDetail(\''+tkEsc(t._id)+'\')},300)" style="color:var(--sick);font-weight:700">'+tkEsc(t.ticket_id||'ticket')+'</a> ('+tkEsc(t.category||'')+')'; }).join(', ')
+          + ' — check before raising a duplicate</div>' : '')
+      + '<div style="margin-top:6px;font-size:11px"><a href="#" onclick="event.preventDefault();tkCloseModal();openOvModal(\''+tkEsc(cg).replace(/'/g,"\\'")+'\',\''+ds+'\')" style="color:var(--text2)">Not an issue? Mark week off / sick / leave for this day instead →</a></div>'
+      + '</div>';
+    form.insertBefore(box, form.firstChild);
+  }
+  var cat = document.getElementById('tkf-cat');
+  if(cat) setTimeout(function(){ cat.focus(); }, 80);
+}
+
 function tkOpenModal(){
   var hc = tkSessionHC();
   var today = new Date().toISOString().slice(0,10);
@@ -13638,6 +14062,7 @@ async function tkSave(){
     _tkData.unshift(Object.assign({_id:ref.id}, rec));
     tkNotify('created', Object.assign({_id:ref.id}, rec));
     tkCloseModal(); tkPopulateFilters(); tkRenderAll();
+    try{ if(document.getElementById('page-roster').classList.contains('active')) renderRoster(); }catch(_e){}
     tkToast('Ticket ' + tid + ' sent to Valeo — Slack notified');
   }catch(e){
     alert('Could not raise the ticket: ' + e.message);
@@ -16204,6 +16629,15 @@ function applyOverrides(){
 
 function openOvModal(cg,date,orderId){
   ovCG=cg;ovDate=date;ovType='';
+  try{
+    var _tb=document.getElementById('ov-ticket-btn');
+    if(_tb){
+      var _isClient=!!(_session&&_session.role==='client');
+      var _open=tkOpenTicketsFor(cg,date).length;
+      _tb.style.display=_isClient?'none':'';
+      _tb.innerHTML='🎫 Open a ticket for this booking'+(_open?' <span style="font-size:11px;color:var(--sick)">· ⚠️ '+_open+' already open</span>':'');
+    }
+  }catch(_e){}
   // Auto-detect order_id from allData if not explicitly passed
   if(!orderId){
     var _existing=allData.find(function(r){
@@ -17272,6 +17706,8 @@ function switchToRoster(){
 }
 
 function renderRoster(){
+  var _hint = document.getElementById('roster-hc-hint');
+  if(_hint) _hint.style.display = (_session && _session.role === 'hc') ? '' : 'none';
   if(!rawData||!rawData.length||!allData||!allData.length) return;
   var wrap=document.getElementById('roster-wrap');
   var lbl=document.getElementById('roster-month-label');
@@ -17500,7 +17936,7 @@ function renderRoster(){
         var safeN=cgName.replace(/'/g,"&#39;").replace(/"/g,'&quot;');
         var tipS=String(tip).replace(/"/g,'&quot;');
         html+='<td class="'+cls+'" title="'+tipS+'" data-cg="'+safeN+'" data-ds="'+ds+'"'
-          +(clickable?' onclick="openOvModal(this.dataset.cg,this.dataset.ds)"':'')+'>'+inner+'</td>';
+          +(clickable?' onclick="rosterCellClick(this.dataset.cg,this.dataset.ds,event)"':'')+'>'+inner+rosterTicketBadge(cgName,ds)+'</td>';
       });
       html+='</tr>';
     });
@@ -19828,7 +20264,7 @@ function rosterBookingsHTML(list, showOid){
     var cl = (b.client_name||'').split(' ')[0];
     var t  = b.time_start&&b.time_end ? b.time_start+'-'+b.time_end : (b.time_start||'');
     var id = b.child_order_id || b.order_id || '';
-    h += '<div class="'+(multi?'rd-bk':'')+'">'
+    h += '<div class="'+(multi?'rd-bk':'')+'"'+(id?' data-oid="'+String(id).replace(/"/g,'&quot;')+'"':'')+'>'
       + (cl?'<div class="rd-cl">'+cl+'</div>':'')
       + (t?'<div class="rd-tm">'+t+'</div>':'')
       + (id&&(showOid||!multi)?'<div class="rd-od">#'+id+'</div>':'')
