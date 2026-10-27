@@ -662,6 +662,26 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .bs-tbl tbody tr.bs-focus td:first-child{box-shadow:inset 3px 0 0 var(--accent);}
 .bs-chip{font-size:11px;padding:3px 9px;border-radius:12px;cursor:pointer;user-select:none;}
 .rd{position:relative;}
+.ov-loc-btn{border-color:rgba(63,185,80,.55);background:rgba(63,185,80,.08);color:#3fb950}
+.ov-loc-btn:hover{background:rgba(63,185,80,.18)}
+.loc-empty{background:var(--bg3);border:1px dashed var(--border);border-radius:8px;padding:16px;text-align:center;color:var(--text2);font-size:13px;margin-bottom:12px;line-height:1.6}
+.loc-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:12px}
+.loc-addr{font-size:15px;font-weight:700;line-height:1.45}
+.loc-meta{font-size:12px;color:var(--text2);margin-top:4px}
+.loc-notes{font-size:12px;margin-top:8px;padding:7px 9px;background:var(--bg);border-radius:6px;line-height:1.5}
+.loc-src{font-size:10px;color:var(--text3);margin-top:8px}
+.loc-actions{display:flex;flex-wrap:wrap;gap:6px}
+.loc-go{display:block;text-align:center;text-decoration:none;box-sizing:border-box;margin-bottom:2px}
+.loc-sec{flex:1;min-width:110px;text-align:center;text-decoration:none;padding:9px 8px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif}
+.oc-btn{background:var(--bg3);border:1px solid var(--border);border-radius:16px;color:var(--text);font-size:11px;font-weight:600;padding:5px 12px;cursor:pointer;font-family:Inter,sans-serif;margin-right:6px}
+.oc-btn:hover{border-color:var(--accent)}
+.oc-head{font-size:11px;color:var(--text3);margin-bottom:8px}
+.oc-card{border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:10px}
+.oc-sub{font-size:11px;color:var(--text2);line-height:1.6;margin-bottom:8px}
+.oc-step{font-size:12px;line-height:1.55;padding:5px 0}
+.oc-step.bad{color:var(--absent)} .oc-step.warn{color:#d29922}
+.oc-fix{font-size:11.5px;color:var(--text2);background:var(--bg3);border-radius:6px;padding:8px 10px;margin:4px 0 6px;line-height:1.7}
+.oc-fix a{color:var(--accent)}
 .tr-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
 .tr-grid .span2{grid-column:1/-1}
 .tr-grid .qt-input{margin-bottom:12px}
@@ -867,7 +887,8 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  </div>
  </div>
  </div>
- <div class="header-right"><div style="display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--text2); margin-right: 8px;">👑 <b style="color:var(--text)">valeo_admin</b> <button onclick="doLogout()" style="background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);border-radius:5px;color:var(--absent);font-size:10px;padding:2px 8px;cursor:pointer;font-family:Inter,sans-serif">Sign out</button></div>
+ <div class="header-right">
+ <button class="oc-btn" id="oc-btn" onclick="ocOpen()" title="Why is an order not showing?" style="display:none">🔍 Check order</button>
  <div class="sync-pill" onclick="loadData(true)" id="sync-pill">
  <div class="sync-dot" id="sync-dot" style="background: var(--duty);"></div>
  <span id="sync-text">Synced 8:08:13 AM</span>
@@ -9995,6 +10016,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <div class="ov-type-btn cancelled" onclick="selectOvType(&#39;cancelled&#39;,this)">❌ Cancelled</div>
  <div class="ov-type-btn removed" onclick="selectOvType(&#39;removed&#39;,this)">🗑 Remove Booking</div>
  <div class="ov-type-btn manual selected" onclick="selectOvType(&#39;manual&#39;,this)" style="grid-column:1/-1">➕ Add Manual Booking</div>
+ <div id="ov-loc-btn" class="ov-ticket-btn ov-loc-btn" onclick="ovOpenLocation()" style="grid-column:1/-1">📍 Client location</div>
  <div id="ov-ticket-btn" class="ov-ticket-btn" onclick="ovRaiseTicket()" style="grid-column:1/-1">🎫 Open a ticket for this booking</div>
  </div>
  <!-- Manual booking fields - shown only when manual selected -->
@@ -10927,6 +10949,53 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 </div>
 
 <!-- ── RAISE TICKET MODAL ── -->
+<div class="qt-modal" id="loc-modal" onclick="if(event.target===this)locClose()">
+ <div class="qt-box" style="max-width:500px">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+   <div class="qt-title">📍 Client location</div>
+   <button class="qt-x" onclick="locClose()" aria-label="Close">×</button>
+  </div>
+  <div class="qt-summary" id="loc-summary" style="margin-top:10px"></div>
+  <div id="loc-view"></div>
+  <div id="loc-edit" style="display:none">
+   <label class="qt-lbl" for="loc-address">Address</label>
+   <textarea id="loc-address" class="qt-input" rows="2" placeholder="Street, community, city"></textarea>
+   <div class="tr-grid">
+    <div><label class="qt-lbl" for="loc-unit">Villa / building · flat</label>
+     <input id="loc-unit" class="qt-input" placeholder="e.g. Villa 14 / Tower B, 1203"></div>
+    <div><label class="qt-lbl" for="loc-area">Area</label>
+     <input id="loc-area" class="qt-input" placeholder="e.g. JVC, Al Barsha"></div>
+   </div>
+   <label class="qt-lbl" for="loc-map">Google Maps link or pin <span style="text-transform:none;letter-spacing:0;font-weight:500">(paste the share link, or "25.07, 55.14")</span></label>
+   <input id="loc-map" class="qt-input" placeholder="https://maps.app.goo.gl/…">
+   <label class="qt-lbl" for="loc-notes">Directions for the caregiver</label>
+   <textarea id="loc-notes" class="qt-input" rows="2" placeholder="Gate code, landmark, parking, which entrance…"></textarea>
+   <label style="display:flex;gap:8px;align-items:center;font-size:12px;color:var(--text2);margin:-4px 0 14px;cursor:pointer">
+    <input type="checkbox" id="loc-all" checked> Use this location for all of this client's bookings
+   </label>
+   <div style="display:flex;gap:8px">
+    <button class="qt-send" style="flex:1;background:var(--bg3);color:var(--text);border:1px solid var(--border)" onclick="locShowView()">Cancel</button>
+    <button class="qt-send" id="loc-save" style="flex:2" onclick="locSave()">Save location</button>
+   </div>
+  </div>
+ </div>
+</div>
+<div class="qt-modal" id="oc-modal" onclick="if(event.target===this)ocClose()">
+ <div class="qt-box" style="max-width:560px">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+   <div class="qt-title">Check an order</div>
+   <button class="qt-x" onclick="ocClose()" aria-label="Close">×</button>
+  </div>
+  <div class="qt-sub">Type an order number to see whether it reached the dashboard — and if not, exactly why. Or type a caregiver's name and pick a day to see every booking they have that day.</div>
+  <div style="display:flex;gap:8px">
+   <input id="oc-id" class="qt-input" placeholder="Order no. (229672) or caregiver name (Maribel)" style="margin:0" onkeydown="if(event.key==='Enter')ocRun()">
+   <input id="oc-day" type="date" class="qt-input" style="margin:0;width:150px" title="Day — used when you search by caregiver name" onchange="ocRun()">
+   <button class="qt-send" style="width:auto;padding:0 18px" onclick="ocRun()">Check</button>
+  </div>
+  <div id="oc-out" style="margin-top:14px"></div>
+  <button onclick="ocSyncAndCheck()" style="margin-top:10px;width:100%;padding:9px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text);font-weight:600;cursor:pointer;font-family:Inter,sans-serif">↻ Sync &amp; check again</button>
+ </div>
+</div>
 <div class="qt-modal" id="tr-modal" onclick="if(event.target===this)trCloseForm()">
  <div class="qt-box" style="max-width:520px">
   <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
@@ -11281,6 +11350,7 @@ async function loadData(force=false){
       throw new Error('Bad JSON from n8n');
     }
     if(!Array.isArray(rows))throw new Error('Bad data');
+    window._lastRows = rows;
 
     // Transform — handle both raw Metabase format and pre-transformed format
     rawData=rows.filter(r=>(r['Nurse_Assigned']||r['caregiver'])&&(r['Confirmed_DateTime']||r['Booked_Slot']||r['date'])).map(r=>{
@@ -11347,6 +11417,11 @@ async function loadData(force=false){
         is_b2b:pickB2B(r),
         is_mumzworld:pickMumzworld(r),
         final_price:parseFloat(r['Final_Price']||r['Order_Price']||0)||0,
+        // client address / pin if the Metabase question has such columns
+        addr_raw:(function(){var k=Object.keys(r).find(function(k){return /address|street|building|landmark|locality/i.test(k)&&!/e-?mail|ip_?address/i.test(k)&&String(r[k]||'').trim();});return k?String(r[k]).trim():'';})(),
+        lat:(function(){var k=Object.keys(r).find(function(k){return /^(lat|latitude|.*_lat|.*_latitude)$/i.test(k);});return k&&r[k]!=null?String(r[k]).trim():'';})(),
+        lng:(function(){var k=Object.keys(r).find(function(k){return /^(lng|lon|long|longitude|.*_lng|.*_lon|.*_longitude)$/i.test(k);});return k&&r[k]!=null?String(r[k]).trim():'';})(),
+        map_raw:(function(){var k=Object.keys(r).find(function(k){return /map|pin|location_?link|location_?url/i.test(k)&&/^https?:\/\//i.test(String(r[k]||''));});return k?String(r[k]).trim():'';})(),
         // temp order = "temp"/"temporary" in any status / type / package / category field
         is_temp:Object.keys(r).some(function(k){
           return /status|type|package|category|order|kind|tag/i.test(k) && !/user|name|price|id$/i.test(k)
@@ -11396,6 +11471,10 @@ async function loadData(force=false){
       if(mzTagged(r) && r.caregiver && r.date) _mumzDays[r.caregiver+'|'+r.date]=true;
     });
     allData = Object.values(dedupMap);
+    // Full list (every order, every day) — the dedup above keeps one per caregiver/day
+    // for counts & analytics; the roster and calendar use this to show 2nd+ bookings.
+    window._allExpanded = expandedRaw;
+    _bkExtraCache = null;
     // Load overrides (also calls loadLocalCache which populates hiddenCGs)
     await loadOverrides();
     // Filter permanently hidden CGs AFTER loadOverrides so hiddenCGs is populated
@@ -11674,7 +11753,7 @@ function renderCalendar(){
   const daysInM=new Date(calYear,calMo+1,0).getDate();
   const daysInPrev=new Date(calYear,calMo,0).getDate();
 
-  const recs=allData.filter(r=>r.caregiver===activeCG&&!r._manual);
+  const recs=allData.filter(r=>r.caregiver===activeCG&&!r._manual).concat(bookingExtras().filter(r=>r.caregiver===activeCG));
   const dayMap={};
   recs.forEach(r=>{
     const d=parseD(r.date);
@@ -13578,7 +13657,8 @@ function tkOrdersFor(cg, date, hc){
       order_id:o.order_id||'', child_order_id:o.child_order_id||'',
       client_name:o.client_name||'', time_start:o.time_start||'', time_end:o.time_end||'',
       package_raw:o.package_raw||o.package_type||'', location:o.location||'',
-      homecare:isClient?(_session.client_tag||'Mumzworld'):(o.homecare||''), is_b2b:!!o.is_b2b, status:o.status||''
+      homecare:isClient?(_session.client_tag||'Mumzworld'):(o.homecare||''), is_b2b:!!o.is_b2b, status:o.status||'',
+      addr_raw:o.addr_raw||'', lat:o.lat||'', lng:o.lng||'', map_raw:o.map_raw||''
     });
   };
   (allData||[]).forEach(function(o){ if(o.caregiver===cg && o.date===date) push(o); });
@@ -13777,6 +13857,327 @@ function tkRenderLog(){
 }
 
 // ── Raise-ticket modal ───────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════
+// CLIENT LOCATION — saved per order and per client (Firestore), shown
+// when a booking is clicked on the roster. Address / pin coming from
+// Metabase (if the question has such columns) is used as a fallback.
+// ══════════════════════════════════════════════════════════════════
+var LOC_COLL = 'booking_locations';
+var _loc = {map:{}, loaded:false, loading:null, cg:'', ds:'', orders:[], o:null};
+
+function locClientKey(name){ return 'c_' + String(name||'').toLowerCase().replace(/[^a-z0-9\u0600-\u06ff]+/g,'_').replace(/^_+|_+$/g,'').slice(0,120); }
+function locOrderKey(o){ var id = o && (o.order_id || o.child_order_id); return id ? 'o_' + String(id).replace(/[^\w-]/g,'_') : ''; }
+async function locLoadAll(){
+  if(_loc.loaded) return;
+  if(_loc.loading) return _loc.loading;
+  _loc.loading = (async function(){
+    try{
+      if(!_db) await initFirebase();
+      if(!_db) return;
+      var snap = await _db.collection(LOC_COLL).get();
+      snap.forEach(function(d){ _loc.map[d.id] = d.data(); });
+      _loc.loaded = true;
+    }catch(e){ console.warn('[location] load', e); }
+    finally{ _loc.loading = null; }
+  })();
+  return _loc.loading;
+}
+// Saved for this order → saved for this client → from Metabase
+function locFor(o){
+  if(!o) return null;
+  var a = _loc.map[locOrderKey(o)];
+  if(a && (a.address || a.map || a.unit)) return Object.assign({_src:'order'}, a);
+  var c = o.client_name ? _loc.map[locClientKey(o.client_name)] : null;
+  if(c && (c.address || c.map || c.unit)) return Object.assign({_src:'client'}, c);
+  if(o.addr_raw || (o.lat && o.lng) || o.map_raw){
+    return {_src:'metabase', address:o.addr_raw || '', area:'', unit:'', notes:'',
+            map:o.map_raw || (o.lat && o.lng ? o.lat + ', ' + o.lng : ''), city:o.location || ''};
+  }
+  return null;
+}
+function locMapsUrl(L, city){
+  if(!L) return '';
+  var m = String(L.map || '').trim();
+  if(/^https?:\/\//i.test(m)) return m;
+  var ll = m.match(/^\s*(-?\d{1,2}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)\s*$/);
+  if(ll) return 'https://www.google.com/maps/search/?api=1&query=' + ll[1] + ',' + ll[2];
+  var q = [L.unit, L.address, L.area, city].filter(Boolean).join(', ');
+  return q ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(q) : '';
+}
+function locOneLine(L){ return L ? [L.unit, L.address, L.area].filter(Boolean).join(', ') : ''; }
+
+async function locOpen(cg, ds, oid){
+  var hc = (typeof tkSessionHC === 'function' && tkSessionHC()) || '';
+  var orders = tkOrdersFor(cg, ds, hc || null).filter(function(o){ return !/cancel/i.test(o.status||''); });
+  if(!orders.length) orders = tkOrdersFor(cg, ds, hc || null);
+  var o = oid ? orders.find(function(x){ return x.child_order_id === oid || x.order_id === oid; }) : null;
+  _loc.cg = cg; _loc.ds = ds; _loc.orders = orders; _loc.o = o || orders[0] || null;
+  document.getElementById('loc-modal').classList.add('show');
+  locRenderSummary();
+  document.getElementById('loc-view').innerHTML = '<div style="padding:10px 0;color:var(--text2);font-size:12px">Loading…</div>';
+  await locLoadAll();
+  locShowView();
+}
+function locClose(){ document.getElementById('loc-modal').classList.remove('show'); }
+function locPick(i){ _loc.o = _loc.orders[+i] || null; locRenderSummary(); locShowView(); }
+function locRenderSummary(){
+  var o = _loc.o, E = tkEsc;
+  var bits = [_loc.cg, (typeof qtFmtDate === 'function' ? qtFmtDate(_loc.ds) : _loc.ds)];
+  if(o){ bits.unshift(o.client_name || 'Client'); if(o.child_order_id || o.order_id) bits.push('#' + (o.child_order_id || o.order_id)); if(o.time_start) bits.push(o.time_start + (o.time_end ? '–' + o.time_end : '')); }
+  var h = E(bits.filter(Boolean).join(' · '));
+  if(_loc.orders.length > 1){
+    h += '<select class="qt-input" style="margin:8px 0 0;padding:6px 8px;font-size:12px" onchange="locPick(this.value)">'
+      + _loc.orders.map(function(x, i){ return '<option value="'+i+'"'+(x === o ? ' selected' : '')+'>'+E(tkOrderLabel(x))+'</option>'; }).join('') + '</select>';
+  }
+  if(!o) h += '<div style="color:var(--sick);margin-top:4px">No booking found for this day</div>';
+  document.getElementById('loc-summary').innerHTML = h;
+}
+function locCanEdit(){ return !!(_session && (_session.role === 'master' || _session.role === 'hc')); }
+function locShowView(){
+  document.getElementById('loc-edit').style.display = 'none';
+  var box = document.getElementById('loc-view'); box.style.display = '';
+  var o = _loc.o, E = tkEsc;
+  if(!o){ box.innerHTML = ''; return; }
+  var L = locFor(o), city = (typeof normCity === 'function' ? normCity(o.location) : o.location) || o.location || '';
+  if(!L){
+    box.innerHTML = '<div class="loc-empty">No location saved for this booking yet.' + (city ? '<br><span style="font-size:11px">City: ' + E(city) + '</span>' : '') + '</div>'
+      + (locCanEdit() ? '<button class="qt-send" onclick="locShowEdit()">＋ Add location</button>' : '');
+    return;
+  }
+  var url = locMapsUrl(L, city);
+  var src = L._src === 'metabase' ? 'From the order data (Metabase)'
+          : 'Saved' + (L.updated_by ? ' by ' + L.updated_by : '') + (L.updated_at ? ' · ' + new Date(L.updated_at).toLocaleDateString([], {day:'2-digit', month:'short'}) : '')
+            + (L._src === 'client' ? ' · client\'s usual location' : '');
+  var text = [o.client_name, locOneLine(L), city].filter(Boolean).join('\n') + (L.notes ? '\nDirections: ' + L.notes : '') + (url ? '\n' + url : '');
+  window._locShareText = text;
+  box.innerHTML = '<div class="loc-card">'
+    + '<div class="loc-addr">' + (locOneLine(L) ? E(locOneLine(L)) : '<span style="color:var(--text3)">Pin only — no written address</span>') + '</div>'
+    + (city ? '<div class="loc-meta">🏙️ ' + E(city) + '</div>' : '')
+    + (L.notes ? '<div class="loc-notes">🧭 ' + E(L.notes) + '</div>' : '')
+    + '<div class="loc-src">' + E(src) + '</div></div>'
+    + '<div class="loc-actions">'
+    + (url ? '<a class="qt-send loc-go" href="' + E(url) + '" target="_blank" rel="noopener">🗺️ Open in Google Maps</a>' : '')
+    + '<button class="loc-sec" onclick="locCopy()">📋 Copy</button>'
+    + '<a class="loc-sec" href="https://wa.me/?text=' + encodeURIComponent(text) + '" target="_blank" rel="noopener">💬 Send on WhatsApp</a>'
+    + (locCanEdit() ? '<button class="loc-sec" onclick="locShowEdit()">✏️ Edit</button>' : '')
+    + '</div>';
+}
+function locCopy(){
+  var t = window._locShareText || '';
+  (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(function(){ tkToast('Location copied'); })
+    .catch(function(){ prompt('Copy the location:', t); });
+}
+function locShowEdit(){
+  var o = _loc.o; if(!o) return;
+  var L = locFor(o) || {};
+  var set = function(k, v){ document.getElementById('loc-' + k).value = v || ''; };
+  set('address', L.address); set('unit', L.unit); set('area', L.area); set('map', L.map); set('notes', L.notes);
+  document.getElementById('loc-all').checked = L._src !== 'order';
+  document.getElementById('loc-view').style.display = 'none';
+  document.getElementById('loc-edit').style.display = '';
+  var b = document.getElementById('loc-save'); b.disabled = false; b.textContent = 'Save location';
+  setTimeout(function(){ document.getElementById('loc-address').focus(); }, 50);
+}
+async function locSave(){
+  var o = _loc.o; if(!o) return;
+  var g = function(k){ return document.getElementById('loc-' + k).value.trim(); };
+  var rec = {address:g('address'), unit:g('unit'), area:g('area'), map:g('map'), notes:g('notes')};
+  if(!rec.address && !rec.map){ alert('Add an address or a Google Maps link / pin.'); return; }
+  if(rec.map && !/^https?:\/\//i.test(rec.map) && !/^\s*-?\d{1,2}\.\d+\s*,\s*-?\d{1,3}\.\d+\s*$/.test(rec.map)){
+    alert('The map field should be a Google Maps link (https://…) or coordinates like 25.07, 55.14'); return;
+  }
+  Object.assign(rec, {client_name:o.client_name || '', order_id:o.order_id || '', child_order_id:o.child_order_id || '',
+    city:o.location || '', updated_at:new Date().toISOString(), updated_by:(_session && _session.username) || ''});
+  var b = document.getElementById('loc-save'); b.disabled = true; b.textContent = 'Saving…';
+  try{
+    if(!_db) await initFirebase();
+    if(!_db) throw new Error('Firebase not connected');
+    var ok = locOrderKey(o), ck = o.client_name ? locClientKey(o.client_name) : '';
+    var batch = _db.batch();
+    if(ok) batch.set(_db.collection(LOC_COLL).doc(ok), rec, {merge:true});
+    if(ck && document.getElementById('loc-all').checked) batch.set(_db.collection(LOC_COLL).doc(ck), rec, {merge:true});
+    await batch.commit();
+    if(ok) _loc.map[ok] = Object.assign({}, _loc.map[ok], rec);
+    if(ck && document.getElementById('loc-all').checked) _loc.map[ck] = Object.assign({}, _loc.map[ck], rec);
+    tkToast('Location saved');
+    locShowView();
+    try{ if(document.getElementById('page-roster').classList.contains('active')) renderRoster(); }catch(_e){}
+  }catch(e){
+    alert('Could not save the location: ' + e.message);
+    b.disabled = false; b.textContent = 'Save location';
+  }
+}
+// short "📍 …" line for roster tooltips
+function locTipLine(o){ var L = locFor(o); var t = locOneLine(L); return t ? '\n📍 ' + t : ''; }
+// END CLIENT LOCATION
+
+// ══════════════════════════════════════════════════════════════════
+// ORDER CHECK — "why isn't order X showing?" (admin)
+// Walks the same rules loadData / the roster use and reports the
+// first one that hides the order.
+// ══════════════════════════════════════════════════════════════════
+function ocOpen(prefill){
+  var m = document.getElementById('oc-modal');
+  document.getElementById('oc-id').value = prefill || '';
+  document.getElementById('oc-out').innerHTML = '';
+  m.classList.add('show');
+  setTimeout(function(){ document.getElementById('oc-id').focus(); }, 60);
+}
+function ocClose(){ document.getElementById('oc-modal').classList.remove('show'); }
+async function ocSyncAndCheck(){
+  var out = document.getElementById('oc-out');
+  out.innerHTML = '<div class="oc-step">⏳ Pulling the latest orders…</div>';
+  try{ await loadData(true); }catch(e){}
+  ocRun();
+}
+function ocRun(){
+  var id = document.getElementById('oc-id').value.replace(/^#/, '').trim();
+  var out = document.getElementById('oc-out');
+  if(!id){ out.innerHTML = ''; return; }
+  if(!/^\d+$/.test(id)) return ocRunCaregiver(id);
+  var E = function(v){ return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+  var step = function(ok, html){ return '<div class="oc-step ' + (ok === true ? 'ok' : ok === false ? 'bad' : 'warn') + '">' + (ok === true ? '✅ ' : ok === false ? '❌ ' : '⚠️ ') + html + '</div>'; };
+  var rows = window._lastRows || [];
+  var synced = (document.getElementById('sync-text')||{}).textContent || '';
+  var idOf = function(r){ return [r['Cart_Order_ID'], r['Child_Order_ID'], r['order_id'], r['child_order_id'], r['Order_ID']].map(function(v){ return String(v==null?'':v).trim(); }); };
+  var hits = rows.filter(function(r){ return idOf(r).indexOf(id) >= 0; });
+  var h = '<div class="oc-head">Order <b>#' + E(id) + '</b> · data ' + E(synced || 'not loaded') + ' · ' + rows.length + ' rows received</div>';
+
+  if(!hits.length){
+    h += step(false, '<b>Not in the data the dashboard received.</b> The order is missing from what n8n / Metabase sends, so the dashboard never sees it.')
+      + '<div class="oc-fix"><b>What to do</b><br>1. Click <b>Sync &amp; check again</b> below (forces fresh data).<br>'
+      + '2. Still missing → open the Metabase question that feeds the dashboard and search for ' + E(id) + '. If it is not there, the question is filtering it out (status, date range or homecare filter) or Metabase has not refreshed yet.<br>'
+      + '3. Check the number — it can be the cart order ID or the child order ID; both are searched.</div>';
+    out.innerHTML = h; return;
+  }
+  hits.forEach(function(r, n){
+    var nurse = String(r['Nurse_Assigned'] || r['caregiver'] || '').trim();
+    var hc = String(r['Homecare'] || r['homecare'] || '').trim();
+    var slot = String(r['Confirmed_DateTime'] || r['Booked_Slot'] || r['date'] || '').replace('T', ' ');
+    var ds = slot.slice(0, 10);
+    var child = String(r['Child_Order_ID'] || r['child_order_id'] || '').trim();
+    var os = String(r['Order_Status'] || r['status'] || '').trim();
+    h += '<div class="oc-card"><div class="oc-sub">' + (hits.length > 1 ? 'Row ' + (n+1) + ' of ' + hits.length + ' · ' : '')
+      + (child ? 'child #' + E(child) + ' · ' : '') + E(r['Package'] || r['Parent_Package'] || r['package_type'] || '')
+      + '<br>Nurse: <b>' + E(nurse || '— empty —') + '</b> · Homecare: <b>' + E(hc || '—') + '</b> · Status: <b>' + E(os || '—') + '</b> · Slot: <b>' + E(slot || '—') + '</b></div>';
+
+    if(!nurse){
+      h += step(false, '<b>No nurse in the data.</b> <code>Nurse_Assigned</code> is empty for this order in what Metabase sent, so it is skipped. The assignment has not reached Metabase / n8n yet.')
+        + '<div class="oc-fix">Click <b>Sync &amp; check again</b>. If still empty, check the order in the admin panel saved the assignment, and that the Metabase question includes the <code>Nurse_Assigned</code> column for this order. Metabase can lag a few minutes behind.</div></div>';
+      return;
+    }
+    h += step(true, 'Nurse assigned: <b>' + E(nurse) + '</b>');
+    if(!ds){ h += step(false, '<b>No date/slot.</b> <code>Confirmed_DateTime</code> and <code>Booked_Slot</code> are both empty, so the dashboard cannot place it on a day.') + '</div>'; return; }
+    if(ds < '2026-01-01'){ h += step(false, '<b>Date is before 2026</b> (' + E(ds) + ') — older orders are ignored.') + '</div>'; return; }
+    var excludedHC = ['Carezone Home Healthcare LLC','Dummy HomeCare','Helpful Agency','Nifas HC','babysitting KSA','Pyramid Home Health care'];
+    if(excludedHC.some(function(e){ return e.toLowerCase() === hc.toLowerCase(); })){
+      h += step(false, '<b>Homecare "' + E(hc) + '" is excluded</b> from this dashboard on purpose, so its orders are never shown.') + '</div>'; return;
+    }
+    h += step(true, 'Date ' + E(ds) + ' and homecare are fine');
+
+    var rec = (rawData||[]).find(function(x){
+      return x.caregiver === nurse && x.date === ds && (x.order_id === id || x.child_order_id === id || (child && x.child_order_id === child));
+    }) || (rawData||[]).find(function(x){ return x.order_id === id || x.child_order_id === id; });
+    if(!rec){ h += step(false, 'Passed the checks but is not in the loaded orders — click <b>Sync &amp; check again</b>.') + '</div>'; return; }
+    var cg = rec.caregiver, rhc = rec.homecare;
+    if(/cancel/i.test(rec.status) || /cancel/i.test(rec.order_status_raw||'')){
+      h += step(null, '<b>Order is cancelled</b> in Metabase — it shows on the roster as <b>Cxl</b>, not as a duty.');
+    }
+    var hidden = [...(typeof hiddenCGs !== 'undefined' ? hiddenCGs : [])].some(function(k){ return k.toLowerCase() === (cg + '|' + rhc).toLowerCase(); });
+    if(hidden) h += step(false, '<b>Caregiver ' + E(cg) + ' is hidden</b> (' + E(rhc) + '). Turn on <b>Show hidden</b> in the Calendar tab, then unhide them.');
+    var range = rec.date + (rec.end_date && rec.end_date !== rec.date ? ' → ' + rec.end_date : '');
+    var blocked = hidden;
+    try{
+      var st = cgDayState(cg, rhc, rec.date);
+      if(st === 'exited' || st === 'pre') blocked = true;
+      if(st === 'exited') h += step(false, '<b>' + E(cg) + ' is marked as exited</b> on or before ' + E(rec.date) + ' (exit date ' + E(getCGExit(cg, rhc)) + '), so the roster greys out this day. Fix the exit date with <b>Edit exit</b> on their roster row.');
+      else if(st === 'pre') h += step(false, '<b>' + E(cg) + ' has a join date after this order</b> (' + E(getCGJoin(cg, rhc)) + '). Fix it with the caregiver settings.');
+      else if(st === 'pause') h += step(null, '<b>' + E(cg) + ' is paused</b> on ' + E(rec.date) + ' (on leave / paused period).');
+    }catch(_e){}
+    var ovs = [];
+    try{
+      var d0 = new Date(rec.date + 'T00:00:00'), d1 = new Date((rec.end_date || rec.date) + 'T00:00:00');
+      for(var d = new Date(d0), k = 0; d <= d1 && k < 62; d.setDate(d.getDate()+1), k++){
+        var dd = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+        var ov = overrides[cg + '|' + dd] || overrides[(rec.child_order_id || rec.order_id) + '|' + dd];
+        if(ov && ov.type && ov.type !== 'manual') ovs.push(dd + ' = ' + ov.type);
+      }
+    }catch(_e){}
+    if(ovs.length) h += step(null, '<b>Day overrides</b> replace the booking on: ' + E(ovs.join(', ')) + '. Click that day on the roster → <b>Clear</b> to remove.');
+    if(!blocked && !ovs.length){
+      h += step(true, '<b>It is in the dashboard.</b> Roster: <b>' + E(cg) + '</b> (' + E(rhc) + ') · ' + E(range) + (rec.time_start ? ' · ' + E(rec.time_start) + (rec.time_end ? '–' + E(rec.time_end) : '') : '') + '.')
+        + '<div class="oc-fix">Not seeing it? Make sure the roster is on the week of <b>' + E(rec.date) + '</b>, the homecare / city filters include <b>' + E(rhc) + '</b>, and refresh the page (Ctrl + Shift + R).'
+        + ' <a href="#" onclick="event.preventDefault();ocClose();ocGoRoster(\'' + E(rec.date) + '\')">Open roster on that week →</a></div>';
+    }
+    h += '</div>';
+  });
+  out.innerHTML = h;
+}
+// caregiver + day: every order they have that day, and whether the roster shows it
+function ocRunCaregiver(name){
+  var out = document.getElementById('oc-out');
+  var E = function(v){ return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+  var ds = document.getElementById('oc-day').value;
+  if(!ds){ ds = new Date().toISOString().slice(0,10); document.getElementById('oc-day').value = ds; }
+  var q = name.toLowerCase().replace(/\s+/g,' ').trim();
+  var norm = function(x){ return String(x||'').toLowerCase().replace(/\s+/g,' ').trim(); };
+  // 1) every source row for this name that covers the day
+  var src = (window._lastRows||[]).filter(function(r){ return norm(r['Nurse_Assigned']||r['caregiver']).indexOf(q) >= 0; });
+  // 2) what the dashboard made of them
+  var recs = (rawData||[]).filter(function(r){ return norm(r.caregiver).indexOf(q) >= 0 && ds >= r.date && ds <= (r.end_date||r.date); });
+  var names = [...new Set(recs.map(function(r){ return r.caregiver; }).concat(src.map(function(r){ return String(r['Nurse_Assigned']||r['caregiver']||'').trim(); })))].filter(Boolean);
+  var idx = rosterDayIndex();
+  var h = '<div class="oc-head">Caregiver matching <b>' + E(name) + '</b> on <b>' + E(ds) + '</b></div>';
+  if(!names.length){
+    out.innerHTML = h + '<div class="oc-step bad">❌ No caregiver with that name in the data the dashboard received.</div>'; return;
+  }
+  if(names.length > 1){
+    var lower = {}; names.forEach(function(n){ var k = norm(n); (lower[k] = lower[k] || []).push(n); });
+    var clash = Object.values(lower).filter(function(a){ return a.length > 1; });
+    h += '<div class="oc-step warn">⚠️ Several spellings / people match: ' + names.map(E).join(', ')
+      + (clash.length ? '. <b>The same name is spelled differently in Metabase</b> (' + clash.map(function(a){ return a.map(E).join(' vs '); }).join('; ') + ') — the dashboard treats each spelling as a separate caregiver, so their orders land on different roster rows.' : '. Type more of the name to narrow it down.') + '</div>';
+  }
+  if(!recs.length){
+    h += '<div class="oc-step bad">❌ No order covers ' + E(ds) + ' for this caregiver.</div><div class="oc-fix">Their orders in the data: '
+      + ((rawData||[]).filter(function(r){ return norm(r.caregiver).indexOf(q) >= 0; }).slice(0, 8).map(function(r){ return '#' + E(r.child_order_id||r.order_id) + ' ' + E(r.date) + (r.end_date && r.end_date !== r.date ? '→' + E(r.end_date) : ''); }).join(', ') || 'none') + '</div>';
+    out.innerHTML = h; return;
+  }
+  var seen = {};
+  recs.forEach(function(r){
+    var oid = r.child_order_id || r.order_id || '';
+    if(seen[r.caregiver + oid]) return; seen[r.caregiver + oid] = 1;
+    var day = (idx[r.caregiver + '|' + ds] || []);
+    var onRoster = day.some(function(x){ return (x.child_order_id || x.order_id) === oid; });
+    var dayRec = day.find(function(x){ return (x.child_order_id || x.order_id) === oid; });
+    var st = dayRec ? dayRec.status : r.status;
+    var ov = overrides[r.caregiver + '|' + ds];
+    var line = '<b>#' + E(oid) + '</b> · ' + E(r.client_name || '—') + (r.time_start ? ' · ' + E(r.time_start) + (r.time_end ? '–' + E(r.time_end) : '') : '')
+      + ' · ' + E(r.homecare) + ' · ' + E(r.package_type || '') + ' · <i>' + E(st || '') + '</i>';
+    var why = '';
+    if(!onRoster) why = 'not in the roster for this day';
+    else if(/cancel/i.test(st)) why = 'cancelled';
+    else if(/week\s*off/i.test(st)) why = 'week off for this order';
+    var hid = [...hiddenCGs].some(function(k){ return k.toLowerCase() === (r.caregiver + '|' + r.homecare).toLowerCase(); });
+    if(hid) why = 'caregiver row is hidden';
+    h += '<div class="oc-step ' + (why ? 'warn' : 'ok') + '">' + (why ? '⚠️ ' : '✅ ') + line + (why ? ' — <b>' + E(why) + '</b>' : '') + '</div>';
+    if(ov && ov.type) h += '<div class="oc-fix">A <b>' + E(ov.type) + '</b> override is set on ' + E(r.caregiver) + ' for ' + E(ds) + ' — it replaces the bookings in that roster cell.</div>';
+  });
+  var live = recs.filter(function(r){ return !/cancel/i.test(r.status||''); }).length;
+  h += '<div class="oc-fix">' + live + ' live booking' + (live === 1 ? '' : 's') + ' that day. <a href="#" onclick="event.preventDefault();ocClose();ocGoRoster(\'' + E(ds) + '\')">Open roster on that week →</a></div>';
+  out.innerHTML = h;
+}
+function ocGoRoster(ds){
+  switchTab('roster');
+  setTimeout(function(){
+    try{
+      rosterDate = new Date(ds + 'T00:00:00');
+      var hf = document.getElementById('roster-hc-filter'); if(hf && _session && _session.role === 'master') hf.value = '';
+      renderRoster();
+    }catch(e){}
+  }, 200);
+}
+// END ORDER CHECK
+
 // ══════════════════════════════════════════════════════════════════
 // TRANSPORT CHARGES — transport Shifa books for other homecares'
 // caregivers, which Valeo reimburses. Visible to admin + Shifa only.
@@ -14195,6 +14596,11 @@ function qtRenderSummary(){
   } else if(!_qt.orders.length){
     html += '<div style="margin-top:4px;color:var(--sick)">No booking found on the roster for this day</div>';
   }
+  if(o){
+    var _L = locFor(o);
+    html += '<div style="margin-top:6px"><a href="#" onclick="event.preventDefault();qtClose();locOpen(\''+tkEsc(_qt.cg).replace(/'/g,"\\'")+'\',\''+_qt.ds+'\',\''+tkEsc(o.child_order_id||o.order_id||'')+'\')" style="color:var(--accent);font-weight:600">📍 '
+      + (_L ? tkEsc((locOneLine(_L)||'View location').slice(0,60)) : 'Client location') + '</a></div>';
+  }
   document.getElementById('qt-summary').innerHTML = html;
 
   var open = tkOpenTicketsFor(_qt.cg, _qt.ds);
@@ -14274,7 +14680,8 @@ function rosterCellClick(cg, ds, ev){
     var live = orders.filter(function(o){ return !/cancel/i.test(o.status||''); });
     if(live.length || orders.length) return qtOpen(cg, ds, bk ? bk.getAttribute('data-oid') : '');
   }
-  openOvModal(cg, ds);
+  var _bk = ev && ev.target && ev.target.closest ? ev.target.closest('[data-oid]') : null;
+  openOvModal(cg, ds, _bk ? _bk.getAttribute('data-oid') : undefined);
 }
 function tkOpenTicketsFor(cg, ds){
   return (_tkData||[]).filter(function(t){
@@ -14285,6 +14692,11 @@ function rosterTicketBadge(cg, ds){
   if(_session && _session.role === 'client') return '';
   var n = tkOpenTicketsFor(cg, ds).length;
   return n ? '<span class="rd-tk" title="'+n+' open ticket'+(n>1?'s':'')+' on this shift">⚠️'+(n>1?n:'')+'</span>' : '';
+}
+function ovOpenLocation(){
+  var cg = ovCG, ds = ovDate, oid = window._ovOrderId || '';
+  if(typeof closeOvModal === 'function') closeOvModal();
+  locOpen(cg, ds, oid);
 }
 function ovRaiseTicket(){
   var cg = ovCG, ds = ovDate, oid = window._ovOrderId || '';
@@ -16339,7 +16751,7 @@ function renderExpiring(){
   // Build calendar end date map — use allData (which reflects overrides/extensions)
   // The actual last date a CG appears in allData for a given order = calendar end date
   const calendarEndMap = {};
-  allData.forEach(function(r){
+  allData.concat(typeof bookingExtras==='function'?bookingExtras():[]).forEach(function(r){
     if(!r.caregiver||!r.date) return;
     var st=(r.status||'').toLowerCase().replace(/\s+/g,'');
     if(st==='cancelled'||st==='removed') return;
@@ -17071,6 +17483,14 @@ function openOvModal(cg,date,orderId){
       var _open=tkOpenTicketsFor(cg,date).length;
       _tb.style.display=_isClient?'none':'';
       _tb.innerHTML='🎫 Open a ticket for this booking'+(_open?' <span style="font-size:11px;color:var(--sick)">· ⚠️ '+_open+' already open</span>':'');
+    }
+    var _lb=document.getElementById('ov-loc-btn');
+    if(_lb){
+      var _bk=tkOrdersFor(cg,date,null).filter(function(o){return !/cancel/i.test(o.status||'');});
+      var _o=orderId?_bk.find(function(o){return o.child_order_id===orderId||o.order_id===orderId;}):_bk[0];
+      var _L=_o?locFor(_o):null;
+      _lb.style.display=(_bk.length&&!(_session&&_session.role==='client'))?'':'none';
+      _lb.innerHTML='📍 Client location'+(_L?' <span style="font-size:11px;color:var(--text2)">· '+tkEsc(locOneLine(_L)||'pin saved').slice(0,40)+'</span>':' <span style="font-size:11px;color:var(--text3)">· not saved yet</span>');
     }
   }catch(_e){}
   // Auto-detect order_id from allData if not explicitly passed
@@ -18232,13 +18652,8 @@ function renderRoster(){
   var _xb=document.getElementById('roster-exited-btn');
   if(_xb) _xb.textContent=(rosterShowExited?'👤 Exited shown':'👤 Exited hidden')+(exitedCount?' ('+exitedCount+')':'');
   invalidateRosterIndex();
-  var dayMap={};
-  allData.forEach(function(r){
-    if(!r.caregiver||!r.date) return;
-    var k=r.caregiver+'|'+r.date;
-    if(!dayMap[k]) dayMap[k]=[];
-    dayMap[k].push(r);
-  });
+  // every booking per caregiver/day — includes 2nd+ orders the per-day dedup dropped
+  var dayMap=rosterDayIndex();
   var woLookup={};
   Object.entries(weekOffCfg).forEach(function(e){
     var cfgKey=e[0],woDays=e[1]||[];
@@ -18360,7 +18775,7 @@ function renderRoster(){
           var _bks=st.active&&st.active.length?st.active:[ev];
           var cl2=(ev.client_name||'').split(' ')[0];
           var isMumz=_mumzDays[cgName+'|'+ds]||recs.some(mzTagged);
-          if(_bks.length>1) tip=rosterBookingsTip(cgName,ds,_bks);
+          if(_bks.length>1) tip=rosterBookingsTip(cgName,ds,_bks); else if(typeof locTipLine==='function') tip+=locTipLine(ev);
           if(isMumz){cls+=' rd-mumz';tip=(_bks.length>1?tip+'\n':cgName+' | '+ds+' · ')+'Mumzworld order';}
           else if((ev.client_name||'').toLowerCase().includes('shady'))cls+=' rd-shady';
           else cls+=' rd-duty';
@@ -18942,6 +19357,7 @@ async function doLogin(){
     applySessionUI();loadData();
     if(_session.role==='client')setTimeout(function(){switchTab('mumz');},150);
     else setTimeout(function(){ try{ bsDeepLink() || trDeepLink(); }catch(e){ console.warn('[deeplink]', e); } },300);
+    setTimeout(function(){ try{ locLoadAll(); }catch(e){} },1800);
   }catch(e){err.style.display='block';btn.disabled=false;btn.textContent='Sign In';}
 }
 function applySessionUI(){
@@ -18953,6 +19369,7 @@ function applySessionUI(){
     badge.innerHTML=(_session.role==='master'?'👑':_session.role==='client'?'🛍️':'🏥')+' <b style="color:var(--text)">'+_session.username+'</b> <button onclick="doLogout()" style="background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.3);border-radius:5px;color:var(--absent);font-size:10px;padding:2px 8px;cursor:pointer;font-family:Inter,sans-serif">Sign out</button>';
     header.insertBefore(badge,header.firstChild);
   }
+  var _ocb=document.getElementById('oc-btn'); if(_ocb) _ocb.style.display=(_session.role==='master')?'':'none';
   if(_session.role==='hc'){
     var _shifa=trIsShifa();
     document.querySelectorAll('.main-tab').forEach(function(t){var txt=t.textContent.trim();if(!txt.includes('Calendar')&&!txt.includes('Roster')&&!txt.includes('Complaint')&&!txt.includes('Tickets')&&!txt.includes('Leave Applications')&&!(_shifa&&txt.includes('Transport Charges')))t.style.display='none';});
@@ -20650,14 +21067,43 @@ function lcCardStartBtn(cg, hc){
 // ══════════════════════════════════════════════════════════════════
 // ROSTER TRUTH  —  one function every tab counts from
 // ══════════════════════════════════════════════════════════════════
-var _rdxCache = null, _woCache = null;
-function invalidateRosterIndex(){ _rdxCache = null; _woCache = null; }
+var _rdxCache = null, _woCache = null, _bkExtraCache = null;
+function invalidateRosterIndex(){ _rdxCache = null; _woCache = null; _bkExtraCache = null; }
+// Additional live bookings the per-day dedup dropped (same caregiver, same day, different order)
+function bookingExtras(){
+  if(_bkExtraCache) return _bkExtraCache;
+  var have = {};
+  (allData||[]).forEach(function(r){ have[r.caregiver + '|' + r.date + '|' + (r.child_order_id || r.order_id || '')] = 1; });
+  var hid = {};
+  (typeof hiddenCGs !== 'undefined' ? [...hiddenCGs] : []).forEach(function(k){ hid[String(k.split('|')[0]||'').toLowerCase()] = 1; });
+  var NON = {weekoff:1, removed:1, cancelled:1, sick:1, holiday:1, paid:1, unpaid:1, off:1, absent:1};
+  var out = [];
+  (window._allExpanded||[]).forEach(function(r){
+    if(!r || !r.caregiver || !r.date) return;
+    var oid = r.child_order_id || r.order_id || ''; if(!oid) return;
+    var k = r.caregiver + '|' + r.date;
+    if(have[k + '|' + oid]) return;
+    if(NON[String(r.status||'').toLowerCase().replace(/\s+/g,'')]) return;
+    if(hid[r.caregiver.toLowerCase()]) return;
+    var ov = overrides[k], ov2 = overrides[oid + '|' + r.date];
+    if(ov && ['removed','cancelled'].indexOf(ov.type) >= 0 && ov.child_order_id === oid) return;
+    if(ov2 && ['removed','cancelled'].indexOf(ov2.type) >= 0) return;
+    have[k + '|' + oid] = 1;
+    out.push(r);
+  });
+  _bkExtraCache = out; return out;
+}
 
 function rosterDayIndex(){
   if(_rdxCache) return _rdxCache;
   var m = {};
   (allData||[]).forEach(function(r){
     if(!r.caregiver || !r.date) return;
+    var k = r.caregiver+'|'+r.date;
+    if(!m[k]) m[k] = [];
+    m[k].push(r);
+  });
+  bookingExtras().forEach(function(r){
     var k = r.caregiver+'|'+r.date;
     if(!m[k]) m[k] = [];
     m[k].push(r);
@@ -20713,7 +21159,8 @@ function rosterBookingsTip(cg, ds, list){
     + list.map(function(b){
         var t = b.time_start&&b.time_end ? b.time_start+'-'+b.time_end : (b.time_start||'');
         var id = b.child_order_id || b.order_id || '';
-        return '\n• '+(b.client_name||'Client')+(t?' · '+t:'')+(id?' · #'+id:'');
+        var L = typeof locFor==='function' ? locOneLine(locFor(b)) : '';
+        return '\n• '+(b.client_name||'Client')+(t?' · '+t:'')+(id?' · #'+id:'')+(L?'\n   📍 '+L:'');
       }).join('');
 }
 
@@ -21358,6 +21805,7 @@ if(checkExistingSession()){
   // complaint data drives the roster / card warning badges, so pull it up front
   setTimeout(function(){ try{ initComplaints(); }catch(e){ console.warn('[complaints] preload', e); } }, 1200);
   setTimeout(function(){ try{ tkPreload(); }catch(e){ console.warn('[tickets] preload', e); } }, 1600);
+  setTimeout(function(){ try{ locLoadAll(); }catch(e){ console.warn('[location] preload', e); } }, 1800);
   setTimeout(function(){ try{ lvPreload(); }catch(e){ console.warn('[leave] preload', e); } }, 2000);
   if(_session&&_session.role==='client')setTimeout(function(){switchTab('mumz');},400);
   else setTimeout(function(){ try{ bsDeepLink() || trDeepLink(); }catch(e){ console.warn('[deeplink]', e); } },500);
