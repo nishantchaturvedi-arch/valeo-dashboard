@@ -485,6 +485,16 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .rd-shady{background:#f472b6;color:#fff;}
 .rd-b2b{background:#ec4899;color:#fff;}
 .rd-mumz{background:#ff2d95;color:#fff;}
+.rd-uc{background:#2f81f7;color:#fff;}
+.rd-mixed{background:var(--bg3);color:#fff;padding:1px !important;}
+.rd-mixed .rd-multi{gap:2px;}
+.rd-mixed .rd-cnt{background:rgba(0,0,0,.45);margin:1px 0 0 1px;}
+.rd-mixed .rd-bk{border-bottom:none;border-radius:3px;padding:2px 3px;}
+.rd-mixed .bk-duty{background:#f59e0b;color:#000;}
+.rd-mixed .bk-mumz{background:#ff2d95;color:#fff;}
+.rd-mixed .bk-uc{background:#2f81f7;color:#fff;}
+.rd-mixed .bk-b2b{background:#ec4899;color:#fff;}
+.rd-mixed .bk-shady{background:#f472b6;color:#fff;}
 .rd-empty{background:transparent;}
 .rd-today{outline:2px solid var(--accent)!important;outline-offset:-2px;}
 .col-weekend{opacity:.7;}
@@ -662,6 +672,16 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .bs-tbl tbody tr.bs-focus td:first-child{box-shadow:inset 3px 0 0 var(--accent);}
 .bs-chip{font-size:11px;padding:3px 9px;border-radius:12px;cursor:pointer;user-select:none;}
 .rd{position:relative;}
+.ov-bk-head{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text2);margin:2px 0 6px;display:flex;justify-content:space-between}
+.ov-bk-head span{text-transform:none;letter-spacing:0;font-weight:500;color:var(--text3)}
+.ov-bk-row{display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:7px 9px;margin-bottom:5px;font-size:12px}
+.ov-bk-row.gone{opacity:.55}
+.ov-bk-row.gone .ov-bk-txt b{text-decoration:line-through}
+.ov-bk-txt{flex:1;line-height:1.4}
+.ov-bk-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;background:#f59e0b}
+.ov-bk-dot.bk-mumz{background:#ff2d95}.ov-bk-dot.bk-uc{background:#2f81f7}.ov-bk-dot.bk-shady{background:#f472b6}
+.ov-bk-btn{background:rgba(248,81,73,.12);border:1px solid rgba(248,81,73,.4);border-radius:5px;color:#f85149;font-size:11px;font-weight:600;padding:4px 10px;cursor:pointer;font-family:Inter,sans-serif;white-space:nowrap}
+.ov-bk-btn.restore{background:rgba(63,185,80,.12);border-color:rgba(63,185,80,.45);color:#3fb950}
 .ov-loc-btn{border-color:rgba(63,185,80,.55);background:rgba(63,185,80,.08);color:#3fb950}
 .ov-loc-btn:hover{background:rgba(63,185,80,.18)}
 .loc-empty{background:var(--bg3);border:1px dashed var(--border);border-radius:8px;padding:16px;text-align:center;color:var(--text2);font-size:13px;margin-bottom:12px;line-height:1.6}
@@ -10006,6 +10026,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <div class="override-box">
  <div class="override-title">📝 Add Override</div>
  <div class="override-date-info" id="ov-date-info">NERYLOU STA ISABEL SAMSON  ·  2026-09-10</div>
+ <div id="ov-bk-list"></div>
  <div id="ov-existing-list" style="margin-bottom:8px"></div>
  <div class="override-type-grid">
  <div class="ov-type-btn sick" onclick="selectOvType(&#39;sick&#39;,this)">🤒 Sick Leave</div>
@@ -11139,7 +11160,16 @@ var _b2bDays={};
 // caregiver|date keys that have at least one Mumzworld order (survives dedup)
 var _mumzDays={};
 // Mumzworld and B2B orders are one group everywhere: roster tag, roster filter, Mumzworld Orders tab
-function mzTagged(r){ return !!(r && (r.is_mumzworld || r.is_b2b)); }
+function mzTagged(r){ return !!(r && (r.is_mumzworld || r.is_b2b || r.is_uc)); }
+// Colour of one booking on the roster: Mumzworld = pink, B2B partner (Urban Company) = blue, own = amber
+function bookingKind(r){
+  if(!r) return 'duty';
+  // Mumzworld + every B2B order (incl. Urban Company) → pink · own orders → amber
+  if(r.is_mumzworld || r.is_b2b || r.is_uc) return 'mumz';
+  if(String(r.client_name||'').toLowerCase().indexOf('shady') >= 0) return 'shady';
+  return 'duty';
+}
+var BK_LABEL = {mumz:'Mumzworld / B2B order', shady:'', duty:''};
 let overrides = {}; // key: "caregiver|date" or "order_id|date" -> override object
 let splitAssignments = {}; // key: order_id -> {cg2: name}
 let activeCG=null, calYear=new Date().getFullYear(), calMo=new Date().getMonth();
@@ -11260,6 +11290,34 @@ function pickB2B(r){
 // Detect Mumzworld orders. Scans all raw row values for the string "mumzworld"
 // (covers whichever column Metabase uses — client name, source, package, etc),
 // plus explicit checks on client_name/package once the row has been normalised.
+// B2B client names: "Mumzworld BabySitter" and "Urban Company"
+function pickUrbanCompany(r){
+  if(!r||typeof r!=='object') return false;
+  for(var k in r){
+    if(!Object.prototype.hasOwnProperty.call(r,k)) continue;
+    var v=r[k]; if(v==null) continue;
+    if(/urban\s*company/i.test(String(v))) return true;
+  }
+  return false;
+}
+function hasB2BClientCol(r){
+  if(!r||typeof r!=='object') return false;
+  return Object.keys(r).some(function(k){ return /b2bclient|b2bpartner|clientb2b|partnername|b2bname/.test(k.toLowerCase().replace(/[^a-z0-9]/g,'')); });
+}
+function pickB2BClient(r){
+  if(!r||typeof r!=='object') return '';
+  for(var k in r){
+    if(!Object.prototype.hasOwnProperty.call(r,k)) continue;
+    var kn=k.toLowerCase().replace(/[^a-z0-9]/g,'');
+    if(/b2bclient|b2bpartner|clientb2b|partnername|b2bname/.test(kn)) return String(r[k]==null?'':r[k]).trim();
+  }
+  for(var k2 in r){
+    var v=String(r[k2]==null?'':r[k2]);
+    if(/urban\s*company/i.test(v)) return 'Urban Company';
+    if(/mumzworld/i.test(v)) return 'Mumzworld BabySitter';
+  }
+  return '';
+}
 function pickMumzworld(r){
   if(!r||typeof r!=='object') return false;
   for(var k in r){
@@ -11375,7 +11433,10 @@ async function loadData(force=false){
           location:String(r['location']||'').trim(),
           type_of_user:String(r['type_of_user']||'').trim(),
           is_b2b:pickB2B(r),
-          is_mumzworld:pickMumzworld(r)
+          is_mumzworld:pickMumzworld(r),
+        is_uc:pickUrbanCompany(r),
+        b2b_client:pickB2BClient(r),
+        has_b2b_client:hasB2BClientCol(r)
         };
       }
       const slot=String(r['Confirmed_DateTime']||r['Booked_Slot']||r['Order_Date']||'');
@@ -11416,6 +11477,9 @@ async function loadData(force=false){
         type_of_user:String(r['Type_Of_User']||'').trim(),
         is_b2b:pickB2B(r),
         is_mumzworld:pickMumzworld(r),
+        is_uc:pickUrbanCompany(r),
+        b2b_client:pickB2BClient(r),
+        has_b2b_client:hasB2BClientCol(r),
         final_price:parseFloat(r['Final_Price']||r['Order_Price']||0)||0,
         // client address / pin if the Metabase question has such columns
         addr_raw:(function(){var k=Object.keys(r).find(function(k){return /address|street|building|landmark|locality/i.test(k)&&!/e-?mail|ip_?address/i.test(k)&&String(r[k]||'').trim();});return k?String(r[k]).trim():'';})(),
@@ -11753,7 +11817,7 @@ function renderCalendar(){
   const daysInM=new Date(calYear,calMo+1,0).getDate();
   const daysInPrev=new Date(calYear,calMo,0).getDate();
 
-  const recs=allData.filter(r=>r.caregiver===activeCG&&!r._manual).concat(bookingExtras().filter(r=>r.caregiver===activeCG));
+  const recs=allData.filter(r=>r.caregiver===activeCG&&!r._manual).concat(bookingExtras().filter(r=>r.caregiver===activeCG)).filter(r=>!isBookingRemoved(r));
   const dayMap={};
   recs.forEach(r=>{
     const d=parseD(r.date);
@@ -17503,6 +17567,7 @@ function openOvModal(cg,date,orderId){
   var aab=document.getElementById('ov-add-another');if(aab)aab.style.display='none';
   document.getElementById('ov-date-info').textContent=cg+'  ·  '+date;
   var el=document.getElementById('ov-existing-list');if(el)renderExistingBookings(cg,date);
+  try{ renderOvBookingList(cg,date); }catch(_e){ console.warn('[ov-bk-list]',_e); }
   var existing=overrides[cg+'|'+date];
   if(existing&&existing.type!=='manual'&&existing.type!=='manual_list'){
     ovType=existing.type;document.getElementById('ov-note').value=existing.note||'';
@@ -17553,6 +17618,59 @@ async function saveOverride(){
   } else {overrides[ovKey]=payload;}
   saveLocalCache();reRenderAll();closeOvModal();
   await persistWrite('override',ovKey,JSON.parse(JSON.stringify(overrides[ovKey])));
+}
+
+// Bookings in this cell, each removable on its own (shown when there are 2+)
+function ovDayBookings(cg, date){
+  var NON = {weekoff:1, removed:1, cancelled:1, sick:1, holiday:1, paid:1, unpaid:1, off:1, absent:1};
+  var seen = {}, out = [];
+  (rosterDayIndex()[cg + '|' + date] || []).forEach(function(r){
+    var st = String(r.status||'').toLowerCase().replace(/\s+/g,'');
+    if(NON[st]) return;
+    var oid = r.child_order_id || r.order_id || ''; if(!oid || seen[oid]) return;
+    seen[oid] = 1; out.push(r);
+  });
+  return out.sort(function(a, b){ return (a.time_start ? toMins(a.time_start) : 9999) - (b.time_start ? toMins(b.time_start) : 9999); });
+}
+function renderOvBookingList(cg, date){
+  var box = document.getElementById('ov-bk-list'); if(!box) return;
+  var list = ovDayBookings(cg, date);
+  var rmBtn = document.querySelector('.ov-type-btn.removed');
+  if(rmBtn) rmBtn.innerHTML = list.length > 1 ? '🗑️ Remove all bookings' : '🗑️ Remove Booking';
+  if(list.length < 2){ box.innerHTML = ''; return; }
+  var E = function(v){ return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
+  var live = list.filter(function(r){ return !isBookingRemoved(r); }).length;
+  var h = '<div class="ov-bk-head">Bookings on this day <span>' + live + ' of ' + list.length + ' active</span></div>';
+  list.forEach(function(r){
+    var oid = r.child_order_id || r.order_id, gone = isBookingRemoved(r);
+    var kind = typeof bookingKind === 'function' ? bookingKind(r) : 'duty';
+    var t = r.time_start ? r.time_start + (r.time_end ? '–' + r.time_end : '') : '';
+    h += '<div class="ov-bk-row' + (gone ? ' gone' : '') + '">'
+      + '<span class="ov-bk-dot bk-' + kind + '"></span>'
+      + '<span class="ov-bk-txt"><b>' + E(r.client_name || 'Client') + '</b>' + (t ? ' · ' + E(t) : '') + ' · #' + E(oid)
+      + (gone ? ' <i>— removed for this day</i>' : '') + '</span>'
+      + (gone
+          ? '<button class="ov-bk-btn restore" data-oid="' + E(oid) + '" onclick="ovRestoreOne(this.dataset.oid)">↩ Restore</button>'
+          : '<button class="ov-bk-btn" data-oid="' + E(oid) + '" onclick="ovRemoveOne(this.dataset.oid)">Remove</button>')
+      + '</div>';
+  });
+  box.innerHTML = h;
+}
+async function ovRemoveOne(oid){
+  var cg = ovCG, date = ovDate;
+  var r = ovDayBookings(cg, date).find(function(x){ return (x.child_order_id || x.order_id) === oid; });
+  if(!confirm('Remove only this booking on ' + date + '?\n\n' + ((r && r.client_name) || 'Client') + ' · #' + oid + '\n\nThe other booking(s) that day stay.')) return;
+  var key = oid + '|' + date;
+  overrides[key] = {type:'removed', caregiver:cg, date:date, child_order_id:oid, client_name:(r && r.client_name) || '',
+                    note:'Removed this booking only', saved_at:new Date().toISOString(), by:(_session && _session.username) || ''};
+  saveLocalCache(); invalidateRosterIndex(); reRenderAll(); renderOvBookingList(cg, date);
+  await persistWrite('override', key, JSON.parse(JSON.stringify(overrides[key])));
+}
+async function ovRestoreOne(oid){
+  var cg = ovCG, date = ovDate, key = oid + '|' + date;
+  delete overrides[key];
+  saveLocalCache(); invalidateRosterIndex(); reRenderAll(); renderOvBookingList(cg, date);
+  await persistDelete('override', key);
 }
 
 async function clearOverride(){
@@ -18588,7 +18706,13 @@ function renderRoster(){
   var _mzMonthPfx=year+'-'+String(month+1).padStart(2,'0')+'-';
   var mzMonthCG={};
   Object.keys(_mumzDays||{}).forEach(function(k){ var p=k.split('|'); if((p[1]||'').indexOf(_mzMonthPfx)===0) mzMonthCG[p[0]]=true; });
-  function _mzKeep(n){ if(filterMz==='mumz') return !!mzMonthCG[n]; if(filterMz==='non') return !mzMonthCG[n]; return true; }
+  var ucMonthCG={};
+  if(filterMz==='uc'||filterMz==='non'){
+    (allData||[]).concat(typeof bookingExtras==='function'?bookingExtras():[]).forEach(function(r){
+      if(r && r.caregiver && String(r.date||'').indexOf(_mzMonthPfx)===0 && bookingKind(r)==='uc') ucMonthCG[r.caregiver]=true;
+    });
+  }
+  function _mzKeep(n){ if(filterMz==='mumz') return !!mzMonthCG[n]; if(filterMz==='uc') return !!ucMonthCG[n]; if(filterMz==='non') return !mzMonthCG[n] && !ucMonthCG[n]; return true; }
   // City filter uses manually-set cgSettings city (not order location)
   // cgCityMap kept for backward compat but now reads from settings
   var cgCityMap={};
@@ -18769,11 +18893,16 @@ function renderRoster(){
           var ev=st.rec||recs[0]||{};
           var _bks=st.active&&st.active.length?st.active:[ev];
           var cl2=(ev.client_name||'').split(' ')[0];
-          var isMumz=_mumzDays[cgName+'|'+ds]||recs.some(mzTagged);
           if(_bks.length>1) tip=rosterBookingsTip(cgName,ds,_bks); else if(typeof locTipLine==='function') tip+=locTipLine(ev);
-          if(isMumz){cls+=' rd-mumz';tip=(_bks.length>1?tip+'\n':cgName+' | '+ds+' · ')+'Mumzworld order';}
-          else if((ev.client_name||'').toLowerCase().includes('shady'))cls+=' rd-shady';
-          else cls+=' rd-duty';
+          // one colour per booking: same kind → whole cell, mixed → each booking its own colour
+          var _kinds=[...new Set(_bks.map(bookingKind))];
+          if(_kinds.length===1){
+            cls+=' rd-'+_kinds[0];
+            if(BK_LABEL[_kinds[0]]) tip=(_bks.length>1?tip+'\n':cgName+' | '+ds+' · ')+BK_LABEL[_kinds[0]]+(_bks.length>1?'s':'');
+          } else {
+            cls+=' rd-mixed';
+            tip+='\n'+_kinds.map(function(k){ return BK_LABEL[k]||'Own order'; }).join(' + ');
+          }
           var t3=ev.time_start&&ev.time_end?ev.time_start+'-'+ev.time_end:(ev.time_start||'');
           var oid=ev.child_order_id||ev.order_id||'';
           inner=_bks.length>1?rosterBookingsHTML(_bks,false):'<div class="rd-in">'+(cl2?'<div class="rd-cl">'+cl2+'</div>':'')+(t3?'<div class="rd-tm">'+t3+'</div>':'')+(oid?'<div class="rd-od">#'+oid+'</div>':'')+'</div>';
@@ -21118,11 +21247,19 @@ function rosterWoLookup(){
 
 // Every live booking for one caregiver on one day — de-duplicated, earliest first
 var _RD_NONWORK = {weekoff:1,sick:1,holiday:1,paid:1,unpaid:1,off:1,removed:1,cancelled:1,absent:1};
+// One booking removed on one day (others that day stay) — stored as override "order|date"
+function isBookingRemoved(r){
+  if(!r || !r.date) return false;
+  var oid = r.child_order_id || r.order_id; if(!oid) return false;
+  var ov = overrides[oid + '|' + r.date];
+  return !!(ov && ov.type === 'removed');
+}
 function rosterActiveRecs(recs){
   var seen = {}, out = [];
   (recs||[]).forEach(function(r){
     var st = (r.status||'').toLowerCase().replace(/\s+/g,'');
     if(_RD_NONWORK[st]) return;
+    if(isBookingRemoved(r)) return;
     var key = r.child_order_id || r.order_id || ((r.client_name||'')+'|'+(r.time_start||''));
     if(seen[key]) return; seen[key] = 1;
     out.push(r);
@@ -21141,7 +21278,7 @@ function rosterBookingsHTML(list, showOid){
     var cl = (b.client_name||'').split(' ')[0];
     var t  = b.time_start&&b.time_end ? b.time_start+'-'+b.time_end : (b.time_start||'');
     var id = b.child_order_id || b.order_id || '';
-    h += '<div class="'+(multi?'rd-bk':'')+'"'+(id?' data-oid="'+String(id).replace(/"/g,'&quot;')+'"':'')+'>'
+    h += '<div class="'+(multi?'rd-bk bk-'+bookingKind(b):'')+'"'+(id?' data-oid="'+String(id).replace(/"/g,'&quot;')+'"':'')+'>'
       + (cl?'<div class="rd-cl">'+cl+'</div>':'')
       + (t?'<div class="rd-tm">'+t+'</div>':'')
       + (id&&(showOid||!multi)?'<div class="rd-od">#'+id+'</div>':'')
@@ -21188,6 +21325,7 @@ function rosterDay(cg, hc, ds, idx, wo){
   if(recs.length){
     var _act = rosterActiveRecs(recs);
     if(_act.length) return {code:'duty', rec:_act[0], recs:recs, active:_act};
+    if(recs.some(isBookingRemoved)) return {code:'empty'};
     var ev = recs[0], st = (ev.status||'').toLowerCase().replace(/\s+/g,'');
     if(st==='weekoff')                  return {code:'weekoff',   rec:ev, recs:recs};
     if(st==='sick')                     return {code:'sick',      rec:ev, recs:recs};
