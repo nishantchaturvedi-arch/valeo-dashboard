@@ -672,6 +672,13 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .bs-tbl tbody tr.bs-focus td:first-child{box-shadow:inset 3px 0 0 var(--accent);}
 .bs-chip{font-size:11px;padding:3px 9px;border-radius:12px;cursor:pointer;user-select:none;}
 .rd{position:relative;}
+.ri-types{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px}
+.ri-types button{padding:10px 8px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-family:Inter,sans-serif;font-size:13px;font-weight:600;cursor:pointer;text-align:left}
+.ri-types button.on{background:var(--text);color:var(--bg);border-color:var(--text)}
+.ri-opt{text-transform:none;letter-spacing:0;font-weight:500;color:var(--text3)}
+.ri-cur{font-size:12px;color:var(--text2);background:var(--bg3);border-radius:6px;padding:7px 10px;margin:-6px 0 12px}
+.dy-rep{background:transparent;border:1px solid var(--border);border-radius:5px;color:var(--text2);font-size:10px;font-weight:600;padding:3px 7px;cursor:pointer;font-family:Inter,sans-serif}
+.dy-rep:hover{border-color:#d29922;color:#d29922}
 .dy-tbl tbody tr{cursor:pointer}
 .dy-tbl tr.dy-slot td{background:var(--bg2);font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text2);padding:6px 10px;cursor:default}
 .dy-tbl tr.dy-now td{background:rgba(63,185,80,.07)}
@@ -9921,6 +9928,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
   <button class="roster-nav-btn" onclick="dyShift(1)" title="Next day" style="width:30px;height:30px;font-size:16px">›</button>
   <button class="roster-nav-btn" onclick="dySetDate(dyToday())" style="padding:0 12px;height:30px">Today</button>
   <button onclick="dyExportCSV()" style="padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-weight:600;cursor:pointer">Export CSV</button>
+  <button onclick="riOpen('missing')" style="padding:6px 14px;background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:700;cursor:pointer">🎫 Report an issue</button>
  </div>
 </div>
 <div id="dy-kpis" style="padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap"></div>
@@ -10893,6 +10901,67 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 </div>
 
 <!-- ── RAISE TICKET MODAL ── -->
+<div class="qt-modal" id="ri-modal" onclick="if(event.target===this)riClose()">
+ <div class="qt-box" style="max-width:520px">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+   <div class="qt-title">Report an issue</div>
+   <button class="qt-x" onclick="riClose()" aria-label="Close">×</button>
+  </div>
+  <div class="qt-sub">Goes straight to the Valeo ops team on Slack and appears in HC Tickets.</div>
+  <label class="qt-lbl">What's the issue?</label>
+  <div class="ri-types" id="ri-types">
+   <button type="button" data-t="missing" onclick="riSetType('missing')">📭 Missing order</button>
+   <button type="button" data-t="leave" onclick="riSetType('leave')">🤒 CG sick / leave</button>
+   <button type="button" data-t="location" onclick="riSetType('location')">📍 Wrong location</button>
+   <button type="button" data-t="other" onclick="riSetType('other')">💬 Other</button>
+  </div>
+  <div id="ri-hc-wrap"><label class="qt-lbl" for="ri-hc">Homecare</label>
+   <select id="ri-hc" class="qt-input" onchange="riFillCGs()"></select></div>
+  <div class="tr-grid">
+   <div><label class="qt-lbl" for="ri-date" id="ri-date-lbl">Date</label>
+    <input id="ri-date" type="date" class="qt-input" onchange="riFillBookings()"></div>
+   <div><label class="qt-lbl" for="ri-cg">Caregiver</label>
+    <select id="ri-cg" class="qt-input" onchange="riFillBookings()"></select></div>
+  </div>
+  <!-- booking picker (leave / location / other) -->
+  <div id="ri-bk-wrap"><label class="qt-lbl" for="ri-bk" id="ri-bk-lbl">Booking</label>
+   <select id="ri-bk" class="qt-input"></select></div>
+  <!-- missing order -->
+  <div id="ri-missing" class="tr-grid">
+   <div class="span2"><label class="qt-lbl" for="ri-m-client">Client name</label>
+    <input id="ri-m-client" class="qt-input" placeholder="Who the caregiver is working for"></div>
+   <div><label class="qt-lbl" for="ri-m-start">Start time</label><input id="ri-m-start" type="time" class="qt-input"></div>
+   <div><label class="qt-lbl" for="ri-m-end">End time</label><input id="ri-m-end" type="time" class="qt-input"></div>
+   <div><label class="qt-lbl" for="ri-m-order">Order # <span class="ri-opt">(if known)</span></label><input id="ri-m-order" class="qt-input" placeholder="e.g. 229672"></div>
+   <div><label class="qt-lbl" for="ri-m-city">City / area</label><input id="ri-m-city" class="qt-input" placeholder="e.g. Dubai, JVC"></div>
+  </div>
+  <!-- sick / leave -->
+  <div id="ri-leave" class="tr-grid">
+   <div><label class="qt-lbl" for="ri-l-type">Type</label>
+    <select id="ri-l-type" class="qt-input"><option>Sick</option><option>Emergency leave</option><option>Planned leave</option><option>Other absence</option></select></div>
+   <div><label class="qt-lbl" for="ri-l-to">Until (last day off)</label><input id="ri-l-to" type="date" class="qt-input"></div>
+   <div class="span2"><label class="qt-lbl" for="ri-l-cover">Cover</label>
+    <select id="ri-l-cover" class="qt-input"><option value="">Choose…</option><option>We are sending a replacement</option><option>We need Valeo to arrange cover</option><option>No cover needed</option></select></div>
+  </div>
+  <!-- wrong location -->
+  <div id="ri-location">
+   <div class="ri-cur" id="ri-loc-cur"></div>
+   <label class="qt-lbl" for="ri-loc-addr">Correct address</label>
+   <textarea id="ri-loc-addr" class="qt-input" rows="2" placeholder="Villa / building, street, area"></textarea>
+   <label class="qt-lbl" for="ri-loc-map">Google Maps link or pin <span class="ri-opt">(optional)</span></label>
+   <input id="ri-loc-map" class="qt-input" placeholder="https://maps.app.goo.gl/… or 25.07, 55.14">
+  </div>
+  <label class="qt-lbl">Priority</label>
+  <div class="qt-seg" id="ri-prio">
+   <button type="button" data-p="P3" onclick="riSetPrio('P3')">Low</button>
+   <button type="button" data-p="P2" onclick="riSetPrio('P2')">Normal</button>
+   <button type="button" data-p="P1" onclick="riSetPrio('P1')">Urgent</button>
+  </div>
+  <label class="qt-lbl" for="ri-details">Details <span id="ri-req" class="ri-opt" style="color:var(--absent);display:none">· required</span></label>
+  <textarea id="ri-details" class="qt-input" rows="3" placeholder="Anything ops should know…"></textarea>
+  <button class="qt-send" id="ri-send" onclick="riSave()">Send to ops</button>
+ </div>
+</div>
 <div class="qt-modal" id="loc-modal" onclick="if(event.target===this)locClose()">
  <div class="qt-box" style="max-width:500px">
   <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
@@ -12536,7 +12605,7 @@ function renderHCPerf(){
 function switchTab(tab){
   // HC partner accounts: Calendar + Roster only
   if(tab==='transport'&&!trCanSee()){alert('Access restricted');return;}
-  if(_session&&_session.role==='hc'&&tab!=='calendar'&&tab!=='roster'&&tab!=='complaints'&&tab!=='tickets'&&tab!=='leave'&&tab!=='avail'&&!(tab==='transport'&&trIsShifa())){alert('Access restricted');return;}
+  if(_session&&_session.role==='hc'&&tab!=='calendar'&&tab!=='roster'&&tab!=='complaints'&&tab!=='tickets'&&tab!=='leave'&&tab!=='avail'&&tab!=='ops'&&!(tab==='transport'&&trIsShifa())){alert('Access restricted');return;}
   // Client accounts (e.g. Mumzworld): their own order list + tickets only
   if(_session&&_session.role==='client'&&tab!=='mumz'&&tab!=='tickets'){alert('Access restricted');return;}
   if(tab==='roster'){setTimeout(switchToRoster,80);}
@@ -13895,6 +13964,13 @@ function dyCollect(ds){
         oid:b.order_id||'', pkg:'Manual', city:b.location||'', kind:'manual', off:'', src:b, manual:true});
     });
   });
+  var _own = (typeof tkSessionHC === 'function' && _session && _session.role === 'hc') ? tkSessionHC() : '';
+  if(_own){
+    rows = rows.filter(function(r){
+      var h = r.hc || (typeof tkHCOfCaregiver === 'function' ? tkHCOfCaregiver(r.cg, ds) : '');
+      return tkHCMatch(h, _own);
+    });
+  }
   rows.forEach(function(r){ r.sm = dyMins(r.start); });
   rows.sort(function(a, b){ return (a.sm == null ? 9999 : a.sm) - (b.sm == null ? 9999 : b.sm) || a.cg.localeCompare(b.cg); });
   return rows;
@@ -13907,6 +13983,7 @@ function dyPopulate(rows){
     el.value = vals.indexOf(cur) >= 0 ? cur : '';
   };
   fill('dy-f-hc', [...new Set(rows.map(function(r){ return r.hc; }).filter(Boolean))].sort(), 'All homecares');
+  var _hcSel = document.getElementById('dy-f-hc'); if(_hcSel) _hcSel.style.display = (_session && _session.role === 'hc') ? 'none' : '';
   fill('dy-f-city', [...new Set(rows.map(function(r){ return r.city; }).filter(Boolean))].sort(), 'All cities');
 }
 
@@ -13977,13 +14054,16 @@ function dyRender(refill){
       + '<td style="font-size:11px">' + E(r.city || '—') + '</td>'
       + '<td style="font-family:monospace;font-size:11px">' + (r.oid ? '#' + E(r.oid) : '—') + '</td>'
       + '<td>' + stat + '</td>'
-      + '<td style="white-space:nowrap">' + (loc ? '<a href="#" onclick="event.stopPropagation();event.preventDefault();dyLoc(' + i + ')" title="' + E(locOneLine(loc) || 'Location') + '" style="text-decoration:none">📍</a>' : '') + '</td>'
+      + '<td style="white-space:nowrap">' + (loc ? '<a href="#" onclick="event.stopPropagation();event.preventDefault();dyLoc(' + i + ')" title="' + E(locOneLine(loc) || 'Location') + '" style="text-decoration:none">📍</a> ' : '')
+      + '<button class="dy-rep" onclick="event.stopPropagation();dyReport(' + i + ')" title="Report sick / leave, wrong location or another issue on this booking">⚠️ Report</button>'
+      + (typeof tkOpenTicketsFor === 'function' && tkOpenTicketsFor(r.cg, _dy.date).length ? ' <span title="Open ticket on this shift">🎫</span>' : '') + '</td>'
       + '</tr>';
   });
   box.innerHTML = h + '</tbody></table>';
 }
 // click a row → the same booking popup as the roster
 function dyOpen(i){ var r = _dy.rows[i]; if(!r) return; openOvModal(r.cg, _dy.date, r.oid || undefined); }
+function dyReport(i){ var r = _dy.rows[i]; if(!r) return; riOpen('leave', {cg:r.cg, hc:r.hc, date:_dy.date, oid:r.oid}); }
 function dyLoc(i){ var r = _dy.rows[i]; if(!r) return; locOpen(r.cg, _dy.date, r.oid); }
 
 function dyExportCSV(){
@@ -14000,6 +14080,151 @@ function dyExportCSV(){
   a.download = 'daily_orders_' + _dy.date + '.csv'; a.click();
 }
 // END DAILY ORDERS
+
+// ══════════════════════════════════════════════════════════════════
+// REPORT AN ISSUE (Daily Orders) — homecares raise: missing order,
+// caregiver sick / leave, wrong location, other. Saved as HC tickets
+// (same collection, Slack alert and SLA as the HC Tickets tab).
+// ══════════════════════════════════════════════════════════════════
+var RI_TYPES = {
+  missing:  {c:'Missing order',     g:'Order data',      p:'P2', team:'Ops'},
+  leave:    {c:'Caregiver sick / leave', g:'Caregiver availability', p:'P1', team:'Ops'},
+  location: {c:'Wrong location',    g:'Order data',      p:'P2', team:'Ops'},
+  other:    {c:'Other',             g:'Other',           p:'P2', team:'Ops', req:true}
+};
+var _ri = {type:'missing', prio:'P2', opts:[], busy:false};
+function riHC(){ return tkSessionHC() || (document.getElementById('ri-hc')||{}).value || ''; }
+
+function riOpen(type, row){
+  var isHC = !!(_session && _session.role === 'hc');
+  document.getElementById('ri-hc-wrap').style.display = isHC ? 'none' : '';
+  if(!isHC){
+    var hs = document.getElementById('ri-hc');
+    hs.innerHTML = tkHomecares().map(function(h){ return '<option>' + tkEsc(h) + '</option>'; }).join('');
+    if(row && row.hc) hs.value = row.hc;
+  }
+  ['ri-m-client','ri-m-start','ri-m-end','ri-m-order','ri-m-city','ri-l-to','ri-loc-addr','ri-loc-map','ri-details'].forEach(function(id){ document.getElementById(id).value = ''; });
+  document.getElementById('ri-l-type').value = 'Sick'; document.getElementById('ri-l-cover').value = '';
+  document.getElementById('ri-date').value = (row && row.date) || _dy.date || dyToday();
+  _ri.preset = row || null;
+  riFillCGs();
+  if(row && row.cg){ var cs = document.getElementById('ri-cg'); if(![].some.call(cs.options, function(o){ return o.value === row.cg; })) cs.insertAdjacentHTML('beforeend', '<option>' + tkEsc(row.cg) + '</option>'); cs.value = row.cg; riFillBookings(); }
+  riSetType(type || 'missing');
+  var b = document.getElementById('ri-send'); b.disabled = false; b.textContent = 'Send to ops';
+  document.getElementById('ri-modal').classList.add('show');
+}
+function riClose(){ document.getElementById('ri-modal').classList.remove('show'); }
+function riFillCGs(){
+  var cs = document.getElementById('ri-cg'), cur = cs.value;
+  var list = tkCaregiversFor(riHC());
+  cs.innerHTML = '<option value="">Choose caregiver…</option>' + list.map(function(n){ return '<option>' + tkEsc(n) + '</option>'; }).join('');
+  if(list.indexOf(cur) >= 0) cs.value = cur;
+  riFillBookings();
+}
+function riFillBookings(){
+  var cg = document.getElementById('ri-cg').value, ds = document.getElementById('ri-date').value;
+  var bs = document.getElementById('ri-bk');
+  _ri.opts = (cg && ds) ? tkOrdersFor(cg, ds, riHC() || null).filter(function(o){ return !/cancel/i.test(o.status||''); }) : [];
+  bs.innerHTML = (_ri.opts.length ? '' : '<option value="">' + (cg ? 'No booking on this day' : 'Choose a caregiver first') + '</option>')
+    + (_ri.type === 'leave' && _ri.opts.length > 1 ? '<option value="all">All bookings that day</option>' : '')
+    + _ri.opts.map(function(o, i){ return '<option value="' + i + '">' + tkEsc(tkOrderLabel(o)) + '</option>'; }).join('');
+  var pre = _ri.preset && _ri.preset.oid;
+  if(pre){ var i = _ri.opts.findIndex(function(o){ return o.child_order_id === pre || o.order_id === pre; }); if(i >= 0) bs.value = String(i); }
+  riShowCurLoc();
+}
+function riShowCurLoc(){
+  var box = document.getElementById('ri-loc-cur'); if(!box) return;
+  var o = riPickedOrder();
+  var L = o && typeof locFor === 'function' ? locFor(o) : null;
+  box.innerHTML = o ? ('Currently on file: <b>' + tkEsc(L ? (locOneLine(L) || 'pin only') : 'no address saved') + '</b>' + (o.location ? ' · ' + tkEsc(o.location) : '')) : '';
+  box.style.display = o ? '' : 'none';
+}
+function riPickedOrder(){ var v = document.getElementById('ri-bk').value; return (v !== '' && v !== 'all') ? _ri.opts[+v] : null; }
+function riSetType(t){
+  _ri.type = t; var T = RI_TYPES[t];
+  [].forEach.call(document.querySelectorAll('#ri-types button'), function(b){ b.classList.toggle('on', b.getAttribute('data-t') === t); });
+  document.getElementById('ri-missing').style.display  = t === 'missing'  ? '' : 'none';
+  document.getElementById('ri-leave').style.display    = t === 'leave'    ? '' : 'none';
+  document.getElementById('ri-location').style.display = t === 'location' ? '' : 'none';
+  document.getElementById('ri-bk-wrap').style.display  = t === 'missing'  ? 'none' : '';
+  document.getElementById('ri-bk-lbl').textContent = t === 'leave' ? 'Affected booking' : t === 'location' ? 'Booking with the wrong location' : 'Booking (optional)';
+  document.getElementById('ri-date-lbl').textContent = t === 'leave' ? 'First day off' : t === 'missing' ? 'Date of the order' : 'Date';
+  document.getElementById('ri-req').style.display = T.req ? '' : 'none';
+  document.getElementById('ri-details').placeholder = t === 'missing' ? 'Package, who booked it, anything that helps us find it…'
+    : t === 'leave' ? 'Reason, when the client was informed, replacement name…' : t === 'location' ? 'What went wrong at the old address…' : 'Describe the issue…';
+  riFillBookings();
+  riSetPrio(t === 'leave' && document.getElementById('ri-date').value <= dyToday() ? 'P1' : T.p);
+}
+function riSetPrio(p){
+  _ri.prio = p;
+  [].forEach.call(document.querySelectorAll('#ri-prio button'), function(b){ b.classList.toggle('on', b.getAttribute('data-p') === p); });
+}
+function ri12(t){ if(!t) return ''; var p = t.split(':'), h = +p[0], m = p[1]; return ((h % 12) || 12) + ':' + m + ' ' + (h < 12 ? 'AM' : 'PM'); }
+
+async function riSave(){
+  if(_ri.busy) return;
+  var T = RI_TYPES[_ri.type], g = function(id){ return document.getElementById(id).value.trim(); };
+  var hc = riHC(), cg = g('ri-cg'), ds = g('ri-date'), det = g('ri-details');
+  if(!hc){ alert('Choose the homecare.'); return; }
+  if(!ds){ alert('Choose the date.'); return; }
+  if(!cg){ alert('Choose the caregiver.'); return; }
+  var o = riPickedOrder(), lines = [], extra = {};
+  if(_ri.type === 'missing'){
+    if(!g('ri-m-client')){ alert('Enter the client name.'); return; }
+    if(!g('ri-m-start')){ alert('Enter the start time.'); return; }
+    extra = {missing_client:g('ri-m-client'), missing_start:ri12(g('ri-m-start')), missing_end:ri12(g('ri-m-end')), missing_order_ref:g('ri-m-order'), missing_city:g('ri-m-city')};
+    lines.push('Order not showing on the dashboard: ' + extra.missing_client + ' · ' + ds + ' · ' + extra.missing_start + (extra.missing_end ? '–' + extra.missing_end : '')
+      + (extra.missing_order_ref ? ' · #' + extra.missing_order_ref : '') + (extra.missing_city ? ' · ' + extra.missing_city : ''));
+  } else if(_ri.type === 'leave'){
+    if(!g('ri-l-cover')){ alert('Say whether you are sending cover.'); return; }
+    var to = g('ri-l-to'); if(to && to < ds){ alert('"Until" cannot be before the first day off.'); return; }
+    extra = {leave_type:g('ri-l-type'), leave_from:ds, leave_to:to || ds, cover:g('ri-l-cover'), all_bookings:document.getElementById('ri-bk').value === 'all'};
+    lines.push(extra.leave_type + ': ' + cg + ' off ' + ds + (to && to !== ds ? ' → ' + to : '') + ' · ' + extra.cover);
+  } else if(_ri.type === 'location'){
+    if(!o){ alert('Choose the booking with the wrong location.'); return; }
+    if(!g('ri-loc-addr') && !g('ri-loc-map')){ alert('Enter the correct address or a map link.'); return; }
+    extra = {correct_address:g('ri-loc-addr'), correct_map:g('ri-loc-map')};
+    lines.push('Correct location: ' + [extra.correct_address, extra.correct_map].filter(Boolean).join(' · '));
+  } else if(!det){ alert('Please describe the issue.'); document.getElementById('ri-details').focus(); return; }
+  if(det) lines.push(det);
+
+  var now = new Date(), who = (_session && _session.username) || 'HC';
+  var seq = String((_tkData||[]).filter(function(r){ return (r.created_at||'').slice(0,10) === now.toISOString().slice(0,10); }).length + 1).padStart(3,'0');
+  var tid = 'TKT-' + now.toISOString().slice(2,10).replace(/-/g,'') + '-' + seq;
+  var rec = Object.assign({
+    ticket_id:tid, homecare:hc, caregiver:cg, shift_date:ds,
+    category:T.c, group:T.g, reason:T.c, delay_mins:0,
+    description:lines.join('\n'), priority:_ri.prio, team:T.team,
+    sla_minutes:(TK_PRIO[_ri.prio]||{}).sla || 60, slack_channel:TK_SLACK.channel,
+    order_id:o ? o.order_id : (extra.missing_order_ref || ''), child_order_id:o ? o.child_order_id : '',
+    client_name:o ? o.client_name : (extra.missing_client || ''),
+    shift_time:o ? (o.time_start + (o.time_end ? '–' + o.time_end : '')) : (extra.missing_start ? extra.missing_start + (extra.missing_end ? '–' + extra.missing_end : '') : ''),
+    package:o ? o.package_raw : '', city:o ? (typeof normCity==='function' ? normCity(o.location) : o.location) : (extra.missing_city || ''),
+    is_b2b:o ? !!o.is_b2b : false,
+    status:'Open', owner:'', resolution:'',
+    raised_by:who, raised_role:(_session && _session.role) || 'unknown', source:'daily-orders', issue_type:_ri.type,
+    created_at:now.toISOString(), updated_at:now.toISOString(),
+    timeline:[{t:now.toISOString(), by:who, note:'Reported from Daily Orders — ' + T.c, to:'Open'}]
+  }, extra);
+  _ri.busy = true;
+  var b = document.getElementById('ri-send'); b.disabled = true; b.textContent = 'Sending…';
+  try{
+    if(!_db) await initFirebase();
+    if(!_db) throw new Error('Firebase not connected');
+    var ref = await _db.collection(_TK_COLL).add(rec);
+    (_tkData = _tkData || []).unshift(Object.assign({_id:ref.id}, rec));
+    tkNotify('created', Object.assign({_id:ref.id}, rec));
+    riClose();
+    try{ tkPopulateFilters(); tkRenderAll(); }catch(_e){}
+    try{ dyRender(false); }catch(_e){}
+    tkToast('Ticket ' + tid + ' sent to ops — Slack notified');
+  }catch(e){
+    alert('Could not send: ' + e.message);
+    b.disabled = false; b.textContent = 'Send to ops';
+  }finally{ _ri.busy = false; }
+}
+// END REPORT AN ISSUE
+
 
 // ══════════════════════════════════════════════════════════════════
 // CLIENT LOCATION — saved per order and per client (Firestore), shown
@@ -19569,7 +19794,7 @@ function applySessionUI(){
   var _ocb=document.getElementById('oc-btn'); if(_ocb) _ocb.style.display=(_session.role==='master')?'':'none';
   if(_session.role==='hc'){
     var _shifa=trIsShifa();
-    document.querySelectorAll('.main-tab').forEach(function(t){var txt=t.textContent.trim();if(!txt.includes('Calendar')&&!txt.includes('Roster')&&!txt.includes('Complaint')&&!txt.includes('Tickets')&&!txt.includes('Leave Applications')&&!(_shifa&&txt.includes('Transport Charges')))t.style.display='none';});
+    document.querySelectorAll('.main-tab').forEach(function(t){var txt=t.textContent.trim();if(!txt.includes('Calendar')&&!txt.includes('Roster')&&!txt.includes('Complaint')&&!txt.includes('Tickets')&&!txt.includes('Leave Applications')&&!txt.includes('Operations')&&!(_shifa&&txt.includes('Transport Charges')))t.style.display='none';});
     // hide "Add Caregiver" but keep the Leave Report / Complaint exports available
     document.querySelectorAll('.add-cg-btn').forEach(function(ab){ if(!ab.classList.contains('lr-open-btn')) ab.style.display='none'; });
   }
