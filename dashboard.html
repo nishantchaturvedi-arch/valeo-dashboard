@@ -9928,6 +9928,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
   <button class="roster-nav-btn" onclick="dyShift(1)" title="Next day" style="width:30px;height:30px;font-size:16px">›</button>
   <button class="roster-nav-btn" onclick="dySetDate(dyToday())" style="padding:0 12px;height:30px">Today</button>
   <button onclick="dyExportCSV()" style="padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-weight:600;cursor:pointer">Export CSV</button>
+  <button onclick="shOpen()" style="padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-weight:600;cursor:pointer">🔗 Share</button>
   <button onclick="riOpen('missing')" style="padding:6px 14px;background:var(--accent);border:none;border-radius:6px;color:#fff;font-size:11px;font-weight:700;cursor:pointer">🎫 Report an issue</button>
  </div>
 </div>
@@ -10901,6 +10902,34 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 </div>
 
 <!-- ── RAISE TICKET MODAL ── -->
+<div class="qt-modal" id="sh-modal" onclick="if(event.target===this)shClose()">
+ <div class="qt-box" style="max-width:520px">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+   <div class="qt-title">🔗 Share daily orders</div>
+   <button class="qt-x" onclick="shClose()" aria-label="Close">×</button>
+  </div>
+  <div class="qt-sub">Homecares open the link, log in with their own account and see only their own orders.</div>
+  <div class="tr-grid">
+   <div><label class="qt-lbl" for="sh-day">Day</label>
+    <select id="sh-day" class="qt-input" onchange="shRender()">
+     <option value="tomorrow">Tomorrow</option><option value="today">Today</option><option value="selected">Day shown on screen</option><option value="always">Always "tomorrow" (bookmark)</option>
+    </select></div>
+   <div id="sh-hc-wrap"><label class="qt-lbl" for="sh-hc">Homecare</label>
+    <select id="sh-hc" class="qt-input" onchange="shRender()"></select></div>
+  </div>
+  <label class="qt-lbl" for="sh-link">Link</label>
+  <div style="display:flex;gap:6px;margin-bottom:14px">
+   <input id="sh-link" class="qt-input" readonly style="margin:0;font-family:monospace;font-size:12px" onclick="this.select()">
+   <button class="loc-sec" style="flex:0 0 auto;min-width:0" onclick="shCopy('sh-link','Link copied')">📋 Copy</button>
+  </div>
+  <label class="qt-lbl" for="sh-msg">Message <span class="ri-opt">(orders listed — edit before sending if you like)</span></label>
+  <textarea id="sh-msg" class="qt-input" rows="9" style="font-family:monospace;font-size:12px;line-height:1.5"></textarea>
+  <div class="loc-actions">
+   <button class="loc-sec" onclick="shCopy('sh-msg','Message copied')">📋 Copy message</button>
+   <a class="loc-sec" id="sh-wa" target="_blank" rel="noopener">💬 Send on WhatsApp</a>
+  </div>
+ </div>
+</div>
 <div class="qt-modal" id="ri-modal" onclick="if(event.target===this)riClose()">
  <div class="qt-box" style="max-width:520px">
   <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
@@ -14079,6 +14108,60 @@ function dyExportCSV(){
   a.href = URL.createObjectURL(new Blob(['\ufeff' + csv], {type:'text/csv;charset=utf-8'}));
   a.download = 'daily_orders_' + _dy.date + '.csv'; a.click();
 }
+// ── Share daily orders (link + message per homecare) ─────────────
+// Links: dashboard.html#ops=2026-11-01 · #ops=tomorrow · #ops=today
+function dyDayOffset(n){ var d = new Date(); d.setDate(d.getDate() + n); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function shOpen(){
+  var isHC = !!(_session && _session.role === 'hc');
+  document.getElementById('sh-hc-wrap').style.display = isHC ? 'none' : '';
+  if(!isHC){
+    var hs = document.getElementById('sh-hc'), cur = hs.value;
+    hs.innerHTML = '<option value="">All homecares (one message each)</option>' + tkHomecares().map(function(h){ return '<option>' + tkEsc(h) + '</option>'; }).join('');
+    var f = document.getElementById('dy-f-hc'); hs.value = cur || (f && f.value) || '';
+  }
+  document.getElementById('sh-day').value = (_dy.date && _dy.date !== dyToday() && _dy.date !== dyDayOffset(1)) ? 'selected' : 'tomorrow';
+  shRender();
+  document.getElementById('sh-modal').classList.add('show');
+}
+function shClose(){ document.getElementById('sh-modal').classList.remove('show'); }
+function shRender(){
+  var mode = document.getElementById('sh-day').value;
+  var ds = mode === 'today' ? dyToday() : mode === 'selected' ? (_dy.date || dyToday()) : dyDayOffset(1);
+  var base = location.origin + location.pathname;
+  var link = base + '#ops=' + (mode === 'always' ? 'tomorrow' : ds);
+  document.getElementById('sh-link').value = link;
+  var hc = (_session && _session.role === 'hc') ? tkSessionHC() : document.getElementById('sh-hc').value;
+  var rows = dyCollect(ds).filter(function(r){ return !r.off; });
+  var hcs = hc ? [hc] : [...new Set(rows.map(function(r){ return r.hc; }).filter(Boolean))].sort();
+  var dLbl = new Date(ds + 'T00:00:00').toLocaleDateString([], {weekday:'short', day:'numeric', month:'short'});
+  var blocks = hcs.map(function(h){
+    var mine = rows.filter(function(r){ return tkHCMatch(r.hc, h); });
+    var lines = mine.map(function(r){
+      return '• ' + (r.start ? r.start + (r.end ? '–' + r.end : '') : 'Time TBC') + ' · ' + r.cg + ' → ' + (r.client || 'Client') + (r.city ? ' (' + r.city + ')' : '') + (r.oid ? ' #' + r.oid : '');
+    });
+    return '📋 *' + h + '* — orders for ' + dLbl + ' (' + mine.length + ')\n' + (lines.join('\n') || '• No bookings');
+  });
+  var msg = (blocks.join('\n\n') || '📋 No bookings on ' + dLbl)
+    + '\n\nFull list, times & locations (log in with your homecare account):\n' + link
+    + '\nIf anything is missing or wrong, use 🎫 Report an issue on that page.';
+  document.getElementById('sh-msg').value = msg;
+  document.getElementById('sh-wa').href = 'https://wa.me/?text=' + encodeURIComponent(msg);
+}
+function shCopy(id, okMsg){
+  var t = document.getElementById(id).value;
+  (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(function(){ tkToast(okMsg); })
+    .catch(function(){ var el = document.getElementById(id); el.select(); document.execCommand && document.execCommand('copy'); tkToast(okMsg); });
+}
+// open the Operations tab on the linked day (after login)
+function dyDeepLink(){
+  var h = decodeURIComponent((location.hash || '').replace(/^#/, ''));
+  if(!/^ops\b/i.test(h)) return false;
+  if(!_session || (_session.role !== 'master' && _session.role !== 'hc')) return false;
+  var v = (h.split('=')[1] || '').trim().toLowerCase();
+  _dy.date = v === 'tomorrow' ? dyDayOffset(1) : v === 'today' || !v ? dyToday() : (/^\d{4}-\d{2}-\d{2}$/.test(v) ? v : dyToday());
+  switchTab('ops');
+  return true;
+}
 // END DAILY ORDERS
 
 // ══════════════════════════════════════════════════════════════════
@@ -16664,7 +16747,7 @@ function bsToast(msg){
   if(typeof tkToast === 'function') return tkToast(msg);
   alert(msg);
 }
-window.addEventListener('hashchange', function(){ bsDeepLink() || trDeepLink(); });
+window.addEventListener('hashchange', function(){ bsDeepLink() || trDeepLink() || dyDeepLink(); });
 // END UAE BABYSITTING LEADS
 
 // ── Theme toggle ─────────────────────────────────────────────────
@@ -19778,7 +19861,7 @@ async function doLogin(){
     document.getElementById('login-screen').style.display='none';
     applySessionUI();loadData();
     if(_session.role==='client')setTimeout(function(){switchTab('mumz');},150);
-    else setTimeout(function(){ try{ bsDeepLink() || trDeepLink(); }catch(e){ console.warn('[deeplink]', e); } },300);
+    else setTimeout(function(){ try{ bsDeepLink() || trDeepLink() || dyDeepLink(); }catch(e){ console.warn('[deeplink]', e); } },300);
     setTimeout(function(){ try{ locLoadAll(); }catch(e){} },1800);
   }catch(e){err.style.display='block';btn.disabled=false;btn.textContent='Sign In';}
 }
@@ -22239,7 +22322,7 @@ if(checkExistingSession()){
   setTimeout(function(){ try{ locLoadAll(); }catch(e){ console.warn('[location] preload', e); } }, 1800);
   setTimeout(function(){ try{ lvPreload(); }catch(e){ console.warn('[leave] preload', e); } }, 2000);
   if(_session&&_session.role==='client')setTimeout(function(){switchTab('mumz');},400);
-  else setTimeout(function(){ try{ bsDeepLink() || trDeepLink(); }catch(e){ console.warn('[deeplink]', e); } },500);
+  else setTimeout(function(){ try{ bsDeepLink() || trDeepLink() || dyDeepLink(); }catch(e){ console.warn('[deeplink]', e); } },500);
 } else {
   var _ls=document.getElementById('login-screen');
   if(_ls) _ls.style.display='flex';
