@@ -672,6 +672,12 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .bs-tbl tbody tr.bs-focus td:first-child{box-shadow:inset 3px 0 0 var(--accent);}
 .bs-chip{font-size:11px;padding:3px 9px;border-radius:12px;cursor:pointer;user-select:none;}
 .rd{position:relative;}
+.dy-tbl tbody tr{cursor:pointer}
+.dy-tbl tr.dy-slot td{background:var(--bg2);font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text2);padding:6px 10px;cursor:default}
+.dy-tbl tr.dy-now td{background:rgba(63,185,80,.07)}
+.dy-tbl tr.dy-off td{opacity:.55}
+.dy-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;vertical-align:middle}
+.dy-tag{font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(255,45,149,.16);color:#ff2d95;vertical-align:middle}
 .ov-bk-head{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--text2);margin:2px 0 6px;display:flex;justify-content:space-between}
 .ov-bk-head span{text-transform:none;letter-spacing:0;font-weight:500;color:var(--text3)}
 .ov-bk-row{display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:7px 9px;margin-bottom:5px;font-size:12px}
@@ -9904,120 +9910,37 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 
 <!-- ── OPERATIONS PAGE ── -->
 <div class="page" id="page-ops">
- <div class="ops-page">
-
- <!-- Expiring Packages -->
- <div class="ops-section">
- <div class="ops-section-header">
- <div class="ops-section-title">
-          🔔 Expiring Packages
- <span class="ops-badge yellow" id="exp-count">—</span>
+<div style="padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+ <div>
+  <div style="font-size:15px;font-weight:700">📋 Daily Orders</div>
+  <div id="dy-sub" style="font-size:11px;color:var(--text3);margin-top:2px">Every booking on the day, by start time</div>
  </div>
- <div style="font-size:11px;color:var(--text2)">Next 4 weeks · follow up required</div>
- </div>
- <div style="overflow-x:auto">
- <table class="ops-table">
- <thead>
- <tr>
- <th>Client</th>
- <th>Caregiver</th>
- <th>Homecare</th>
- <th>Package</th>
- <th>End Date</th>
- <th>Expires In</th>
- <th>Amount Paid</th>
- <th>Location</th>
- </tr>
- </thead>
- <tbody id="exp-tbody"></tbody>
- </table>
- </div>
- </div>
-
- <!-- Unassigned Orders -->
- <div class="ops-section">
- <div class="ops-section-header">
- <div class="ops-section-title">
-          ⚠️ Unassigned Orders
- <span class="ops-badge red" id="unassigned-count">—</span>
- </div>
- <div style="font-size:11px;color:var(--text2)">Orders with no caregiver assigned</div>
- </div>
- <div style="overflow-x:auto">
- <table class="ops-table">
- <thead>
- <tr>
- <th>Order ID</th>
- <th>Client</th>
- <th>Homecare</th>
- <th>Package</th>
- <th>Booked Slot</th>
- <th>Location</th>
- <th>Status</th>
- </tr>
- </thead>
- <tbody id="unassigned-tbody"></tbody>
- </table>
- </div>
- </div>
-
-<!-- ── Churned Clients ── -->
-<div style="margin-top:24px">
- <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
- <span style="font-size:13px;font-weight:700;color:var(--text)">🔄 Churned Clients <span class="ops-count" id="churned-count">—</span></span>
- <span style="font-size:11px;color:var(--text3)">Package ended 1–30 days ago · no renewal</span>
- </div>
- <div style="overflow-x:auto">
- ${splitCg2?"":""}<table class="ops-table">
- <thead><tr><th>Client</th><th>${splitCg2?"Day ":""}Caregiver</th><th>Night Caregiver</th><th>Homecare</th><th>Package</th><th>Ended</th><th>Days Ago</th><th>City</th></tr></thead>
- <tbody id="churned-tbody"></tbody>
- </table>
+ <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+  <button class="roster-nav-btn" onclick="dyShift(-1)" title="Previous day" style="width:30px;height:30px;font-size:16px">‹</button>
+  <input type="date" id="dy-date" class="bs-in" onchange="dySetDate(this.value)" style="padding:6px 8px">
+  <button class="roster-nav-btn" onclick="dyShift(1)" title="Next day" style="width:30px;height:30px;font-size:16px">›</button>
+  <button class="roster-nav-btn" onclick="dySetDate(dyToday())" style="padding:0 12px;height:30px">Today</button>
+  <button onclick="dyExportCSV()" style="padding:6px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-weight:600;cursor:pointer">Export CSV</button>
  </div>
 </div>
-
-<!-- ── Churn Risk Score ── -->
-<div style="margin-top:24px">
- <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
- <span style="font-size:13px;font-weight:700;color:var(--text)">🧠 Churn Risk Score <span class="ops-count" id="churn-risk-count">—</span></span>
- <span style="font-size:11px;color:var(--text3)">Logistic regression · clients ranked by renewal risk</span>
- </div>
- <div style="overflow-x:auto">
- <table class="ops-table">
- <thead><tr><th>Client</th><th>Homecare</th><th>Risk Score</th><th>Risk Level</th><th>Last Package</th><th>End Date</th><th>Key Factors</th></tr></thead>
- <tbody id="churn-risk-tbody"></tbody>
- </table>
- </div>
+<div id="dy-kpis" style="padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap"></div>
+<div style="padding:10px 20px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+ <input id="dy-search" type="text" placeholder="🔍 Client, caregiver, order #…" oninput="dyRender()" class="bs-in" style="width:220px">
+ <select id="dy-f-hc" onchange="dyRender()" class="bs-in"></select>
+ <select id="dy-f-city" onchange="dyRender()" class="bs-in"></select>
+ <select id="dy-f-type" onchange="dyRender()" class="bs-in">
+  <option value="">All orders</option><option value="mumz">🛍️ Mumzworld (incl. B2B)</option><option value="own">Own orders</option>
+ </select>
+ <select id="dy-f-slot" onchange="dyRender()" class="bs-in">
+  <option value="">All day</option><option value="m">🌅 Morning (before 12)</option><option value="a">☀️ Afternoon (12–5)</option><option value="e">🌆 Evening (5–9)</option><option value="n">🌙 Night (9 PM +)</option>
+ </select>
+ <label style="font-size:11px;color:var(--text2);display:flex;gap:5px;align-items:center;cursor:pointer"><input type="checkbox" id="dy-f-cxl" onchange="dyRender()"> Show cancelled / off</label>
+ <button onclick="dyClear()" style="padding:6px 10px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text2);font-size:11px;cursor:pointer">Clear</button>
 </div>
-
-<!-- ── Idle Caregivers ── -->
-<div style="margin-top:24px">
- <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
- <span style="font-size:13px;font-weight:700;color:var(--text)">💤 Idle Caregivers <span class="ops-count" id="idle-cg-count">—</span></span>
- <span style="font-size:11px;color:var(--text3)">No bookings in next 14 days</span>
- </div>
- <div style="overflow-x:auto">
- <table class="ops-table">
- <thead><tr><th>Caregiver</th><th>Homecare</th><th>Last Booking</th><th>Last Client</th><th>Days Since Last Booking</th></tr></thead>
- <tbody id="idle-cg-tbody"></tbody>
- </table>
- </div>
+<div style="padding:0 20px 20px">
+ <div id="dy-count" style="font-size:11px;color:var(--text2);margin-bottom:8px"></div>
+ <div id="dy-table" class="bs-wrap" style="max-height:calc(100vh - 300px)"><div class="bs-empty">Loading…</div></div>
 </div>
-
-<!-- ── Double Booked ── -->
-<div style="margin-top:24px">
- <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
- <span style="font-size:13px;font-weight:700;color:var(--text)">🚨 Double Booked <span class="ops-count" id="double-booked-count">—</span></span>
- <span style="font-size:11px;color:var(--text3)">Caregivers with overlapping shifts · next 30 days</span>
- </div>
- <div style="overflow-x:auto">
- <table class="ops-table">
- <thead><tr><th>Date</th><th>Caregiver</th><th>Homecare</th><th>Order 1</th><th>Shift 1</th><th>Order 2</th><th>Shift 2</th></tr></thead>
- <tbody id="double-booked-tbody"></tbody>
- </table>
- </div>
-</div>
-
- </div>
 </div>
 
 
@@ -13922,6 +13845,163 @@ function tkRenderLog(){
 
 // ── Raise-ticket modal ───────────────────────────────────────────
 // ══════════════════════════════════════════════════════════════════
+// DAILY ORDERS (Operations tab) — every booking on one day, by time
+// Same sources as the roster: all orders (incl. 2nd bookings), manual
+// bookings, removed-booking and day overrides, hidden caregivers.
+// ══════════════════════════════════════════════════════════════════
+var _dy = {date:'', rows:[]};
+function dyToday(){ var d = new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function dySetDate(ds){ if(!ds) return; _dy.date = ds; var i = document.getElementById('dy-date'); if(i) i.value = ds; dyRender(true); }
+function dyShift(n){ var d = new Date((_dy.date || dyToday()) + 'T00:00:00'); d.setDate(d.getDate()+n); dySetDate(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')); }
+function dyClear(){ ['dy-search','dy-f-hc','dy-f-city','dy-f-type','dy-f-slot'].forEach(function(id){ var e = document.getElementById(id); if(e) e.value = ''; }); document.getElementById('dy-f-cxl').checked = false; dyRender(); }
+function dyMins(t){ try{ return t ? toMins(t) : null; }catch(e){ return null; } }
+function dyDur(a, b){
+  var s = dyMins(a), e = dyMins(b); if(s == null || e == null) return '';
+  var m = e - s; if(m <= 0) m += 1440;
+  var h = Math.floor(m/60), mm = m % 60; return h + 'h' + (mm ? ' ' + mm + 'm' : '');
+}
+var OV_LABEL = {sick:'🤒 Sick leave', weekoff:'🌙 Day off', holiday:'🎉 Public holiday', paid:'🏖️ Paid leave', unpaid:'💸 Unpaid leave', cancelled:'❌ Cancelled', removed:'🗑️ Removed'};
+
+function dyCollect(ds){
+  var rows = [], seen = {};
+  var hidden = {}; (typeof hiddenCGs !== 'undefined' ? [...hiddenCGs] : []).forEach(function(k){ hidden[k.toLowerCase()] = 1; });
+  var idx = rosterDayIndex();
+  Object.keys(idx).forEach(function(k){
+    if(k.slice(-11) !== '|' + ds) return;
+    var cg = k.slice(0, -11);
+    var ov = overrides[k];
+    (idx[k] || []).forEach(function(r){
+      if(hidden[(cg + '|' + (r.homecare||'')).toLowerCase()]) return;
+      var st = String(r.status||'').toLowerCase().replace(/\s+/g,'');
+      if(st === 'weekoff' || st === 'removed') return;                 // not a booking that day
+      var oid = r.child_order_id || r.order_id || (r.client_name + '|' + r.time_start);
+      if(seen[cg + '|' + oid]) return; seen[cg + '|' + oid] = 1;
+      var off = '';
+      if(isBookingRemoved(r)) off = OV_LABEL.removed;
+      else if(ov && ov.type && ov.type !== 'manual' && ov.type !== 'manual_list') off = OV_LABEL[ov.type] || ov.type;
+      else if(/cancel/.test(st)) off = OV_LABEL.cancelled;
+      rows.push({cg:cg, hc:r.homecare||'', client:r.client_name||'', start:r.time_start||'', end:r.time_end||'',
+        oid:r.child_order_id || r.order_id || '', pkg:r.package_type||'', city:(typeof normCity==='function'?normCity(r.location):r.location)||r.location||'',
+        kind:(typeof bookingKind==='function'?bookingKind(r):'duty'), off:off, src:r, manual:false});
+    });
+  });
+  // manual bookings added from the roster
+  Object.keys(overrides).forEach(function(k){
+    var ov = overrides[k]; if(!ov || k.slice(-11) !== '|' + ds) return;
+    var cg = ov.caregiver || k.slice(0, -11);
+    var list = ov.type === 'manual' ? [ov] : (ov.type === 'manual_list' ? (ov.bookings||[]) : []);
+    list.forEach(function(b){
+      rows.push({cg:cg, hc:ov.homecare||b.homecare||'', client:b.client_name||'Manual booking', start:b.time_start||'', end:b.time_end||'',
+        oid:b.order_id||'', pkg:'Manual', city:b.location||'', kind:'manual', off:'', src:b, manual:true});
+    });
+  });
+  rows.forEach(function(r){ r.sm = dyMins(r.start); });
+  rows.sort(function(a, b){ return (a.sm == null ? 9999 : a.sm) - (b.sm == null ? 9999 : b.sm) || a.cg.localeCompare(b.cg); });
+  return rows;
+}
+
+function dyPopulate(rows){
+  var fill = function(id, vals, first){
+    var el = document.getElementById(id); if(!el) return; var cur = el.value;
+    el.innerHTML = '<option value="">' + first + '</option>' + vals.map(function(v){ return '<option>' + tkEsc(v) + '</option>'; }).join('');
+    el.value = vals.indexOf(cur) >= 0 ? cur : '';
+  };
+  fill('dy-f-hc', [...new Set(rows.map(function(r){ return r.hc; }).filter(Boolean))].sort(), 'All homecares');
+  fill('dy-f-city', [...new Set(rows.map(function(r){ return r.city; }).filter(Boolean))].sort(), 'All cities');
+}
+
+function dyRender(refill){
+  var box = document.getElementById('dy-table'); if(!box) return;
+  if(!_dy.date) _dy.date = dyToday();
+  var di = document.getElementById('dy-date'); if(di && di.value !== _dy.date) di.value = _dy.date;
+  var all = dyCollect(_dy.date);
+  if(refill !== false) dyPopulate(all);
+  var g = function(id){ var e = document.getElementById(id); return e ? e.value : ''; };
+  var q = g('dy-search').toLowerCase().trim(), fh = g('dy-f-hc'), fc = g('dy-f-city'), ft = g('dy-f-type'), fs = g('dy-f-slot');
+  var showOff = document.getElementById('dy-f-cxl').checked;
+  var slotOf = function(m){ if(m == null) return ''; return m < 720 ? 'm' : m < 1020 ? 'a' : m < 1260 ? 'e' : 'n'; };
+  var rows = all.filter(function(r){
+    if(!showOff && r.off) return false;
+    if(fh && r.hc !== fh) return false;
+    if(fc && r.city !== fc) return false;
+    if(ft === 'mumz' && r.kind !== 'mumz') return false;
+    if(ft === 'own' && r.kind === 'mumz') return false;
+    if(fs && slotOf(r.sm) !== fs) return false;
+    if(q && [r.client, r.cg, r.oid, r.hc, r.pkg].join(' ').toLowerCase().indexOf(q) < 0) return false;
+    return true;
+  });
+  _dy.rows = rows;
+
+  // header + KPIs (for the whole day, not just the filtered rows)
+  var live = all.filter(function(r){ return !r.off; });
+  var d = new Date(_dy.date + 'T00:00:00'), isToday = _dy.date === dyToday();
+  document.getElementById('dy-sub').textContent = d.toLocaleDateString([], {weekday:'long', day:'numeric', month:'long', year:'numeric'}) + (isToday ? ' · today' : '');
+  var nowM = new Date().getHours()*60 + new Date().getMinutes();
+  var inProg = isToday ? live.filter(function(r){ var s = r.sm, e = dyMins(r.end); if(s == null || e == null) return false; if(e <= s) e += 1440; return nowM >= s && nowM < e; }).length : 0;
+  var cgs = new Set(live.map(function(r){ return r.cg; })).size;
+  var hrs = live.reduce(function(t, r){ var s = r.sm, e = dyMins(r.end); if(s == null || e == null) return t; var m = e - s; if(m <= 0) m += 1440; return t + m; }, 0);
+  var card = function(v, l, c){ return '<div class="tk-kpi"><div class="tk-kpi-v" style="color:'+(c||'var(--text)')+'">'+v+'</div><div class="tk-kpi-l">'+l+'</div></div>'; };
+  document.getElementById('dy-kpis').innerHTML =
+      card(live.length, 'Bookings')
+    + card(cgs, 'Caregivers working')
+    + card(Math.round(hrs/60), 'Hours booked')
+    + card(live.filter(function(r){ return r.kind === 'mumz'; }).length, 'Mumzworld / B2B', '#ff2d95')
+    + (isToday ? card(inProg, 'In progress now', '#3fb950') : '')
+    + card(all.length - live.length, 'Cancelled / off', (all.length - live.length) ? '#f85149' : '');
+
+  document.getElementById('dy-count').textContent = rows.length + ' of ' + all.length + ' booking' + (all.length === 1 ? '' : 's') + ' shown';
+  if(!rows.length){ box.innerHTML = '<div class="bs-empty">' + (all.length ? 'No bookings match these filters' : 'No bookings on this day') + '</div>'; return; }
+
+  var E = tkEsc, lastSlot = '';
+  var SLOT = {m:'🌅 Morning', a:'☀️ Afternoon', e:'🌆 Evening', n:'🌙 Night', '':'🕒 No time set'};
+  var h = '<table class="bs-tbl dy-tbl"><thead><tr><th>Time</th><th>Duration</th><th>Client</th><th>Caregiver</th><th>Homecare</th><th>Package</th><th>City</th><th>Order #</th><th>Status</th><th></th></tr></thead><tbody>';
+  rows.forEach(function(r, i){
+    var sl = slotOf(r.sm);
+    if(sl !== lastSlot){ lastSlot = sl; h += '<tr class="dy-slot"><td colspan="10">' + SLOT[sl] + '</td></tr>'; }
+    var e = dyMins(r.end), now = false, done = false;
+    if(isToday && r.sm != null && e != null){ var ee = e <= r.sm ? e + 1440 : e; now = nowM >= r.sm && nowM < ee; done = nowM >= ee; }
+    var stat = r.off ? '<span class="tk-pill" style="background:rgba(248,81,73,.14);color:#f85149">' + E(r.off) + '</span>'
+      : now ? '<span class="tk-pill" style="background:rgba(63,185,80,.16);color:#3fb950">● In progress</span>'
+      : done ? '<span class="tk-pill" style="background:var(--bg3);color:var(--text3)">Done</span>'
+      : isToday ? '<span class="tk-pill" style="background:rgba(47,129,247,.14);color:#2f81f7">Upcoming</span>'
+      : '<span class="tk-pill" style="background:var(--bg3);color:var(--text2)">Booked</span>';
+    var dot = r.kind === 'mumz' ? '#ff2d95' : r.kind === 'manual' ? '#a855f7' : r.kind === 'shady' ? '#f472b6' : '#f59e0b';
+    var loc = (!r.manual && typeof locFor === 'function') ? locFor(r.src) : null;
+    h += '<tr class="' + (r.off ? 'dy-off' : now ? 'dy-now' : '') + '" data-i="' + i + '" onclick="dyOpen(' + i + ')">'
+      + '<td style="font-family:monospace;font-weight:700;white-space:nowrap"><span class="dy-dot" style="background:' + dot + '"></span>' + (r.start ? E(r.start) + (r.end ? ' – ' + E(r.end) : '') : '—') + '</td>'
+      + '<td style="font-size:11px;color:var(--text2)">' + E(dyDur(r.start, r.end)) + '</td>'
+      + '<td><b>' + E(r.client || '—') + '</b>' + (r.kind === 'mumz' ? ' <span class="dy-tag">Mumzworld</span>' : r.manual ? ' <span class="dy-tag" style="background:rgba(168,85,247,.18);color:#a855f7">Manual</span>' : '') + '</td>'
+      + '<td>' + E(r.cg) + '</td>'
+      + '<td style="font-size:11px;color:var(--text2)">' + E(r.hc || '—') + '</td>'
+      + '<td style="font-size:11px;color:var(--text2);max-width:180px;overflow:hidden;text-overflow:ellipsis" title="' + E(r.pkg) + '">' + E(r.pkg || '—') + '</td>'
+      + '<td style="font-size:11px">' + E(r.city || '—') + '</td>'
+      + '<td style="font-family:monospace;font-size:11px">' + (r.oid ? '#' + E(r.oid) : '—') + '</td>'
+      + '<td>' + stat + '</td>'
+      + '<td style="white-space:nowrap">' + (loc ? '<a href="#" onclick="event.stopPropagation();event.preventDefault();dyLoc(' + i + ')" title="' + E(locOneLine(loc) || 'Location') + '" style="text-decoration:none">📍</a>' : '') + '</td>'
+      + '</tr>';
+  });
+  box.innerHTML = h + '</tbody></table>';
+}
+// click a row → the same booking popup as the roster
+function dyOpen(i){ var r = _dy.rows[i]; if(!r) return; openOvModal(r.cg, _dy.date, r.oid || undefined); }
+function dyLoc(i){ var r = _dy.rows[i]; if(!r) return; locOpen(r.cg, _dy.date, r.oid); }
+
+function dyExportCSV(){
+  var rows = _dy.rows; if(!rows.length){ alert('Nothing to export.'); return; }
+  var q = function(v){ v = String(v==null?'':v); return /[",\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+  var head = ['Date','Start','End','Duration','Client','Caregiver','Homecare','Package','City','Order #','Type','Status','Address'];
+  var csv = [head.join(',')].concat(rows.map(function(r){
+    var L = (!r.manual && typeof locFor === 'function') ? locFor(r.src) : null;
+    return [_dy.date, r.start, r.end, dyDur(r.start, r.end), r.client, r.cg, r.hc, r.pkg, r.city, r.oid,
+            r.kind === 'mumz' ? 'Mumzworld / B2B' : r.manual ? 'Manual' : 'Own', r.off || 'Booked', L ? locOneLine(L) : ''].map(q).join(',');
+  })).join('\r\n');
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\ufeff' + csv], {type:'text/csv;charset=utf-8'}));
+  a.download = 'daily_orders_' + _dy.date + '.csv'; a.click();
+}
+// END DAILY ORDERS
+
+// ══════════════════════════════════════════════════════════════════
 // CLIENT LOCATION — saved per order and per client (Firestore), shown
 // when a booking is clicked on the roster. Address / pin coming from
 // Metabase (if the question has such columns) is used as a fallback.
@@ -16794,14 +16874,7 @@ function renderChurnRisk(){
   document.getElementById('churn-risk-tbody').innerHTML=html;
 }
 
-function renderOps(){
-  renderExpiring();
-  renderUnassigned();
-  renderChurned();
-  renderIdleCGs();
-  renderDoubleBooked();
-  renderChurnRisk();
-}
+function renderOps(){ dyRender(); }
 
 function renderExpiring(){
   const today = new Date(); today.setHours(0,0,0,0);
