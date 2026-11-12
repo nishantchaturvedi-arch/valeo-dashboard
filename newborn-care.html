@@ -11105,7 +11105,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 // n8n could return HTTP 200 with an empty body (quota exhaustion), which made
 // res.json() throw "Unexpected end of JSON input" and res.ok useless as a guard.
 // Treat an empty body as a failure, and surface the server's error message.
-const VALEO_API_BASE = 'https://dashboard-api-alpha.vercel.app';
+const VALEO_API_BASE = 'https://dashboard-api-beta-three.vercel.app';
 async function fetchJSON(url, opts){
   const res  = await fetch(url, opts);
   const text = await res.text();
