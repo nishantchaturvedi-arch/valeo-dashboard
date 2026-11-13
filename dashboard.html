@@ -19191,10 +19191,23 @@ function rosterDates(){
   while(cur<=end){ out.push(cur.getFullYear()+'-'+pad(cur.getMonth()+1)+'-'+pad(cur.getDate())); cur.setDate(cur.getDate()+1); }
   return out;
 }
+// Utilisation in hours, same basis as Analytics: 288 sellable hours a month per caregiver,
+// spread evenly over the month's days. Days before joining, after leaving and on pause
+// carry no capacity; sick, leave and week-off days keep theirs.
+function rosterCapPerDay(ds){ var y=+ds.slice(0,4), m=+ds.slice(5,7); return 288/new Date(y,m,0).getDate(); }
+function rosterDayHours(r){
+  var toH=function(t){ var pm=/PM/i.test(t); t=String(t).replace(/\s*(AM|PM)/i,'').trim(); var p=t.split(':'), h=parseInt(p[0])||0, m=parseInt(p[1])||0; if(pm&&h<12)h+=12; if(!pm&&h===12)h=0; return h+m/60; };
+  var span=function(b){ if(!b||!b.time_start||!b.time_end) return 0; var d=toH(b.time_end)-toH(b.time_start); return d>0?d:24+d; };
+  var pkg=function(b){ return b ? (extractHours(b.package_type||b.package_raw||'')||0) : 0; };
+  var list, h=0;
+  if(r.code==='manual'){ list = r.bookings && r.bookings.length ? r.bookings : [r.ov]; list.forEach(function(b){ h += span(b) || pkg(b); }); }
+  else { list = r.active && r.active.length ? r.active : [r.rec]; list.forEach(function(b){ h += pkg(b) || span(b); }); }
+  return Math.min(h, 24);
+}
 function rosterUtilCell(c){
-  if(!c.avail) return '<span class="r-util na" title="No available days in this range">—</span>';
-  var p=Math.round(c.worked/c.avail*100), cls=p>=70?'hi':p>=40?'mid':'lo';
-  return '<span class="r-util '+cls+'" title="Utilisation: '+c.worked+' worked of '+c.avail+' available days (days before joining, after leaving and on pause are not available)">'+p+'%</span>';
+  if(!c.cap) return '<span class="r-util na" title="No available hours in this range">—</span>';
+  var p=Math.min(Math.round(c.hrs/c.cap*100),100), cls=p>=70?'hi':p>=40?'mid':'lo';
+  return '<span class="r-util '+cls+'" title="Utilisation: '+Math.round(c.hrs)+'h worked of '+Math.round(c.cap)+'h available (288h a month per caregiver; sick, leave and week-off days count as available; days before joining, after leaving and on pause do not)">'+p+'%</span>';
 }
 function toggleShowExited(){
   rosterShowExited=!rosterShowExited;
@@ -19367,10 +19380,10 @@ function renderRoster(){
   Object.entries(hcGroups).sort().forEach(function(hce){
     var hcName=hce[0],cgs=hce[1].sort();
     var _gw=0,_ga=0;
-    cgs.forEach(function(n){ var hv=cgMap[n]?cgMap[n].homecare:''; var c=_cnt[n]=rosterRangeCounts(n,hv,dates,dayMap,woLookup); _gw+=c.worked; _ga+=c.avail; });
+    cgs.forEach(function(n){ var hv=cgMap[n]?cgMap[n].homecare:''; var c=_cnt[n]=rosterRangeCounts(n,hv,dates,dayMap,woLookup); _gw+=c.hrs; _ga+=c.cap; });
     _totW+=_gw; _totA+=_ga;
     html+='<tr class="roster-hc-hdr"><td colspan="'+(dates.length+2)+'">'+hcName+' &mdash; '+cgs.length+' caregivers'
-      +(isClientView?'':' &nbsp;·&nbsp; utilisation '+rosterUtilCell({worked:_gw,avail:_ga}))+'</td></tr>';
+      +(isClientView?'':' &nbsp;·&nbsp; utilisation '+rosterUtilCell({hrs:_gw,cap:_ga}))+'</td></tr>';
     cgs.forEach(function(cgName){
       var parts=cgName.trim().split(' ');
       var ini=((parts[0]||'')[0]||'')+((parts[1]||'')[0]||'');
@@ -19498,7 +19511,7 @@ function renderRoster(){
   html+='</tbody></table>';
   wrap.innerHTML=html;
   var _ut=document.getElementById('roster-util');
-  if(_ut) _ut.innerHTML=isClientView?'':'Utilisation '+rosterUtilCell({worked:_totW,avail:_totA});
+  if(_ut) _ut.innerHTML=isClientView?'':'Utilisation '+rosterUtilCell({hrs:_totW,cap:_totA});
 }
 
 // ── Drag Override ────────────────────────────────────────────────
@@ -21935,11 +21948,15 @@ function rosterMonthCounts(cg, hc, y, m, idx, wo){
 function rosterRangeCounts(cg, hc, dates, idx, wo){
   idx = idx || rosterDayIndex();
   wo  = wo  || rosterWoLookup();
-  var c = {duty:0, manual:0, dayoff:0, weekoff:0, sick:0, paid:0, unpaid:0, holiday:0, cancelled:0, pause:0, worked:0, avail:0};
+  var c = {duty:0, manual:0, dayoff:0, weekoff:0, sick:0, paid:0, unpaid:0, holiday:0, cancelled:0, pause:0, worked:0, avail:0, hrs:0, cap:0};
   for(var i=0; i<dates.length; i++){
     var ds = dates[i];
     var r  = rosterDay(cg, hc, ds, idx, wo);
-    if(r.code !== 'pre' && r.code !== 'exited' && r.code !== 'pause') c.avail++;
+    if(r.code !== 'pre' && r.code !== 'exited' && r.code !== 'pause'){
+      c.avail++;
+      c.cap += rosterCapPerDay(ds);           // sick, leave and week-off days stay in capacity
+    }
+    if(r.code === 'duty' || r.code === 'manual') c.hrs += rosterDayHours(r);
     switch(r.code){
       case 'duty':      c.duty++;   c.worked++; break;
       case 'manual':    c.manual++; c.worked++; break;
