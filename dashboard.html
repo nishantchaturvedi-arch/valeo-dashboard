@@ -654,6 +654,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .pl-ue{display:grid;grid-template-columns:minmax(280px,420px) 1fr;gap:16px;padding:12px 14px;border-bottom:1px solid var(--border)}
 .pl-ue-sum td{font-size:12px}
 @media(max-width:700px){.pl-ue{grid-template-columns:1fr}}
+.pl-cost-in{width:110px;text-align:right;font-family:monospace;font-size:12px;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 6px}
+.pl-cost-in:focus{outline:none;border-color:var(--accent)}
+.pl-cost-in:placeholder-shown{border-style:dashed;border-color:rgba(210,153,34,.6)}
 .pl-x{background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:2px 6px}
 .pl-x:hover{color:var(--absent)}
 @media(max-width:900px){.pl-grid{grid-template-columns:1fr}.pl-inv-form{grid-template-columns:1fr 1fr}}
@@ -10994,7 +10997,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
   </div>
   <!-- HC invoices -->
   <div class="tk-card">
-   <div class="tk-card-h"><span>🧾 Homecare invoices</span><span id="pl-inv-total" style="font-family:monospace"></span></div>
+   <div class="tk-card-h"><span>🧾 Homecare invoices <span style="font-weight:500;color:var(--text3)">— optional: upload a file, or just type each homecare's cost in the table below</span></span><span id="pl-inv-total" style="font-family:monospace"></span></div>
    <div style="padding:14px 14px 4px">
     <div class="pl-inv-form">
      <div><label class="qt-lbl" for="pl-inv-hc">Homecare</label><select id="pl-inv-hc" class="qt-input" onfocus="plFillHC()" onmousedown="plFillHC()" onchange="plPickHC(this)"></select></div>
@@ -22952,7 +22955,7 @@ function plRender(){
       + c.inv.sort(function(a,b){ return String(a.homecare).localeCompare(String(b.homecare)); }).map(function(i){
           return '<tr><td><b>' + tkEsc(i.homecare) + '</b></td><td>' + tkEsc(i.invoice_no||'—') + '</td><td>' + tkEsc(i.invoice_date||'—') + '</td>'
             + '<td class="pl-num">' + plAED(i.amount) + '</td><td class="pl-num" style="color:var(--text3)">' + (i.vat ? plAED(i.vat) : '—') + '</td>'
-            + '<td>' + (i.attachment ? '<a href="#" onclick="event.preventDefault();plViewFile(\'' + i._id + '\')">📎 ' + tkEsc(i.attachment.name||'file') + '</a>' : '<span style="color:var(--sick)">no file</span>') + '</td>'
+            + '<td>' + (i.attachment ? '<a href="#" onclick="event.preventDefault();plViewFile(\'' + i._id + '\')">📎 ' + tkEsc(i.attachment.name||'file') + '</a>' : i.quick ? '<span style="color:var(--text3)">entered in table</span>' : '<span style="color:var(--text3)">no file</span>') + '</td>'
             + '<td style="color:var(--text3)">' + tkEsc(i.created_by||'') + (i.created_at ? ' · ' + String(i.created_at).slice(0,10) : '') + '</td>'
             + '<td><button class="pl-x" title="Delete" onclick="plDelInvoice(\'' + i._id + '\')">✕</button></td></tr>';
         }).join('') + '</tbody>'
@@ -22999,6 +23002,7 @@ function plRenderUE(p, c){
     var k = tkNorm(i.homecare);
     if(!rows[k]) rows[k] = {name:i.homecare, bookings:0, wdays:0, hrs:0, sp:0, cost:0, inv:0, ncg:0, cgs:{}};
     rows[k].cost += (+i.amount||0); rows[k].inv++;
+    if(!i.quick) rows[k].fileCost = (rows[k].fileCost||0) + (+i.amount||0);
   });
   plPaidHours(p, rows);
   var list = Object.values(rows).sort(function(a,b){ return b.bookings - a.bookings || b.sp - a.sp; });
@@ -23034,12 +23038,16 @@ function plRenderUE(p, c){
   var row = function(a, tot){
     var m = a.sp - a.cost;
     return '<tr' + (tot ? ' style="background:var(--bg3);font-weight:700"' : '') + '><td>' + (tot ? 'Total' : '<b>' + tkEsc(a.name) + '</b>'
-        + (a.bookings && !a.inv ? ' <span class="tk-pill" style="color:var(--sick)" title="No invoice uploaded for this month, so cost is 0">no invoice</span>' : '')) + '</td>'
+        + (a.bookings && !a.inv ? ' <span class="tk-pill" style="color:var(--sick)" title="No cost entered for this month — type it in the Cost column">no cost</span>' : '')) + '</td>'
       + '<td class="pl-num">' + n0(a.bookings) + '</td><td class="pl-num">' + n0(a.wdays) + '</td><td class="pl-num">' + n0(a.hrs)
         + (a.exOver >= 1 ? ' <span style="color:#f59e0b;font-size:10px" title="Exclusive CGs worked ' + n0(a.exOver) + 'h beyond the 288h a month they are paid for">+' + n0(a.exOver) + ' over</span>' : '') + '</td>'
       + '<td class="pl-num" title="' + (a.nEx ? a.nEx + ' exclusive CGs: ' + n0(a.exPaid) + 'h paid, ' + n0(a.exServed) + 'h served' : 'No exclusive CGs — paid for booked hours') + '">' + n0(a.paid) + (a.nEx ? ' <span style="color:#f59e0b">👑' + a.nEx + '</span>' : '') + '</td>'
       + '<td class="pl-num ' + (a.paid && a.used / a.paid < .8 ? 'pl-neg' : '') + '" title="' + n0(a.used) + 'h of ' + n0(a.paid) + 'h paid were used (exclusive CGs count up to their paid hours)">' + plPct(a.used, a.paid) + '</td>'
-      + '<td class="pl-num">' + n0(a.cost) + '</td><td class="pl-num">' + n2(a.hrs ? a.cost / a.hrs : 0) + '</td>'
+      + '<td class="pl-num">' + (tot ? n0(a.cost)
+          : '<input class="pl-cost-in" type="number" min="0" step="1" inputmode="decimal" data-hc="' + tkEsc(a.name) + '" value="' + (a.cost ? Math.round(a.cost*100)/100 : '') + '" placeholder="Enter cost"'
+            + ' title="Homecare cost for ' + plMonthLabel(p) + ' (excl. VAT). Type the amount and press Enter — results update straight away.' + (a.fileCost ? ' Includes ' + n0(a.fileCost) + ' from uploaded invoices.' : '') + '"'
+            + ' onchange="plSetCost(this.dataset.hc,this.value)" onkeydown="if(event.key===\'Enter\')this.blur()">') + '</td>'
+      + '<td class="pl-num">' + n2(a.hrs ? a.cost / a.hrs : 0) + '</td>'
       + '<td class="pl-num"' + (a.hcaSp ? ' title="Includes ' + n0(a.hcaSp) + ' from ' + a.hcaN + ' HC ASSIGNED orders with no nurse yet"' : '') + '>' + n0(a.sp) + (a.hcaSp ? ' <span style="color:#d29922;font-size:10px">⏳</span>' : '') + '</td><td class="pl-num">' + n2(a.hrs ? (a.sp - (a.hcaSp||0)) / a.hrs : 0) + '</td>'
       + '<td class="pl-num ' + plCls(m) + '">' + n0(m) + '</td><td class="pl-num ' + plCls(m) + '">' + plPct(m, a.sp) + '</td></tr>';
   };
@@ -23125,7 +23133,6 @@ async function plSaveInvoice(){
   if(vat !== null && (isNaN(vat) || vat < 0)){ alert('VAT must be a positive number.'); return; }
   if(no && _pl.inv.some(function(i){ return tkHCMatch(i.homecare, hc) && String(i.invoice_no||'').toLowerCase() === no.toLowerCase(); })
      && !confirm('Invoice ' + no + ' from ' + hc + ' is already uploaded. Upload again?')) return;
-  if(!_pl.file && !confirm('No invoice file attached. Save without the file?')) return;
   var btn = document.getElementById('pl-inv-save'); _pl.busy = true; btn.disabled = true; btn.textContent = 'Uploading…';
   try{
     if(!_db) await initFirebase();
@@ -23160,6 +23167,28 @@ function plViewFile(id){
   var body = /^image\//.test(a.type) ? '<img src="' + src + '" style="max-width:100%;height:auto">' : '<iframe src="' + src + '" style="border:0;width:100%;height:100vh"></iframe>';
   w.document.write('<title>' + tkEsc(a.name||'invoice') + '</title><body style="margin:0;background:#111">' + body + '</body>');
   w.document.close();
+}
+// Cost typed straight into the unit-economics table. Stored as one "entered directly"
+// record per homecare per month; uploaded invoices for that homecare stay as they are,
+// so the typed figure is the total and the direct entry is the part not covered by files.
+async function plSetCost(hc, val){
+  var p = plMonth(), v = String(val||'').trim() === '' ? 0 : parseFloat(val);
+  if(isNaN(v) || v < 0){ alert('Enter a valid amount.'); plRender(); return; }
+  var mine = _pl.inv.filter(function(i){ return i.period === p && tkHCMatch(i.homecare, hc); });
+  var files = mine.filter(function(i){ return !i.quick; }).reduce(function(t,i){ return t + (+i.amount||0); }, 0);
+  var quick = mine.find(function(i){ return i.quick; });
+  var rest = Math.round((v - files) * 100) / 100;
+  if(rest < 0){ alert(hc + ' already has ' + plAED(files) + ' in uploaded invoices for ' + plMonthLabel(p) + '. Delete an invoice below to go lower.'); plRender(); return; }
+  try{
+    if(!_db) await initFirebase(); if(!_db) throw new Error('Firebase not connected');
+    if(quick && !rest){ await _db.collection(_PL_INV).doc(quick._id).delete(); _pl.inv = _pl.inv.filter(function(i){ return i !== quick; }); }
+    else if(quick){ var upd = {amount:rest, updated_at:new Date().toISOString(), updated_by:plUser()}; await _db.collection(_PL_INV).doc(quick._id).set(upd, {merge:true}); Object.assign(quick, upd); }
+    else if(rest){
+      var doc = {period:p, homecare:hc, invoice_no:'', invoice_date:'', amount:rest, vat:0, attachment:null, quick:true, created_at:new Date().toISOString(), created_by:plUser()};
+      var r = await _db.collection(_PL_INV).add(doc); _pl.inv.push(Object.assign({_id:r.id}, doc));
+    }
+    plStatus('Cost saved for ' + hc); plRender();
+  }catch(e){ alert('Could not save: ' + e.message); }
 }
 async function plDelInvoice(id){
   var i = _pl.inv.find(function(x){ return x._id === id; }); if(!i) return;
