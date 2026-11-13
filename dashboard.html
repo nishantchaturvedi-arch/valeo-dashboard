@@ -11021,7 +11021,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
      <b style="color:var(--text2)">Hours served</b> from the package (e.g. "12 hours").
      <b style="color:var(--text2)">Hours paid</b> = 288 h a month for each exclusive CG (pro rata by start / end date, pauses excluded) + booked hours for everyone else.
      <b style="color:var(--text2)">Paid used %</b> = paid hours actually worked; hours an exclusive CG works beyond 288 h show as "over" and are not counted.
-     <b style="color:var(--text2)">SP</b> = Final Price spread evenly over each order's service days.
+     <b style="color:var(--text2)">SP</b> = Final Price spread evenly over each order's service days — Nurse Assigned, Completed and HC Assigned orders (⏳ = includes HC Assigned orders with no nurse yet).
      <b style="color:var(--text2)">Cost</b> = that homecare's invoices for the month.
      <b style="color:var(--text2)">Margin</b> = SP − Cost.
      <div id="pl-ue-note" style="color:var(--sick);margin-top:6px"></div>
@@ -11657,6 +11657,7 @@ async function loadData(force=false){
       return {date:ds, end_date:calcEndDate(ds, pkg), homecare:hc, client_name:String(r['User Name']||'').trim(),
         order_id:String(r['Cart_Order_ID']||'').trim(), child_order_id:String(r['Child_Order_ID']||'').trim(),
         package_type:pkg.trim(), location:String(r['City']||'').trim(), status_raw:String(r['Order_Status']||'').trim(),
+        final_price:parseFloat(r['Final_Price']||r['Order_Price']||0)||0,
         time_start: tm ? fmtTime(tm) : '', time_end: tm ? calcTimeEnd(tm, pkg) : ''};
     }).filter(Boolean);
 
@@ -22873,7 +22874,23 @@ function plUnitEcon(p){
     T.bookings++; T.hrs += h; T.sp += sp; cgs[r.caregiver] = 1;
     if(okey(r)) orders[okey(r)] = 1;
   });
-  var val = {hc:hc, bookings:T.bookings, wdays:T.wdays, hrs:T.hrs, sp:T.sp, cgs:Object.keys(cgs).length, orders:Object.keys(orders).length};
+  // HC ASSIGNED orders (homecare has the order, no nurse yet): revenue only, spread over
+  // every day of the package — no bookings, hours or caregivers until a nurse is on it.
+  var hcaSp = 0, hcaN = 0;
+  (window._pendingOrders || []).forEach(function(o){
+    if(_normKey(o.status_raw) !== 'hcassigned' || !o.final_price || !o.date) return;
+    var end = o.end_date || o.date, n = Math.round((new Date(end+'T12:00:00') - new Date(o.date+'T12:00:00'))/864e5) + 1;
+    if(n < 1) n = 1;
+    var per = o.final_price / n, inMonth = 0, cur = new Date(o.date+'T12:00:00');
+    for(var i = 0; i < n; i++){ var ds = cur.getFullYear()+'-'+pad(cur.getMonth()+1)+'-'+pad(cur.getDate()); if(ds.slice(0,7) === p) inMonth++; cur.setDate(cur.getDate()+1); }
+    if(!inMonth) return;
+    var name = o.homecare || 'Unassigned', key = tkNorm(name);
+    var a = hc[key] || (hc[key] = {name:name, bookings:0, wdays:0, hrs:0, sp:0, cost:0, inv:0, cgs:{}});
+    a.sp += per * inMonth; a.hcaSp = (a.hcaSp||0) + per * inMonth; a.hcaN = (a.hcaN||0) + 1;
+    T.sp += per * inMonth; hcaSp += per * inMonth; hcaN++;
+    orders['hca|' + (o.child_order_id || o.order_id)] = 1;
+  });
+  var val = {hc:hc, bookings:T.bookings, wdays:T.wdays, hrs:T.hrs, sp:T.sp, cgs:Object.keys(cgs).length, orders:Object.keys(orders).length, hcaSp:hcaSp, hcaN:hcaN};
   _plUECache.m[p] = val;
   return val;
 }
@@ -23005,7 +23022,8 @@ function plRenderUE(p, c){
     + line('Total caregiver cost (AED)', n0(T.cost))
     + line('Weighted average cost per hour (AED)', n2(T.hrs ? T.cost / T.hrs : 0))
     + line('Total SP, Final Price (AED)', n0(T.sp))
-    + line('SP per hour (AED)', n2(T.hrs ? T.sp / T.hrs : 0))
+    + (u.hcaSp ? line('&nbsp;&nbsp;· of which HC assigned, no nurse yet (' + u.hcaN + ' orders)', n0(u.hcaSp)) : '')
+    + line('SP per hour (AED)', n2(T.hrs ? (T.sp - (u.hcaSp||0)) / T.hrs : 0))
     + line('Margin (AED)', n0(tm), plCls(tm))
     + line('Margin %', plPct(tm, T.sp), plCls(tm))
     + '</tbody>';
@@ -23022,7 +23040,7 @@ function plRenderUE(p, c){
       + '<td class="pl-num" title="' + (a.nEx ? a.nEx + ' exclusive CGs: ' + n0(a.exPaid) + 'h paid, ' + n0(a.exServed) + 'h served' : 'No exclusive CGs — paid for booked hours') + '">' + n0(a.paid) + (a.nEx ? ' <span style="color:#f59e0b">👑' + a.nEx + '</span>' : '') + '</td>'
       + '<td class="pl-num ' + (a.paid && a.used / a.paid < .8 ? 'pl-neg' : '') + '" title="' + n0(a.used) + 'h of ' + n0(a.paid) + 'h paid were used (exclusive CGs count up to their paid hours)">' + plPct(a.used, a.paid) + '</td>'
       + '<td class="pl-num">' + n0(a.cost) + '</td><td class="pl-num">' + n2(a.hrs ? a.cost / a.hrs : 0) + '</td>'
-      + '<td class="pl-num">' + n0(a.sp) + '</td><td class="pl-num">' + n2(a.hrs ? a.sp / a.hrs : 0) + '</td>'
+      + '<td class="pl-num"' + (a.hcaSp ? ' title="Includes ' + n0(a.hcaSp) + ' from ' + a.hcaN + ' HC ASSIGNED orders with no nurse yet"' : '') + '>' + n0(a.sp) + (a.hcaSp ? ' <span style="color:#d29922;font-size:10px">⏳</span>' : '') + '</td><td class="pl-num">' + n2(a.hrs ? (a.sp - (a.hcaSp||0)) / a.hrs : 0) + '</td>'
       + '<td class="pl-num ' + plCls(m) + '">' + n0(m) + '</td><td class="pl-num ' + plCls(m) + '">' + plPct(m, a.sp) + '</td></tr>';
   };
   document.getElementById('pl-hc-tbl').innerHTML = list.length
