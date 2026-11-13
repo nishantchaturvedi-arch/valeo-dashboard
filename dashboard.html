@@ -11007,6 +11007,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
   <div class="tk-card">
    <div class="tk-card-h"><span>🧾 Homecare costs <span style="font-weight:500;color:var(--text3)">— type each homecare's cost for the month (excl. VAT) and press Enter; everything recalculates</span></span><span id="pl-inv-total" style="font-family:monospace"></span></div>
    <div class="pl-qc" id="pl-qc"></div>
+   <div id="pl-qc-msg" style="font-size:12px;font-weight:600;padding:0 14px 10px;min-height:16px"></div>
    <details class="pl-up"><summary>⬆ Upload invoice file (optional)</summary>
    <div style="padding:14px 14px 4px">
     <div class="pl-inv-form">
@@ -23055,7 +23056,7 @@ function plRenderUE(p, c){
       + '<td class="pl-num" title="' + (a.nEx ? a.nEx + ' exclusive CGs: ' + n0(a.exPaid) + 'h paid, ' + n0(a.exServed) + 'h served' : 'No exclusive CGs — paid for booked hours') + '">' + n0(a.paid) + (a.nEx ? ' <span style="color:#f59e0b">👑' + a.nEx + '</span>' : '') + '</td>'
       + '<td class="pl-num ' + (a.paid && a.used / a.paid < .8 ? 'pl-neg' : '') + '" title="' + n0(a.used) + 'h of ' + n0(a.paid) + 'h paid were used (exclusive CGs count up to their paid hours)">' + plPct(a.used, a.paid) + '</td>'
       + '<td class="pl-num">' + (tot ? n0(a.cost)
-          : '<input class="pl-cost-in" type="number" min="0" step="1" inputmode="decimal" data-hc="' + tkEsc(a.name) + '" value="' + (a.cost ? Math.round(a.cost*100)/100 : '') + '" placeholder="Enter cost"'
+          : '<input class="pl-cost-in" type="text" inputmode="decimal" autocomplete="off" data-hc="' + tkEsc(a.name) + '" value="' + (a.cost ? (Math.round(a.cost*100)/100).toLocaleString() : '') + '" placeholder="Enter cost"'
             + ' title="Homecare cost for ' + plMonthLabel(p) + ' (excl. VAT). Type the amount and press Enter — results update straight away.' + (a.fileCost ? ' Includes ' + n0(a.fileCost) + ' from uploaded invoices.' : '') + '"'
             + ' onchange="plSetCost(this.dataset.hc,this.value)" onkeydown="if(event.key===\'Enter\')this.blur()">') + '</td>'
       + '<td class="pl-num">' + n2(a.hrs ? a.cost / a.hrs : 0) + '</td>'
@@ -23070,7 +23071,7 @@ function plRenderUE(p, c){
     qc.innerHTML = names.filter(function(a){ return a.name && a.name !== 'Unassigned'; }).map(function(a){
       return '<label class="pl-qc-row' + (a.cost ? ' set' : (a.bookings ? ' need' : '')) + '"><span class="pl-qc-n" title="' + tkEsc(a.name) + '">' + tkEsc(a.name) + '</span>'
         + (a.bookings ? '<span class="pl-qc-s">' + n0(a.sp) + ' SP</span>' : '<span class="pl-qc-s">no bookings</span>')
-        + '<input class="pl-cost-in" type="number" min="0" step="1" inputmode="decimal" data-hc="' + tkEsc(a.name) + '" value="' + (a.cost ? Math.round(a.cost*100)/100 : '') + '" placeholder="Cost"'
+        + '<input class="pl-cost-in" type="text" inputmode="decimal" autocomplete="off" data-hc="' + tkEsc(a.name) + '" value="' + (a.cost ? (Math.round(a.cost*100)/100).toLocaleString() : '') + '" placeholder="Cost"'
         + ' onchange="plSetCost(this.dataset.hc,this.value)" onkeydown="if(event.key===\'Enter\')this.blur()"></label>';
     }).join('');
   }
@@ -23194,9 +23195,16 @@ function plViewFile(id){
 // Cost typed straight into the unit-economics table. Stored as one "entered directly"
 // record per homecare per month; uploaded invoices for that homecare stay as they are,
 // so the typed figure is the total and the direct entry is the part not covered by files.
+function plParseAmt(val){
+  var t = String(val||'').replace(/aed|qar|[\s,\u00a0]/gi, '');   // allow "AED 135,367"
+  if(t === '') return 0;
+  return /^\d*\.?\d+$|^\d+\.$/.test(t) ? parseFloat(t) : NaN;
+}
+function plCostMsg(t, err){ var m = document.getElementById('pl-qc-msg'); if(m){ m.textContent = t; m.style.color = err ? 'var(--absent)' : 'var(--duty)'; } plStatus(t, err); }
 async function plSetCost(hc, val){
-  var p = plMonth(), v = String(val||'').trim() === '' ? 0 : parseFloat(val);
-  if(isNaN(v) || v < 0){ alert('Enter a valid amount.'); plRender(); return; }
+  var p = plMonth(), v = plParseAmt(val);
+  if(isNaN(v) || v < 0){ plCostMsg('"' + val + '" is not an amount — type a number like 135367 or 135,367.', true); return; }
+  plCostMsg('Saving ' + hc + '…');
   var mine = _pl.inv.filter(function(i){ return i.period === p && tkHCMatch(i.homecare, hc); });
   var files = mine.filter(function(i){ return !i.quick; }).reduce(function(t,i){ return t + (+i.amount||0); }, 0);
   var quick = mine.find(function(i){ return i.quick; });
@@ -23210,8 +23218,8 @@ async function plSetCost(hc, val){
       var doc = {period:p, homecare:hc, invoice_no:'', invoice_date:'', amount:rest, vat:0, attachment:null, quick:true, created_at:new Date().toISOString(), created_by:plUser()};
       var r = await _db.collection(_PL_INV).add(doc); _pl.inv.push(Object.assign({_id:r.id}, doc));
     }
-    plStatus('Cost saved for ' + hc); plRender();
-  }catch(e){ alert('Could not save: ' + e.message); }
+    plRender(); plCostMsg('✓ Saved ' + hc + ': ' + plAED(v) + ' for ' + plMonthLabel(p));
+  }catch(e){ console.warn('[pl] cost save', e); plCostMsg('Could not save ' + hc + ' — ' + e.message, true); }
 }
 async function plDelInvoice(id){
   var i = _pl.inv.find(function(x){ return x._id === id; }); if(!i) return;
