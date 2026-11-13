@@ -596,6 +596,17 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .tk-tbl tr:hover td{background:var(--bg3)}
 .tk-scroll{max-height:520px;overflow:auto}
 .tk-empty{padding:22px;text-align:center;color:var(--text2);font-size:12px}
+/* ── P&L ── */
+.pl-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+.pl-mk-form{display:grid;grid-template-columns:1.2fr 1fr 1.6fr auto;gap:8px;margin-bottom:10px}
+.pl-inv-form{display:grid;grid-template-columns:repeat(3,1fr);gap:0 12px}
+.pl-inv-form .qt-input{margin-bottom:10px}
+.pl-num{font-family:monospace;text-align:right;white-space:nowrap}
+.pl-pos{color:var(--duty)}.pl-neg{color:var(--absent)}
+.pl-x{background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:2px 6px}
+.pl-x:hover{color:var(--absent)}
+@media(max-width:900px){.pl-grid{grid-template-columns:1fr}.pl-inv-form{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.pl-mk-form,.pl-inv-form{grid-template-columns:1fr}}
 .tk-pill{display:inline-block;font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;white-space:nowrap;border:1px solid currentColor}
 .tk-badge{display:inline-block;font-size:8px;font-weight:700;padding:0 5px;line-height:15px;border-radius:6px;white-space:nowrap}
 .tk-sel{background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:10px;padding:2px 6px;border-radius:5px;outline:none;font-family:'Inter',sans-serif;max-width:140px}
@@ -948,6 +959,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <button class="main-tab" onclick="switchTab(&#39;complaints&#39;)">🚩 Complaint Tracker</button>
  <button class="main-tab" onclick="switchTab(&#39;penalty&#39;)">⚠️ Penalty Tracker</button>
  <button class="main-tab" onclick="switchTab(&#39;expecting&#39;)">🤰 Expecting Mothers</button>
+ <button class="main-tab" onclick="switchTab(&#39;pl&#39;)">💰 P&amp;L</button>
 </div>
 
 <!-- ── Availability bar (calendar only) ── -->
@@ -10863,6 +10875,77 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 </div>
 
 <!-- ══ HC TICKET DESK ══ -->
+<div class="page" id="page-pl">
+ <div class="tk-bar">
+ <div style="font-size:15px;font-weight:700">💰 P&amp;L</div>
+ <label style="font-size:11px;color:var(--text2)">Month</label>
+ <input id="pl-month" class="tk-inp" type="month" onchange="plRender()">
+ <button class="tk-btn" onclick="initPL(true)">↻ Refresh</button>
+ <button class="tk-btn" onclick="plExportCSV()">⬇ CSV (12 months)</button>
+ <span id="pl-status" style="font-size:11px;color:var(--text3)"></span>
+ </div>
+ <div class="tk-kpis" id="pl-kpis"></div>
+ <div class="tk-page">
+  <div class="pl-grid">
+   <!-- Revenue -->
+   <div class="tk-card">
+    <div class="tk-card-h"><span>💵 Revenue</span><span id="pl-rev-src" style="font-weight:500;color:var(--text3);font-size:11px"></span></div>
+    <div style="padding:14px">
+     <label class="qt-lbl" for="pl-rev">Revenue for the month (AED)</label>
+     <input id="pl-rev" class="qt-input" type="number" min="0" step="0.01" placeholder="Leave empty to use revenue from orders">
+     <label class="qt-lbl" for="pl-rev-note">Note <span class="ri-opt">(optional)</span></label>
+     <input id="pl-rev-note" class="qt-input" type="text" placeholder="e.g. from finance, net of refunds">
+     <div id="pl-rev-orders" style="font-size:11px;color:var(--text2);margin:2px 0 12px;line-height:1.6"></div>
+     <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="tk-btn pri" onclick="plSaveRevenue()">Save revenue</button>
+      <button class="tk-btn" onclick="plUseOrderRevenue()">Use revenue from orders</button>
+     </div>
+    </div>
+   </div>
+   <!-- Marketing -->
+   <div class="tk-card">
+    <div class="tk-card-h"><span>📣 Marketing expense</span><span id="pl-mk-total" style="font-family:monospace"></span></div>
+    <div style="padding:14px 14px 4px">
+     <div class="pl-mk-form">
+      <select id="pl-mk-ch" class="tk-inp"></select>
+      <input id="pl-mk-amt" class="tk-inp" type="number" min="0" step="0.01" placeholder="Amount (AED)">
+      <input id="pl-mk-note" class="tk-inp" type="text" placeholder="Note (optional)">
+      <button class="tk-btn pri" onclick="plAddMarketing()">+ Add</button>
+     </div>
+    </div>
+    <div class="tk-scroll" style="max-height:260px"><table class="tk-tbl" id="pl-mk-tbl"></table></div>
+   </div>
+  </div>
+  <!-- HC invoices -->
+  <div class="tk-card">
+   <div class="tk-card-h"><span>🧾 Homecare invoices</span><span id="pl-inv-total" style="font-family:monospace"></span></div>
+   <div style="padding:14px 14px 4px">
+    <div class="pl-inv-form">
+     <div><label class="qt-lbl" for="pl-inv-hc">Homecare</label><select id="pl-inv-hc" class="qt-input"></select></div>
+     <div><label class="qt-lbl" for="pl-inv-no">Invoice no.</label><input id="pl-inv-no" class="qt-input" type="text" placeholder="e.g. INV-1042"></div>
+     <div><label class="qt-lbl" for="pl-inv-date">Invoice date</label><input id="pl-inv-date" class="qt-input" type="date"></div>
+     <div><label class="qt-lbl" for="pl-inv-amt">Amount excl. VAT (AED)</label><input id="pl-inv-amt" class="qt-input" type="number" min="0" step="0.01"></div>
+     <div><label class="qt-lbl" for="pl-inv-vat">VAT (AED) <span class="ri-opt">(optional)</span></label><input id="pl-inv-vat" class="qt-input" type="number" min="0" step="0.01"></div>
+     <div><label class="qt-lbl" for="pl-inv-file">Invoice file <span class="ri-opt">(PDF or image, max 10 MB)</span></label><input id="pl-inv-file" class="qt-input" type="file" accept="application/pdf,image/*" onchange="plPickFile(this)"></div>
+    </div>
+    <div id="pl-inv-chip" style="font-size:11px;margin-bottom:8px"></div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:10px">The invoice is booked against the month picked at the top. Its cost counts in GM1 for that month.</div>
+    <button class="tk-btn pri" id="pl-inv-save" onclick="plSaveInvoice()" style="margin-bottom:12px">⬆ Upload invoice</button>
+   </div>
+   <div class="tk-scroll" style="max-height:340px"><table class="tk-tbl" id="pl-inv-tbl"></table></div>
+  </div>
+  <!-- Per HC -->
+  <div class="tk-card">
+   <div class="tk-card-h"><span>🏥 GM1 by homecare</span><span style="font-weight:500;color:var(--text3);font-size:11px">Revenue from orders · cost from invoices</span></div>
+   <div class="tk-scroll"><table class="tk-tbl" id="pl-hc-tbl"></table></div>
+  </div>
+  <!-- Trend -->
+  <div class="tk-card">
+   <div class="tk-card-h"><span>📈 Last 12 months</span></div>
+   <div class="tk-scroll"><table class="tk-tbl" id="pl-trend-tbl"></table></div>
+  </div>
+ </div>
+</div>
 <div class="page" id="page-tickets">
  <div class="tk-bar">
  <div style="font-size:15px;font-weight:700">🎫 HC Ticket Desk</div>
@@ -12654,13 +12737,14 @@ function switchTab(tab){
   if(_session&&_session.role==='hc'&&tab!=='calendar'&&tab!=='roster'&&tab!=='complaints'&&tab!=='tickets'&&tab!=='leave'&&tab!=='avail'&&tab!=='ops'&&!(tab==='transport'&&trIsShifa())){alert('Access restricted');return;}
   // Client accounts (e.g. Mumzworld): their own order list + tickets only
   if(_session&&_session.role==='client'&&tab!=='mumz'&&tab!=='tickets'){alert('Access restricted');return;}
+  if(tab==='pl'&&_session&&_session.role!=='master'){alert('Master access only');return;}
   if(tab==='roster'){setTimeout(switchToRoster,80);}
   if(tab==='daily'){setTimeout(switchToDaily,80);}
   if(tab==='mumz'){setTimeout(switchToMumz,80);}
   var _tabLbl={calendar:'calendar',analytics:'analytics',ops:'operations',planner:'schedule builder',roster:'roster',
     daily:'daily orders',supply:'supply',customleads:'lead tracker',bsleads:'babysitting leads',
     complaints:'complaint',penalty:'penalty',expecting:'expecting',tickets:'hc tickets',leave:'leave applications',
-    mumz:'mumzworld orders', avail:'availability search', transport:'transport charges'}[tab]||tab;
+    mumz:'mumzworld orders', avail:'availability search', transport:'transport charges', pl:'p&l'}[tab]||tab;
   document.querySelectorAll('.main-tab').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase().includes(_tabLbl)));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   var _pg=document.getElementById('page-'+tab);if(_pg)_pg.classList.add('active');
@@ -12678,6 +12762,7 @@ function switchTab(tab){
   if(tab==='expecting'){initExpecting();}
   if(tab==='supply'){if(_session&&_session.role!=='master'){alert('Master access only');return;}loadSupply();}
   if(tab==='penalty'){if(_session&&_session.role!=='master'){alert('Master access only');return;}loadPenalties();}
+  if(tab==='pl'){initPL();}
 }
 
 
@@ -22361,5 +22446,283 @@ if(checkExistingSession()){
 
 
 
+
+<script>
+// ═════════════════════════════════════════════════════════════════
+// P&L — revenue, homecare invoices, marketing → GM1 / GM2 (master only)
+//   GM1 = Revenue − Homecare invoice cost (excl. VAT)
+//   GM2 = GM1 − Marketing expense
+// Firestore:
+//   valeo_pl_months/{YYYY-MM}  {revenue, revenue_note, updated_at, updated_by}
+//   valeo_pl_marketing/{id}    {period, channel, amount, note, created_at, created_by}
+//   valeo_hc_invoices/{id}     {period, homecare, invoice_no, invoice_date, amount, vat, attachment, ...}
+// Invoice files: ≤700 KB inside the doc, bigger ones in Firebase Storage (same as leave).
+// ═════════════════════════════════════════════════════════════════
+var _PL_MONTHS = 'valeo_pl_months', _PL_MK = 'valeo_pl_marketing', _PL_INV = 'valeo_hc_invoices';
+var PL_CHANNELS = ['Meta Ads','Google Ads','TikTok Ads','Snapchat Ads','Influencers','Agency / Freelancer','Offline / Events','Referral / Discounts','Other'];
+var PL_MAX_FILE = 10 * 1024 * 1024;
+var _pl = {loaded:false, months:{}, mk:[], inv:[], file:null, busy:false};
+
+function plIsMaster(){ return !_session || _session.role === 'master'; }
+function plUser(){ return (_session && _session.username) || 'unknown'; }
+function plAED(n){ n = Math.round((+n||0)); return (n < 0 ? '−' : '') + 'AED ' + Math.abs(n).toLocaleString(); }
+function plPct(a, b){ return b ? (Math.round(a / b * 1000) / 10) + '%' : '—'; }
+function plCls(n){ return n < 0 ? 'pl-neg' : 'pl-pos'; }
+function plMonth(){ var el = document.getElementById('pl-month'); return (el && el.value) || avToday().slice(0,7); }
+function plMonthLabel(p){ var a = p.split('-'); return MONTHS[+a[1]-1].slice(0,3) + ' ' + a[0]; }
+function plShiftMonth(p, d){ var a = p.split('-'), dt = new Date(+a[0], +a[1]-1+d, 1); return dt.getFullYear() + '-' + pad(dt.getMonth()+1); }
+function plNum(id){ var v = String((document.getElementById(id)||{}).value||'').trim(); return v === '' ? null : parseFloat(v); }
+
+async function initPL(force){
+  if(!plIsMaster()){ alert('Master access only'); return; }
+  var m = document.getElementById('pl-month'); if(m && !m.value) m.value = avToday().slice(0,7);
+  var ch = document.getElementById('pl-mk-ch');
+  if(ch && !ch.options.length) ch.innerHTML = PL_CHANNELS.map(function(c){ return '<option>' + tkEsc(c) + '</option>'; }).join('');
+  plFillHC();
+  if(_pl.loaded && !force){ plRender(); return; }
+  plStatus('Loading…');
+  try{
+    if(!_db) await initFirebase();
+    if(!_db) throw new Error('Firebase not connected');
+    var r = await Promise.all([_db.collection(_PL_MONTHS).get(), _db.collection(_PL_MK).get(), _db.collection(_PL_INV).get()]);
+    _pl.months = {}; r[0].forEach(function(d){ _pl.months[d.id] = d.data(); });
+    _pl.mk = [];  r[1].forEach(function(d){ _pl.mk.push(Object.assign({_id:d.id}, d.data())); });
+    _pl.inv = []; r[2].forEach(function(d){ _pl.inv.push(Object.assign({_id:d.id}, d.data())); });
+    _pl.loaded = true; plStatus('');
+  }catch(e){ console.warn('[pl]', e); plStatus('Could not load — ' + e.message, true); return; }
+  plRender();
+}
+function plStatus(t, err){ var s = document.getElementById('pl-status'); if(s){ s.textContent = t; s.style.color = err ? 'var(--absent)' : 'var(--text3)'; } }
+function plFillHC(){
+  var s = document.getElementById('pl-inv-hc'); if(!s) return;
+  var cur = s.value, list = tkHomecares();
+  _pl.inv.forEach(function(i){ if(i.homecare && !list.some(function(h){ return tkHCMatch(h, i.homecare); })) list.push(i.homecare); });
+  s.innerHTML = '<option value="">Choose homecare…</option>' + list.sort().map(function(h){ return '<option>' + tkEsc(h) + '</option>'; }).join('');
+  if(cur) s.value = cur;
+}
+
+// ── Revenue from orders (rawData), by homecare ───────────────────
+// An order counts in the month its service starts; cancelled / temp / unassigned never count.
+function plOrderRevenue(p){
+  var seen = {}, byHC = {}, total = 0, n = 0;
+  (rawData||[]).forEach(function(r){
+    if(!r.final_price || !r.date || r.date.slice(0,7) !== p) return;
+    if(revenueExcludeReason(r)) return;
+    var k = r.child_order_id || r.order_id || (r.caregiver + '|' + r.date);
+    if(seen[k]) return; seen[k] = 1;
+    var v = parseFloat(r.final_price) || 0;
+    total += v; n++;
+    var hc = r.homecare || '—'; byHC[hc] = (byHC[hc]||0) + v;
+  });
+  return {total:total, n:n, byHC:byHC};
+}
+function plCalc(p){
+  var o = plOrderRevenue(p), md = _pl.months[p] || {};
+  var manual = (md.revenue !== undefined && md.revenue !== null && md.revenue !== '');
+  var rev = manual ? +md.revenue : o.total;
+  var inv = _pl.inv.filter(function(i){ return i.period === p; });
+  var cost = inv.reduce(function(s,i){ return s + (+i.amount||0); }, 0);
+  var mk = _pl.mk.filter(function(x){ return x.period === p; });
+  var mkt = mk.reduce(function(s,x){ return s + (+x.amount||0); }, 0);
+  var gm1 = rev - cost, gm2 = gm1 - mkt;
+  return {p:p, rev:rev, manual:manual, orders:o, inv:inv, cost:cost, mk:mk, mkt:mkt, gm1:gm1, gm2:gm2};
+}
+
+// ── Render ───────────────────────────────────────────────────────
+function plRender(){
+  if(!_pl.loaded) return;
+  var p = plMonth(), c = plCalc(p), md = _pl.months[p] || {};
+  var kpi = function(v, l, cls){ return '<div class="tk-kpi"><div class="tk-kpi-v ' + (cls||'') + '">' + v + '</div><div class="tk-kpi-l">' + l + '</div></div>'; };
+  document.getElementById('pl-kpis').innerHTML =
+      kpi(plAED(c.rev), 'Revenue' + (c.manual ? '' : ' (from orders)'))
+    + kpi(plAED(c.cost), 'Homecare cost')
+    + kpi(plAED(c.gm1), 'GM1', plCls(c.gm1)) + kpi(plPct(c.gm1, c.rev), 'GM1 %', plCls(c.gm1))
+    + kpi(plAED(c.mkt), 'Marketing')
+    + kpi(plAED(c.gm2), 'GM2', plCls(c.gm2)) + kpi(plPct(c.gm2, c.rev), 'GM2 %', plCls(c.gm2));
+
+  // revenue card
+  var ri = document.getElementById('pl-rev'), rn = document.getElementById('pl-rev-note');
+  if(document.activeElement !== ri) ri.value = c.manual ? md.revenue : '';
+  if(document.activeElement !== rn) rn.value = md.revenue_note || '';
+  document.getElementById('pl-rev-src').textContent = c.manual
+    ? 'Entered' + (md.updated_by ? ' by ' + md.updated_by : '') + (md.updated_at ? ' · ' + String(md.updated_at).slice(0,10) : '')
+    : 'Not entered — using orders';
+  document.getElementById('pl-rev-orders').innerHTML = 'From orders in ' + plMonthLabel(p) + ': <b>' + plAED(c.orders.total) + '</b> (' + c.orders.n
+    + ' orders, by service start date; cancelled, temp and unassigned excluded).' + (rawData && rawData.length ? '' : ' <span style="color:var(--sick)">Order data not loaded yet.</span>');
+
+  // marketing
+  document.getElementById('pl-mk-total').textContent = plAED(c.mkt);
+  document.getElementById('pl-mk-tbl').innerHTML = c.mk.length
+    ? '<thead><tr><th>Channel</th><th style="text-align:right">Amount</th><th>Note</th><th>Added by</th><th></th></tr></thead><tbody>'
+      + c.mk.sort(function(a,b){ return (+b.amount||0) - (+a.amount||0); }).map(function(x){
+          return '<tr><td>' + tkEsc(x.channel) + '</td><td class="pl-num">' + plAED(x.amount) + '</td><td>' + tkEsc(x.note||'') + '</td>'
+            + '<td style="color:var(--text3)">' + tkEsc(x.created_by||'') + '</td>'
+            + '<td><button class="pl-x" title="Delete" onclick="plDelMarketing(\'' + x._id + '\')">✕</button></td></tr>';
+        }).join('') + '</tbody>'
+    : '<tbody><tr><td class="tk-empty">No marketing expense for ' + plMonthLabel(p) + ' yet.</td></tr></tbody>';
+
+  // invoices
+  document.getElementById('pl-inv-total').textContent = plAED(c.cost) + ' excl. VAT';
+  document.getElementById('pl-inv-tbl').innerHTML = c.inv.length
+    ? '<thead><tr><th>Homecare</th><th>Invoice no.</th><th>Invoice date</th><th style="text-align:right">Amount</th><th style="text-align:right">VAT</th><th>File</th><th>Uploaded</th><th></th></tr></thead><tbody>'
+      + c.inv.sort(function(a,b){ return String(a.homecare).localeCompare(String(b.homecare)); }).map(function(i){
+          return '<tr><td><b>' + tkEsc(i.homecare) + '</b></td><td>' + tkEsc(i.invoice_no||'—') + '</td><td>' + tkEsc(i.invoice_date||'—') + '</td>'
+            + '<td class="pl-num">' + plAED(i.amount) + '</td><td class="pl-num" style="color:var(--text3)">' + (i.vat ? plAED(i.vat) : '—') + '</td>'
+            + '<td>' + (i.attachment ? '<a href="#" onclick="event.preventDefault();plViewFile(\'' + i._id + '\')">📎 ' + tkEsc(i.attachment.name||'file') + '</a>' : '<span style="color:var(--sick)">no file</span>') + '</td>'
+            + '<td style="color:var(--text3)">' + tkEsc(i.created_by||'') + (i.created_at ? ' · ' + String(i.created_at).slice(0,10) : '') + '</td>'
+            + '<td><button class="pl-x" title="Delete" onclick="plDelInvoice(\'' + i._id + '\')">✕</button></td></tr>';
+        }).join('') + '</tbody>'
+    : '<tbody><tr><td class="tk-empty">No homecare invoices uploaded for ' + plMonthLabel(p) + ' yet.</td></tr></tbody>';
+
+  // GM1 by homecare
+  var hcs = {};
+  Object.keys(c.orders.byHC).forEach(function(h){ hcs[tkNorm(h)] = {name:h, rev:c.orders.byHC[h], cost:0, n:0}; });
+  c.inv.forEach(function(i){ var k = tkNorm(i.homecare); if(!hcs[k]) hcs[k] = {name:i.homecare, rev:0, cost:0, n:0}; hcs[k].cost += (+i.amount||0); hcs[k].n++; });
+  var rows = Object.values(hcs).sort(function(a,b){ return b.rev - a.rev; });
+  document.getElementById('pl-hc-tbl').innerHTML = rows.length
+    ? '<thead><tr><th>Homecare</th><th style="text-align:right">Revenue (orders)</th><th style="text-align:right">Invoice cost</th><th style="text-align:right">GM1</th><th style="text-align:right">GM1 %</th></tr></thead><tbody>'
+      + rows.map(function(h){
+          var g = h.rev - h.cost;
+          return '<tr><td><b>' + tkEsc(h.name) + '</b>' + (h.n ? '' : ' <span class="tk-pill" style="color:var(--sick)">no invoice</span>') + '</td>'
+            + '<td class="pl-num">' + plAED(h.rev) + '</td><td class="pl-num">' + plAED(h.cost) + '</td>'
+            + '<td class="pl-num ' + plCls(g) + '">' + plAED(g) + '</td><td class="pl-num ' + plCls(g) + '">' + plPct(g, h.rev) + '</td></tr>';
+        }).join('') + '</tbody>'
+    : '<tbody><tr><td class="tk-empty">No orders or invoices for ' + plMonthLabel(p) + '.</td></tr></tbody>';
+
+  // 12-month trend
+  var th = '<thead><tr><th>Month</th><th style="text-align:right">Revenue</th><th style="text-align:right">HC cost</th><th style="text-align:right">GM1</th><th style="text-align:right">GM1 %</th><th style="text-align:right">Marketing</th><th style="text-align:right">GM2</th><th style="text-align:right">GM2 %</th></tr></thead><tbody>';
+  document.getElementById('pl-trend-tbl').innerHTML = th + plTrend(p).map(function(t){
+    return '<tr style="cursor:pointer' + (t.p === p ? ';background:var(--bg3);font-weight:600' : '') + '" onclick="plGo(\'' + t.p + '\')"><td>' + plMonthLabel(t.p) + (t.manual ? '' : ' <span style="color:var(--text3);font-size:9px">rev from orders</span>') + '</td>'
+      + '<td class="pl-num">' + plAED(t.rev) + '</td><td class="pl-num">' + plAED(t.cost) + '</td>'
+      + '<td class="pl-num ' + plCls(t.gm1) + '">' + plAED(t.gm1) + '</td><td class="pl-num ' + plCls(t.gm1) + '">' + plPct(t.gm1, t.rev) + '</td>'
+      + '<td class="pl-num">' + plAED(t.mkt) + '</td>'
+      + '<td class="pl-num ' + plCls(t.gm2) + '">' + plAED(t.gm2) + '</td><td class="pl-num ' + plCls(t.gm2) + '">' + plPct(t.gm2, t.rev) + '</td></tr>';
+  }).join('') + '</tbody>';
+}
+function plTrend(p){ var out = []; for(var i = 11; i >= 0; i--) out.push(plCalc(plShiftMonth(p, -i))); return out; }
+function plGo(p){ document.getElementById('pl-month').value = p; plRender(); window.scrollTo({top:0, behavior:'smooth'}); }
+
+// ── Revenue ──────────────────────────────────────────────────────
+async function plSaveRevenue(){
+  var p = plMonth(), v = plNum('pl-rev'), note = String(document.getElementById('pl-rev-note').value||'').trim();
+  if(v !== null && (isNaN(v) || v < 0)){ alert('Enter a valid revenue amount.'); return; }
+  var doc = {revenue: v, revenue_note: note, updated_at: new Date().toISOString(), updated_by: plUser()};
+  try{
+    if(!_db) await initFirebase();
+    await _db.collection(_PL_MONTHS).doc(p).set(doc, {merge:true});
+    _pl.months[p] = Object.assign(_pl.months[p]||{}, doc);
+    plStatus(v === null ? 'Revenue cleared — using orders' : 'Revenue saved'); plRender();
+  }catch(e){ alert('Could not save: ' + e.message); }
+}
+function plUseOrderRevenue(){
+  var o = plOrderRevenue(plMonth());
+  document.getElementById('pl-rev').value = Math.round(o.total * 100) / 100;
+  plSaveRevenue();
+}
+
+// ── Marketing ────────────────────────────────────────────────────
+async function plAddMarketing(){
+  var amt = plNum('pl-mk-amt');
+  if(amt === null || isNaN(amt) || amt <= 0){ alert('Enter the amount spent.'); return; }
+  var doc = {period: plMonth(), channel: document.getElementById('pl-mk-ch').value, amount: amt,
+    note: String(document.getElementById('pl-mk-note').value||'').trim(), created_at: new Date().toISOString(), created_by: plUser()};
+  try{
+    if(!_db) await initFirebase();
+    var ref = await _db.collection(_PL_MK).add(doc);
+    _pl.mk.push(Object.assign({_id:ref.id}, doc));
+    document.getElementById('pl-mk-amt').value = ''; document.getElementById('pl-mk-note').value = '';
+    plRender();
+  }catch(e){ alert('Could not save: ' + e.message); }
+}
+async function plDelMarketing(id){
+  var x = _pl.mk.find(function(m){ return m._id === id; }); if(!x) return;
+  if(!confirm('Delete ' + x.channel + ' · ' + plAED(x.amount) + '?')) return;
+  try{ await _db.collection(_PL_MK).doc(id).delete(); _pl.mk = _pl.mk.filter(function(m){ return m._id !== id; }); plRender(); }
+  catch(e){ alert('Could not delete: ' + e.message); }
+}
+
+// ── Invoices ─────────────────────────────────────────────────────
+async function plPickFile(input){
+  var chip = document.getElementById('pl-inv-chip'), file = input.files && input.files[0];
+  _pl.file = null;
+  if(!file){ chip.innerHTML = ''; return; }
+  if(file.size > PL_MAX_FILE){ chip.innerHTML = '<span style="color:var(--absent)">That file is ' + lvKB(file.size) + ' — max 10 MB.</span>'; input.value = ''; return; }
+  chip.innerHTML = 'Preparing ' + tkEsc(file.name) + '…';
+  try{
+    var shrunk = await lvShrinkImage(file);
+    var data = shrunk || await lvReadDataURL(file);
+    var bytes = Math.round((data.length - (data.indexOf(',')+1)) * 3 / 4);
+    _pl.file = {name:file.name, type: shrunk ? 'image/jpeg' : (file.type||'application/octet-stream'), size:bytes, data:data};
+    chip.innerHTML = '📎 ' + tkEsc(file.name) + ' · ' + lvKB(bytes) + (shrunk ? ' <span style="color:var(--text3)">(compressed)</span>' : '');
+  }catch(e){ chip.innerHTML = '<span style="color:var(--absent)">' + tkEsc(e.message) + '</span>'; }
+}
+async function plSaveInvoice(){
+  if(_pl.busy) return;
+  var hc = document.getElementById('pl-inv-hc').value, amt = plNum('pl-inv-amt'), vat = plNum('pl-inv-vat');
+  var no = String(document.getElementById('pl-inv-no').value||'').trim(), dt = document.getElementById('pl-inv-date').value, p = plMonth();
+  if(!hc){ alert('Choose the homecare.'); return; }
+  if(amt === null || isNaN(amt) || amt <= 0){ alert('Enter the invoice amount (excl. VAT).'); return; }
+  if(vat !== null && (isNaN(vat) || vat < 0)){ alert('VAT must be a positive number.'); return; }
+  if(no && _pl.inv.some(function(i){ return tkHCMatch(i.homecare, hc) && String(i.invoice_no||'').toLowerCase() === no.toLowerCase(); })
+     && !confirm('Invoice ' + no + ' from ' + hc + ' is already uploaded. Upload again?')) return;
+  if(!_pl.file && !confirm('No invoice file attached. Save without the file?')) return;
+  var btn = document.getElementById('pl-inv-save'); _pl.busy = true; btn.disabled = true; btn.textContent = 'Uploading…';
+  try{
+    if(!_db) await initFirebase();
+    var ref = 'inv_' + p + '_' + Date.now().toString(36);
+    var att = await plPersistFile(_pl.file, ref);
+    var doc = {period:p, homecare:hc, invoice_no:no, invoice_date:dt, amount:amt, vat:vat||0, attachment:att,
+      created_at:new Date().toISOString(), created_by:plUser()};
+    var r = await _db.collection(_PL_INV).add(doc);
+    _pl.inv.push(Object.assign({_id:r.id}, doc));
+    ['pl-inv-no','pl-inv-date','pl-inv-amt','pl-inv-vat','pl-inv-file'].forEach(function(id){ document.getElementById(id).value = ''; });
+    _pl.file = null; document.getElementById('pl-inv-chip').innerHTML = '';
+    plStatus('Invoice saved'); plRender();
+  }catch(e){ alert('Could not upload: ' + e.message); }
+  finally{ _pl.busy = false; btn.disabled = false; btn.textContent = '⬆ Upload invoice'; }
+}
+// small files ride inside the Firestore doc; bigger ones go to Firebase Storage
+async function plPersistFile(f, ref){
+  if(!f) return null;
+  if(f.size <= LV_INLINE_CAP) return {name:f.name, type:f.type, size:f.size, mode:'inline', data:f.data};
+  var st = lvStorage();
+  if(!st) throw new Error('That file is ' + lvKB(f.size) + ' and Firebase Storage is not available — attach a file under ' + lvKB(LV_INLINE_CAP) + '.');
+  var path = 'hc-invoices/' + ref + '_' + String(f.name).replace(/[^A-Za-z0-9._-]/g,'_');
+  var snap = await st.ref(path).putString(f.data, 'data_url');
+  return {name:f.name, type:f.type, size:f.size, mode:'storage', url:await snap.ref.getDownloadURL(), path:path};
+}
+function plViewFile(id){
+  var i = _pl.inv.find(function(x){ return x._id === id; }); if(!i || !i.attachment) return;
+  var a = i.attachment, src = a.mode === 'storage' ? a.url : a.data;
+  if(!src) return;
+  if(a.mode === 'storage'){ window.open(src, '_blank'); return; }
+  var w = window.open('', '_blank'); if(!w){ alert('Please allow pop-ups to view the invoice.'); return; }
+  var body = /^image\//.test(a.type) ? '<img src="' + src + '" style="max-width:100%;height:auto">' : '<iframe src="' + src + '" style="border:0;width:100%;height:100vh"></iframe>';
+  w.document.write('<title>' + tkEsc(a.name||'invoice') + '</title><body style="margin:0;background:#111">' + body + '</body>');
+  w.document.close();
+}
+async function plDelInvoice(id){
+  var i = _pl.inv.find(function(x){ return x._id === id; }); if(!i) return;
+  if(!confirm('Delete invoice ' + (i.invoice_no||'') + ' from ' + i.homecare + ' (' + plAED(i.amount) + ')?')) return;
+  try{
+    await _db.collection(_PL_INV).doc(id).delete();
+    if(i.attachment && i.attachment.mode === 'storage' && i.attachment.path){ try{ await lvStorage().ref(i.attachment.path).delete(); }catch(e){ console.warn('[pl] file delete', e); } }
+    _pl.inv = _pl.inv.filter(function(x){ return x._id !== id; }); plRender();
+  }catch(e){ alert('Could not delete: ' + e.message); }
+}
+
+// ── Export ───────────────────────────────────────────────────────
+function plExportCSV(){
+  if(!_pl.loaded) return;
+  var r2 = function(n){ return Math.round(n * 100) / 100; };
+  var lines = [['Month','Revenue','Revenue source','HC cost (excl VAT)','GM1','GM1 %','Marketing','GM2','GM2 %'].join(',')];
+  plTrend(plMonth()).forEach(function(t){
+    lines.push([t.p, r2(t.rev), t.manual ? 'entered' : 'orders', r2(t.cost), r2(t.gm1), plPct(t.gm1, t.rev), r2(t.mkt), r2(t.gm2), plPct(t.gm2, t.rev)].join(','));
+  });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([lines.join('\n')], {type:'text/csv'}));
+  a.download = 'valeo-pl-' + plMonth() + '.csv'; a.click();
+}
+</script>
 
 </body></html>
