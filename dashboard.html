@@ -11395,6 +11395,23 @@ function expandOrders(orders){
   return res;
 }
 
+// ── Scope filter: UAE orders with status Nurse Assigned / Completed only ──
+// Country: any column whose name contains "country" (Country, User_Country, ...).
+// Rows with no country column at all are kept (the source sheet is UAE-only).
+// Status: Order_Status compared without case/spaces/underscores.
+const ALLOWED_ORDER_STATUSES = ['nurseassigned','completed'];
+function _normKey(v){ return String(v==null?'':v).toLowerCase().replace(/[\s_\-]+/g,''); }
+function isUAERow(r){
+  const keys = Object.keys(r).filter(k=>/country/i.test(k));
+  if(!keys.length) return true;
+  return keys.some(k=>{ const v=_normKey(r[k]); return v==='uae'||v==='ae'||v==='unitedarabemirates'; });
+}
+function isAllowedStatusRow(r){
+  if(!('Order_Status' in r)) return true; // pre-transformed rows carry no Metabase status
+  return ALLOWED_ORDER_STATUSES.includes(_normKey(r['Order_Status']));
+}
+function inDashboardScope(r){ return isUAERow(r) && isAllowedStatusRow(r); }
+
 // ── Load via n8n proxy ──────────────────────────────────────────
 async function loadData(force=false){
   setSyncState('loading','Fetching...');
@@ -11432,7 +11449,7 @@ async function loadData(force=false){
     window._lastRows = rows;
 
     // Transform — handle both raw Metabase format and pre-transformed format
-    rawData=rows.filter(r=>(r['Nurse_Assigned']||r['caregiver'])&&(r['Confirmed_DateTime']||r['Booked_Slot']||r['date'])).map(r=>{
+    rawData=rows.filter(inDashboardScope).filter(r=>(r['Nurse_Assigned']||r['caregiver'])&&(r['Confirmed_DateTime']||r['Booked_Slot']||r['date'])).map(r=>{
       // If already transformed (has 'caregiver' field), use as-is
       if(r['caregiver']){
         // Resolve date: prefer r.date, fallback to Confirmed_DateTime, then Booked_Slot
@@ -14519,6 +14536,8 @@ function ocRun(){
       return;
     }
     h += step(true, 'Nurse assigned: <b>' + E(nurse) + '</b>');
+    if(!isUAERow(r)){ h += step(false, '<b>Not a UAE order.</b> The dashboard only shows orders where Country is UAE.') + '</div>'; return; }
+    if(!isAllowedStatusRow(r)){ h += step(false, '<b>Status "' + E(os || '—') + '" is filtered out.</b> The dashboard only shows orders with status <b>Nurse Assigned</b> or <b>Completed</b>.') + '</div>'; return; }
     if(!ds){ h += step(false, '<b>No date/slot.</b> <code>Confirmed_DateTime</code> and <code>Booked_Slot</code> are both empty, so the dashboard cannot place it on a day.') + '</div>'; return; }
     if(ds < '2026-01-01'){ h += step(false, '<b>Date is before 2026</b> (' + E(ds) + ') — older orders are ignored.') + '</div>'; return; }
     var excludedHC = ['Carezone Home Healthcare LLC','Dummy HomeCare','Helpful Agency','Nifas HC','babysitting KSA','Pyramid Home Health care'];
