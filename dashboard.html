@@ -654,6 +654,14 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .pl-ue{display:grid;grid-template-columns:minmax(280px,420px) 1fr;gap:16px;padding:12px 14px;border-bottom:1px solid var(--border)}
 .pl-ue-sum td{font-size:12px}
 @media(max-width:700px){.pl-ue{grid-template-columns:1fr}}
+.pl-qc{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:8px;padding:12px 14px}
+.pl-qc-row{display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg)}
+.pl-qc-row.need{border-color:rgba(210,153,34,.55)}
+.pl-qc-row.set{border-color:rgba(63,185,80,.5)}
+.pl-qc-n{flex:1;min-width:0;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pl-qc-s{font-size:10px;color:var(--text3);white-space:nowrap}
+.pl-up{border-top:1px solid var(--border)}
+.pl-up>summary{padding:10px 14px;font-size:12px;font-weight:600;color:var(--text2);cursor:pointer}
 .pl-cost-in{width:110px;text-align:right;font-family:monospace;font-size:12px;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:4px 6px}
 .pl-cost-in:focus{outline:none;border-color:var(--accent)}
 .pl-cost-in:placeholder-shown{border-style:dashed;border-color:rgba(210,153,34,.6)}
@@ -10997,7 +11005,9 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
   </div>
   <!-- HC invoices -->
   <div class="tk-card">
-   <div class="tk-card-h"><span>🧾 Homecare invoices <span style="font-weight:500;color:var(--text3)">— optional: upload a file, or just type each homecare's cost in the table below</span></span><span id="pl-inv-total" style="font-family:monospace"></span></div>
+   <div class="tk-card-h"><span>🧾 Homecare costs <span style="font-weight:500;color:var(--text3)">— type each homecare's cost for the month (excl. VAT) and press Enter; everything recalculates</span></span><span id="pl-inv-total" style="font-family:monospace"></span></div>
+   <div class="pl-qc" id="pl-qc"></div>
+   <details class="pl-up"><summary>⬆ Upload invoice file (optional)</summary>
    <div style="padding:14px 14px 4px">
     <div class="pl-inv-form">
      <div><label class="qt-lbl" for="pl-inv-hc">Homecare</label><select id="pl-inv-hc" class="qt-input" onfocus="plFillHC()" onmousedown="plFillHC()" onchange="plPickHC(this)"></select></div>
@@ -11012,6 +11022,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
     <button class="tk-btn pri" id="pl-inv-save" onclick="plSaveInvoice()" style="margin-bottom:12px">⬆ Upload invoice</button>
    </div>
    <div class="tk-scroll" style="max-height:340px"><table class="tk-tbl" id="pl-inv-tbl"></table></div>
+   </details>
   </div>
   <!-- Unit economics by homecare -->
   <div class="tk-card">
@@ -11025,7 +11036,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
      <b style="color:var(--text2)">Hours paid</b> = 288 h a month for each exclusive CG (pro rata by start / end date, pauses excluded) + booked hours for everyone else.
      <b style="color:var(--text2)">Paid used %</b> = paid hours actually worked; hours an exclusive CG works beyond 288 h show as "over" and are not counted.
      <b style="color:var(--text2)">SP</b> = Final Price spread evenly over each order's service days — Nurse Assigned, Completed and HC Assigned orders (⏳ = includes HC Assigned orders with no nurse yet).
-     <b style="color:var(--text2)">Cost</b> = that homecare's invoices for the month.
+     <b style="color:var(--text2)">Cost</b> = the amount entered for that homecare for the month (typed or from uploaded invoices).
      <b style="color:var(--text2)">Margin</b> = SP − Cost.
      <div id="pl-ue-note" style="color:var(--sick);margin-top:6px"></div>
     </div>
@@ -23051,11 +23062,23 @@ function plRenderUE(p, c){
       + '<td class="pl-num"' + (a.hcaSp ? ' title="Includes ' + n0(a.hcaSp) + ' from ' + a.hcaN + ' HC ASSIGNED orders with no nurse yet"' : '') + '>' + n0(a.sp) + (a.hcaSp ? ' <span style="color:#d29922;font-size:10px">⏳</span>' : '') + '</td><td class="pl-num">' + n2(a.hrs ? (a.sp - (a.hcaSp||0)) / a.hrs : 0) + '</td>'
       + '<td class="pl-num ' + plCls(m) + '">' + n0(m) + '</td><td class="pl-num ' + plCls(m) + '">' + plPct(m, a.sp) + '</td></tr>';
   };
+  // quick cost entry grid: every homecare with bookings, invoices or exclusive CGs this month
+  var qc = document.getElementById('pl-qc');
+  if(qc){
+    var names = list.map(function(a){ return a; });
+    plHCList().forEach(function(h){ if(!names.some(function(a){ return tkHCMatch(a.name, h); })) names.push({name:h, cost:0, bookings:0, sp:0}); });
+    qc.innerHTML = names.filter(function(a){ return a.name && a.name !== 'Unassigned'; }).map(function(a){
+      return '<label class="pl-qc-row' + (a.cost ? ' set' : (a.bookings ? ' need' : '')) + '"><span class="pl-qc-n" title="' + tkEsc(a.name) + '">' + tkEsc(a.name) + '</span>'
+        + (a.bookings ? '<span class="pl-qc-s">' + n0(a.sp) + ' SP</span>' : '<span class="pl-qc-s">no bookings</span>')
+        + '<input class="pl-cost-in" type="number" min="0" step="1" inputmode="decimal" data-hc="' + tkEsc(a.name) + '" value="' + (a.cost ? Math.round(a.cost*100)/100 : '') + '" placeholder="Cost"'
+        + ' onchange="plSetCost(this.dataset.hc,this.value)" onkeydown="if(event.key===\'Enter\')this.blur()"></label>';
+    }).join('');
+  }
   document.getElementById('pl-hc-tbl').innerHTML = list.length
     ? th + list.map(function(a){ return row(a); }).join('') + row(T, true) + '</tbody>'
     : '<tbody><tr><td class="tk-empty">No bookings or invoices for ' + plMonthLabel(p) + '.</td></tr></tbody>';
   document.getElementById('pl-ue-note').textContent = miss
-    ? miss + ' homecare' + (miss > 1 ? 's have' : ' has') + ' bookings but no invoice for ' + plMonthLabel(p) + ' — their cost shows as 0 until one is uploaded.'
+    ? miss + ' homecare' + (miss > 1 ? 's have' : ' has') + ' bookings but no cost for ' + plMonthLabel(p) + ' — type it in 🧾 Homecare costs above (their cost counts as 0 until then).'
     : '';
 }
 function plExportUE(){
