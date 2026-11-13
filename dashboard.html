@@ -515,6 +515,11 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .r-exit-btn{background:none;border:1px solid var(--border);color:var(--text3);border-radius:5px;font-size:9px;padding:0 5px;line-height:15px;cursor:pointer;font-family:'Inter',sans-serif;}
 .r-exit-btn:hover{border-color:var(--absent);color:var(--absent);}
 .r-exit-tag{display:inline-block;font-size:8px;font-weight:700;padding:0 5px;line-height:15px;border-radius:6px;background:rgba(248,81,73,.15);color:#f85149;}
+.r-date-tag{cursor:pointer;margin-right:2px}
+.r-date-tag:hover{filter:brightness(1.25)}
+.r-join-tag.inferred{background:transparent;border:1px dashed rgba(63,185,80,.6)}
+.r-exit-tag.none{background:var(--bg3);color:var(--text3)}
+.r-util sup{font-size:7px;margin-left:1px;opacity:.8}
 .r-join-tag{display:inline-block;font-size:8px;font-weight:700;padding:0 5px;line-height:15px;border-radius:6px;background:rgba(63,185,80,.15);color:#3fb950;}
 /* ── Caregiver lifecycle modal ── */
 .lc-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:900;align-items:center;justify-content:center;padding:16px;}
@@ -19275,10 +19280,30 @@ function rosterDayHours(r){
   else { list = r.active && r.active.length ? r.active : [r.rec]; list.forEach(function(b){ h += pkg(b) || span(b); }); }
   return Math.min(h, 24);
 }
+// Start date for pro rata: the joining date if set, otherwise the caregiver's first order
+var _rsFirst = {sig:'', m:{}};
+function rosterCGStart(cg, hc){
+  var j = getCGJoin(cg, hc); if(j) return {date:j, set:true};
+  var sig = (rawData||[]).length + '|' + Object.keys(manualCGs||{}).length;
+  if(_rsFirst.sig !== sig){
+    _rsFirst = {sig:sig, m:{}};
+    (rawData||[]).forEach(function(r){ if(!r.caregiver || !r.date) return; var k = r.caregiver + '|' + tkNorm(r.homecare); if(!_rsFirst.m[k] || r.date < _rsFirst.m[k]) _rsFirst.m[k] = r.date; });
+  }
+  var f = _rsFirst.m[cg + '|' + tkNorm(hc)] || '';
+  return {date:f, set:false};
+}
+function rosterDatesTag(cg, hc, sn, sh){
+  var st = rosterCGStart(cg, hc), ex = getCGExit(cg, hc);
+  var fmt = function(d){ return d ? parseInt(d.slice(8)) + ' ' + MONTHS[+d.slice(5,7)-1].slice(0,3) + (d.slice(0,4) !== String(new Date().getFullYear()) ? ' ' + d.slice(2,4) : '') : ''; };
+  var click = ' onclick="event.stopPropagation();openLifecycle(\'' + sn + '\',\'' + sh + '\')"';
+  return '<span class="r-join-tag r-date-tag' + (st.set ? '' : ' inferred') + '"' + click + ' title="' + (st.set ? 'Start date ' + st.date : st.date ? 'No start date set — using first order ' + st.date + '. Click to set.' : 'No start date set. Click to set.') + '">▶ ' + (fmt(st.date) || 'start?') + '</span>'
+    + '<span class="r-exit-tag r-date-tag' + (ex ? '' : ' none') + '"' + click + ' title="' + (ex ? 'End date ' + ex + ' (left from this day)' : 'No end date — still active. Click to set.') + '">🚪 ' + (fmt(ex) || 'active') + '</span>';
+}
 function rosterUtilCell(c){
   if(!c.cap) return '<span class="r-util na" title="No available hours in this range">—</span>';
   var p=Math.min(Math.round(c.hrs/c.cap*100),100), cls=p>=70?'hi':p>=40?'mid':'lo';
-  return '<span class="r-util '+cls+'" title="Utilisation: '+Math.round(c.hrs)+'h worked of '+Math.round(c.cap)+'h available (288h a month per caregiver; sick, leave and week-off days count as available; days before joining, after leaving and on pause do not)">'+p+'%</span>';
+  var pr=(c.days && c.avail<c.days) ? ' · pro rata '+c.avail+' of '+c.days+' days' : '';
+  return '<span class="r-util '+cls+'" title="Utilisation: '+Math.round(c.hrs)+'h worked of '+Math.round(c.cap)+'h available'+pr+'. Capacity is 288h a month per caregiver, counted only from their start date to their end date (pauses excluded); sick, leave and week-off days count as available.">'+p+'%'+(pr?'<sup>pr</sup>':'')+'</span>';
 }
 function toggleShowExited(){
   rosterShowExited=!rosterShowExited;
@@ -19475,8 +19500,7 @@ function renderRoster(){
           +'<span class="rc h" title="Public holiday">H'+_mc.holiday+'</span>'
         +'</div>'
         +'<div class="r-row-acts">'
-          +(_exit?'<span class="r-exit-tag" title="Removed from '+_exit+' onward">🚪 '+_exit.slice(5)+'</span>'
-                 :(_join?'<span class="r-join-tag" title="Joined '+_join+'">▶ '+_join.slice(5)+'</span>':''))
+          +rosterDatesTag(cgName,hcVal,_safeN0,_safeH0)
           +cxBadge(cgName,hcVal,true)
           +'<button class="r-exit-btn" onclick="event.stopPropagation();offboardCG(\''+_safeN0+'\',\''+_safeH0+'\')" title="Caregiver resigned / removed — set the date they leave from">'+(_exit?'Edit exit':'✕ Remove')+'</button>'
         +'</div>'
@@ -22025,11 +22049,12 @@ function rosterMonthCounts(cg, hc, y, m, idx, wo){
 function rosterRangeCounts(cg, hc, dates, idx, wo){
   idx = idx || rosterDayIndex();
   wo  = wo  || rosterWoLookup();
-  var c = {duty:0, manual:0, dayoff:0, weekoff:0, sick:0, paid:0, unpaid:0, holiday:0, cancelled:0, pause:0, worked:0, avail:0, hrs:0, cap:0};
+  var _st = rosterCGStart(cg, hc);   // joining date, or first order when none is set
+  var c = {duty:0, manual:0, dayoff:0, weekoff:0, sick:0, paid:0, unpaid:0, holiday:0, cancelled:0, pause:0, worked:0, avail:0, hrs:0, cap:0, days:dates.length};
   for(var i=0; i<dates.length; i++){
     var ds = dates[i];
     var r  = rosterDay(cg, hc, ds, idx, wo);
-    if(r.code !== 'pre' && r.code !== 'exited' && r.code !== 'pause'){
+    if(r.code !== 'pre' && r.code !== 'exited' && r.code !== 'pause' && !(_st.date && ds < _st.date)){
       c.avail++;
       c.cap += rosterCapPerDay(ds);           // sick, leave and week-off days stay in capacity
     }
