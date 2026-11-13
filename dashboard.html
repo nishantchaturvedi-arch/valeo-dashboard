@@ -11020,6 +11020,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
      <b style="color:var(--text2)">Working days</b> = distinct caregiver + date.
      <b style="color:var(--text2)">Hours served</b> from the package (e.g. "12 hours").
      <b style="color:var(--text2)">Hours paid</b> = 288 h a month for each exclusive CG (pro rata by start / end date, pauses excluded) + booked hours for everyone else.
+     <b style="color:var(--text2)">Paid used %</b> = paid hours actually worked; hours an exclusive CG works beyond 288 h show as "over" and are not counted.
      <b style="color:var(--text2)">SP</b> = Final Price spread evenly over each order's service days.
      <b style="color:var(--text2)">Cost</b> = that homecare's invoices for the month.
      <b style="color:var(--text2)">Margin</b> = SP − Cost.
@@ -22959,15 +22960,20 @@ function plPaidHours(p, rows){
   var y = +p.slice(0,4), m = +p.slice(5,7), dim = new Date(y, m, 0).getDate(), dates = [];
   for(var d = 1; d <= dim; d++) dates.push(p + '-' + pad(d));
   var idx = rosterDayIndex(), wo = rosterWoLookup();
-  Object.keys(rows).forEach(function(k){ var a = rows[k]; a.paid = 0; a.exPaid = 0; a.exServed = 0; a.nEx = 0;
+  Object.keys(rows).forEach(function(k){ var a = rows[k]; a.paid = 0; a.exPaid = 0; a.exServed = 0; a.exUsed = 0; a.exOver = 0; a.nEx = 0;
     Object.keys(a.cgs||{}).forEach(function(cg){ if(!isExclusiveCG(cg, a.name)) a.paid += a.cgs[cg]; }); });
   exAllCGs().forEach(function(c){
     if(!isExclusiveCG(c.name, c.hc)) return;
     var cap = rosterRangeCounts(c.name, c.hc, dates, idx, wo).cap; if(cap <= 0) return;
     var k = tkNorm(c.hc);
-    if(!rows[k]) rows[k] = {name:c.hc, bookings:0, wdays:0, hrs:0, sp:0, cost:0, inv:0, ncg:0, cgs:{}, paid:0, exPaid:0, exServed:0, nEx:0};
-    var a = rows[k]; a.nEx++; a.exPaid += cap; a.paid += cap; a.exServed += (a.cgs && a.cgs[c.name]) || 0;
+    if(!rows[k]) rows[k] = {name:c.hc, bookings:0, wdays:0, hrs:0, sp:0, cost:0, inv:0, ncg:0, cgs:{}, paid:0, exPaid:0, exServed:0, exUsed:0, exOver:0, nEx:0};
+    var a = rows[k], sv = (a.cgs && a.cgs[c.name]) || 0;
+    a.nEx++; a.exPaid += cap; a.paid += cap; a.exServed += sv;
+    a.exUsed += Math.min(sv, cap);                 // paid hours actually used
+    a.exOver += Math.max(sv - cap, 0);             // worked beyond the 288h we pay — not paid extra
   });
+  // hours of the paid hours that were used: booked hours of non-exclusive CGs + exclusive hours up to their paid hours
+  Object.keys(rows).forEach(function(k){ var a = rows[k]; a.used = (a.hrs - a.exServed) + a.exUsed; });
 }
 function plRenderUE(p, c){
   var u = c.orders.ue, rows = {};
@@ -22979,7 +22985,7 @@ function plRenderUE(p, c){
   });
   plPaidHours(p, rows);
   var list = Object.values(rows).sort(function(a,b){ return b.bookings - a.bookings || b.sp - a.sp; });
-  var T = list.reduce(function(t,a){ t.bookings += a.bookings; t.wdays += a.wdays; t.hrs += a.hrs; t.cost += a.cost; t.sp += a.sp; t.paid += a.paid||0; t.exPaid += a.exPaid||0; t.exServed += a.exServed||0; t.nEx += a.nEx||0; return t; }, {bookings:0, wdays:0, hrs:0, cost:0, sp:0, paid:0, exPaid:0, exServed:0, nEx:0});
+  var T = list.reduce(function(t,a){ t.bookings += a.bookings; t.wdays += a.wdays; t.hrs += a.hrs; t.cost += a.cost; t.sp += a.sp; t.paid += a.paid||0; t.exPaid += a.exPaid||0; t.exServed += a.exServed||0; t.exOver += a.exOver||0; t.used += a.used||0; t.nEx += a.nEx||0; return t; }, {bookings:0, wdays:0, hrs:0, cost:0, sp:0, paid:0, exPaid:0, exServed:0, exOver:0, used:0, nEx:0});
   var n0 = function(n){ return Math.round(n||0).toLocaleString(); };
   var n2 = function(n){ return n ? (Math.round(n*100)/100).toFixed(2) : '—'; };
   var miss = list.filter(function(a){ return a.bookings && !a.inv; }).length;
@@ -22993,8 +22999,9 @@ function plRenderUE(p, c){
     + line('Hours paid', n0(T.paid))
     + line('&nbsp;&nbsp;· exclusive (' + T.nEx + ' CGs × 288h pro rata)', n0(T.exPaid))
     + line('&nbsp;&nbsp;· non-exclusive (booked hours)', n0(T.paid - T.exPaid))
-    + line('Paid hours not served', n0(Math.max(T.paid - T.hrs, 0)), (T.paid - T.hrs) > 0 ? 'pl-neg' : '')
-    + line('Paid hours used %', plPct(T.hrs, T.paid))
+    + line('Paid hours not used', n0(Math.max(T.paid - T.used, 0)), (T.paid - T.used) > 0 ? 'pl-neg' : '')
+    + line('Paid hours used %', plPct(T.used, T.paid))
+    + (T.exOver ? line('Exclusive hours above 288h (no extra pay)', '+' + n0(T.exOver)) : '')
     + line('Total caregiver cost (AED)', n0(T.cost))
     + line('Weighted average cost per hour (AED)', n2(T.hrs ? T.cost / T.hrs : 0))
     + line('Total SP, Final Price (AED)', n0(T.sp))
@@ -23010,9 +23017,10 @@ function plRenderUE(p, c){
     var m = a.sp - a.cost;
     return '<tr' + (tot ? ' style="background:var(--bg3);font-weight:700"' : '') + '><td>' + (tot ? 'Total' : '<b>' + tkEsc(a.name) + '</b>'
         + (a.bookings && !a.inv ? ' <span class="tk-pill" style="color:var(--sick)" title="No invoice uploaded for this month, so cost is 0">no invoice</span>' : '')) + '</td>'
-      + '<td class="pl-num">' + n0(a.bookings) + '</td><td class="pl-num">' + n0(a.wdays) + '</td><td class="pl-num">' + n0(a.hrs) + '</td>'
+      + '<td class="pl-num">' + n0(a.bookings) + '</td><td class="pl-num">' + n0(a.wdays) + '</td><td class="pl-num">' + n0(a.hrs)
+        + (a.exOver >= 1 ? ' <span style="color:#f59e0b;font-size:10px" title="Exclusive CGs worked ' + n0(a.exOver) + 'h beyond the 288h a month they are paid for">+' + n0(a.exOver) + ' over</span>' : '') + '</td>'
       + '<td class="pl-num" title="' + (a.nEx ? a.nEx + ' exclusive CGs: ' + n0(a.exPaid) + 'h paid, ' + n0(a.exServed) + 'h served' : 'No exclusive CGs — paid for booked hours') + '">' + n0(a.paid) + (a.nEx ? ' <span style="color:#f59e0b">👑' + a.nEx + '</span>' : '') + '</td>'
-      + '<td class="pl-num ' + (a.paid && a.hrs / a.paid < .8 ? 'pl-neg' : '') + '">' + plPct(a.hrs, a.paid) + '</td>'
+      + '<td class="pl-num ' + (a.paid && a.used / a.paid < .8 ? 'pl-neg' : '') + '" title="' + n0(a.used) + 'h of ' + n0(a.paid) + 'h paid were used (exclusive CGs count up to their paid hours)">' + plPct(a.used, a.paid) + '</td>'
       + '<td class="pl-num">' + n0(a.cost) + '</td><td class="pl-num">' + n2(a.hrs ? a.cost / a.hrs : 0) + '</td>'
       + '<td class="pl-num">' + n0(a.sp) + '</td><td class="pl-num">' + n2(a.hrs ? a.sp / a.hrs : 0) + '</td>'
       + '<td class="pl-num ' + plCls(m) + '">' + n0(m) + '</td><td class="pl-num ' + plCls(m) + '">' + plPct(m, a.sp) + '</td></tr>';
