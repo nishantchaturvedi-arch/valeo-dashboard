@@ -603,6 +603,30 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .pl-inv-form .qt-input{margin-bottom:10px}
 .pl-num{font-family:monospace;text-align:right;white-space:nowrap}
 .pl-pos{color:var(--duty)}.pl-neg{color:var(--absent)}
+/* ── Grouped navigation ── */
+.nav-grp{display:flex;flex-shrink:0}
+.nav-grp-btn{padding:12px 16px;font-size:12px;font-weight:500;color:var(--text2);cursor:pointer;background:none;border:none;border-bottom:2px solid transparent;font-family:'Inter',sans-serif;white-space:nowrap;display:flex;align-items:center;gap:6px;transition:color .15s}
+.nav-grp-btn:hover,.nav-grp.open .nav-grp-btn{color:var(--text)}
+.nav-grp.active .nav-grp-btn{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+.nav-cur{font-weight:500;color:var(--text2);max-width:160px;overflow:hidden;text-overflow:ellipsis}
+.nav-grp.active .nav-cur{color:var(--text)}
+.nav-caret{font-size:9px;opacity:.7;transition:transform .15s}
+.nav-grp.open .nav-caret{transform:rotate(180deg)}
+.nav-badge{background:var(--absent);color:#fff;font-size:9px;font-weight:700;border-radius:8px;padding:1px 6px;line-height:14px}
+.nav-menu{display:none;position:fixed;z-index:9050;min-width:240px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.35);padding:6px}
+.nav-menu.open{display:block}
+.nav-menu-h{font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);padding:6px 10px 4px}
+.nav-menu .main-tab{display:flex;align-items:center;gap:6px;width:100%;text-align:left;padding:9px 10px;border-radius:7px;border-bottom:none;font-size:12.5px;color:var(--text)}
+.nav-menu .main-tab:hover{background:var(--bg3)}
+.nav-menu .main-tab.active{background:var(--bg3);color:var(--accent);font-weight:600;box-shadow:inset 3px 0 0 var(--accent)}
+@media(max-width:768px){
+  .main-tabs[data-grouped]{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;overflow:visible;padding:0 4px;gap:0}
+  .main-tabs[data-grouped] > .main-tab,.main-tabs[data-grouped] .nav-grp-btn{white-space:normal;text-align:center;justify-content:center;padding:8px 2px;font-size:11px;line-height:1.3;width:100%;min-width:0}
+  .main-tabs[data-grouped] .nav-grp{min-width:0}
+  .nav-cur,.nav-caret{display:none}
+  .nav-badge{position:absolute;top:2px;right:4px;font-size:8px;padding:0 4px}
+  .nav-grp-btn{position:relative}
+}
 .pl-ue{display:grid;grid-template-columns:minmax(280px,420px) 1fr;gap:16px;padding:12px 14px;border-bottom:1px solid var(--border)}
 .pl-ue-sum td{font-size:12px}
 @media(max-width:700px){.pl-ue{grid-template-columns:1fr}}
@@ -22841,6 +22865,94 @@ function plExportCSV(){
   a.href = URL.createObjectURL(new Blob([lines.join('\n')], {type:'text/csv'}));
   a.download = 'valeo-pl-' + plMonth() + '.csv'; a.click();
 }
+</script>
+
+<script>
+// ═════════════════════════════════════════════════════════════════
+// GROUPED NAVIGATION — the .main-tab buttons are moved into a few dropdowns.
+// The buttons themselves are untouched, so switchTab(), role-based hiding and the
+// ticket / leave badges keep working; navSync() just mirrors their state on the groups.
+// ═════════════════════════════════════════════════════════════════
+var NAV_GROUPS = [
+  {id:'sched',   label:'🗓 Scheduling',        short:'🗓 Schedule', tabs:['roster','planner','avail','ops']},
+  {id:'hc',      label:'🏥 Homecare Partners', short:'🏥 Partners', tabs:['tickets','leave','complaints','penalty','supply']},
+  {id:'growth',  label:'🎯 Leads & Clients',   short:'🎯 Leads',    tabs:['customleads','bsleads','expecting','mumz']},
+  {id:'finance', label:'💰 Finance & Reports', short:'💰 Finance',  tabs:['analytics','pl','transport']}
+];
+function navTabKey(b){ var m = String(b.getAttribute('onclick')||'').match(/switchTab\(['"]([a-z]+)['"]\)/); return m ? m[1] : ''; }
+function navBuild(){
+  var bar = document.querySelector('.main-tabs'); if(!bar || bar.getAttribute('data-grouped')) return;
+  var btns = {}; [].forEach.call(bar.querySelectorAll('.main-tab'), function(b){ btns[navTabKey(b)] = b; });
+  NAV_GROUPS.forEach(function(g){
+    var wrap = document.createElement('div'); wrap.className = 'nav-grp'; wrap.setAttribute('data-g', g.id);
+    var hb = document.createElement('button'); hb.type = 'button'; hb.className = 'nav-grp-btn';
+    hb.innerHTML = '<span class="nav-lbl"></span><span class="nav-cur"></span><span class="nav-badge" style="display:none"></span><span class="nav-caret">▼</span>';
+    hb.onclick = function(e){ e.stopPropagation(); navToggle(g.id); };
+    var menu = document.createElement('div'); menu.className = 'nav-menu'; menu.setAttribute('data-g', g.id);
+    menu.innerHTML = '<div class="nav-menu-h">' + g.label.replace(/^\S+\s/, '') + '</div>';
+    menu.onclick = function(e){ e.stopPropagation(); };
+    g.tabs.forEach(function(k){ if(btns[k]){ menu.appendChild(btns[k]); delete btns[k]; } });
+    wrap.appendChild(hb); bar.appendChild(wrap); document.body.appendChild(menu);
+  });
+  // anything not in a group (e.g. a tab added later) stays as a plain tab after Calendar
+  var cal = btns.calendar; delete btns.calendar;
+  Object.keys(btns).forEach(function(k){ cal && cal.parentNode === bar ? bar.insertBefore(btns[k], cal.nextSibling) : bar.appendChild(btns[k]); });
+  bar.setAttribute('data-grouped', '1');
+  // mirror changes to the real buttons (hidden by role, active, badge counts)
+  if(window.MutationObserver){
+    var t = null, mo = new MutationObserver(function(){ clearTimeout(t); t = setTimeout(navSync, 30); });
+    [].forEach.call(document.querySelectorAll('.main-tab'), function(b){ mo.observe(b, {attributes:true, attributeFilter:['class','style'], childList:true, subtree:true, characterData:true}); });
+  }
+  document.addEventListener('click', navClose);
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') navClose(); });
+  window.addEventListener('resize', function(){ navClose(); navSync(); });
+  bar.addEventListener('scroll', function(){ if(Date.now() - _navOpenedAt > 400) navClose(); });
+  navSync();
+}
+function navVisible(b){ return b.style.display !== 'none' && getComputedStyle(b).display !== 'none'; }
+function navLabel(b){ var c = b.cloneNode(true); [].forEach.call(c.querySelectorAll('span'), function(s){ s.remove(); }); return c.textContent.trim(); }
+function navSync(){
+  NAV_GROUPS.forEach(function(g){
+    var wrap = document.querySelector('.nav-grp[data-g="' + g.id + '"]'), menu = document.querySelector('.nav-menu[data-g="' + g.id + '"]');
+    if(!wrap || !menu) return;
+    var items = [].filter.call(menu.querySelectorAll('.main-tab'), navVisible);
+    var act = items.find(function(b){ return b.classList.contains('active'); });
+    var only = items.length === 1 ? items[0] : null;
+    wrap.style.display = items.length ? '' : 'none';
+    wrap.classList.toggle('active', !!act);
+    wrap.querySelector('.nav-lbl').textContent = only ? navLabel(only) : (window.innerWidth <= 768 ? g.short : g.label);
+    wrap.querySelector('.nav-caret').style.display = only ? 'none' : '';
+    var cur = wrap.querySelector('.nav-cur');
+    cur.textContent = (act && !only) ? '· ' + navLabel(act).replace(/^\S+\s/, '') : '';
+    var n = 0, red = false;
+    items.forEach(function(b){ [].forEach.call(b.querySelectorAll('span[id$="-tab-badge"]'), function(s){ var v = parseInt(s.textContent, 10); if(v > 0){ n += v; if(/f85149|rgb\(248, 81, 73\)/.test(s.style.color)) red = true; } }); });
+    var bd = wrap.querySelector('.nav-badge');
+    bd.style.display = n ? '' : 'none'; bd.textContent = n; bd.style.background = red ? 'var(--absent)' : 'var(--accent)';
+  });
+}
+var _navOpenedAt = 0;
+function navToggle(id){
+  var menu = document.querySelector('.nav-menu[data-g="' + id + '"]'), wrap = document.querySelector('.nav-grp[data-g="' + id + '"]');
+  var items = [].filter.call(menu.querySelectorAll('.main-tab'), navVisible);
+  if(items.length === 1){ navClose(); items[0].click(); return; }
+  var open = menu.classList.contains('open');
+  navClose();
+  if(open) return;
+  var r = wrap.getBoundingClientRect();
+  menu.classList.add('open'); wrap.classList.add('open'); _navOpenedAt = Date.now();
+  var w = menu.offsetWidth;
+  menu.style.top = (r.bottom + 4) + 'px';
+  menu.style.left = Math.max(8, Math.min(r.left, window.innerWidth - w - 8)) + 'px';
+}
+function navClose(){
+  [].forEach.call(document.querySelectorAll('.nav-menu.open'), function(m){ m.classList.remove('open'); });
+  [].forEach.call(document.querySelectorAll('.nav-grp.open'), function(g){ g.classList.remove('open'); });
+}
+(function(){
+  var _sw = window.switchTab;
+  if(typeof _sw === 'function') window.switchTab = function(tab){ var r = _sw.apply(this, arguments); navClose(); navSync(); return r; };
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', navBuild); else navBuild();
+})();
 </script>
 
 </body></html>
