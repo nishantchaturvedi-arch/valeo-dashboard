@@ -610,6 +610,11 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .pl-num{font-family:monospace;text-align:right;white-space:nowrap}
 .pl-pos{color:var(--duty)}.pl-neg{color:var(--absent)}
 /* ── Grouped navigation ── */
+.login-country{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.login-country button{padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer}
+.login-country button.on{border-color:var(--accent);color:var(--text);background:rgba(47,129,247,.14);box-shadow:inset 0 0 0 1px var(--accent)}
+.vc-switch{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text2);margin-right:8px}
+.vc-switch select{background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:6px;font-size:11px;font-weight:600;padding:3px 6px;font-family:'Inter',sans-serif;cursor:pointer}
 .nav-grp{display:flex;flex-shrink:0}
 .nav-grp-btn{padding:12px 16px;font-size:12px;font-weight:500;color:var(--text2);cursor:pointer;background:none;border:none;border-bottom:2px solid transparent;font-family:'Inter',sans-serif;white-space:nowrap;display:flex;align-items:center;gap:6px;transition:color .15s}
 .nav-grp-btn:hover,.nav-grp.open .nav-grp-btn{color:var(--text)}
@@ -950,6 +955,12 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <div style="font-size:12px;color:var(--text2);margin-bottom:22px">Sign in to continue</div>
  <div style="margin-bottom:14px"><label class="login-label">Username</label><input class="login-input" id="login-user" type="text" placeholder="Enter username" onkeydown="if(event.key===&#39;Enter&#39;)doLogin()"></div>
  <div style="margin-bottom:14px"><label class="login-label">Password</label><input class="login-input" id="login-pass" type="password" placeholder="Enter password" onkeydown="if(event.key===&#39;Enter&#39;)doLogin()"></div>
+ <div style="margin-bottom:18px"><label class="login-label">Country</label>
+  <div class="login-country" id="login-country">
+   <button type="button" data-c="AE" onclick="loginPickCountry('AE')">🇦🇪 UAE</button>
+   <button type="button" data-c="QA" onclick="loginPickCountry('QA')">🇶🇦 Qatar</button>
+  </div>
+ </div>
  <button class="login-btn" id="login-btn" onclick="doLogin()">Sign In</button>
  <div class="login-error" id="login-error" style="display: none;">Incorrect username or password</div>
  </div>
@@ -11282,6 +11293,22 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 // n8n could return HTTP 200 with an empty body (quota exhaustion), which made
 // res.json() throw "Unexpected end of JSON input" and res.ok useless as a guard.
 // Treat an empty body as a failure, and surface the server's error message.
+// ── Country (chosen at login) ───────────────────────────────────────────────
+// Each country sees only its own orders, and everything saved in Firebase or the
+// browser is kept apart (Qatar uses "<name>_qa" collections / keys; UAE keeps the
+// original names, so existing UAE data is untouched).
+var VALEO_COUNTRIES = {
+  AE:{code:'AE', name:'UAE',   flag:'🇦🇪', cur:'AED', tz:'Asia/Dubai', aliases:['uae','ae','are','unitedarabemirates'], keepNoCountry:true},
+  QA:{code:'QA', name:'Qatar', flag:'🇶🇦', cur:'QAR', tz:'Asia/Qatar', aliases:['qatar','qa','qat','stateofqatar'],      keepNoCountry:false}
+};
+var VALEO_COUNTRY = (function(){
+  try{ var s = JSON.parse(sessionStorage.getItem('valeo_session')||'null'); if(s && VALEO_COUNTRIES[s.country]) return s.country; }catch(e){}
+  try{ var c = localStorage.getItem(ckey('valeo_country')); if(VALEO_COUNTRIES[c]) return c; }catch(e){}
+  return 'AE';
+})();
+var VC = VALEO_COUNTRIES[VALEO_COUNTRY];
+function ckey(k){ return VALEO_COUNTRY === 'AE' ? k : k + '_' + VALEO_COUNTRY.toLowerCase(); }
+
 const VALEO_API_BASE = 'https://dashboard-api-beta-three.vercel.app';
 async function fetchJSON(url, opts){
   const res  = await fetch(url, opts);
@@ -11536,11 +11563,14 @@ function expandOrders(orders){
 // Status: Order_Status compared without case/spaces/underscores.
 const ALLOWED_ORDER_STATUSES = ['nurseassigned','completed'];
 function _normKey(v){ return String(v==null?'':v).toLowerCase().replace(/[\s_\-]+/g,''); }
-function isUAERow(r){
+// Country: any column whose name contains "country". Rows with no country column
+// are UAE (the original sheet is UAE-only), so Qatar never shows them.
+function isCountryRow(r){
   const keys = Object.keys(r).filter(k=>/country/i.test(k));
-  if(!keys.length) return true;
-  return keys.some(k=>{ const v=_normKey(r[k]); return v==='uae'||v==='ae'||v==='unitedarabemirates'; });
+  if(!keys.length) return VC.keepNoCountry;
+  return keys.some(k=>VC.aliases.includes(_normKey(r[k])));
 }
+function isUAERow(r){ return isCountryRow(r); }
 function isAllowedStatusRow(r){
   if(!('Order_Status' in r)) return true; // pre-transformed rows carry no Metabase status
   return ALLOWED_ORDER_STATUSES.includes(_normKey(r['Order_Status']));
@@ -12304,14 +12334,14 @@ var EXCLUSIVE_HC    = new Set(['shifa']);
 // Load user-customised exclusives from localStorage
 (function(){
   try{
-    var saved = JSON.parse(localStorage.getItem('valeo_exclusive_cgs')||'null');
+    var saved = JSON.parse(localStorage.getItem(ckey('valeo_exclusive_cgs'))||'null');
     if(saved && saved.names) EXCLUSIVE_NAMES = new Set(saved.names);
     if(saved && saved.hcs)   EXCLUSIVE_HC    = new Set(saved.hcs);
   }catch(e){}
 })();
 
 function saveExclusiveList(){
-  localStorage.setItem('valeo_exclusive_cgs', JSON.stringify({
+  localStorage.setItem(ckey('valeo_exclusive_cgs'), JSON.stringify({
     names:[...EXCLUSIVE_NAMES], hcs:[...EXCLUSIVE_HC]
   }));
 }
@@ -14673,7 +14703,7 @@ function ocRun(){
       return;
     }
     h += step(true, 'Nurse assigned: <b>' + E(nurse) + '</b>');
-    if(!isUAERow(r)){ h += step(false, '<b>Not a UAE order.</b> The dashboard only shows orders where Country is UAE.') + '</div>'; return; }
+    if(!isUAERow(r)){ h += step(false, '<b>Not a ' + VC.name + ' order.</b> You are signed in to ' + VC.name + ', which only shows orders where Country is ' + VC.name + '. Switch country at the top right.') + '</div>'; return; }
     if(!isAllowedStatusRow(r)){ h += step(false, '<b>Status "' + E(os || '—') + '" is filtered out.</b> The dashboard only shows orders with status <b>Nurse Assigned</b> or <b>Completed</b>.') + '</div>'; return; }
     if(!ds){ h += step(false, '<b>No date/slot.</b> <code>Confirmed_DateTime</code> and <code>Booked_Slot</code> are both empty, so the dashboard cannot place it on a day.') + '</div>'; return; }
     if(ds < '2026-01-01'){ h += step(false, '<b>Date is before 2026</b> (' + E(ds) + ') — older orders are ignored.') + '</div>'; return; }
@@ -17509,6 +17539,12 @@ async function initFirebase(){
     var fa=firebase.initializeApp({apiKey:"AIzaSyDL_cSwxL8x90rDVLHaj9fPE1cTcdEEmII",authDomain:"valeo-dashboard.firebaseapp.com",projectId:"valeo-dashboard",storageBucket:"valeo-dashboard.firebasestorage.app",messagingSenderId:"892578266142",appId:"1:892578266142:web:115b3b677c4d53c8c5020f"});
     _db=firebase.firestore(fa);console.log('[fb] connected');
   }catch(e){try{_db=firebase.firestore(firebase.app());}catch(e2){console.warn('[fb] failed:',e2);}}
+  // Qatar reads and writes its own "<collection>_qa" collections
+  if(_db && !_db._vcScoped && VALEO_COUNTRY !== 'AE'){
+    var _oc = _db.collection.bind(_db);
+    _db.collection = function(n){ return _oc(ckey(n)); };
+    _db._vcScoped = true;
+  }
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -17520,7 +17556,7 @@ async function initFirebase(){
 var AV_MIN_REST_MIN  = 600;   // 10 h uninterrupted rest between shifts
 var AV_MAX_DAY_MIN   = 720;   // 12 working hours per calendar day
 var AV_MAX_WEEK_DAYS = 6;     // 6 working days per week (Mon–Sun)
-var AV_TZ = 'Asia/Dubai';
+var AV_TZ = VC.tz;
 var AV_DAY_BLOCK = {sick:'Sick leave', off:'Day off', holiday:'Holiday', paid:'Paid leave',
   unpaid:'Unpaid leave', weekoff:'Week off (package)', pause:'On pause / vacation',
   exited:'Left the homecare', pre:'Not joined yet'};
@@ -17890,11 +17926,11 @@ document.addEventListener('visibilitychange', function(){ if(document.hidden && 
 
 function saveLocalCache(){
   try{
-    localStorage.setItem('valeo_overrides',JSON.stringify(overrides));
-    localStorage.setItem('valeo_splits',JSON.stringify(splitAssignments));
-    localStorage.setItem('valeo_manual_cgs',JSON.stringify(manualCGs));
-    localStorage.setItem('valeo_hidden_cgs',JSON.stringify([...hiddenCGs]));
-    localStorage.setItem('valeo_weekoff',JSON.stringify(weekOffCfg));
+    localStorage.setItem(ckey('valeo_overrides'),JSON.stringify(overrides));
+    localStorage.setItem(ckey('valeo_splits'),JSON.stringify(splitAssignments));
+    localStorage.setItem(ckey('valeo_manual_cgs'),JSON.stringify(manualCGs));
+    localStorage.setItem(ckey('valeo_hidden_cgs'),JSON.stringify([...hiddenCGs]));
+    localStorage.setItem(ckey('valeo_weekoff'),JSON.stringify(weekOffCfg));
   }catch(e){}
 }
 
@@ -17917,12 +17953,12 @@ function reRenderAll(){
 
 function loadLocalCache(){
   try{
-    overrides=JSON.parse(localStorage.getItem('valeo_overrides')||'{}');
-    cgSettings=JSON.parse(localStorage.getItem('valeo_cg_settings')||'{}');
-    splitAssignments=JSON.parse(localStorage.getItem('valeo_splits')||'{}');
-    manualCGs=JSON.parse(localStorage.getItem('valeo_manual_cgs')||'{}');
-    hiddenCGs=new Set(JSON.parse(localStorage.getItem('valeo_hidden_cgs')||'[]'));
-    weekOffCfg=JSON.parse(localStorage.getItem('valeo_weekoff')||'{}');
+    overrides=JSON.parse(localStorage.getItem(ckey('valeo_overrides'))||'{}');
+    cgSettings=JSON.parse(localStorage.getItem(ckey('valeo_cg_settings'))||'{}');
+    splitAssignments=JSON.parse(localStorage.getItem(ckey('valeo_splits'))||'{}');
+    manualCGs=JSON.parse(localStorage.getItem(ckey('valeo_manual_cgs'))||'{}');
+    hiddenCGs=new Set(JSON.parse(localStorage.getItem(ckey('valeo_hidden_cgs'))||'[]'));
+    weekOffCfg=JSON.parse(localStorage.getItem(ckey('valeo_weekoff'))||'{}');
   }catch(e){overrides={};splitAssignments={};manualCGs={};hiddenCGs=new Set();weekOffCfg={};}
 }
 
@@ -17970,7 +18006,7 @@ async function syncFromSheet(){
 // the ones the server does not have. It never overwrites what is already on the server.
 async function pushLocalChanges(){
   if(!_db){ await initFirebase(); if(!_db){ alert('Still not connected to Firebase.'); return; } }
-  var local={}; try{ local=JSON.parse(localStorage.getItem('valeo_overrides')||'{}'); }catch(e){}
+  var local={}; try{ local=JSON.parse(localStorage.getItem(ckey('valeo_overrides'))||'{}'); }catch(e){}
   var snap=await _db.collection('valeo_state').get(), have={};
   snap.forEach(function(d){ have[d.id]=true; });
   var batch=_db.batch(), n=0;
@@ -19191,10 +19227,23 @@ function rosterDates(){
   while(cur<=end){ out.push(cur.getFullYear()+'-'+pad(cur.getMonth()+1)+'-'+pad(cur.getDate())); cur.setDate(cur.getDate()+1); }
   return out;
 }
+// Utilisation in hours, same basis as Analytics: 288 sellable hours a month per caregiver,
+// spread evenly over the month's days. Days before joining, after leaving and on pause
+// carry no capacity; sick, leave and week-off days keep theirs.
+function rosterCapPerDay(ds){ var y=+ds.slice(0,4), m=+ds.slice(5,7); return 288/new Date(y,m,0).getDate(); }
+function rosterDayHours(r){
+  var toH=function(t){ var pm=/PM/i.test(t); t=String(t).replace(/\s*(AM|PM)/i,'').trim(); var p=t.split(':'), h=parseInt(p[0])||0, m=parseInt(p[1])||0; if(pm&&h<12)h+=12; if(!pm&&h===12)h=0; return h+m/60; };
+  var span=function(b){ if(!b||!b.time_start||!b.time_end) return 0; var d=toH(b.time_end)-toH(b.time_start); return d>0?d:24+d; };
+  var pkg=function(b){ return b ? (extractHours(b.package_type||b.package_raw||'')||0) : 0; };
+  var list, h=0;
+  if(r.code==='manual'){ list = r.bookings && r.bookings.length ? r.bookings : [r.ov]; list.forEach(function(b){ h += span(b) || pkg(b); }); }
+  else { list = r.active && r.active.length ? r.active : [r.rec]; list.forEach(function(b){ h += pkg(b) || span(b); }); }
+  return Math.min(h, 24);
+}
 function rosterUtilCell(c){
-  if(!c.avail) return '<span class="r-util na" title="No available days in this range">—</span>';
-  var p=Math.round(c.worked/c.avail*100), cls=p>=70?'hi':p>=40?'mid':'lo';
-  return '<span class="r-util '+cls+'" title="Utilisation: '+c.worked+' worked of '+c.avail+' available days (days before joining, after leaving and on pause are not available)">'+p+'%</span>';
+  if(!c.cap) return '<span class="r-util na" title="No available hours in this range">—</span>';
+  var p=Math.min(Math.round(c.hrs/c.cap*100),100), cls=p>=70?'hi':p>=40?'mid':'lo';
+  return '<span class="r-util '+cls+'" title="Utilisation: '+Math.round(c.hrs)+'h worked of '+Math.round(c.cap)+'h available (288h a month per caregiver; sick, leave and week-off days count as available; days before joining, after leaving and on pause do not)">'+p+'%</span>';
 }
 function toggleShowExited(){
   rosterShowExited=!rosterShowExited;
@@ -19367,10 +19416,10 @@ function renderRoster(){
   Object.entries(hcGroups).sort().forEach(function(hce){
     var hcName=hce[0],cgs=hce[1].sort();
     var _gw=0,_ga=0;
-    cgs.forEach(function(n){ var hv=cgMap[n]?cgMap[n].homecare:''; var c=_cnt[n]=rosterRangeCounts(n,hv,dates,dayMap,woLookup); _gw+=c.worked; _ga+=c.avail; });
+    cgs.forEach(function(n){ var hv=cgMap[n]?cgMap[n].homecare:''; var c=_cnt[n]=rosterRangeCounts(n,hv,dates,dayMap,woLookup); _gw+=c.hrs; _ga+=c.cap; });
     _totW+=_gw; _totA+=_ga;
     html+='<tr class="roster-hc-hdr"><td colspan="'+(dates.length+2)+'">'+hcName+' &mdash; '+cgs.length+' caregivers'
-      +(isClientView?'':' &nbsp;·&nbsp; utilisation '+rosterUtilCell({worked:_gw,avail:_ga}))+'</td></tr>';
+      +(isClientView?'':' &nbsp;·&nbsp; utilisation '+rosterUtilCell({hrs:_gw,cap:_ga}))+'</td></tr>';
     cgs.forEach(function(cgName){
       var parts=cgName.trim().split(' ');
       var ini=((parts[0]||'')[0]||'')+((parts[1]||'')[0]||'');
@@ -19498,7 +19547,7 @@ function renderRoster(){
   html+='</tbody></table>';
   wrap.innerHTML=html;
   var _ut=document.getElementById('roster-util');
-  if(_ut) _ut.innerHTML=isClientView?'':'Utilisation '+rosterUtilCell({worked:_totW,avail:_totA});
+  if(_ut) _ut.innerHTML=isClientView?'':'Utilisation '+rosterUtilCell({hrs:_totW,cap:_totA});
 }
 
 // ── Drag Override ────────────────────────────────────────────────
@@ -20057,8 +20106,12 @@ async function doLogin(){
     ];
     var match=ALL_USERS.find(function(u){return u.username===user&&u.password===pass;});
     if(!match)throw new Error('invalid');
-    _session={username:match.username,role:match.role,homecare:match.homecare||null,client_tag:match.client_tag||null};
+    var _cty=(typeof _loginCountry!=='undefined'&&_loginCountry)||VALEO_COUNTRY;
+    _session={username:match.username,role:match.role,homecare:match.homecare||null,client_tag:match.client_tag||null,country:_cty};
     sessionStorage.setItem('valeo_session',JSON.stringify(_session));
+    try{ localStorage.setItem('valeo_country',_cty); }catch(e){}
+    // a different country than the page started with → start clean so nothing UAE-scoped lingers
+    if(_cty!==VALEO_COUNTRY){ location.reload(); return; }
     document.getElementById('login-screen').style.display='none';
     applySessionUI();loadData();
     if(_session.role==='client')setTimeout(function(){switchTab('mumz');},150);
@@ -21506,10 +21559,10 @@ function setCGFilter(f){
 var cgSettings = {}; // key: "cg|hc" -> {city, start_date, exit_date, pauses:[{from,to,label}]}
 
 function loadCGSettings(){
-  try{ cgSettings=JSON.parse(localStorage.getItem('valeo_cg_settings')||'{}'); }catch(e){ cgSettings={}; }
+  try{ cgSettings=JSON.parse(localStorage.getItem(ckey('valeo_cg_settings'))||'{}'); }catch(e){ cgSettings={}; }
 }
 function saveCGSettings(){
-  localStorage.setItem('valeo_cg_settings', JSON.stringify(cgSettings));
+  localStorage.setItem(ckey('valeo_cg_settings'), JSON.stringify(cgSettings));
 }
 function getCGSetting(cg, hc){
   var key = cg+'|'+hc;
@@ -21517,9 +21570,9 @@ function getCGSetting(cg, hc){
   return cgSettings[key];
 }
 // ── Canonical roster locations ───────────────────────────────────
-var CITY_CODES=['DXB','AUH','SHJ','RAK','Alain','Other'];
-var CITY_LABELS={DXB:'🏙 DXB — Dubai',AUH:'🕌 AUH — Abu Dhabi',SHJ:'🏗 SHJ — Sharjah',RAK:'⛰ RAK — Ras Al Khaimah',Alain:'🌵 Alain — Al Ain',Other:'📍 Other'};
-var CITY_CLS={DXB:'dubai',AUH:'auh',SHJ:'shj',RAK:'rak',Alain:'alain',Other:'other'};
+var CITY_CODES=VALEO_COUNTRY==='QA'?['DOH','RAY','WAK','LUS','KHR','Other']:['DXB','AUH','SHJ','RAK','Alain','Other'];
+var CITY_LABELS={DOH:'🏙 DOH — Doha',RAY:'🏟 RAY — Al Rayyan',WAK:'⚓ WAK — Al Wakrah',LUS:'🌆 LUS — Lusail',KHR:'🌴 KHR — Al Khor',DXB:'🏙 DXB — Dubai',AUH:'🕌 AUH — Abu Dhabi',SHJ:'🏗 SHJ — Sharjah',RAK:'⛰ RAK — Ras Al Khaimah',Alain:'🌵 Alain — Al Ain',Other:'📍 Other'};
+var CITY_CLS={DOH:'dubai',RAY:'auh',WAK:'shj',LUS:'alain',KHR:'rak',DXB:'dubai',AUH:'auh',SHJ:'shj',RAK:'rak',Alain:'alain',Other:'other'};
 // Maps legacy/variant stored values onto canonical codes
 function normCity(v){
   var t=String(v||'').trim();
@@ -21527,7 +21580,9 @@ function normCity(v){
   var k=t.toLowerCase().replace(/[\s\u00a0._-]+/g,'');
   var m={dxb:'DXB',dubai:'DXB',auh:'AUH',abudhabi:'AUH',abudhabhi:'AUH',ad:'AUH',
          shj:'SHJ',sharjah:'SHJ',rak:'RAK',rasalkhaimah:'RAK',
-         alain:'Alain',ain:'Alain',other:'Other'};
+         alain:'Alain',ain:'Alain',other:'Other',
+         doh:'DOH',doha:'DOH',ray:'RAY',rayyan:'RAY',alrayyan:'RAY',wak:'WAK',wakrah:'WAK',alwakrah:'WAK',
+         lus:'LUS',lusail:'LUS',khr:'KHR',khor:'KHR',alkhor:'KHR'};
   return m[k]||'Other';
 }
 function cityCls(v){var c=normCity(v);return CITY_CLS[c]||'unset';}
@@ -21935,11 +21990,15 @@ function rosterMonthCounts(cg, hc, y, m, idx, wo){
 function rosterRangeCounts(cg, hc, dates, idx, wo){
   idx = idx || rosterDayIndex();
   wo  = wo  || rosterWoLookup();
-  var c = {duty:0, manual:0, dayoff:0, weekoff:0, sick:0, paid:0, unpaid:0, holiday:0, cancelled:0, pause:0, worked:0, avail:0};
+  var c = {duty:0, manual:0, dayoff:0, weekoff:0, sick:0, paid:0, unpaid:0, holiday:0, cancelled:0, pause:0, worked:0, avail:0, hrs:0, cap:0};
   for(var i=0; i<dates.length; i++){
     var ds = dates[i];
     var r  = rosterDay(cg, hc, ds, idx, wo);
-    if(r.code !== 'pre' && r.code !== 'exited' && r.code !== 'pause') c.avail++;
+    if(r.code !== 'pre' && r.code !== 'exited' && r.code !== 'pause'){
+      c.avail++;
+      c.cap += rosterCapPerDay(ds);           // sick, leave and week-off days stay in capacity
+    }
+    if(r.code === 'duty' || r.code === 'manual') c.hrs += rosterDayHours(r);
     switch(r.code){
       case 'duty':      c.duty++;   c.worked++; break;
       case 'manual':    c.manual++; c.worked++; break;
@@ -22598,7 +22657,7 @@ async function initPL(force){
 }
 function plStatus(t, err){ var s = document.getElementById('pl-status'); if(s){ s.textContent = t; s.style.color = err ? 'var(--absent)' : 'var(--text3)'; } }
 // Partner homecares (same as the HC login accounts), plus any seen in orders, caregivers or invoices
-var PL_HC_BASE = ['Babysitter One Call Doctor','Bayti Dubai and Abudhabi Caregiver','Caresynq','Magical Hands','Mahara HC AD',
+var PL_HC_BASE = VALEO_COUNTRY !== 'AE' ? [] : ['Babysitter One Call Doctor','Bayti Dubai and Abudhabi Caregiver','Caresynq','Magical Hands','Mahara HC AD',
   'Nasmat Babysitter HC','Shifa','Unicare','ZAKHA HOME HEALTHCARE CENTER L.L.C'];
 function plHCList(){
   var out = [], seen = {};
@@ -22932,6 +22991,61 @@ function plExportCSV(){
 }
 </script>
 
+<script>
+// ═════════════════════════════════════════════════════════════════
+// COUNTRY — login picker, header switcher, currency label, UAE-only tab
+// ═════════════════════════════════════════════════════════════════
+var _loginCountry = VALEO_COUNTRY;
+function loginPickCountry(c){
+  _loginCountry = c;
+  [].forEach.call(document.querySelectorAll('#login-country button'), function(b){ b.classList.toggle('on', b.getAttribute('data-c') === c); });
+}
+function vcSwitch(c){
+  if(!VALEO_COUNTRIES[c] || c === VALEO_COUNTRY) return;
+  try{ var s = JSON.parse(sessionStorage.getItem('valeo_session')||'null'); if(s){ s.country = c; sessionStorage.setItem('valeo_session', JSON.stringify(s)); } }catch(e){}
+  try{ localStorage.setItem('valeo_country', c); }catch(e){}
+  location.reload();
+}
+function vcHeader(){
+  var h = document.querySelector('.header-right'); if(!h || !_session || document.getElementById('vc-switch')) return;
+  var d = document.createElement('div'); d.className = 'vc-switch'; d.id = 'vc-switch';
+  d.innerHTML = '<select onchange="vcSwitch(this.value)" title="Country — switching reloads the dashboard">'
+    + Object.keys(VALEO_COUNTRIES).map(function(k){ var c = VALEO_COUNTRIES[k]; return '<option value="' + k + '"' + (k === VALEO_COUNTRY ? ' selected' : '') + '>' + c.flag + ' ' + c.name + '</option>'; }).join('')
+    + '</select>';
+  h.insertBefore(d, h.firstChild);
+}
+// currency label: every "AED" the dashboard prints becomes the country's currency
+function vcCurrencyFix(root){
+  if(VC.cur === 'AED' || !root) return;
+  var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null), n;
+  while((n = w.nextNode())){ if(n.nodeValue.indexOf('AED') >= 0) n.nodeValue = n.nodeValue.replace(/AED/g, VC.cur); }
+  if(root.querySelectorAll) [].forEach.call(root.querySelectorAll('[placeholder*="AED"],[title*="AED"]'), function(e){
+    ['placeholder','title'].forEach(function(a){ var v = e.getAttribute(a); if(v && v.indexOf('AED') >= 0) e.setAttribute(a, v.replace(/AED/g, VC.cur)); });
+  });
+}
+(function(){
+  loginPickCountry(VALEO_COUNTRY);
+  document.title = document.title + (VALEO_COUNTRY === 'AE' ? '' : ' · ' + VC.name);
+  // UAE Babysitting Leads reads a UAE-only sheet — not offered in other countries
+  if(VALEO_COUNTRY !== 'AE'){
+    var bs = document.querySelector('.main-tab[onclick*="bsleads"]'); if(bs) bs.style.display = 'none';
+    var _sw = window.switchTab;
+    if(typeof _sw === 'function') window.switchTab = function(tab){ if(tab === 'bsleads') return; return _sw.apply(this, arguments); };
+  }
+  var _as = window.applySessionUI;
+  if(typeof _as === 'function') window.applySessionUI = function(){ var r = _as.apply(this, arguments); vcHeader(); return r; };
+  vcHeader();
+  if(VC.cur !== 'AED'){
+    vcCurrencyFix(document.body);
+    if(window.MutationObserver) new MutationObserver(function(ms){
+      ms.forEach(function(m){
+        if(m.type === 'characterData'){ if(m.target.nodeValue && m.target.nodeValue.indexOf('AED') >= 0) m.target.nodeValue = m.target.nodeValue.replace(/AED/g, VC.cur); }
+        else [].forEach.call(m.addedNodes, function(x){ if(x.nodeType === 3){ if(x.nodeValue.indexOf('AED') >= 0) x.nodeValue = x.nodeValue.replace(/AED/g, VC.cur); } else if(x.nodeType === 1) vcCurrencyFix(x); });
+      });
+    }).observe(document.body, {childList:true, subtree:true, characterData:true});
+  }
+})();
+</script>
 <script>
 // ═════════════════════════════════════════════════════════════════
 // GROUPED NAVIGATION — the .main-tab buttons are moved into a few dropdowns.
