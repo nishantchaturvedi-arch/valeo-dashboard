@@ -502,6 +502,12 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .rd-pre{background:repeating-linear-gradient(-45deg,rgba(110,118,129,.10),rgba(110,118,129,.10) 4px,transparent 4px,transparent 9px);cursor:default;}
 .rd-pause{background:#7c3aed;color:#fff;}
 .rd-paid{background:#0891b2;color:#fff;}
+.roster-range{display:inline-flex;align-items:center;gap:6px}
+.roster-range input[type=date]{width:auto;min-width:130px}
+.roster-util-total{font-size:12px;color:var(--text2);font-weight:600;margin-left:4px}
+.r-util{display:inline-block;font-size:9px;font-weight:700;font-family:monospace;padding:0 5px;border-radius:4px;line-height:15px;margin-right:2px;border:1px solid currentColor}
+.r-util.hi{color:var(--duty)}.r-util.mid{color:var(--accent)}.r-util.lo{color:var(--absent)}.r-util.na{color:var(--text3)}
+.roster-hc-hdr .r-util{font-size:10px;color:#fff !important;border-color:rgba(255,255,255,.75);background:rgba(0,0,0,.18)}
 .r-counts{display:flex;gap:2px;margin-top:3px;flex-wrap:wrap;}
 .rc{font-size:8px;font-weight:700;padding:0 4px;border-radius:6px;background:var(--bg3);border:1px solid var(--border);font-family:monospace;line-height:14px;}
 .rc.d{color:#f59e0b}.rc.o{color:#94a3b8}.rc.s{color:#ef4444}.rc.p{color:#22b8d6}.rc.u{color:#f97316}.rc.h{color:var(--accent)}
@@ -10150,6 +10156,13 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <button class="roster-nav-btn" onclick="rosterPrevMonth()">‹</button>
  <span class="roster-month-label" id="roster-month-label">September 2026</span>
  <button class="roster-nav-btn" onclick="rosterNextMonth()">›</button>
+ <span class="roster-range" title="Show only these days — counts and utilisation follow the range">
+  <input type="date" id="roster-from" class="roster-hc-filter" onchange="rosterSetRange()" aria-label="From date">
+  <span style="color:var(--text3)">→</span>
+  <input type="date" id="roster-to" class="roster-hc-filter" onchange="rosterSetRange()" aria-label="To date">
+  <button class="roster-hc-filter" id="roster-range-clear" onclick="rosterClearRange()" style="cursor:pointer;display:none" title="Back to the whole month">Month</button>
+ </span>
+ <span id="roster-util" class="roster-util-total"></span>
  <select class="roster-hc-filter" id="roster-hc-filter" onchange="renderRoster()"><option value="">All Homecare</option><option value="Bayti Dubai and Abudhabi Caregiver">Bayti Dubai and Abudhabi Caregiver</option><option value="Caresynq">Caresynq</option><option value="Magical Hands">Magical Hands</option><option value="Mahara HC AD">Mahara HC AD</option><option value="Nasmat Babysitter HC">Nasmat Babysitter HC</option><option value="Shifa">Shifa</option><option value="Unicare">Unicare</option><option value="ZAKHA HOME HEALTHCARE CENTER L.L.C">ZAKHA HOME HEALTHCARE&nbsp;CENTER&nbsp;L.L.C</option></select>
  <select class="roster-hc-filter" id="roster-city-filter" onchange="renderRoster()"><option value="">All Locations</option><option value="DXB">🏙 DXB — Dubai</option><option value="AUH">🕌 AUH — Abu Dhabi</option><option value="SHJ">🏗 SHJ — Sharjah</option><option value="RAK">⛰ RAK — Ras Al Khaimah</option><option value="Alain">🌵 Alain — Al Ain</option><option value="Other">📍 Other</option><option value="__unset">— No location set</option></select>
  <select class="roster-hc-filter" id="roster-mz-filter" onchange="renderRoster()" title="Mumzworld tag covers both Mumzworld and B2B orders"><option value="">All Orders</option><option value="mumz">🛍️ Mumzworld (incl. B2B)</option><option value="non">Non-Mumzworld</option></select>
@@ -19151,8 +19164,38 @@ async function downloadSchedJPG(){
 // ── Roster View ──────────────────────────────────────────────────
 var rosterDate=new Date();
 var rosterShowExited=false;
-function rosterPrevMonth(){rosterDate.setMonth(rosterDate.getMonth()-1);renderRoster();}
-function rosterNextMonth(){rosterDate.setMonth(rosterDate.getMonth()+1);renderRoster();}
+var rosterRange=null;   // {from:'YYYY-MM-DD', to:'YYYY-MM-DD'} — null = whole month of rosterDate
+var ROSTER_MAX_DAYS=92;
+function rosterPrevMonth(){rosterRange=null;rosterDate.setDate(1);rosterDate.setMonth(rosterDate.getMonth()-1);renderRoster();}
+function rosterNextMonth(){rosterRange=null;rosterDate.setDate(1);rosterDate.setMonth(rosterDate.getMonth()+1);renderRoster();}
+function rosterSetRange(){
+  var f=document.getElementById('roster-from').value, t=document.getElementById('roster-to').value;
+  if(!f && !t){ rosterClearRange(); return; }
+  if(!f) f=t; if(!t) t=f;
+  if(t<f){ var x=f; f=t; t=x; }
+  var n=Math.round((new Date(t+'T12:00:00')-new Date(f+'T12:00:00'))/864e5)+1;
+  if(n>ROSTER_MAX_DAYS){ alert('Please pick up to '+ROSTER_MAX_DAYS+' days.'); t=new Date(new Date(f+'T12:00:00').getTime()+(ROSTER_MAX_DAYS-1)*864e5).toISOString().slice(0,10); }
+  rosterRange={from:f,to:t};
+  rosterDate=new Date(f+'T12:00:00');
+  renderRoster();
+}
+function rosterClearRange(){ rosterRange=null; renderRoster(); }
+// the days on screen: the picked range, or the whole month of rosterDate
+function rosterDates(){
+  var y=rosterDate.getFullYear(), m=rosterDate.getMonth(), out=[];
+  var mf=y+'-'+pad(m+1)+'-01', mt=y+'-'+pad(m+1)+'-'+pad(new Date(y,m+1,0).getDate());
+  // a jump from elsewhere (e.g. Check order) moved rosterDate outside the range → whole month
+  if(rosterRange && (rosterRange.to<mf || rosterRange.from>mt)) rosterRange=null;
+  var f=rosterRange?rosterRange.from:mf, t=rosterRange?rosterRange.to:mt;
+  var cur=new Date(f+'T12:00:00'), end=new Date(t+'T12:00:00');
+  while(cur<=end){ out.push(cur.getFullYear()+'-'+pad(cur.getMonth()+1)+'-'+pad(cur.getDate())); cur.setDate(cur.getDate()+1); }
+  return out;
+}
+function rosterUtilCell(c){
+  if(!c.avail) return '<span class="r-util na" title="No available days in this range">—</span>';
+  var p=Math.round(c.worked/c.avail*100), cls=p>=70?'hi':p>=40?'mid':'lo';
+  return '<span class="r-util '+cls+'" title="Utilisation: '+c.worked+' worked of '+c.avail+' available days (days before joining, after leaving and on pause are not available)">'+p+'%</span>';
+}
 function toggleShowExited(){
   rosterShowExited=!rosterShowExited;
   var b=document.getElementById('roster-exited-btn');
@@ -19211,9 +19254,17 @@ function renderRoster(){
   var MNAMES=['January','February','March','April','May','June','July','August','September','October','November','December'];
   var DNAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   var DFULL=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  lbl.textContent=MNAMES[month]+' '+year;
-  var dates=[];
-  for(var d=1;d<=dim;d++) dates.push(year+'-'+String(month+1).padStart(2,'0')+'-'+String(d).padStart(2,'0'));
+  var dates=rosterDates();
+  var rFrom=dates[0], rTo=dates[dates.length-1];
+  var _fullMonth=!rosterRange;
+  var _fmtD=function(ds){ return parseInt(ds.slice(8))+' '+MNAMES[+ds.slice(5,7)-1].slice(0,3); };
+  lbl.textContent=_fullMonth?MNAMES[month]+' '+year:_fmtD(rFrom)+' – '+_fmtD(rTo)+' '+rTo.slice(0,4);
+  var _rf=document.getElementById('roster-from'), _rt=document.getElementById('roster-to'), _rc=document.getElementById('roster-range-clear');
+  if(_rf && document.activeElement!==_rf) _rf.value=rFrom;
+  if(_rt && document.activeElement!==_rt) _rt.value=rTo;
+  if(_rc) _rc.style.display=_fullMonth?'none':'';
+  var _inR=function(ds){ return ds>=rFrom && ds<=rTo; };
+  var _rangeTxt=_fullMonth?MNAMES[month]+' '+year:_fmtD(rFrom)+' – '+_fmtD(rTo);
   var filterHC=document.getElementById('roster-hc-filter').value;
   var filterCity=(document.getElementById('roster-city-filter')||{}).value||'';
   var filterMz=(document.getElementById('roster-mz-filter')||{}).value||'';
@@ -19227,13 +19278,12 @@ function renderRoster(){
     var _mzSel=document.getElementById('roster-mz-filter'); if(_mzSel) _mzSel.style.display='none';
   }
   // Caregivers with a Mumzworld / B2B order in the month on screen
-  var _mzMonthPfx=year+'-'+String(month+1).padStart(2,'0')+'-';
   var mzMonthCG={};
-  Object.keys(_mumzDays||{}).forEach(function(k){ var p=k.split('|'); if((p[1]||'').indexOf(_mzMonthPfx)===0) mzMonthCG[p[0]]=true; });
+  Object.keys(_mumzDays||{}).forEach(function(k){ var p=k.split('|'); if(_inR(p[1]||'')) mzMonthCG[p[0]]=true; });
   var ucMonthCG={};
   if(filterMz==='uc'||filterMz==='non'){
     (allData||[]).concat(typeof bookingExtras==='function'?bookingExtras():[]).forEach(function(r){
-      if(r && r.caregiver && String(r.date||'').indexOf(_mzMonthPfx)===0 && bookingKind(r)==='uc') ucMonthCG[r.caregiver]=true;
+      if(r && r.caregiver && _inR(String(r.date||'')) && bookingKind(r)==='uc') ucMonthCG[r.caregiver]=true;
     });
   }
   function _mzKeep(n){ if(filterMz==='mumz') return !!mzMonthCG[n]; if(filterMz==='uc') return !!ucMonthCG[n]; if(filterMz==='non') return !mzMonthCG[n] && !ucMonthCG[n]; return true; }
@@ -19284,7 +19334,8 @@ function renderRoster(){
     var hc=isClientView?'Mumzworld':(cg.homecare||'Other');
     // Resigned / removed caregivers vanish from their exit month onward.
     // Earlier months still show them exactly as they were.
-    if(!cgVisibleInMonth(cg.name,cg.homecare||'',year,month)){
+    var _ex=getCGExit(cg.name,cg.homecare||''), _jn=getCGJoin(cg.name,cg.homecare||'');
+    if((_ex && _ex<=rFrom) || (_jn && _jn>rTo)){
       exitedCount++;
       if(!rosterShowExited) return;
     }
@@ -19312,21 +19363,26 @@ function renderRoster(){
     html+=DNAMES[dow]+'<br><b>'+parseInt(ds.slice(8))+'</b></th>';
   });
   html+='</tr></thead><tbody>';
+  var _cnt={}, _totW=0, _totA=0;
   Object.entries(hcGroups).sort().forEach(function(hce){
     var hcName=hce[0],cgs=hce[1].sort();
-    html+='<tr class="roster-hc-hdr"><td colspan="'+(dim+2)+'">'+hcName+' &mdash; '+cgs.length+' caregivers</td></tr>';
+    var _gw=0,_ga=0;
+    cgs.forEach(function(n){ var hv=cgMap[n]?cgMap[n].homecare:''; var c=_cnt[n]=rosterRangeCounts(n,hv,dates,dayMap,woLookup); _gw+=c.worked; _ga+=c.avail; });
+    _totW+=_gw; _totA+=_ga;
+    html+='<tr class="roster-hc-hdr"><td colspan="'+(dates.length+2)+'">'+hcName+' &mdash; '+cgs.length+' caregivers'
+      +(isClientView?'':' &nbsp;·&nbsp; utilisation '+rosterUtilCell({worked:_gw,avail:_ga}))+'</td></tr>';
     cgs.forEach(function(cgName){
       var parts=cgName.trim().split(' ');
       var ini=((parts[0]||'')[0]||'')+((parts[1]||'')[0]||'');
       var hcVal=cgMap[cgName]?cgMap[cgName].homecare:'';
       html+='<tr><td class="col-photo"><div class="r-photo">'+ini.toUpperCase()+'</div></td>';
-      var _mc=rosterMonthCounts(cgName,hcVal,year,month,dayMap,woLookup);
+      var _mc=_cnt[cgName]||rosterRangeCounts(cgName,hcVal,dates,dayMap,woLookup);
       var _exit=getCGExit(cgName,hcVal), _join=getCGJoin(cgName,hcVal);
       var _safeN0=cgName.replace(/'/g,"&#39;").replace(/"/g,'&quot;');
       var _safeH0=hcVal.replace(/'/g,"&#39;").replace(/"/g,'&quot;');
       html+='<td class="col-info"><div class="r-name">'+cgName+'</div>'+(isClientView?'':'<div class="r-hc">'+hcVal+'</div>')
         +(isClientView?'':
-          '<div class="r-counts" title="From this roster — '+MNAMES[month]+' '+year+'">'
+          '<div class="r-counts" title="From this roster — '+_rangeTxt+'">'+rosterUtilCell(_mc)
           +'<span class="rc d" title="Duty '+_mc.duty+' + manual '+_mc.manual+'">D'+_mc.worked+'</span>'
           +'<span class="rc o" title="Day off '+_mc.dayoff+' + week off '+_mc.weekoff+'">O'+_mc.off+'</span>'
           +'<span class="rc s" title="Sick leave">S'+_mc.sick+'</span>'
@@ -19441,6 +19497,8 @@ function renderRoster(){
   });
   html+='</tbody></table>';
   wrap.innerHTML=html;
+  var _ut=document.getElementById('roster-util');
+  if(_ut) _ut.innerHTML=isClientView?'':'Utilisation '+rosterUtilCell({worked:_totW,avail:_totA});
 }
 
 // ── Drag Override ────────────────────────────────────────────────
@@ -21681,7 +21739,7 @@ function lcRefreshViews(){
 // Quick offboard from a roster row: defaults to the 1st of the month on screen
 function offboardCG(cg, hc){
   var y = rosterDate.getFullYear(), m = rosterDate.getMonth();
-  openLifecycle(cg, hc, getCGExit(cg,hc) || (y+'-'+pad(m+1)+'-01'));
+  openLifecycle(cg, hc, getCGExit(cg,hc) || (rosterRange ? rosterRange.from : y+'-'+pad(m+1)+'-01'));
 }
 
 // ── Card buttons (calendar tab) ───────────────────────────────────
@@ -21868,13 +21926,20 @@ function rosterDay(cg, hc, ds, idx, wo){
 
 // Month tally straight off the roster, for one caregiver
 function rosterMonthCounts(cg, hc, y, m, idx, wo){
+  var dim = new Date(y, m+1, 0).getDate(), dates = [];
+  for(var d=1; d<=dim; d++) dates.push(y+'-'+pad(m+1)+'-'+pad(d));
+  return rosterRangeCounts(cg, hc, dates, idx, wo);
+}
+// day counts over any list of dates. avail = days the caregiver could work
+// (not before joining, after leaving or on pause) — the base for utilisation.
+function rosterRangeCounts(cg, hc, dates, idx, wo){
   idx = idx || rosterDayIndex();
   wo  = wo  || rosterWoLookup();
-  var dim = new Date(y, m+1, 0).getDate();
-  var c = {duty:0, manual:0, dayoff:0, weekoff:0, sick:0, paid:0, unpaid:0, holiday:0, cancelled:0, pause:0, worked:0};
-  for(var d=1; d<=dim; d++){
-    var ds = y+'-'+pad(m+1)+'-'+pad(d);
+  var c = {duty:0, manual:0, dayoff:0, weekoff:0, sick:0, paid:0, unpaid:0, holiday:0, cancelled:0, pause:0, worked:0, avail:0};
+  for(var i=0; i<dates.length; i++){
+    var ds = dates[i];
     var r  = rosterDay(cg, hc, ds, idx, wo);
+    if(r.code !== 'pre' && r.code !== 'exited' && r.code !== 'pause') c.avail++;
     switch(r.code){
       case 'duty':      c.duty++;   c.worked++; break;
       case 'manual':    c.manual++; c.worked++; break;
