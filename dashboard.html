@@ -10921,7 +10921,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
    <div class="tk-card-h"><span>🧾 Homecare invoices</span><span id="pl-inv-total" style="font-family:monospace"></span></div>
    <div style="padding:14px 14px 4px">
     <div class="pl-inv-form">
-     <div><label class="qt-lbl" for="pl-inv-hc">Homecare</label><select id="pl-inv-hc" class="qt-input"></select></div>
+     <div><label class="qt-lbl" for="pl-inv-hc">Homecare</label><select id="pl-inv-hc" class="qt-input" onfocus="plFillHC()" onmousedown="plFillHC()" onchange="plPickHC(this)"></select></div>
      <div><label class="qt-lbl" for="pl-inv-no">Invoice no.</label><input id="pl-inv-no" class="qt-input" type="text" placeholder="e.g. INV-1042"></div>
      <div><label class="qt-lbl" for="pl-inv-date">Invoice date</label><input id="pl-inv-date" class="qt-input" type="date"></div>
      <div><label class="qt-lbl" for="pl-inv-amt">Amount excl. VAT (AED)</label><input id="pl-inv-amt" class="qt-input" type="number" min="0" step="0.01"></div>
@@ -22493,12 +22493,33 @@ async function initPL(force){
   plRender();
 }
 function plStatus(t, err){ var s = document.getElementById('pl-status'); if(s){ s.textContent = t; s.style.color = err ? 'var(--absent)' : 'var(--text3)'; } }
+// Partner homecares (same as the HC login accounts), plus any seen in orders, caregivers or invoices
+var PL_HC_BASE = ['Babysitter One Call Doctor','Bayti Dubai and Abudhabi Caregiver','Caresynq','Magical Hands','Mahara HC AD',
+  'Nasmat Babysitter HC','Shifa','Unicare','ZAKHA HOME HEALTHCARE CENTER L.L.C'];
+function plHCList(){
+  var out = [], seen = {};
+  var add = function(h){ h = String(h||'').trim(); var k = tkNorm(h); if(h && !seen[k]){ seen[k] = 1; out.push(h); } };
+  PL_HC_BASE.forEach(add);
+  try{ tkHomecares().forEach(add); }catch(e){}
+  (allData||[]).forEach(function(r){ add(r.homecare); });
+  _pl.inv.forEach(function(i){ add(i.homecare); });
+  return out.sort(function(a,b){ return a.localeCompare(b); });
+}
 function plFillHC(){
   var s = document.getElementById('pl-inv-hc'); if(!s) return;
-  var cur = s.value, list = tkHomecares();
-  _pl.inv.forEach(function(i){ if(i.homecare && !list.some(function(h){ return tkHCMatch(h, i.homecare); })) list.push(i.homecare); });
-  s.innerHTML = '<option value="">Choose homecare…</option>' + list.sort().map(function(h){ return '<option>' + tkEsc(h) + '</option>'; }).join('');
-  if(cur) s.value = cur;
+  var cur = s.value, list = plHCList();
+  if(cur && cur !== '__other' && !list.some(function(h){ return tkHCMatch(h, cur); })) list.push(cur);
+  var sig = list.join('|'); if(s.getAttribute('data-sig') === sig) return; s.setAttribute('data-sig', sig);
+  s.innerHTML = '<option value="">Choose homecare…</option>' + list.map(function(h){ return '<option value="' + tkEsc(h) + '">' + tkEsc(h) + '</option>'; }).join('')
+    + '<option value="__other">Other (type the name)…</option>';
+  if(cur && cur !== '__other') s.value = cur;
+}
+function plPickHC(s){
+  if(s.value !== '__other') return;
+  var n = String(prompt('Homecare name') || '').trim();
+  if(!n){ s.value = ''; return; }
+  var o = document.createElement('option'); o.value = n; o.textContent = n;
+  s.insertBefore(o, s.lastElementChild); s.value = n;
 }
 
 // ── Revenue from orders (rawData), by homecare ───────────────────
@@ -22530,6 +22551,7 @@ function plCalc(p){
 
 // ── Render ───────────────────────────────────────────────────────
 function plRender(){
+  plFillHC();
   if(!_pl.loaded) return;
   var p = plMonth(), c = plCalc(p), md = _pl.months[p] || {};
   var kpi = function(v, l, cls){ return '<div class="tk-kpi"><div class="tk-kpi-v ' + (cls||'') + '">' + v + '</div><div class="tk-kpi-l">' + l + '</div></div>'; };
