@@ -603,6 +603,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .pl-inv-form .qt-input{margin-bottom:10px}
 .pl-num{font-family:monospace;text-align:right;white-space:nowrap}
 .pl-pos{color:var(--duty)}.pl-neg{color:var(--absent)}
+.pl-ue{display:grid;grid-template-columns:minmax(280px,420px) 1fr;gap:16px;padding:12px 14px;border-bottom:1px solid var(--border)}
+.pl-ue-sum td{font-size:12px}
+@media(max-width:700px){.pl-ue{grid-template-columns:1fr}}
 .pl-x{background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:2px 6px}
 .pl-x:hover{color:var(--absent)}
 @media(max-width:900px){.pl-grid{grid-template-columns:1fr}.pl-inv-form{grid-template-columns:1fr 1fr}}
@@ -10934,9 +10937,21 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
    </div>
    <div class="tk-scroll" style="max-height:340px"><table class="tk-tbl" id="pl-inv-tbl"></table></div>
   </div>
-  <!-- Per HC -->
+  <!-- Unit economics by homecare -->
   <div class="tk-card">
-   <div class="tk-card-h"><span>🏥 GM1 by homecare</span><span style="font-weight:500;color:var(--text3);font-size:11px">Revenue from orders · cost from invoices</span></div>
+   <div class="tk-card-h"><span>🏥 Unit economics by homecare</span><button class="tk-btn" onclick="plExportUE()">⬇ CSV</button></div>
+   <div class="pl-ue">
+    <table class="tk-tbl pl-ue-sum" id="pl-ue-sum"></table>
+    <div style="font-size:11px;color:var(--text3);line-height:1.6;padding:4px 2px">
+     <b style="color:var(--text2)">Bookings</b> = caregiver days on duty in the month (sick, leave, week off and cancelled days excluded).
+     <b style="color:var(--text2)">Working days</b> = distinct caregiver + date.
+     <b style="color:var(--text2)">Hours</b> from the package (e.g. "12 hours").
+     <b style="color:var(--text2)">SP</b> = Final Price spread evenly over each order's service days.
+     <b style="color:var(--text2)">Cost</b> = that homecare's invoices for the month.
+     <b style="color:var(--text2)">Margin</b> = SP − Cost.
+     <div id="pl-ue-note" style="color:var(--sick);margin-top:6px"></div>
+    </div>
+   </div>
    <div class="tk-scroll"><table class="tk-tbl" id="pl-hc-tbl"></table></div>
   </div>
   <!-- Trend -->
@@ -22522,20 +22537,57 @@ function plPickHC(s){
   s.insertBefore(o, s.lastElementChild); s.value = n;
 }
 
-// ── Revenue from orders (rawData), by homecare ───────────────────
-// An order counts in the month its service starts; cancelled / temp / unassigned never count.
-function plOrderRevenue(p){
-  var seen = {}, byHC = {}, total = 0, n = 0;
-  (rawData||[]).forEach(function(r){
-    if(!r.final_price || !r.date || r.date.slice(0,7) !== p) return;
-    if(revenueExcludeReason(r)) return;
-    var k = r.child_order_id || r.order_id || (r.caregiver + '|' + r.date);
+// ── Unit economics from the roster (allData) ─────────────────────
+// Booking = one caregiver on duty on one day. SP = the order's Final_Price spread
+// evenly over its service days, so packages running across two months are split.
+// Cancelled / temp / unassigned orders and sick, leave, off and week-off days never count.
+function plActiveDay(r){
+  var s = (r.status||'').toLowerCase().replace(/\s+/g,'');
+  return s!=='cancelled'&&s!=='removed'&&s!=='weekoff'&&s!=='sick'&&s!=='off'&&s!=='holiday'&&s!=='paid'&&s!=='unpaid';
+}
+function plDayHours(r){
+  var s = (r.status||'').toLowerCase();
+  if(s === 'manual' || r._manual){
+    if(!r.time_start || !r.time_end) return 0;
+    var toH = function(t){ var pm = /PM/i.test(t); t = t.replace(/\s*(AM|PM)/i,'').trim(); var p = t.split(':'), h = parseInt(p[0])||0, m = parseInt(p[1])||0; if(pm && h<12) h += 12; if(!pm && h===12) h = 0; return h + m/60; };
+    var d = toH(r.time_end) - toH(r.time_start); return d > 0 ? d : 24 + d;
+  }
+  return extractHours(r.package_type || r.package_raw || '') || 0;
+}
+var _plUECache = {sig:null, m:{}};
+function plUnitEcon(p){
+  var src = allData || [], sig = src.length + '|' + (rawData||[]).length;
+  if(_plUECache.sig !== sig) _plUECache = {sig:sig, m:{}};
+  if(_plUECache.m[p]) return _plUECache.m[p];
+  var okey = function(r){ return r.child_order_id || r.order_id || ''; };
+  var keep = function(r){ return r.caregiver && r.date && plActiveDay(r) && !revenueExcludeReason(r); };
+  var seen = {}, days = {}, list = [];
+  src.forEach(function(r){
+    if(!keep(r)) return;
+    var k = r.caregiver + '|' + r.date + '|' + (okey(r) || r.time_start || '');
     if(seen[k]) return; seen[k] = 1;
-    var v = parseFloat(r.final_price) || 0;
-    total += v; n++;
-    var hc = r.homecare || '—'; byHC[hc] = (byHC[hc]||0) + v;
+    if(okey(r)) days[okey(r)] = (days[okey(r)]||0) + 1;
+    if(r.date.slice(0,7) === p) list.push(r);
   });
-  return {total:total, n:n, byHC:byHC};
+  var hc = {}, orders = {}, cgs = {}, T = {bookings:0, wdays:0, hrs:0, sp:0};
+  var wd = {};
+  list.forEach(function(r){
+    var name = r.homecare || 'Unassigned', key = tkNorm(name);
+    var a = hc[key] || (hc[key] = {name:name, bookings:0, wdays:0, hrs:0, sp:0, cost:0, inv:0, cgs:{}});
+    var sp = (+r.final_price||0) / (okey(r) ? (days[okey(r)]||1) : 1), h = plDayHours(r);
+    a.bookings++; a.hrs += h; a.sp += sp; a.cgs[r.caregiver] = 1;
+    if(!wd[r.caregiver + '|' + r.date]){ wd[r.caregiver + '|' + r.date] = 1; a.wdays++; T.wdays++; }
+    T.bookings++; T.hrs += h; T.sp += sp; cgs[r.caregiver] = 1;
+    if(okey(r)) orders[okey(r)] = 1;
+  });
+  var val = {hc:hc, bookings:T.bookings, wdays:T.wdays, hrs:T.hrs, sp:T.sp, cgs:Object.keys(cgs).length, orders:Object.keys(orders).length};
+  _plUECache.m[p] = val;
+  return val;
+}
+function plOrderRevenue(p){
+  var u = plUnitEcon(p), byHC = {};
+  Object.values(u.hc).forEach(function(a){ byHC[a.name] = a.sp; });
+  return {total:u.sp, n:u.orders, byHC:byHC, ue:u};
 }
 function plCalc(p){
   var o = plOrderRevenue(p), md = _pl.months[p] || {};
@@ -22570,7 +22622,7 @@ function plRender(){
     ? 'Entered' + (md.updated_by ? ' by ' + md.updated_by : '') + (md.updated_at ? ' · ' + String(md.updated_at).slice(0,10) : '')
     : 'Not entered — using orders';
   document.getElementById('pl-rev-orders').innerHTML = 'From orders in ' + plMonthLabel(p) + ': <b>' + plAED(c.orders.total) + '</b> (' + c.orders.n
-    + ' orders, by service start date; cancelled, temp and unassigned excluded).' + (rawData && rawData.length ? '' : ' <span style="color:var(--sick)">Order data not loaded yet.</span>');
+    + ' orders, ' + c.orders.ue.bookings + ' service days; each order\'s price is spread over its service days; cancelled, temp and unassigned excluded).' + (rawData && rawData.length ? '' : ' <span style="color:var(--sick)">Order data not loaded yet.</span>');
 
   // marketing
   document.getElementById('pl-mk-total').textContent = plAED(c.mkt);
@@ -22596,20 +22648,8 @@ function plRender(){
         }).join('') + '</tbody>'
     : '<tbody><tr><td class="tk-empty">No homecare invoices uploaded for ' + plMonthLabel(p) + ' yet.</td></tr></tbody>';
 
-  // GM1 by homecare
-  var hcs = {};
-  Object.keys(c.orders.byHC).forEach(function(h){ hcs[tkNorm(h)] = {name:h, rev:c.orders.byHC[h], cost:0, n:0}; });
-  c.inv.forEach(function(i){ var k = tkNorm(i.homecare); if(!hcs[k]) hcs[k] = {name:i.homecare, rev:0, cost:0, n:0}; hcs[k].cost += (+i.amount||0); hcs[k].n++; });
-  var rows = Object.values(hcs).sort(function(a,b){ return b.rev - a.rev; });
-  document.getElementById('pl-hc-tbl').innerHTML = rows.length
-    ? '<thead><tr><th>Homecare</th><th style="text-align:right">Revenue (orders)</th><th style="text-align:right">Invoice cost</th><th style="text-align:right">GM1</th><th style="text-align:right">GM1 %</th></tr></thead><tbody>'
-      + rows.map(function(h){
-          var g = h.rev - h.cost;
-          return '<tr><td><b>' + tkEsc(h.name) + '</b>' + (h.n ? '' : ' <span class="tk-pill" style="color:var(--sick)">no invoice</span>') + '</td>'
-            + '<td class="pl-num">' + plAED(h.rev) + '</td><td class="pl-num">' + plAED(h.cost) + '</td>'
-            + '<td class="pl-num ' + plCls(g) + '">' + plAED(g) + '</td><td class="pl-num ' + plCls(g) + '">' + plPct(g, h.rev) + '</td></tr>';
-        }).join('') + '</tbody>'
-    : '<tbody><tr><td class="tk-empty">No orders or invoices for ' + plMonthLabel(p) + '.</td></tr></tbody>';
+  // Unit economics by homecare
+  plRenderUE(p, c);
 
   // 12-month trend
   var th = '<thead><tr><th>Month</th><th style="text-align:right">Revenue</th><th style="text-align:right">HC cost</th><th style="text-align:right">GM1</th><th style="text-align:right">GM1 %</th><th style="text-align:right">Marketing</th><th style="text-align:right">GM2</th><th style="text-align:right">GM2 %</th></tr></thead><tbody>';
@@ -22620,6 +22660,62 @@ function plRender(){
       + '<td class="pl-num">' + plAED(t.mkt) + '</td>'
       + '<td class="pl-num ' + plCls(t.gm2) + '">' + plAED(t.gm2) + '</td><td class="pl-num ' + plCls(t.gm2) + '">' + plPct(t.gm2, t.rev) + '</td></tr>';
   }).join('') + '</tbody>';
+}
+function plRenderUE(p, c){
+  var u = c.orders.ue, rows = {};
+  Object.keys(u.hc).forEach(function(k){ var a = u.hc[k]; rows[k] = Object.assign({}, a, {cost:0, inv:0, ncg:Object.keys(a.cgs).length}); });
+  c.inv.forEach(function(i){
+    var k = tkNorm(i.homecare);
+    if(!rows[k]) rows[k] = {name:i.homecare, bookings:0, wdays:0, hrs:0, sp:0, cost:0, inv:0, ncg:0};
+    rows[k].cost += (+i.amount||0); rows[k].inv++;
+  });
+  var list = Object.values(rows).sort(function(a,b){ return b.bookings - a.bookings || b.sp - a.sp; });
+  var T = list.reduce(function(t,a){ t.bookings += a.bookings; t.wdays += a.wdays; t.hrs += a.hrs; t.cost += a.cost; t.sp += a.sp; return t; }, {bookings:0, wdays:0, hrs:0, cost:0, sp:0});
+  var n0 = function(n){ return Math.round(n||0).toLocaleString(); };
+  var n2 = function(n){ return n ? (Math.round(n*100)/100).toFixed(2) : '—'; };
+  var miss = list.filter(function(a){ return a.bookings && !a.inv; }).length;
+
+  var line = function(l, v, cls){ return '<tr><td>' + l + '</td><td class="pl-num ' + (cls||'') + '" style="font-weight:700">' + v + '</td></tr>'; };
+  var tm = T.sp - T.cost;
+  document.getElementById('pl-ue-sum').innerHTML = '<tbody>'
+    + line('Total caregivers (named)', n0(u.cgs))
+    + line('Total bookings (service days)', n0(T.bookings))
+    + line('Total caregiver hours', n0(T.hrs))
+    + line('Total caregiver cost (AED)', n0(T.cost))
+    + line('Weighted average cost per hour (AED)', n2(T.hrs ? T.cost / T.hrs : 0))
+    + line('Total SP, Final Price (AED)', n0(T.sp))
+    + line('SP per hour (AED)', n2(T.hrs ? T.sp / T.hrs : 0))
+    + line('Margin (AED)', n0(tm), plCls(tm))
+    + line('Margin %', plPct(tm, T.sp), plCls(tm))
+    + '</tbody>';
+
+  var th = '<thead><tr><th>Homecare</th><th style="text-align:right">Bookings</th><th style="text-align:right">Working days</th><th style="text-align:right">Hours</th>'
+    + '<th style="text-align:right">Cost (AED)</th><th style="text-align:right">Cost / hour</th><th style="text-align:right">SP (AED)</th><th style="text-align:right">SP / hour</th>'
+    + '<th style="text-align:right">Margin (AED)</th><th style="text-align:right">Margin %</th></tr></thead><tbody>';
+  var row = function(a, tot){
+    var m = a.sp - a.cost;
+    return '<tr' + (tot ? ' style="background:var(--bg3);font-weight:700"' : '') + '><td>' + (tot ? 'Total' : '<b>' + tkEsc(a.name) + '</b>'
+        + (a.bookings && !a.inv ? ' <span class="tk-pill" style="color:var(--sick)" title="No invoice uploaded for this month, so cost is 0">no invoice</span>' : '')) + '</td>'
+      + '<td class="pl-num">' + n0(a.bookings) + '</td><td class="pl-num">' + n0(a.wdays) + '</td><td class="pl-num">' + n0(a.hrs) + '</td>'
+      + '<td class="pl-num">' + n0(a.cost) + '</td><td class="pl-num">' + n2(a.hrs ? a.cost / a.hrs : 0) + '</td>'
+      + '<td class="pl-num">' + n0(a.sp) + '</td><td class="pl-num">' + n2(a.hrs ? a.sp / a.hrs : 0) + '</td>'
+      + '<td class="pl-num ' + plCls(m) + '">' + n0(m) + '</td><td class="pl-num ' + plCls(m) + '">' + plPct(m, a.sp) + '</td></tr>';
+  };
+  document.getElementById('pl-hc-tbl').innerHTML = list.length
+    ? th + list.map(function(a){ return row(a); }).join('') + row(T, true) + '</tbody>'
+    : '<tbody><tr><td class="tk-empty">No bookings or invoices for ' + plMonthLabel(p) + '.</td></tr></tbody>';
+  document.getElementById('pl-ue-note').textContent = miss
+    ? miss + ' homecare' + (miss > 1 ? 's have' : ' has') + ' bookings but no invoice for ' + plMonthLabel(p) + ' — their cost shows as 0 until one is uploaded.'
+    : '';
+}
+function plExportUE(){
+  var p = plMonth(), c = plCalc(p), tbl = document.getElementById('pl-hc-tbl');
+  var csv = [].map.call(tbl.querySelectorAll('tr'), function(tr){
+    return [].map.call(tr.children, function(td){ var v = td.innerText.replace(/no invoice/,'').trim().replace(/,/g,''); return /"|,/.test(v) ? '"' + v.replace(/"/g,'""') + '"' : v; }).join(',');
+  }).join('\n');
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+  a.download = 'valeo-unit-economics-' + p + '.csv'; a.click();
 }
 function plTrend(p){ var out = []; for(var i = 11; i >= 0; i--) out.push(plCalc(plShiftMonth(p, -i))); return out; }
 function plGo(p){ document.getElementById('pl-month').value = p; plRender(); window.scrollTo({top:0, behavior:'smooth'}); }
