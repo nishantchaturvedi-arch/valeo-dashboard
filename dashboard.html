@@ -643,6 +643,14 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
   .nav-badge{position:absolute;top:2px;right:4px;font-size:8px;padding:0 4px}
   .nav-grp-btn{position:relative}
 }
+.ex-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:6px;padding:12px}
+.ex-row{display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:12px;background:var(--bg)}
+.ex-row.on{border-color:rgba(245,158,11,.6);background:rgba(245,158,11,.08)}
+.ex-row.locked{cursor:default}
+.ex-row input{accent-color:#f59e0b;width:15px;height:15px;flex-shrink:0}
+.ex-name{font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ex-sub{font-size:10px;color:var(--text3);white-space:nowrap}
+.ex-sub.stale{color:var(--absent);font-weight:600}
 .pl-ue{display:grid;grid-template-columns:minmax(280px,420px) 1fr;gap:16px;padding:12px 14px;border-bottom:1px solid var(--border)}
 .pl-ue-sum td{font-size:12px}
 @media(max-width:700px){.pl-ue{grid-template-columns:1fr}}
@@ -1009,6 +1017,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <button class="main-tab" onclick="switchTab(&#39;complaints&#39;)">🚩 Complaint Tracker</button>
  <button class="main-tab" onclick="switchTab(&#39;penalty&#39;)">⚠️ Penalty Tracker</button>
  <button class="main-tab" onclick="switchTab(&#39;expecting&#39;)">🤰 Expecting Mothers</button>
+ <button class="main-tab" onclick="switchTab(&#39;exclusive&#39;)">👑 Exclusive CGs</button>
 </div>
 
 <!-- ── Availability bar (calendar only) ── -->
@@ -10931,6 +10940,17 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 </div>
 
 <!-- ══ HC TICKET DESK ══ -->
+<div class="page" id="page-exclusive">
+ <div class="tk-bar">
+  <div style="font-size:15px;font-weight:700">👑 Exclusive CGs</div>
+  <input id="ex-search" class="tk-inp" type="text" placeholder="Search caregiver or homecare…" oninput="exRender()" style="width:230px">
+  <label style="font-size:12px;color:var(--text2);display:flex;align-items:center;gap:5px"><input type="checkbox" id="ex-only" onchange="exRender()"> Only exclusive</label>
+  <label style="font-size:12px;color:var(--text2);display:flex;align-items:center;gap:5px"><input type="checkbox" id="ex-exited" onchange="exRender()"> Show caregivers who left</label>
+  <span style="font-size:11px;color:var(--text3)">Exclusive caregivers are paid 288 h a month (pro rata by start / end date); others are paid for booked hours. Tick to add, untick to remove.</span>
+ </div>
+ <div class="tk-kpis" id="ex-kpis"></div>
+ <div class="tk-page" id="ex-body"></div>
+</div>
 <div class="page" id="page-pl">
  <div class="tk-bar">
  <div style="font-size:15px;font-weight:700">💰 P&amp;L</div>
@@ -10998,7 +11018,8 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
     <div style="font-size:11px;color:var(--text3);line-height:1.6;padding:4px 2px">
      <b style="color:var(--text2)">Bookings</b> = caregiver days on duty in the month (sick, leave, week off and cancelled days excluded).
      <b style="color:var(--text2)">Working days</b> = distinct caregiver + date.
-     <b style="color:var(--text2)">Hours</b> from the package (e.g. "12 hours").
+     <b style="color:var(--text2)">Hours served</b> from the package (e.g. "12 hours").
+     <b style="color:var(--text2)">Hours paid</b> = 288 h a month for each exclusive CG (pro rata by start / end date, pauses excluded) + booked hours for everyone else.
      <b style="color:var(--text2)">SP</b> = Final Price spread evenly over each order's service days.
      <b style="color:var(--text2)">Cost</b> = that homecare's invoices for the month.
      <b style="color:var(--text2)">Margin</b> = SP − Cost.
@@ -11808,6 +11829,7 @@ async function loadData(force=false){
     var _mzPg=document.getElementById('page-mumz');
     if(_mzPg&&_mzPg.classList.contains('active'))switchToMumz();
     populateCGHCFilter();
+    if(typeof exLoad==='function'){ if(!_ex.loaded) exLoad(); else exMigrate(); }
     if(!rawData.length && typeof vcEmptyState==='function') vcEmptyState();
     var _cntRows=rawData;
     if(_session&&_session.role==='hc'&&_session.homecare){
@@ -12355,46 +12377,107 @@ function getAnalyticsData(){
 
 // ── Exclusive CG Registry ────────────────────────────────────────
 // Default exclusive CGs — editable from CG card toggle
-var EXCLUSIVE_NAMES = new Set(['alysa','christine','maribel','soe']);
-var EXCLUSIVE_HC    = new Set(['shifa']);
-// Load user-customised exclusives from localStorage
-(function(){
-  try{
-    var saved = JSON.parse(localStorage.getItem(ckey('valeo_exclusive_cgs'))||'null');
-    if(saved && saved.names) EXCLUSIVE_NAMES = new Set(saved.names);
-    if(saved && saved.hcs)   EXCLUSIVE_HC    = new Set(saved.hcs);
-  }catch(e){}
-})();
-
-function saveExclusiveList(){
-  localStorage.setItem(ckey('valeo_exclusive_cgs'), JSON.stringify({
-    names:[...EXCLUSIVE_NAMES], hcs:[...EXCLUSIVE_HC]
-  }));
-}
-
+// Shared list (Firestore, per country): whole homecares that are exclusive (Shifa by
+// default — every caregiver there is exclusive) plus caregivers added / removed one by
+// one for other homecares, keyed by full name + homecare.
+var EX_DEFAULT_HCS = ['shifa'];
+var EX_LEGACY_NAMES = ['alysa','christine','maribel','soe'];   // old first-name list, migrated once
+var _ex = {hcs:EX_DEFAULT_HCS.slice(), add:{}, remove:{}, loaded:false, migrated:false};
+(function(){ try{ var c = JSON.parse(localStorage.getItem(ckey('valeo_exclusive_v2'))||'null'); if(c){ _ex.hcs = c.hcs||_ex.hcs; _ex.add = c.add||{}; _ex.remove = c.remove||{}; _ex.migrated = !!c.migrated; } }catch(e){} })();
+function exKey(cg, hc){ return tkNorm(cg) + '|' + tkNorm(hc); }
+function exHCWide(hc){ var n = tkNorm(hc); return _ex.hcs.some(function(h){ return n.indexOf(h) === 0; }); }
 function isExclusiveCG(cg, hc){
   if(!cg) return false;
-  var cgl=(cg||'').toLowerCase().trim().split(' ')[0];
-  var hcl=(hc||'').toLowerCase().trim().split(' ')[0];
-  if(EXCLUSIVE_HC.has(hcl)) return true;
-  return EXCLUSIVE_NAMES.has(cgl);
+  var k = exKey(cg, hc);
+  if(exHCWide(hc)) return true;            // e.g. Shifa — always exclusive
+  return !!_ex.add[k] && !_ex.remove[k];
+}
+async function exLoad(){
+  try{
+    if(!_db) await initFirebase(); if(!_db) return;
+    var d = await _db.collection('valeo_exclusive').doc('config').get();
+    if(d.exists){ var v = d.data()||{}; _ex.hcs = v.hcs || EX_DEFAULT_HCS.slice(); _ex.add = v.add||{}; _ex.remove = v.remove||{}; _ex.migrated = true; }
+    _ex.loaded = true; exCache();
+    if(!d.exists) exMigrate();
+    exRefresh();
+  }catch(e){ console.warn('[exclusive] load', e); }
+}
+// first run: turn the old first-name list into named caregivers so nobody changes status
+function exMigrate(){
+  if(_ex.migrated || !(rawData||[]).length) return;
+  if(VALEO_COUNTRY === 'AE') exAllCGs().forEach(function(c){
+    var first = tkNorm(c.name.split(' ')[0]);
+    if(EX_LEGACY_NAMES.indexOf(first) >= 0 && !exHCWide(c.hc)) _ex.add[exKey(c.name, c.hc)] = 1;
+  });
+  _ex.migrated = true; exSave();
+}
+function exCache(){ try{ localStorage.setItem(ckey('valeo_exclusive_v2'), JSON.stringify({hcs:_ex.hcs, add:_ex.add, remove:_ex.remove, migrated:_ex.migrated})); }catch(e){} }
+async function exSave(){
+  exCache();
+  try{ if(!_db) await initFirebase(); if(_db) await _db.collection('valeo_exclusive').doc('config').set({hcs:_ex.hcs, add:_ex.add, remove:_ex.remove, updated_at:new Date().toISOString(), updated_by:(_session&&_session.username)||''}); }
+  catch(e){ alert('Could not save the exclusive list: ' + e.message); }
+}
+function exSet(cg, hc, on){
+  if(!tkIsMaster()){ alert('Only Valeo can change exclusive caregivers.'); return; }
+  if(exHCWide(hc)) return;                 // whole homecare is exclusive
+  var k = exKey(cg, hc);
+  if(on){ _ex.add[k] = 1; delete _ex.remove[k]; } else { delete _ex.add[k]; }
+  exSave(); exRefresh();
+}
+function toggleExclusive(cg, hc){
+  if(exHCWide(hc)){ alert(hc + ': every caregiver is exclusive by default.'); return; }
+  exSet(cg, hc, !isExclusiveCG(cg, hc));
+}
+function exRefresh(){
+  try{ renderHCGrid(); }catch(e){}
+  var ap = document.getElementById('page-analytics'); if(ap && ap.classList.contains('active')) try{ renderAnalyticsData(); }catch(e){}
+  var ep = document.getElementById('page-exclusive'); if(ep && ep.classList.contains('active')) exRender();
+  var pp = document.getElementById('page-pl'); if(pp && pp.classList.contains('active') && typeof plRender === 'function') plRender();
+}
+// every caregiver we know, with homecare
+function exAllCGs(){
+  var m = {};
+  (rawData||[]).forEach(function(r){ if(r.caregiver){ var k = exKey(r.caregiver, r.homecare); if(!m[k]) m[k] = {name:r.caregiver, hc:r.homecare||'—', last:''}; if(r.date > m[k].last) m[k].last = r.date; } });
+  Object.values(manualCGs||{}).forEach(function(c){ var k = exKey(c.name, c.homecare); if(!m[k]) m[k] = {name:c.name, hc:c.homecare||'—', last:''}; });
+  return Object.values(m);
 }
 
-function toggleExclusive(cg, hc){
-  var cgl = (cg||'').toLowerCase().trim().split(' ')[0];
-  var hcl = (hc||'').toLowerCase().trim().split(' ')[0];
-  var wasExcl = isExclusiveCG(cg, hc);
-  if(wasExcl){
-    EXCLUSIVE_NAMES.delete(cgl);
-    // Don't touch EXCLUSIVE_HC — affects all CGs in that HC
-  } else {
-    EXCLUSIVE_NAMES.add(cgl);
-  }
-  saveExclusiveList();
-  renderHCGrid();
-  // Re-render analytics if on that tab
-  var anaPage = document.getElementById('page-analytics');
-  if(anaPage && anaPage.classList.contains('active')) renderAnalyticsData();
+// ── Exclusive CGs page ───────────────────────────────────────────
+function initExclusive(){ if(!_ex.loaded) exLoad(); exRender(); }
+function exRender(){
+  var box = document.getElementById('ex-body'); if(!box) return;
+  var q = String((document.getElementById('ex-search')||{}).value||'').toLowerCase().trim();
+  var only = (document.getElementById('ex-only')||{}).checked;
+  var hideExited = !(document.getElementById('ex-exited')||{}).checked;
+  var today = avToday(), groups = {}, nEx = 0, nAll = 0;
+  exAllCGs().forEach(function(c){
+    var ex = getCGExit(c.name, c.hc); if(hideExited && ex && ex <= today) return;
+    var on = isExclusiveCG(c.name, c.hc); nAll++; if(on) nEx++;
+    if(only && !on) return;
+    if(q && (c.name + ' ' + c.hc).toLowerCase().indexOf(q) < 0) return;
+    (groups[c.hc] = groups[c.hc] || []).push(Object.assign({on:on, exit:ex}, c));
+  });
+  document.getElementById('ex-kpis').innerHTML = '<div class="tk-kpi"><div class="tk-kpi-v" style="color:#f59e0b">' + nEx + '</div><div class="tk-kpi-l">Exclusive</div></div>'
+    + '<div class="tk-kpi"><div class="tk-kpi-v">' + (nAll - nEx) + '</div><div class="tk-kpi-l">Not exclusive</div></div>'
+    + '<div class="tk-kpi"><div class="tk-kpi-v">' + nAll + '</div><div class="tk-kpi-l">Caregivers</div></div>';
+  var hcs = Object.keys(groups).sort(function(a,b){ return (exHCWide(b)?1:0) - (exHCWide(a)?1:0) || a.localeCompare(b); });
+  if(!hcs.length){ box.innerHTML = '<div class="tk-empty">' + (nAll ? 'No caregivers match.' : 'No caregivers yet — order data has not loaded.') + '</div>'; return; }
+  var E = tkEsc, canEdit = tkIsMaster();
+  var stale = new Date(Date.now() - 60*864e5).toISOString().slice(0,10);
+  box.innerHTML = hcs.map(function(hc){
+    var list = groups[hc].sort(function(a,b){ return (b.on?1:0) - (a.on?1:0) || a.name.localeCompare(b.name); });
+    var wide = exHCWide(hc), n = list.filter(function(c){ return c.on; }).length;
+    return '<div class="tk-card"><div class="tk-card-h"><span>' + E(hc) + ' <span style="font-weight:500;color:var(--text3)">· ' + n + ' of ' + list.length + ' exclusive</span></span>'
+      + (wide ? '<span class="tk-pill" style="color:#f59e0b">👑 All caregivers exclusive (default)</span>' : '') + '</div>'
+      + '<div class="ex-grid">' + list.map(function(c){
+          var sn = c.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'"), sh = c.hc.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+          return '<label class="ex-row' + (c.on ? ' on' : '') + (wide || !canEdit ? ' locked' : '') + '">'
+            + '<input type="checkbox"' + (c.on ? ' checked' : '') + (wide || !canEdit ? ' disabled' : '') + ' onchange="exSet(\'' + E(sn) + '\',\'' + E(sh) + '\',this.checked)">'
+            + '<span class="ex-name">' + E(c.name) + '</span>'
+            + (c.exit ? '<span class="ex-sub">left ' + E(c.exit) + '</span>' : c.last ? '<span class="ex-sub' + (c.last < stale ? ' stale" title="No order for 60+ days — if this caregiver has left, set an end date (Roster ▸ 🚪) so she is not counted as paid 288 h' : '') + '">last order ' + E(c.last) + '</span>' : '<span class="ex-sub">manual</span>')
+            + '</label>';
+        }).join('') + '</div></div>';
+  }).join('');
 }
 
 function renderAnalyticsData(){
@@ -12845,13 +12928,13 @@ function switchTab(tab){
   if(_session&&_session.role==='hc'&&tab!=='calendar'&&tab!=='roster'&&tab!=='complaints'&&tab!=='tickets'&&tab!=='leave'&&tab!=='avail'&&tab!=='ops'&&!(tab==='transport'&&trIsShifa())){alert('Access restricted');return;}
   // Client accounts (e.g. Mumzworld): their own order list + tickets only
   if(_session&&_session.role==='client'&&tab!=='mumz'&&tab!=='tickets'){alert('Access restricted');return;}
-  if(tab==='pl'&&_session&&_session.role!=='master'){alert('Master access only');return;}
+  if((tab==='pl'||tab==='exclusive')&&_session&&_session.role!=='master'){alert('Master access only');return;}
   if(tab==='roster'){setTimeout(switchToRoster,80);}
   if(tab==='daily'){setTimeout(switchToDaily,80);}
   if(tab==='mumz'){setTimeout(switchToMumz,80);}
   var _tabLbl={calendar:'calendar',analytics:'analytics',ops:'operations',planner:'schedule builder',roster:'roster',
     daily:'daily orders',supply:'supply',customleads:'lead tracker',bsleads:'babysitting leads',
-    complaints:'complaint',penalty:'penalty',expecting:'expecting',tickets:'hc tickets',leave:'leave applications',
+    complaints:'complaint',exclusive:'exclusive cgs',penalty:'penalty',expecting:'expecting',tickets:'hc tickets',leave:'leave applications',
     mumz:'mumzworld orders', avail:'availability search', transport:'transport charges', pl:'p&l'}[tab]||tab;
   document.querySelectorAll('.main-tab').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase().includes(_tabLbl)));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -12871,6 +12954,7 @@ function switchTab(tab){
   if(tab==='supply'){if(_session&&_session.role!=='master'){alert('Master access only');return;}loadSupply();}
   if(tab==='penalty'){if(_session&&_session.role!=='master'){alert('Master access only');return;}loadPenalties();}
   if(tab==='pl'){initPL();}
+  if(tab==='exclusive'){initExclusive();}
 }
 
 
@@ -22783,7 +22867,7 @@ function plUnitEcon(p){
     var name = r.homecare || 'Unassigned', key = tkNorm(name);
     var a = hc[key] || (hc[key] = {name:name, bookings:0, wdays:0, hrs:0, sp:0, cost:0, inv:0, cgs:{}});
     var sp = (+r.final_price||0) / (okey(r) ? (days[okey(r)]||1) : 1), h = plDayHours(r);
-    a.bookings++; a.hrs += h; a.sp += sp; a.cgs[r.caregiver] = 1;
+    a.bookings++; a.hrs += h; a.sp += sp; a.cgs[r.caregiver] = (a.cgs[r.caregiver]||0) + h;
     if(!wd[r.caregiver + '|' + r.date]){ wd[r.caregiver + '|' + r.date] = 1; a.wdays++; T.wdays++; }
     T.bookings++; T.hrs += h; T.sp += sp; cgs[r.caregiver] = 1;
     if(okey(r)) orders[okey(r)] = 1;
@@ -22869,16 +22953,33 @@ function plRender(){
       + '<td class="pl-num ' + plCls(t.gm2) + '">' + plAED(t.gm2) + '</td><td class="pl-num ' + plCls(t.gm2) + '">' + plPct(t.gm2, t.rev) + '</td></tr>';
   }).join('') + '</tbody>';
 }
+// Hours paid: exclusive caregivers 288h a month (pro rata from start to end date, pauses
+// excluded — same capacity as the roster); everyone else is paid for the hours booked.
+function plPaidHours(p, rows){
+  var y = +p.slice(0,4), m = +p.slice(5,7), dim = new Date(y, m, 0).getDate(), dates = [];
+  for(var d = 1; d <= dim; d++) dates.push(p + '-' + pad(d));
+  var idx = rosterDayIndex(), wo = rosterWoLookup();
+  Object.keys(rows).forEach(function(k){ var a = rows[k]; a.paid = 0; a.exPaid = 0; a.exServed = 0; a.nEx = 0;
+    Object.keys(a.cgs||{}).forEach(function(cg){ if(!isExclusiveCG(cg, a.name)) a.paid += a.cgs[cg]; }); });
+  exAllCGs().forEach(function(c){
+    if(!isExclusiveCG(c.name, c.hc)) return;
+    var cap = rosterRangeCounts(c.name, c.hc, dates, idx, wo).cap; if(cap <= 0) return;
+    var k = tkNorm(c.hc);
+    if(!rows[k]) rows[k] = {name:c.hc, bookings:0, wdays:0, hrs:0, sp:0, cost:0, inv:0, ncg:0, cgs:{}, paid:0, exPaid:0, exServed:0, nEx:0};
+    var a = rows[k]; a.nEx++; a.exPaid += cap; a.paid += cap; a.exServed += (a.cgs && a.cgs[c.name]) || 0;
+  });
+}
 function plRenderUE(p, c){
   var u = c.orders.ue, rows = {};
   Object.keys(u.hc).forEach(function(k){ var a = u.hc[k]; rows[k] = Object.assign({}, a, {cost:0, inv:0, ncg:Object.keys(a.cgs).length}); });
   c.inv.forEach(function(i){
     var k = tkNorm(i.homecare);
-    if(!rows[k]) rows[k] = {name:i.homecare, bookings:0, wdays:0, hrs:0, sp:0, cost:0, inv:0, ncg:0};
+    if(!rows[k]) rows[k] = {name:i.homecare, bookings:0, wdays:0, hrs:0, sp:0, cost:0, inv:0, ncg:0, cgs:{}};
     rows[k].cost += (+i.amount||0); rows[k].inv++;
   });
+  plPaidHours(p, rows);
   var list = Object.values(rows).sort(function(a,b){ return b.bookings - a.bookings || b.sp - a.sp; });
-  var T = list.reduce(function(t,a){ t.bookings += a.bookings; t.wdays += a.wdays; t.hrs += a.hrs; t.cost += a.cost; t.sp += a.sp; return t; }, {bookings:0, wdays:0, hrs:0, cost:0, sp:0});
+  var T = list.reduce(function(t,a){ t.bookings += a.bookings; t.wdays += a.wdays; t.hrs += a.hrs; t.cost += a.cost; t.sp += a.sp; t.paid += a.paid||0; t.exPaid += a.exPaid||0; t.exServed += a.exServed||0; t.nEx += a.nEx||0; return t; }, {bookings:0, wdays:0, hrs:0, cost:0, sp:0, paid:0, exPaid:0, exServed:0, nEx:0});
   var n0 = function(n){ return Math.round(n||0).toLocaleString(); };
   var n2 = function(n){ return n ? (Math.round(n*100)/100).toFixed(2) : '—'; };
   var miss = list.filter(function(a){ return a.bookings && !a.inv; }).length;
@@ -22888,7 +22989,12 @@ function plRenderUE(p, c){
   document.getElementById('pl-ue-sum').innerHTML = '<tbody>'
     + line('Total caregivers (named)', n0(u.cgs))
     + line('Total bookings (service days)', n0(T.bookings))
-    + line('Total caregiver hours', n0(T.hrs))
+    + line('Hours served (booked)', n0(T.hrs))
+    + line('Hours paid', n0(T.paid))
+    + line('&nbsp;&nbsp;· exclusive (' + T.nEx + ' CGs × 288h pro rata)', n0(T.exPaid))
+    + line('&nbsp;&nbsp;· non-exclusive (booked hours)', n0(T.paid - T.exPaid))
+    + line('Paid hours not served', n0(Math.max(T.paid - T.hrs, 0)), (T.paid - T.hrs) > 0 ? 'pl-neg' : '')
+    + line('Paid hours used %', plPct(T.hrs, T.paid))
     + line('Total caregiver cost (AED)', n0(T.cost))
     + line('Weighted average cost per hour (AED)', n2(T.hrs ? T.cost / T.hrs : 0))
     + line('Total SP, Final Price (AED)', n0(T.sp))
@@ -22897,7 +23003,7 @@ function plRenderUE(p, c){
     + line('Margin %', plPct(tm, T.sp), plCls(tm))
     + '</tbody>';
 
-  var th = '<thead><tr><th>Homecare</th><th style="text-align:right">Bookings</th><th style="text-align:right">Working days</th><th style="text-align:right">Hours</th>'
+  var th = '<thead><tr><th>Homecare</th><th style="text-align:right">Bookings</th><th style="text-align:right">Working days</th><th style="text-align:right">Hours served</th><th style="text-align:right" title="Exclusive CGs: 288h a month pro rata · others: booked hours">Hours paid</th><th style="text-align:right">Paid used %</th>'
     + '<th style="text-align:right">Cost (AED)</th><th style="text-align:right">Cost / hour</th><th style="text-align:right">SP (AED)</th><th style="text-align:right">SP / hour</th>'
     + '<th style="text-align:right">Margin (AED)</th><th style="text-align:right">Margin %</th></tr></thead><tbody>';
   var row = function(a, tot){
@@ -22905,6 +23011,8 @@ function plRenderUE(p, c){
     return '<tr' + (tot ? ' style="background:var(--bg3);font-weight:700"' : '') + '><td>' + (tot ? 'Total' : '<b>' + tkEsc(a.name) + '</b>'
         + (a.bookings && !a.inv ? ' <span class="tk-pill" style="color:var(--sick)" title="No invoice uploaded for this month, so cost is 0">no invoice</span>' : '')) + '</td>'
       + '<td class="pl-num">' + n0(a.bookings) + '</td><td class="pl-num">' + n0(a.wdays) + '</td><td class="pl-num">' + n0(a.hrs) + '</td>'
+      + '<td class="pl-num" title="' + (a.nEx ? a.nEx + ' exclusive CGs: ' + n0(a.exPaid) + 'h paid, ' + n0(a.exServed) + 'h served' : 'No exclusive CGs — paid for booked hours') + '">' + n0(a.paid) + (a.nEx ? ' <span style="color:#f59e0b">👑' + a.nEx + '</span>' : '') + '</td>'
+      + '<td class="pl-num ' + (a.paid && a.hrs / a.paid < .8 ? 'pl-neg' : '') + '">' + plPct(a.hrs, a.paid) + '</td>'
       + '<td class="pl-num">' + n0(a.cost) + '</td><td class="pl-num">' + n2(a.hrs ? a.cost / a.hrs : 0) + '</td>'
       + '<td class="pl-num">' + n0(a.sp) + '</td><td class="pl-num">' + n2(a.hrs ? a.sp / a.hrs : 0) + '</td>'
       + '<td class="pl-num ' + plCls(m) + '">' + n0(m) + '</td><td class="pl-num ' + plCls(m) + '">' + plPct(m, a.sp) + '</td></tr>';
@@ -23128,7 +23236,7 @@ function vcCurrencyFix(root){
 // ═════════════════════════════════════════════════════════════════
 var NAV_GROUPS = [
   {id:'sched',   label:'🗓 Scheduling',        short:'🗓 Schedule', tabs:['roster','planner','avail','ops']},
-  {id:'hc',      label:'🏥 Homecare Partners', short:'🏥 Partners', tabs:['tickets','leave','complaints','penalty','supply']},
+  {id:'hc',      label:'🏥 Homecare Partners', short:'🏥 Partners', tabs:['exclusive','tickets','leave','complaints','penalty','supply']},
   {id:'growth',  label:'🎯 Leads & Clients',   short:'🎯 Leads',    tabs:['customleads','bsleads','expecting','mumz']},
   {id:'finance', label:'💰 Finance & Reports', short:'💰 Finance',  tabs:['analytics','pl','transport']}
 ];
