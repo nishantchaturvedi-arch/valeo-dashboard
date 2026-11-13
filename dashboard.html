@@ -11783,6 +11783,7 @@ async function loadData(force=false){
     var _mzPg=document.getElementById('page-mumz');
     if(_mzPg&&_mzPg.classList.contains('active'))switchToMumz();
     populateCGHCFilter();
+    if(!rawData.length && typeof vcEmptyState==='function') vcEmptyState();
     var _cntRows=rawData;
     if(_session&&_session.role==='hc'&&_session.homecare){
       var _cS=_session.homecare.toLowerCase().replace(/[\s\u00a0]+/g,'');
@@ -23014,6 +23015,19 @@ function vcHeader(){
     + '</select>';
   h.insertBefore(d, h.firstChild);
 }
+// The saved page carries a snapshot of UAE screens (caregiver cards, roster table,
+// homecare dropdowns). Renderers stop early when there are no orders, so without
+// this that snapshot would stay on screen. Clear it and say why it is empty.
+function vcEmptyState(){
+  var msg = '<div style="padding:40px 20px;text-align:center;color:var(--text2);font-size:13px;line-height:1.7">'
+    + VC.flag + ' <b style="color:var(--text)">No ' + VC.name + ' orders to show yet.</b><br>'
+    + 'Only orders with Country = ' + VC.name + ', status <b>Nurse Assigned</b> or <b>Completed</b> and a nurse assigned appear here.</div>';
+  ['hc-grid-wrap','roster-wrap'].forEach(function(id){ var e = document.getElementById(id); if(e) e.innerHTML = msg; });
+  ['cg-hc-filter','roster-hc-filter'].forEach(function(id){ var e = document.getElementById(id); if(e && e.options.length) e.innerHTML = e.options[0].outerHTML; });
+  var rc = document.getElementById('cg-result-count'); if(rc) rc.textContent = '0 caregivers';
+  var cs = document.getElementById('roster-city-filter');
+  if(cs) cs.innerHTML = '<option value="">All Locations</option>' + CITY_CODES.map(function(c){ return '<option value="' + c + '">' + CITY_LABELS[c] + '</option>'; }).join('');
+}
 // currency label: every "AED" the dashboard prints becomes the country's currency
 function vcCurrencyFix(root){
   if(VC.cur === 'AED' || !root) return;
@@ -23025,6 +23039,7 @@ function vcCurrencyFix(root){
 }
 (function(){
   loginPickCountry(VALEO_COUNTRY);
+  if(VALEO_COUNTRY !== 'AE') vcEmptyState();   // never show the saved UAE snapshot outside UAE
   document.title = document.title + (VALEO_COUNTRY === 'AE' ? '' : ' · ' + VC.name);
   // UAE Babysitting Leads reads a UAE-only sheet — not offered in other countries
   if(VALEO_COUNTRY !== 'AE'){
