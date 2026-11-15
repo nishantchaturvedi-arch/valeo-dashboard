@@ -11726,10 +11726,11 @@ async function loadData(force=false){
       if(excl.some(function(e){ return e.toLowerCase() === hc.toLowerCase(); })) return null;
       var pkg = String(r['Parent_Package']||r['Package']||'');
       var tm = slot.length > 10 ? slot.slice(11).replace(/Z$/,'').split('+')[0].split('.')[0].split('-')[0].trim() : '';
-      return {date:ds, end_date:calcEndDate(ds, pkg), homecare:hc, client_name:String(r['User Name']||'').trim(),
+      return {date:ds, end_date:(String(r['Child_Package']||'').trim() ? ds : calcEndDate(ds, pkg)), homecare:hc, client_name:String(r['User Name']||'').trim(),
         order_id:String(r['Cart_Order_ID']||'').trim(), child_order_id:String(r['Child_Order_ID']||'').trim(),
         package_type:pkg.trim(), location:String(r['City']||'').trim(), status_raw:String(r['Order_Status']||'').trim(),
         final_price:parseFloat(r['Final_Price']||r['Order_Price']||0)||0,
+        is_b2b:pickB2B(r), is_mumzworld:pickMumzworld(r), is_uc:pickUrbanCompany(r),
         time_start: tm ? fmtTime(tm) : '', time_end: tm ? calcTimeEnd(tm, pkg) : ''};
     }).filter(Boolean);
 
@@ -14375,7 +14376,7 @@ function dyCollect(ds){
     if(ds < p.date || ds > (p.end_date || p.date)) return;
     var oid = p.child_order_id || p.order_id; if(oid && pseen[oid]) return; if(oid) pseen[oid] = 1;
     rows.push({cg:'', hc:p.homecare, client:p.client_name, start:p.time_start, end:p.time_end, oid:oid, pkg:p.package_type,
-      city:(typeof normCity==='function'?normCity(p.location):p.location)||p.location||'', kind:'pending', off:'', src:p, manual:false, pending:true, status:p.status_raw});
+      city:(typeof normCity==='function'?normCity(p.location):p.location)||p.location||'', kind:(mzTagged(p) ? 'mumz' : 'pending'), off:'', src:p, manual:false, pending:true, status:p.status_raw});
   });
   var _own = (typeof tkSessionHC === 'function' && _session && _session.role === 'hc') ? tkSessionHC() : '';
   if(_own){
@@ -14415,7 +14416,7 @@ function dyRender(refill){
     if(fh && r.hc !== fh) return false;
     if(fc && r.city !== fc) return false;
     if(ft === 'mumz' && r.kind !== 'mumz') return false;
-    if(ft === 'own' && (r.kind === 'mumz' || r.pending)) return false;
+    if(ft === 'own' && r.kind === 'mumz') return false;
     if(ft === 'pending' && !r.pending) return false;
     if(fs && slotOf(r.sm) !== fs) return false;
     if(q && [r.client, r.cg, r.oid, r.hc, r.pkg].join(' ').toLowerCase().indexOf(q) < 0) return false;
@@ -14433,13 +14434,15 @@ function dyRender(refill){
   var cgs = new Set(live.map(function(r){ return r.cg; })).size;
   var hrs = live.reduce(function(t, r){ var s = r.sm, e = dyMins(r.end); if(s == null || e == null) return t; var m = e - s; if(m <= 0) m += 1440; return t + m; }, 0);
   var card = function(v, l, c){ return '<div class="tk-kpi"><div class="tk-kpi-v" style="color:'+(c||'var(--text)')+'">'+v+'</div><div class="tk-kpi-l">'+l+'</div></div>'; };
+  var allOrd = live.concat(pend);
   document.getElementById('dy-kpis').innerHTML =
-      card(live.length, 'Bookings')
-    + card(cgs, 'Caregivers working')
-    + card(Math.round(hrs/60), 'Hours booked')
-    + card(live.filter(function(r){ return r.kind === 'mumz'; }).length, 'Mumzworld / B2B', '#ff2d95')
-    + (isToday ? card(inProg, 'In progress now', '#3fb950') : '')
+      card(allOrd.length, 'Orders (all)')
+    + card(live.length, 'Nurse assigned', '#3fb950')
     + card(pend.length, 'Awaiting nurse', pend.length ? '#d29922' : '')
+    + card(cgs, 'Caregivers working')
+    + card(Math.round(hrs/60), 'Hours booked (nurse assigned)')
+    + card(allOrd.filter(function(r){ return r.kind === 'mumz'; }).length, 'Mumzworld / B2B', '#ff2d95')
+    + (isToday ? card(inProg, 'In progress now', '#3fb950') : '')
     + card(all.length - live.length - pend.length, 'Cancelled / off', (all.length - live.length - pend.length) ? '#f85149' : '');
 
   document.getElementById('dy-count').textContent = rows.length + ' of ' + all.length + ' booking' + (all.length === 1 ? '' : 's') + ' shown';
@@ -14527,7 +14530,7 @@ function shRender(){
   var blocks = hcs.map(function(h){
     var mine = rows.filter(function(r){ return tkHCMatch(r.hc, h); });
     var lines = mine.map(function(r){
-      return '• ' + (r.start ? r.start + (r.end ? '–' + r.end : '') : 'Time TBC') + ' · ' + r.cg + ' → ' + (r.client || 'Client') + (r.city ? ' (' + r.city + ')' : '') + (r.oid ? ' #' + r.oid : '');
+      return '• ' + (r.start ? r.start + (r.end ? '–' + r.end : '') : 'Time TBC') + ' · ' + (r.pending ? '⏳ Nurse to be assigned' : r.cg) + ' → ' + (r.client || 'Client') + (r.city ? ' (' + r.city + ')' : '') + (r.oid ? ' #' + r.oid : '');
     });
     return '📋 *' + h + '* — orders for ' + dLbl + ' (' + mine.length + ')\n' + (lines.join('\n') || '• No bookings');
   });
