@@ -669,6 +669,34 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .od-tbl tbody tr.od-click{cursor:pointer}
 .od-tbl .od-grp{border-left:1px solid var(--border)}
 .od-tbl thead tr.od-h1 th{text-align:center;background:var(--bg2);color:var(--text3)}
+.cp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
+.cp-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;cursor:pointer;display:flex;flex-direction:column;gap:10px;transition:border-color .15s}
+.cp-card:hover{border-color:#FFB900}
+.cp-card-top{display:flex;gap:12px;align-items:center}
+.cp-av{width:52px;height:52px;border-radius:50%;object-fit:cover;background:#FFF0C7;color:#0E3A5E;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;flex-shrink:0;border:2px solid #FFB900}
+.cp-nm{font-weight:700;font-size:14px;line-height:1.25}
+.cp-hc{font-size:11px;color:var(--text3)}
+.cp-bar{height:5px;border-radius:3px;background:var(--bg3);overflow:hidden}
+.cp-bar i{display:block;height:100%;background:#FFB900}
+.cp-week{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cp-week span{font-size:9px;text-align:center;border-radius:4px;padding:3px 0;font-weight:600}
+.cp-free{background:rgba(31,157,85,.18);color:#3fb950}.cp-part{background:rgba(255,185,0,.18);color:#d29922}.cp-busy{background:var(--bg3);color:var(--text3)}
+.cp-box{max-width:980px!important;width:96vw;max-height:94vh;overflow:auto}
+.cp-edit{display:grid;grid-template-columns:1.5fr 1fr;gap:20px;margin-top:12px}
+@media(max-width:820px){.cp-edit{grid-template-columns:1fr}}
+.cp-photo-row{display:flex;gap:14px;align-items:center;margin-bottom:12px}
+.cp-photo{width:84px;height:84px;border-radius:50%;background:#FFF0C7 center/cover;border:3px solid #FFB900;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;color:#0E3A5E;flex-shrink:0}
+.cp-cv{background:var(--bg3);border:1px dashed var(--border2);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:12px}
+.cp-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.cp-tags label{font-size:12px;border:1px solid var(--border);border-radius:999px;padding:4px 10px;cursor:pointer;user-select:none}
+.cp-tags input{display:none}
+.cp-tags label:has(input:checked){background:rgba(255,185,0,.18);border-color:#FFB900;color:var(--text)}
+.cp-side-h{font-size:12px;font-weight:700;margin-bottom:8px}
+.cp-cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cp-cal div{border-radius:6px;padding:5px 2px;text-align:center;font-size:10px;line-height:1.3}
+.cp-cal b{display:block;font-size:13px}
+.cp-share{background:var(--bg3);border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.6}
+.cp-share input{width:100%;font-family:monospace;font-size:11px;padding:6px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);margin:6px 0}
 .ex-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:6px;padding:12px}
 .ex-row{display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:12px;background:var(--bg)}
 .ex-row.on{border-color:rgba(245,158,11,.6);background:rgba(245,158,11,.08)}
@@ -1054,6 +1082,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <button class="main-tab" onclick="switchTab(&#39;penalty&#39;)">⚠️ Penalty Tracker</button>
  <button class="main-tab" onclick="switchTab(&#39;expecting&#39;)">🤰 Expecting Mothers</button>
  <button class="main-tab" onclick="switchTab(&#39;exclusive&#39;)">👑 Exclusive CGs</button>
+ <button class="main-tab" onclick="switchTab(&#39;profiles&#39;)">🪪 Caregiver Profiles</button>
  <button class="main-tab" onclick="switchTab(&#39;odrev&#39;)">📈 Revenue by Order Date</button>
 </div>
 
@@ -11079,6 +11108,65 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
   </div>
  </div>
 </div>
+<div class="page" id="page-profiles">
+ <div class="tk-bar">
+  <div style="font-size:15px;font-weight:700">🪪 Caregiver Profiles</div>
+  <input id="cp-q" class="tk-inp" type="text" placeholder="Search caregiver…" oninput="cpRender()" style="width:200px">
+  <select id="cp-hc" class="tk-inp" onchange="cpRender()"><option value="">All homecares</option></select>
+  <select id="cp-f" class="tk-inp" onchange="cpRender()"><option value="">All caregivers</option><option value="shared">🔗 Shared</option><option value="todo">✏️ Profile incomplete</option><option value="free">🟢 Free in next 7 days</option></select>
+  <button class="tk-btn" onclick="cpRefreshShared(true)" title="Re-publish the availability on every shared profile from the current roster">🔄 Refresh shared availability</button>
+  <span id="cp-status" style="font-size:11px;color:var(--text3)"></span>
+ </div>
+ <div class="tk-kpis" id="cp-kpis"></div>
+ <div class="tk-page"><div class="cp-grid" id="cp-grid"></div>
+  <div style="font-size:11px;color:var(--text3);line-height:1.6;padding:8px 2px 16px">Availability comes from the Roster (Valeo bookings, leave, days off, pauses and days with the homecare's own client). Shared links show the client-facing profile only — no homecare, phone or internal notes — and the availability as of the last refresh.</div>
+ </div>
+</div>
+<div class="qt-modal" id="cp-modal" onclick="if(event.target===this)cpClose()">
+ <div class="qt-box cp-box">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+   <div><div class="qt-title" id="cp-title">Caregiver profile</div><div class="qt-sub" id="cp-sub" style="margin-bottom:0"></div></div>
+   <button class="qt-x" onclick="cpClose()" aria-label="Close">×</button>
+  </div>
+  <div class="cp-edit">
+   <div>
+    <div class="cp-photo-row"><div class="cp-photo" id="cp-photo"></div>
+     <div><label class="tk-btn" style="display:inline-block;cursor:pointer">📷 Upload photo<input type="file" accept="image/*" onchange="cpPickPhoto(this)" style="display:none"></label>
+      <button class="tk-btn" onclick="cpSetPhoto('')">Remove</button><div style="font-size:11px;color:var(--text3);margin-top:6px">Square, face centred works best.</div></div></div>
+    <div class="cp-cv"><b>📄 CV</b> <span id="cp-cv-name" style="color:var(--text3)">none</span>
+     <label class="tk-btn" style="display:inline-block;cursor:pointer;margin-left:6px">⬆ Upload CV<input type="file" accept="application/pdf,image/*,.doc,.docx" onchange="cpPickCV(this)" style="display:none"></label>
+     <button class="tk-btn" id="cp-cv-view" onclick="cpViewCV()" style="display:none">View</button>
+     <div id="cp-cv-msg" style="font-size:11px;margin-top:6px;color:var(--text3)">Upload a PDF CV and the fields below are filled in where we can read them — please check.</div>
+     <label style="font-size:12px;color:var(--text2);display:flex;gap:6px;align-items:center;margin-top:6px"><input type="checkbox" id="cp-cv-public"> Show "View CV" on the shared profile</label></div>
+    <div class="tr-grid">
+     <div><label class="qt-lbl" for="cp-name">Name shown to clients</label><input id="cp-name" class="qt-input" type="text"></div>
+     <div><label class="qt-lbl" for="cp-headline">Headline</label><input id="cp-headline" class="qt-input" type="text" placeholder="e.g. Newborn care specialist"></div>
+     <div><label class="qt-lbl" for="cp-exp">Years of experience</label><input id="cp-exp" class="qt-input" type="number" min="0" max="50"></div>
+     <div><label class="qt-lbl" for="cp-age">Age</label><input id="cp-age" class="qt-input" type="number" min="18" max="80"></div>
+     <div><label class="qt-lbl" for="cp-nat">Nationality</label><input id="cp-nat" class="qt-input" type="text" list="cp-nat-list"><datalist id="cp-nat-list"></datalist></div>
+     <div><label class="qt-lbl" for="cp-lang">Languages <span class="ri-opt">(comma separated)</span></label><input id="cp-lang" class="qt-input" type="text" placeholder="English, Arabic, Tagalog"></div>
+    </div>
+    <label class="qt-lbl">Specialities</label><div class="cp-tags" id="cp-spec"></div>
+    <label class="qt-lbl">Certifications</label><div class="cp-tags" id="cp-cert"></div>
+    <label class="qt-lbl" for="cp-cert-other">Other certifications <span class="ri-opt">(comma separated)</span></label><input id="cp-cert-other" class="qt-input" type="text">
+    <label class="qt-lbl" for="cp-edu">Education / training</label><input id="cp-edu" class="qt-input" type="text" placeholder="e.g. Diploma in Midwifery, 2015">
+    <label class="qt-lbl" for="cp-bio">About (shown to clients)</label><textarea id="cp-bio" class="qt-input" rows="5" placeholder="A warm, short introduction: experience with newborns, routines, what families like about her…"></textarea>
+   </div>
+   <div>
+    <div class="cp-side-h">Availability · next 14 days <span style="font-weight:400;color:var(--text3)">(from roster)</span></div>
+    <div class="cp-cal" id="cp-cal"></div>
+    <div class="cp-side-h" style="margin-top:16px">Sharing</div>
+    <div id="cp-share-box" class="cp-share"></div>
+   </div>
+  </div>
+  <div id="cp-msg" style="font-size:12px;font-weight:600;min-height:16px;margin:8px 0"></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+   <button class="tk-btn pri big" onclick="cpSave()">💾 Save profile</button>
+   <button class="tk-btn big" onclick="cpPreview()">👁 Preview</button>
+   <button class="tk-btn big" onclick="cpShare()">🔗 Save & share link</button>
+  </div>
+ </div>
+</div>
 <div class="page" id="page-exclusive">
  <div class="tk-bar">
   <div style="font-size:15px;font-weight:700">👑 Exclusive CGs</div>
@@ -11984,6 +12072,7 @@ async function loadData(force=false){
       if(_act('page-ops') && typeof dyRender === 'function') dyRender();
       if(_act('page-pl') && typeof plRender === 'function' && _pl.loaded){ if(typeof _plUECache !== 'undefined') _plUECache = {sig:null, m:{}}; plRender(); }
       if(_act('page-exclusive') && typeof exRender === 'function') exRender();
+      if(_act('page-profiles') && typeof cpRender === 'function'){ cpRender(); cpRefreshShared(false); }
     }catch(e){ console.warn('[refresh after load]', e); }
     if(!rawData.length && typeof vcEmptyState==='function') vcEmptyState();
     var _cntRows=rawData;
@@ -13086,13 +13175,13 @@ function switchTab(tab){
   if(_session&&_session.role==='hc'&&tab!=='calendar'&&tab!=='roster'&&tab!=='complaints'&&tab!=='tickets'&&tab!=='leave'&&tab!=='avail'&&tab!=='ops'&&!(tab==='transport'&&trIsShifa())){alert('Access restricted');return;}
   // Client accounts (e.g. Mumzworld): their own order list + tickets only
   if(_session&&_session.role==='client'&&tab!=='mumz'&&tab!=='tickets'){alert('Access restricted');return;}
-  if((tab==='pl'||tab==='exclusive'||tab==='odrev')&&_session&&_session.role!=='master'){alert('Master access only');return;}
+  if((tab==='pl'||tab==='exclusive'||tab==='odrev'||tab==='profiles')&&_session&&_session.role!=='master'){alert('Master access only');return;}
   if(tab==='roster'){setTimeout(switchToRoster,80);}
   if(tab==='daily'){setTimeout(switchToDaily,80);}
   if(tab==='mumz'){setTimeout(switchToMumz,80);}
   var _tabLbl={calendar:'calendar',analytics:'utilisation analytics',ops:'operations',planner:'schedule builder',roster:'roster',
     daily:'daily orders',supply:'supply',customleads:'lead tracker',bsleads:'babysitting leads',
-    complaints:'complaint',exclusive:'exclusive cgs',odrev:'revenue by order date',penalty:'penalty',expecting:'expecting',tickets:'hc tickets',leave:'leave applications',
+    complaints:'complaint',exclusive:'exclusive cgs',profiles:'caregiver profiles',odrev:'revenue by order date',penalty:'penalty',expecting:'expecting',tickets:'hc tickets',leave:'leave applications',
     mumz:'mumzworld orders', avail:'availability search', transport:'transport charges', pl:'p&l'}[tab]||tab;
   document.querySelectorAll('.main-tab').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase().includes(_tabLbl)));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -13113,6 +13202,7 @@ function switchTab(tab){
   if(tab==='penalty'){if(_session&&_session.role!=='master'){alert('Master access only');return;}loadPenalties();}
   if(tab==='pl'){initPL();}
   if(tab==='exclusive'){initExclusive();}
+  if(tab==='profiles'){cpInit();}
   if(tab==='odrev'){odRender();}
 }
 
@@ -23726,6 +23816,238 @@ function odExport(){
 </script>
 <script>
 // ═════════════════════════════════════════════════════════════════
+// CAREGIVER PROFILES — profile per caregiver (Firestore valeo_cg_profiles),
+// availability from the roster, and a shareable Valeo-branded page
+// (profile.html, public snapshot in valeo_public_profiles).
+// ═════════════════════════════════════════════════════════════════
+var CP_SPEC = ['Newborn care','Infant care','Toddler care','Twins','Night care','Sleep training','Breastfeeding support','Special needs','Postnatal / mother care','Homework help','Elderly care','Light cooking for kids'];
+var CP_CERT = ['CPR','First aid','Paediatric first aid','DHA licence','DOH licence','Registered nurse','Midwifery','Childcare diploma','Newborn care training'];
+var CP_LANGS = ['English','Arabic','Tagalog','Filipino','Hindi','Urdu','French','Russian','Swahili','Amharic','Sinhala','Nepali','Malayalam','Tamil','Bengali','Indonesian','Spanish','Portuguese','German','Italian','Chinese','Thai'];
+var CP_NATS = ['Filipino','Indian','Kenyan','Ugandan','Ethiopian','Sri Lankan','Nepalese','Indonesian','Pakistani','Bangladeshi','Ghanaian','Nigerian','South African','Myanmar','Egyptian','Jordanian','Syrian','Lebanese','Moroccan','Tunisian','British','Russian','Ukrainian'];
+var _cp = {loaded:false, profiles:{}, cur:null, draft:null, file:null};
+function cpId(cg, hc){ return (tkNorm(cg) + '__' + tkNorm(hc)).replace(/[^a-z0-9_]/g, '').slice(0, 140) || 'cg'; }
+function cpIni(n){ return String(n||'?').trim().split(/\s+/).map(function(w){ return w[0]; }).slice(0,2).join('').toUpperCase(); }
+function cpToken(){ var a = new Uint8Array(9); (window.crypto||{}).getRandomValues ? crypto.getRandomValues(a) : a.forEach(function(_, i){ a[i] = Math.random()*256; }); return [].map.call(a, function(b){ return ('0' + b.toString(16)).slice(-2); }).join(''); }
+function cpLink(tok){ var base = location.href.split('#')[0].split('?')[0].replace(/[^\/]*$/, ''); return base + 'profile.html?id=' + tok + '&c=' + VC.code.toLowerCase(); }
+async function cpInit(force){
+  if(!_cp.loaded || force){
+    try{ if(!_db) await initFirebase(); if(_db){ var snap = await _db.collection('valeo_cg_profiles').get(); _cp.profiles = {}; snap.forEach(function(d){ _cp.profiles[d.id] = d.data(); }); } _cp.loaded = true; }
+    catch(e){ console.warn('[profiles]', e); document.getElementById('cp-status').textContent = 'Could not load profiles — ' + e.message; }
+  }
+  cpRender();
+  cpRefreshShared(false);
+}
+// availability for the next n days from the roster: free / part / busy
+function cpAvail(cg, hc, n){
+  var out = [], d = new Date(avToday() + 'T12:00:00'), idx = rosterDayIndex(), wo = rosterWoLookup();
+  for(var i = 0; i < n; i++){
+    var ds = d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()), r = rosterDay(cg, hc, ds, idx, wo), st;
+    if(r.code === 'duty' || r.code === 'manual'){ var h = rosterDayHours(r); st = h && h < 9 ? 'part' : 'busy'; }
+    else if(r.code === 'empty' || r.code === 'cancelled') st = 'free';
+    else st = 'busy';   // leave, day off, week off, pause, HC client, not joined / left
+    out.push({d:ds, s:st, why:r.code});
+    d.setDate(d.getDate()+1);
+  }
+  return out;
+}
+function cpComplete(p){ if(!p) return 0; var f = [p.photo, p.bio, (p.languages||[]).length, p.experience_years, p.nationality, (p.specialties||[]).length, (p.certifications||[]).length]; return Math.round(f.filter(Boolean).length / f.length * 100); }
+function cpList(){ return (typeof utCaregivers === 'function' ? utCaregivers(lvDateList(avToday(), avToday())) : []).sort(function(a,b){ return a.hc.localeCompare(b.hc) || a.name.localeCompare(b.name); }); }
+function cpRender(){
+  var grid = document.getElementById('cp-grid'); if(!grid) return;
+  if(!(rawData||[]).length){ grid.innerHTML = '<div class="tk-empty">⏳ Loading caregivers…</div>'; return; }
+  var all = cpList(), hs = document.getElementById('cp-hc'), hcur = hs.value, hcs = [...new Set(all.map(function(c){ return c.hc; }))].sort();
+  hs.innerHTML = '<option value="">All homecares</option>' + hcs.map(function(h){ return '<option>' + tkEsc(h) + '</option>'; }).join(''); hs.value = hcs.indexOf(hcur) >= 0 ? hcur : '';
+  var q = String(document.getElementById('cp-q').value||'').toLowerCase().trim(), ff = document.getElementById('cp-f').value;
+  var shared = 0, done = 0;
+  var rows = all.map(function(c){ var p = _cp.profiles[cpId(c.name, c.hc)] || null, av = cpAvail(c.name, c.hc, 7); if(p && p.share_token) shared++; if(cpComplete(p) >= 80) done++; return {c:c, p:p, av:av}; })
+    .filter(function(x){ return (!hs.value || x.c.hc === hs.value) && (!q || x.c.name.toLowerCase().indexOf(q) >= 0)
+      && (!ff || (ff === 'shared' ? x.p && x.p.share_token : ff === 'todo' ? cpComplete(x.p) < 80 : x.av.some(function(d){ return d.s !== 'busy'; }))); });
+  document.getElementById('cp-kpis').innerHTML = '<div class="tk-kpi"><div class="tk-kpi-v">' + all.length + '</div><div class="tk-kpi-l">Caregivers</div></div>'
+    + '<div class="tk-kpi"><div class="tk-kpi-v" style="color:#FFB900">' + done + '</div><div class="tk-kpi-l">Profiles complete</div></div>'
+    + '<div class="tk-kpi"><div class="tk-kpi-v" style="color:var(--accent)">' + shared + '</div><div class="tk-kpi-l">Shared links</div></div>';
+  var E = tkEsc, DW = ['S','M','T','W','T','F','S'];
+  grid.innerHTML = rows.length ? rows.map(function(x){
+    var p = x.p || {}, pc = cpComplete(x.p), nm = p.display_name || x.c.name;
+    return '<div class="cp-card" data-cg="' + E(x.c.name) + '" data-hc="' + E(x.c.hc) + '" onclick="cpOpen(this.dataset.cg,this.dataset.hc)">'
+      + '<div class="cp-card-top">' + (p.photo ? '<img class="cp-av" src="' + E(p.photo) + '" alt="">' : '<div class="cp-av">' + E(cpIni(x.c.name)) + '</div>')
+      + '<div style="min-width:0"><div class="cp-nm">' + E(nm) + (isExclusiveCG(x.c.name, x.c.hc) ? ' <span title="Exclusive" style="color:#f59e0b">👑</span>' : '') + (p.share_token ? ' <span title="Shared link active">🔗</span>' : '') + '</div>'
+      + '<div class="cp-hc">' + E(x.c.hc) + (p.experience_years ? ' · ' + E(p.experience_years) + ' yrs' : '') + ((p.languages||[]).length ? ' · ' + E(p.languages.slice(0,2).join(', ')) : '') + '</div></div></div>'
+      + '<div><div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-bottom:3px"><span>Profile ' + pc + '%</span><span>Next 7 days</span></div><div class="cp-bar"><i style="width:' + pc + '%"></i></div></div>'
+      + '<div class="cp-week">' + x.av.map(function(d){ var dt = new Date(d.d + 'T12:00:00'); return '<span class="cp-' + d.s + '" title="' + d.d + ' · ' + d.why + '">' + DW[dt.getDay()] + '<br>' + dt.getDate() + '</span>'; }).join('') + '</div></div>';
+  }).join('') : '<div class="tk-empty">No caregivers match.</div>';
+}
+function cpTags(id, opts, sel){
+  document.getElementById(id).innerHTML = opts.map(function(o){ return '<label><input type="checkbox" value="' + tkEsc(o) + '"' + ((sel||[]).indexOf(o) >= 0 ? ' checked' : '') + '>' + tkEsc(o) + '</label>'; }).join('');
+}
+function cpOpen(cg, hc){
+  var id = cpId(cg, hc), p = JSON.parse(JSON.stringify(_cp.profiles[id] || {}));
+  _cp.cur = {cg:cg, hc:hc, id:id}; _cp.draft = p; _cp.file = null;
+  document.getElementById('cp-title').textContent = cg;
+  document.getElementById('cp-sub').textContent = hc + (isExclusiveCG(cg, hc) ? ' · 👑 exclusive' : '') + (p.updated_at ? ' · last saved ' + String(p.updated_at).slice(0,10) + (p.updated_by ? ' by ' + p.updated_by : '') : ' · no profile yet');
+  var v = function(i, x){ document.getElementById(i).value = x == null ? '' : x; };
+  v('cp-name', p.display_name || cg); v('cp-headline', p.headline || ''); v('cp-exp', p.experience_years || ''); v('cp-age', p.age || '');
+  v('cp-nat', p.nationality || ''); v('cp-lang', (p.languages||[]).join(', ')); v('cp-edu', p.education || ''); v('cp-bio', p.bio || '');
+  v('cp-cert-other', (p.certifications||[]).filter(function(c){ return CP_CERT.indexOf(c) < 0; }).join(', '));
+  document.getElementById('cp-nat-list').innerHTML = CP_NATS.map(function(n){ return '<option>' + n + '</option>'; }).join('');
+  cpTags('cp-spec', CP_SPEC, p.specialties); cpTags('cp-cert', CP_CERT, p.certifications);
+  document.getElementById('cp-cv-public').checked = !!p.cv_public;
+  cpSetPhoto(p.photo || '', true); cpShowCV();
+  var av = cpAvail(cg, hc, 14), DW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'], lbl = {free:'Free', part:'Part', busy:'Busy'};
+  document.getElementById('cp-cal').innerHTML = av.map(function(d){ var dt = new Date(d.d + 'T12:00:00'); return '<div class="cp-' + d.s + '" title="' + d.why + '">' + DW[dt.getDay()] + '<b>' + dt.getDate() + '</b>' + lbl[d.s] + '</div>'; }).join('');
+  cpShareBox(); document.getElementById('cp-msg').textContent = '';
+  document.getElementById('cp-modal').style.display = 'flex';
+}
+function cpClose(){ document.getElementById('cp-modal').style.display = 'none'; }
+function cpSetPhoto(url, quiet){
+  _cp.draft.photo = url || '';
+  var el = document.getElementById('cp-photo');
+  el.style.backgroundImage = url ? 'url("' + url + '")' : ''; el.textContent = url ? '' : cpIni(_cp.cur ? _cp.cur.cg : '');
+}
+function cpPickPhoto(input){
+  var f = input.files && input.files[0]; input.value = ''; if(!f) return;
+  var fr = new FileReader();
+  fr.onload = function(){ var img = new Image(); img.onload = function(){
+    var s = 480, w = img.width, h = img.height, side = Math.min(w, h), cv = document.createElement('canvas'); cv.width = s; cv.height = s;
+    cv.getContext('2d').drawImage(img, (w - side)/2, (h - side)/2, side, side, 0, 0, s, s);   // centre square crop
+    cpSetPhoto(cv.toDataURL('image/jpeg', 0.82));
+  }; img.src = fr.result; };
+  fr.readAsDataURL(f);
+}
+function cpShowCV(){
+  var cv = _cp.draft.cv; document.getElementById('cp-cv-name').textContent = cv ? cv.name + ' · ' + lvKB(cv.size||0) : 'none';
+  document.getElementById('cp-cv-view').style.display = cv ? '' : 'none';
+}
+function cpViewCV(){
+  var a = _cp.draft.cv; if(!a) return; var src = a.mode === 'storage' ? a.url : a.data;
+  if(a.mode === 'storage'){ window.open(src, '_blank'); return; }
+  var w = window.open('', '_blank'); if(!w) return;
+  w.document.write('<title>' + tkEsc(a.name) + '</title><body style="margin:0">' + (/^image\//.test(a.type) ? '<img src="' + src + '" style="max-width:100%">' : '<iframe src="' + src + '" style="border:0;width:100%;height:100vh"></iframe>') + '</body>'); w.document.close();
+}
+async function cpPickCV(input){
+  var f = input.files && input.files[0]; input.value = ''; if(!f) return;
+  var msg = document.getElementById('cp-cv-msg');
+  if(f.size > 10*1024*1024){ msg.style.color = 'var(--absent)'; msg.textContent = 'That file is ' + lvKB(f.size) + ' — max 10 MB.'; return; }
+  var data = await lvReadDataURL(f);
+  _cp.file = {name:f.name, type:f.type||'application/octet-stream', size:f.size, data:data};
+  _cp.draft.cv = {name:f.name, type:_cp.file.type, size:f.size, mode:'pending'}; cpShowCV();
+  msg.style.color = 'var(--text3)'; msg.textContent = 'CV attached — it is saved with the profile.';
+  if(/pdf/i.test(f.type) || /\.pdf$/i.test(f.name)){
+    msg.textContent = 'Reading the CV…';
+    try{ var txt = await cpPdfText(data); var n = cpFillFromText(txt); msg.style.color = n ? 'var(--duty)' : 'var(--text3)'; msg.textContent = n ? '✓ Filled ' + n + ' field(s) from the CV — please check them.' : 'CV attached. Could not pick out details automatically — please fill the fields.'; }
+    catch(e){ msg.textContent = 'CV attached (could not read its text: ' + e.message + ').'; }
+  }
+}
+function cpLoadScript(src){ return new Promise(function(res, rej){ var s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = function(){ rej(new Error('could not load PDF reader')); }; document.head.appendChild(s); }); }
+async function cpPdfText(dataUrl){
+  if(!window.pdfjsLib){ await cpLoadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'); pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; }
+  var bin = atob(dataUrl.split(',')[1]), u = new Uint8Array(bin.length); for(var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+  var pdf = await pdfjsLib.getDocument({data:u}).promise, out = [];
+  for(var p = 1; p <= Math.min(pdf.numPages, 6); p++){ var c = await (await pdf.getPage(p)).getTextContent(); out.push(c.items.map(function(i){ return i.str; }).join(' ')); }
+  return out.join('\n');
+}
+// fill only empty fields from CV text
+function cpFillFromText(t){
+  var n = 0, low = ' ' + String(t||'').toLowerCase().replace(/\s+/g, ' ') + ' ', set = function(id, v){ var e = document.getElementById(id); if(v && !String(e.value||'').trim()){ e.value = v; n++; } };
+  var yrs = low.match(/(\d{1,2})\s*\+?\s*(?:years?|yrs?)\s*(?:of)?\s*(?:experience|exp)/) || low.match(/experience[^.]{0,30}?(\d{1,2})\s*\+?\s*(?:years?|yrs?)/);
+  if(yrs) set('cp-exp', yrs[1]);
+  var age = low.match(/\bage\s*[:\-]?\s*(\d{2})\b/); if(age) set('cp-age', age[1]);
+  var nat = CP_NATS.find(function(x){ return low.indexOf(' ' + x.toLowerCase()) >= 0; }) || (/\bphilippines\b/.test(low) ? 'Filipino' : /\bindia\b/.test(low) ? 'Indian' : /\bkenya\b/.test(low) ? 'Kenyan' : '');
+  set('cp-nat', nat);
+  var langs = CP_LANGS.filter(function(x){ return new RegExp('\\b' + x.toLowerCase() + '\\b').test(low); });
+  if(langs.indexOf('Tagalog') >= 0 || langs.indexOf('Filipino') >= 0){ langs = langs.filter(function(x){ return x !== 'Filipino' && x !== 'Tagalog'; }); langs.push('Tagalog'); }   // Filipino is usually the nationality line
+  set('cp-lang', langs.join(', '));
+  var tick = function(box, list, tests){ list.forEach(function(o, i){ if(tests[i] && tests[i].test(low)){ var cb = document.querySelector('#' + box + ' input[value="' + o + '"]'); if(cb && !cb.checked){ cb.checked = true; n++; } } }); };
+  tick('cp-cert', CP_CERT, [/\bcpr\b/, /first[\s-]?aid/, /paediatric first aid|pediatric first aid/, /\bdha\b/, /\bdoh\b/, /registered nurse|\brn\b/, /midwi/, /child ?care (?:diploma|certificate)|early childhood/, /newborn care/]);
+  tick('cp-spec', CP_SPEC, [/newborn/, /infant/, /toddler/, /twins?\b/, /night (?:nanny|care|shift)/, /sleep training/, /breast ?feeding|lactation/, /special needs|autism|adhd/, /postnatal|post-natal|postpartum/, /homework|tutor/, /elderly|geriatric/, /cook/]);
+  var edu = (String(t||'').match(/(?:Bachelor|Diploma|Degree|Certificate|BSc|B\.Sc|Associate)[^\n.]{0,80}/i) || [])[0]; set('cp-edu', edu ? edu.trim() : '');
+  return n;
+}
+function cpCollect(){
+  var g = function(i){ return String(document.getElementById(i).value||'').trim(); }, list = function(v){ return v.split(/[,;\/]+/).map(function(x){ return x.trim(); }).filter(Boolean); };
+  var checked = function(id){ return [].map.call(document.querySelectorAll('#' + id + ' input:checked'), function(c){ return c.value; }); };
+  var p = _cp.draft;
+  p.display_name = g('cp-name') || _cp.cur.cg; p.headline = g('cp-headline'); p.experience_years = g('cp-exp'); p.age = g('cp-age');
+  p.nationality = g('cp-nat'); p.languages = list(g('cp-lang')); p.education = g('cp-edu'); p.bio = g('cp-bio');
+  p.specialties = checked('cp-spec'); p.certifications = checked('cp-cert').concat(list(g('cp-cert-other')));
+  p.cv_public = document.getElementById('cp-cv-public').checked;
+  p.caregiver = _cp.cur.cg; p.homecare = _cp.cur.hc;
+  return p;
+}
+function cpPublicDoc(p, cg, hc){
+  var city = typeof getCGCity === 'function' ? getCGCity(cg, hc) : '';
+  return {name:p.display_name || cg, headline:p.headline || '', photo:p.photo || '', experience_years:p.experience_years || '', age:p.age || '', nationality:p.nationality || '',
+    languages:p.languages || [], specialties:p.specialties || [], certifications:p.certifications || [], education:p.education || '', bio:p.bio || '', city:city || '',
+    availability:cpAvail(cg, hc, 14).map(function(d){ return {d:d.d, s:d.s}; }), as_of:new Date().toISOString(), country:VC.code.toLowerCase(),
+    cv:(p.cv_public && p.cv && p.cv.mode === 'storage') ? {url:p.cv.url, name:p.cv.name} : null};
+}
+async function cpSave(silent){
+  var msg = document.getElementById('cp-msg'), p = cpCollect(), cur = _cp.cur;
+  msg.style.color = 'var(--text2)'; msg.textContent = 'Saving…';
+  try{
+    if(!_db) await initFirebase(); if(!_db) throw new Error('not connected to the database');
+    if(_cp.file){
+      var f = _cp.file, path = 'cg-cv/' + cur.id + '_' + Date.now().toString(36) + '_' + String(f.name).replace(/[^A-Za-z0-9._-]/g,'_');
+      if(f.size <= LV_INLINE_CAP && !p.cv_public) p.cv = {name:f.name, type:f.type, size:f.size, mode:'inline', data:f.data};
+      else { var st = lvStorage(); if(!st) throw new Error('the CV is ' + lvKB(f.size) + ' and file storage is not available — use a smaller file'); var sn = await st.ref(path).putString(f.data, 'data_url'); p.cv = {name:f.name, type:f.type, size:f.size, mode:'storage', url:await sn.ref.getDownloadURL(), path:path}; }
+      _cp.file = null;
+    }
+    p.updated_at = new Date().toISOString(); p.updated_by = (_session && _session.username) || '';
+    await _db.collection('valeo_cg_profiles').doc(cur.id).set(p);
+    _cp.profiles[cur.id] = JSON.parse(JSON.stringify(p));
+    if(p.share_token) await _db.collection('valeo_public_profiles').doc(p.share_token).set(cpPublicDoc(p, cur.cg, cur.hc));
+    cpShowCV(); cpShareBox(); cpRender();
+    if(!silent){ msg.style.color = 'var(--duty)'; msg.textContent = '✓ Saved' + (p.share_token ? ' — the shared profile is updated too.' : '.'); }
+    return true;
+  }catch(e){ msg.style.color = 'var(--absent)'; msg.textContent = 'Could not save — ' + e.message; return false; }
+}
+async function cpShare(){
+  if(!_cp.draft.share_token) _cp.draft.share_token = cpToken();
+  if(!(await cpSave(true))) return;
+  var link = cpLink(_cp.draft.share_token), msg = document.getElementById('cp-msg');
+  try{ await navigator.clipboard.writeText(link); }catch(e){}
+  msg.style.color = 'var(--duty)'; msg.textContent = '✓ Shared — link copied. Anyone with the link can see the client-facing profile.';
+  cpShareBox();
+}
+async function cpUnshare(){
+  var p = _cp.draft, tok = p.share_token; if(!tok) return;
+  if(!confirm('Stop sharing? The link will stop working.')) return;
+  try{ await _db.collection('valeo_public_profiles').doc(tok).delete(); }catch(e){}
+  delete p.share_token; await cpSave(true);
+  document.getElementById('cp-msg').textContent = 'Sharing stopped — the old link no longer works.';
+}
+function cpShareBox(){
+  var p = _cp.draft || {}, box = document.getElementById('cp-share-box');
+  if(!p.share_token){ box.innerHTML = 'Not shared yet. <b>🔗 Save & share link</b> creates a public link with the Valeo-branded profile (no homecare, phone or internal notes).'; return; }
+  var link = cpLink(p.share_token), wa = 'https://wa.me/?text=' + encodeURIComponent('Meet ' + (p.display_name || _cp.cur.cg) + ', a Valeo caregiver: ' + link);
+  box.innerHTML = '🔗 <b>Shared</b><input readonly value="' + tkEsc(link) + '" onclick="this.select()">'
+    + '<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="tk-btn" onclick="navigator.clipboard&&navigator.clipboard.writeText(\'' + link + '\');tkToast&&tkToast(\'Link copied\')">📋 Copy</button>'
+    + '<a class="tk-btn" href="' + link + '" target="_blank" rel="noopener" style="text-decoration:none">↗ Open</a>'
+    + '<a class="tk-btn" href="' + wa + '" target="_blank" rel="noopener" style="text-decoration:none">💬 WhatsApp</a>'
+    + '<button class="tk-btn" onclick="cpUnshare()">Stop sharing</button></div>'
+    + '<div style="color:var(--text3);margin-top:6px">Availability on the link is refreshed whenever this profile is saved or the Profiles tab is opened.</div>';
+}
+function cpPreview(){
+  var p = cpCollect(), doc = cpPublicDoc(p, _cp.cur.cg, _cp.cur.hc);
+  if(_cp.file && /^image\//.test(_cp.file.type)) doc.cv = null;
+  try{ localStorage.setItem('valeo_profile_preview', JSON.stringify(doc)); }catch(e){ alert('Preview needs a bit of browser storage — please save and use Open instead.'); return; }
+  window.open(location.href.split('#')[0].split('?')[0].replace(/[^\/]*$/, '') + 'profile.html?preview=1', '_blank');
+}
+// keep shared links' availability current: republish when older than 6 h (or on demand)
+async function cpRefreshShared(force){
+  if(!_db || !(rawData||[]).length) return;
+  var st = document.getElementById('cp-status'), n = 0, list = cpList();
+  for(var i = 0; i < list.length; i++){
+    var c = list[i], p = _cp.profiles[cpId(c.name, c.hc)]; if(!p || !p.share_token) continue;
+    var age = Date.now() - new Date(p.published_at || 0).getTime();
+    if(!force && age < 6*3600e3) continue;
+    try{ await _db.collection('valeo_public_profiles').doc(p.share_token).set(cpPublicDoc(p, c.name, c.hc)); p.published_at = new Date().toISOString(); n++;
+      _db.collection('valeo_cg_profiles').doc(cpId(c.name, c.hc)).set({published_at:p.published_at}, {merge:true}); }catch(e){ console.warn('[profiles] refresh', e); }
+  }
+  if(st && (force || n)) st.textContent = n ? '✓ Availability refreshed on ' + n + ' shared profile' + (n === 1 ? '' : 's') : 'Shared profiles are up to date';
+}
+</script>
+<script>
+// ═════════════════════════════════════════════════════════════════
 // UTILISATION ANALYTICS — the same caregiver list and rosterRangeCounts()
 // the Roster uses, so the two always agree. Exclusive caregivers get a %;
 // non-exclusive caregivers show hours served.
@@ -24006,7 +24328,7 @@ function vcCurrencyFix(root){
 // ═════════════════════════════════════════════════════════════════
 var NAV_GROUPS = [
   {id:'sched',   label:'🗓 Scheduling',        short:'🗓 Schedule', tabs:['roster','planner','avail','ops']},
-  {id:'hc',      label:'🏥 Homecare Partners', short:'🏥 Partners', tabs:['exclusive','tickets','leave','complaints','penalty','supply']},
+  {id:'hc',      label:'🏥 Homecare Partners', short:'🏥 Partners', tabs:['profiles','exclusive','tickets','leave','complaints','penalty','supply']},
   {id:'growth',  label:'🎯 Leads & Clients',   short:'🎯 Leads',    tabs:['customleads','bsleads','expecting','mumz']},
   {id:'finance', label:'💰 Finance & Reports', short:'💰 Finance',  tabs:['analytics','pl','odrev','transport']}
 ];
