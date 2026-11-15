@@ -651,6 +651,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 }
 #page-odrev{--od-new:#3987e5;--od-rep:#d95926;--od-one:#3987e5}
 [data-theme="light"] #page-odrev{--od-new:#2a78d6;--od-rep:#eb6834;--od-one:#2a78d6}
+.ut-split{display:grid;grid-template-columns:minmax(260px,1fr) 2fr;gap:8px;align-items:start}
+@media(max-width:1000px){.ut-split{grid-template-columns:1fr}}
+.ut-pct{display:inline-block;min-width:44px;text-align:center;font-weight:700;font-family:monospace;padding:1px 6px;border-radius:5px;border:1px solid currentColor;font-size:11px}
+.ut-pct.hi{color:var(--duty)}.ut-pct.mid{color:var(--accent)}.ut-pct.lo{color:var(--absent)}.ut-pct.na{color:var(--text3);border-style:dashed}
 .od-range{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
 .od-charts{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
 .od-chart.od-wide{grid-column:1 / -1}
@@ -1033,7 +1037,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 
 <!-- ── Tabs ── -->
 <div class="main-tabs">
- <button class="main-tab" onclick="switchTab(&#39;analytics&#39;)">📊 Analytics</button>
+ <button class="main-tab" onclick="switchTab(&#39;analytics&#39;)">📊 Utilisation Analytics</button>
  <button class="main-tab" onclick="switchTab(&#39;pl&#39;)">💰 P&amp;L</button>
  <button class="main-tab" onclick="switchTab(&#39;ops&#39;)">⚡ Operations</button>
  <button class="main-tab" onclick="switchTab(&#39;planner&#39;)">📋 Schedule Builder</button>
@@ -9990,7 +9994,34 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 
 <!-- ── ANALYTICS PAGE ── -->
 <div class="page" id="page-analytics">
- <div class="analytics-page">
+ <div id="ut-page">
+  <div class="tk-bar">
+   <div style="font-size:15px;font-weight:700">📊 Utilisation</div>
+   <label style="font-size:12px;color:var(--text2);font-weight:600" for="ut-month">Month</label>
+   <select id="ut-month" class="tk-inp" onchange="utPickMonth(this.value)"></select>
+   <span class="od-range"><label style="font-size:12px;color:var(--text2);font-weight:600" for="ut-from">or From</label>
+    <input type="date" id="ut-from" class="tk-inp" onchange="utRange()"><label style="font-size:12px;color:var(--text2)" for="ut-to">To</label>
+    <input type="date" id="ut-to" class="tk-inp" onchange="utRange()">
+    <button class="tk-btn" id="ut-range-clear" onclick="utPickMonth(avToday().slice(0,7))" style="display:none">✕ Clear</button></span>
+   <select id="ut-hc" class="tk-inp" onchange="utRender()"><option value="">All homecares</option></select>
+   <select id="ut-type" class="tk-inp" onchange="utRender()"><option value="">Exclusive + non-exclusive</option><option value="ex">👑 Exclusive only</option><option value="non">Non-exclusive only</option></select>
+   <button class="tk-btn pri" onclick="utDownload()">⬇ Download report</button>
+  </div>
+  <div class="tk-kpis" id="ut-kpis"></div>
+  <div class="tk-page">
+   <div class="tk-card"><div class="tk-card-h"><span id="ut-hc-title">🏥 Homecare-wise utilisation</span></div>
+    <div class="ut-split"><div class="od-cv" style="height:auto;min-height:220px" id="ut-chart-wrap"><canvas id="ut-chart"></canvas></div>
+    <div class="tk-scroll" style="max-height:none;overflow-x:auto"><table class="tk-tbl od-tbl" id="ut-hc-tbl"></table></div></div></div>
+   <div class="tk-card"><div class="tk-card-h"><span id="ut-cg-title">👥 Caregiver-wise</span><input id="ut-q" class="tk-inp" type="text" placeholder="Search caregiver…" oninput="utRender()" style="width:200px"></div>
+    <div class="tk-scroll" style="max-height:600px;overflow:auto"><table class="tk-tbl od-tbl" id="ut-cg-tbl"></table></div></div>
+   <div style="font-size:11px;color:var(--text3);line-height:1.7;padding:2px 4px 16px">
+    Same calculation as the Roster. <b style="color:var(--text2)">Utilisation</b> = hours served on Valeo bookings ÷ available hours, for <b style="color:var(--text2)">exclusive caregivers only</b> (non-exclusive caregivers are shared with the homecare and paid per booked hour, so they show hours served, no %).
+    <b style="color:var(--text2)">Available hours</b> = 288 h a month, pro rata from the caregiver's start date (joining date, or first order) to the end date, minus pauses and days busy with the homecare's own client; sick, leave and week-off days stay available.
+    <b style="color:var(--text2)">Hours served</b> from the package (e.g. "12 hours") or the manual booking's times. Capped at 100% per group.
+   </div>
+  </div>
+ </div>
+ <div class="analytics-page" style="display:none">
  <!-- Month tabs -->
  <div class="month-tabs" id="month-tabs"></div>
  <!-- Week tabs -->
@@ -13059,7 +13090,7 @@ function switchTab(tab){
   if(tab==='roster'){setTimeout(switchToRoster,80);}
   if(tab==='daily'){setTimeout(switchToDaily,80);}
   if(tab==='mumz'){setTimeout(switchToMumz,80);}
-  var _tabLbl={calendar:'calendar',analytics:'analytics',ops:'operations',planner:'schedule builder',roster:'roster',
+  var _tabLbl={calendar:'calendar',analytics:'utilisation analytics',ops:'operations',planner:'schedule builder',roster:'roster',
     daily:'daily orders',supply:'supply',customleads:'lead tracker',bsleads:'babysitting leads',
     complaints:'complaint',exclusive:'exclusive cgs',odrev:'revenue by order date',penalty:'penalty',expecting:'expecting',tickets:'hc tickets',leave:'leave applications',
     mumz:'mumzworld orders', avail:'availability search', transport:'transport charges', pl:'p&l'}[tab]||tab;
@@ -23692,6 +23723,166 @@ function odExport(){
   var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([lines.join('\n')], {type:'text/csv'}));
   a.download = 'valeo-revenue-by-order-date.csv'; a.click();
 }
+</script>
+<script>
+// ═════════════════════════════════════════════════════════════════
+// UTILISATION ANALYTICS — the same caregiver list and rosterRangeCounts()
+// the Roster uses, so the two always agree. Exclusive caregivers get a %;
+// non-exclusive caregivers show hours served.
+// ═════════════════════════════════════════════════════════════════
+var _ut = {month:'', from:'', to:''}, _utChart = null, _utLast = null;
+function utDates(){
+  var f, t;
+  if(_ut.from && _ut.to){ f = _ut.from; t = _ut.to; }
+  else { var m = _ut.month || avToday().slice(0,7); f = m + '-01'; t = m + '-' + pad(new Date(+m.slice(0,4), +m.slice(5,7), 0).getDate()); }
+  return lvDateList(f, t);
+}
+function utPickMonth(m){ _ut.month = m; _ut.from = ''; _ut.to = ''; ['ut-from','ut-to'].forEach(function(id){ var e = document.getElementById(id); if(e) e.value = ''; }); utRender(); }
+function utRange(){
+  var f = document.getElementById('ut-from').value, t = document.getElementById('ut-to').value;
+  if(!f || !t) return;
+  if(t < f){ var x = f; f = t; t = x; }
+  if(lvDateList(f, t).length > 92){ alert('Pick up to 92 days.'); return; }
+  _ut.from = f; _ut.to = t; utRender();
+}
+// caregivers exactly as the Roster lists them for this period
+function utCaregivers(dates){
+  var from = dates[0], to = dates[dates.length-1], cg = {};
+  (rawData||[]).forEach(function(r){ if(r.caregiver && !cg[r.caregiver]) cg[r.caregiver] = {name:r.caregiver, hc:r.homecare||''}; });
+  Object.values(manualCGs||{}).forEach(function(v){ if(!cg[v.name]) cg[v.name] = {name:v.name, hc:v.homecare||''}; });
+  [...hiddenCGs].forEach(function(k){ delete cg[k.split('|')[0]]; });   // same rule as the Roster
+  return Object.values(cg).filter(function(c){
+    var ex = getCGExit(c.name, c.hc), jn = getCGJoin(c.name, c.hc);
+    return !((ex && ex <= from) || (jn && jn > to));
+  });
+}
+function utCompute(){
+  var dates = utDates(), idx = rosterDayIndex(), wo = rosterWoLookup();
+  var rows = utCaregivers(dates).map(function(c){
+    var k = rosterRangeCounts(c.name, c.hc, dates, idx, wo), st = rosterCGStart(c.name, c.hc);
+    return {name:c.name, hc:c.hc || 'Other', ex:isExclusiveCG(c.name, c.hc), start:st.date || '', startSet:st.set, end:getCGExit(c.name, c.hc) || '',
+      hrs:k.hrs, cap:k.cap, capPaid:k.capPaid, avail:k.avail, days:k.days, worked:k.worked, off:k.off, sick:k.sick, leave:k.leave, hcbusy:k.hcbusy};
+  });
+  return {dates:dates, rows:rows};
+}
+function utPctOf(h, c){ return c ? Math.min(Math.round(h / c * 100), 100) : null; }
+function utPctHTML(p){ if(p === null) return '<span class="ut-pct na">—</span>'; return '<span class="ut-pct ' + (p >= 70 ? 'hi' : p >= 40 ? 'mid' : 'lo') + '">' + p + '%</span>'; }
+function utGroup(list){
+  var g = {ex:0, non:0, exHrs:0, exCap:0, exPaid:0, exUnused:0, exOver:0, nonHrs:0, busy:0, exBusy:0, worked:0};
+  list.forEach(function(r){
+    g.busy += r.hcbusy; g.worked += r.worked;
+    if(r.ex){ g.ex++; g.exHrs += r.hrs; g.exCap += r.cap; g.exPaid += r.capPaid; g.exUnused += Math.max(r.cap - r.hrs, 0); g.exOver += Math.max(r.hrs - r.cap, 0); g.exBusy += r.hcbusy; }
+    else { g.non++; g.nonHrs += r.hrs; }
+  });
+  g.util = utPctOf(g.exHrs, g.exCap);
+  return g;
+}
+function utRender(){
+  var page = document.getElementById('ut-page'); if(!page) return;
+  if(!(rawData||[]).length){ document.getElementById('ut-kpis').innerHTML = '<div class="tk-kpi" style="min-width:300px"><div class="tk-kpi-v" style="font-size:14px">⏳ Loading orders…</div><div class="tk-kpi-l">the page fills in when the data is in</div></div>'; return; }
+  // month list
+  var ms = document.getElementById('ut-month'), now = avToday().slice(0,7), opts = [];
+  for(var i = 0; i < 13; i++){ var d = new Date(+now.slice(0,4), +now.slice(5,7) - 1 - i, 1); opts.push(d.getFullYear() + '-' + pad(d.getMonth()+1)); }
+  if(!_ut.month) _ut.month = now;
+  var R = !!(_ut.from && _ut.to);
+  ms.innerHTML = (R ? '<option value="range">📅 ' + odFmtD(_ut.from) + ' – ' + odFmtD(_ut.to) + '</option>' : '') + opts.map(function(m){ return '<option value="' + m + '">' + plMonthLabel(m) + '</option>'; }).join('');
+  ms.value = R ? 'range' : _ut.month;
+  document.getElementById('ut-range-clear').style.display = R ? '' : 'none';
+  var D = utCompute(); _utLast = D;
+  var period = R ? odFmtD(_ut.from) + ' – ' + odFmtD(_ut.to) : plMonthLabel(_ut.month);
+  // homecare filter
+  var hs = document.getElementById('ut-hc'), hcur = hs.value, hcs = [...new Set(D.rows.map(function(r){ return r.hc; }))].sort();
+  hs.innerHTML = '<option value="">All homecares</option>' + hcs.map(function(h){ return '<option>' + tkEsc(h) + '</option>'; }).join(''); hs.value = hcs.indexOf(hcur) >= 0 ? hcur : '';
+  var fh = hs.value, ft = document.getElementById('ut-type').value, q = String(document.getElementById('ut-q').value||'').toLowerCase().trim();
+  var scope = D.rows.filter(function(r){ return !fh || r.hc === fh; });
+  var G = utGroup(scope), n0 = function(x){ return Math.round(x||0).toLocaleString(); };
+  var kpi = function(v,l,c,t){ return '<div class="tk-kpi"' + (t ? ' title="' + t + '"' : '') + '><div class="tk-kpi-v" style="color:' + (c||'var(--text)') + '">' + v + '</div><div class="tk-kpi-l">' + l + '</div></div>'; };
+  document.getElementById('ut-kpis').innerHTML =
+      kpi(G.util === null ? '—' : G.util + '%', 'Exclusive utilisation · ' + period, G.util === null ? '' : G.util >= 70 ? 'var(--duty)' : G.util >= 40 ? 'var(--accent)' : 'var(--absent)', 'Same as the Roster toolbar figure')
+    + kpi(n0(G.ex), '👑 Exclusive caregivers', '#f59e0b')
+    + kpi(n0(G.exHrs) + ' / ' + n0(G.exCap), 'Exclusive hours served / available')
+    + kpi(n0(G.exUnused), 'Exclusive hours not used', G.exUnused ? 'var(--absent)' : '')
+    + kpi(n0(G.non), 'Non-exclusive caregivers')
+    + kpi(n0(G.nonHrs), 'Non-exclusive hours served')
+    + kpi(n0(G.busy), '🏠 Days with HC client', G.exBusy ? 'var(--absent)' : '#94a3b8', G.exBusy ? G.exBusy + ' of them are exclusive caregivers (paid by Valeo)' : '');
+  // homecare table
+  var byHC = {}; D.rows.forEach(function(r){ (byHC[r.hc] = byHC[r.hc] || []).push(r); });
+  var hcRows = Object.keys(byHC).map(function(h){ return Object.assign({hc:h}, utGroup(byHC[h])); })
+    .filter(function(g){ return !fh || g.hc === fh; })
+    .sort(function(a,b){ return (b.util === null ? -1 : b.util) - (a.util === null ? -1 : a.util) || b.ex - a.ex || a.hc.localeCompare(b.hc); });
+  document.getElementById('ut-hc-title').textContent = '🏥 Homecare-wise utilisation · ' + period;
+  var hcRow = function(g, tot){
+    return '<tr' + (tot ? ' style="background:var(--bg3);font-weight:700"' : '') + '><td>' + (tot ? 'Total' : '<b>' + tkEsc(g.hc) + '</b>') + '</td>'
+      + '<td class="od-grp">' + n0(g.ex) + '</td><td>' + n0(g.exHrs) + '</td><td>' + n0(g.exCap) + '</td><td>' + utPctHTML(g.util) + '</td><td>' + n0(g.exUnused) + '</td>'
+      + '<td class="od-grp">' + n0(g.non) + '</td><td>' + n0(g.nonHrs) + '</td>'
+      + '<td class="od-grp">' + (g.busy ? n0(g.busy) + (g.exBusy ? ' <span style="color:var(--absent)" title="Exclusive caregivers — Valeo pays">⚠' + g.exBusy + '</span>' : '') : '0') + '</td></tr>';
+  };
+  document.getElementById('ut-hc-tbl').innerHTML = '<thead><tr class="od-h1"><th></th><th colspan="5" class="od-grp">👑 Exclusive</th><th colspan="2" class="od-grp">Non-exclusive</th><th class="od-grp"></th></tr>'
+    + '<tr><th>Homecare</th><th class="od-grp">CGs</th><th>Hrs served</th><th>Hrs available</th><th>Utilisation</th><th>Hrs not used</th><th class="od-grp">CGs</th><th>Hrs served</th><th class="od-grp">🏠 Days with HC client</th></tr></thead><tbody>'
+    + hcRows.map(function(g){ return hcRow(g); }).join('') + hcRow(Object.assign({hc:'Total'}, G), true) + '</tbody>';
+  // chart: exclusive utilisation by homecare
+  var ch = hcRows.filter(function(g){ return g.util !== null; });
+  document.getElementById('ut-chart-wrap').style.height = Math.max(160, ch.length * 34 + 50) + 'px';
+  if(typeof Chart !== 'undefined'){
+    if(_utChart) _utChart.destroy();
+    var dark = document.documentElement.getAttribute('data-theme') !== 'light', ink = dark ? '#8b949e' : '#656d76', grid = dark ? '#30363d' : '#d0d7de';
+    _utChart = new Chart(document.getElementById('ut-chart'), {type:'bar',
+      data:{labels:ch.map(function(g){ return g.hc.length > 26 ? g.hc.slice(0,24) + '…' : g.hc; }), datasets:[{label:'Exclusive utilisation', data:ch.map(function(g){ return g.util; }), backgroundColor:dark ? '#3987e5' : '#2a78d6', borderRadius:4, borderSkipped:false, maxBarThickness:22}]},
+      options:{indexAxis:'y', responsive:true, maintainAspectRatio:false, animation:{duration:250}, plugins:{legend:{display:false}, title:{display:true, text:'Exclusive utilisation by homecare', color:ink, font:{size:11, weight:'600'}, align:'start'},
+        tooltip:{callbacks:{title:function(it){ return ch[it[0].dataIndex].hc; }, label:function(it){ var g = ch[it.dataIndex]; return ' ' + g.util + '% · ' + n0(g.exHrs) + ' of ' + n0(g.exCap) + ' h · ' + g.ex + ' CGs'; }}}},
+        scales:{x:{min:0, max:100, grid:{color:grid}, border:{display:false}, ticks:{color:ink, font:{size:10}, callback:function(v){ return v + '%'; }}}, y:{grid:{display:false}, ticks:{color:ink, font:{size:10}}}}}});
+  }
+  // caregiver table
+  var list = scope.filter(function(r){ return (!ft || (ft === 'ex' ? r.ex : !r.ex)) && (!q || r.name.toLowerCase().indexOf(q) >= 0); })
+    .sort(function(a,b){ return (b.ex - a.ex) || ((a.ex ? utPctOf(a.hrs, a.cap) || 0 : 0) - (b.ex ? utPctOf(b.hrs, b.cap) || 0 : 0)) || a.name.localeCompare(b.name); });
+  document.getElementById('ut-cg-title').textContent = '👥 Caregiver-wise · ' + list.length + ' caregiver' + (list.length === 1 ? '' : 's');
+  document.getElementById('ut-cg-tbl').innerHTML = '<thead><tr><th>Caregiver</th><th style="text-align:left">Homecare</th><th style="text-align:left">Type</th><th style="text-align:left">Start</th><th style="text-align:left">End</th>'
+    + '<th>Days available</th><th>Hrs served</th><th>Hrs available</th><th>Utilisation</th><th class="od-grp">Worked</th><th>Off</th><th>Sick</th><th>Leave</th><th>🏠 HC</th></tr></thead><tbody>'
+    + (list.length ? list.map(function(r){
+        var p = r.ex ? utPctOf(r.hrs, r.cap) : null;
+        return '<tr><td><b>' + tkEsc(r.name) + '</b></td><td style="text-align:left">' + tkEsc(r.hc) + '</td><td style="text-align:left">' + (r.ex ? '<span style="color:#f59e0b">👑 Exclusive</span>' : 'Non-exclusive') + '</td>'
+          + '<td style="text-align:left' + (r.startSet ? '' : ';color:var(--text3)') + '" title="' + (r.startSet ? 'Joining date' : 'No joining date — first order') + '">' + (r.start || '—') + '</td><td style="text-align:left">' + (r.end || 'active') + '</td>'
+          + '<td>' + r.avail + ' / ' + r.days + '</td><td>' + n0(r.hrs) + '</td><td>' + (r.ex ? n0(r.cap) : '—') + '</td><td>' + (r.ex ? utPctHTML(p) : '<span class="ut-pct na" title="Not exclusive — no %">—</span>') + '</td>'
+          + '<td class="od-grp">' + r.worked + '</td><td>' + r.off + '</td><td>' + r.sick + '</td><td>' + r.leave + '</td><td>' + (r.hcbusy ? '<span style="color:' + (r.ex ? 'var(--absent)' : 'var(--text2)') + '">' + r.hcbusy + '</span>' : '0') + '</td></tr>';
+      }).join('') : '<tr><td colspan="14" class="tk-empty">No caregivers match.</td></tr>') + '</tbody>';
+}
+function utDownload(){
+  if(!_utLast) utRender(); var D = _utLast; if(!D) return;
+  var R = !!(_ut.from && _ut.to), period = R ? _ut.from + ' to ' + _ut.to : _ut.month;
+  var fh = document.getElementById('ut-hc').value, rows = D.rows.filter(function(r){ return !fh || r.hc === fh; }), G = utGroup(rows);
+  var r1 = function(x){ return Math.round((x||0)*10)/10; };
+  var summary = [['Valeo utilisation report'], ['Country', VC.name], ['Period', period], ['Homecare', fh || 'All'], ['Generated', new Date().toISOString().slice(0,16).replace('T',' ')], [],
+    ['Exclusive utilisation %', G.util === null ? '' : G.util], ['Exclusive caregivers', G.ex], ['Exclusive hours served', r1(G.exHrs)], ['Exclusive hours available', r1(G.exCap)], ['Exclusive hours not used', r1(G.exUnused)],
+    ['Non-exclusive caregivers', G.non], ['Non-exclusive hours served', r1(G.nonHrs)], ['Days with homecare own client', G.busy], ['  of which exclusive caregivers', G.exBusy], [],
+    ['How it is calculated'], ['Utilisation = hours served on Valeo bookings / available hours, exclusive caregivers only (same as the Roster).'],
+    ['Available hours = 288 h a month pro rata from start date (joining date or first order) to end date, minus pauses and days with the homecare\'s own client.']];
+  var byHC = {}; rows.forEach(function(r){ (byHC[r.hc] = byHC[r.hc] || []).push(r); });
+  var hcSheet = [['Homecare','Exclusive CGs','Exclusive hrs served','Exclusive hrs available','Exclusive utilisation %','Exclusive hrs not used','Non-exclusive CGs','Non-exclusive hrs served','Days with HC client','of which exclusive']]
+    .concat(Object.keys(byHC).sort().map(function(h){ var g = utGroup(byHC[h]); return [h, g.ex, r1(g.exHrs), r1(g.exCap), g.util === null ? '' : g.util, r1(g.exUnused), g.non, r1(g.nonHrs), g.busy, g.exBusy]; }))
+    .concat([['Total', G.ex, r1(G.exHrs), r1(G.exCap), G.util === null ? '' : G.util, r1(G.exUnused), G.non, r1(G.nonHrs), G.busy, G.exBusy]]);
+  var cgSheet = [['Caregiver','Homecare','Type','Start date','Start source','End date','Days available','Days in period','Hrs served','Hrs available','Utilisation %','Days worked','Off','Sick','Leave','Days with HC client']]
+    .concat(rows.slice().sort(function(a,b){ return a.hc.localeCompare(b.hc) || a.name.localeCompare(b.name); }).map(function(r){
+      return [r.name, r.hc, r.ex ? 'Exclusive' : 'Non-exclusive', r.start, r.startSet ? 'joining date' : 'first order', r.end || 'active', r.avail, r.days, r1(r.hrs), r.ex ? r1(r.cap) : '', r.ex ? (utPctOf(r.hrs, r.cap) === null ? '' : utPctOf(r.hrs, r.cap)) : '', r.worked, r.off, r.sick, r.leave, r.hcbusy];
+    }));
+  var name = 'valeo-utilisation-' + VC.code.toLowerCase() + '-' + period.replace(/ /g,'') + (fh ? '-' + fh.replace(/[^A-Za-z0-9]+/g,'_') : '');
+  if(typeof XLSX !== 'undefined'){
+    var wb = XLSX.utils.book_new();
+    [['Summary', summary], ['Homecares', hcSheet], ['Caregivers', cgSheet]].forEach(function(x){ var ws = XLSX.utils.aoa_to_sheet(x[1]); ws['!cols'] = (x[1][0]||[]).map(function(){ return {wch:18}; }); XLSX.utils.book_append_sheet(wb, ws, x[0]); });
+    XLSX.writeFile(wb, name + '.xlsx');
+  } else {
+    var csv = [].concat(summary, [[]], hcSheet, [[]], cgSheet).map(function(r){ return r.map(function(v){ v = String(v==null?'':v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g,'""') + '"' : v; }).join(','); }).join('\n');
+    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'})); a.download = name + '.csv'; a.click();
+  }
+}
+(function(){
+  // the old analytics still runs (hidden) for anything that reads its results; the visible page is utRender
+  var _ra = window.renderAnalyticsData;
+  window.renderAnalyticsData = function(){ try{ if(_ra) _ra.apply(this, arguments); }catch(e){ console.warn('[analytics]', e); } try{ utRender(); }catch(e){ console.warn('[utilisation]', e); } };
+  var _rb = window.renderAnalytics;
+  window.renderAnalytics = function(){ try{ if(_rb) _rb.apply(this, arguments); }catch(e){ console.warn('[analytics]', e); } try{ utRender(); }catch(e){ console.warn('[utilisation]', e); } };
+  if(window.MutationObserver) new MutationObserver(function(){ var p = document.getElementById('page-analytics'); if(p && p.classList.contains('active')) utRender(); })
+    .observe(document.documentElement, {attributes:true, attributeFilter:['data-theme']});
+})();
 </script>
 <script>
 // ═════════════════════════════════════════════════════════════════
