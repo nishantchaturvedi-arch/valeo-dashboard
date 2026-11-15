@@ -10989,10 +10989,12 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <div class="tk-page">
   <div class="od-charts">
    <div class="tk-card od-chart od-wide"><div class="tk-card-h"><span id="od-c1-t">Revenue by day</span><span class="od-leg"><i style="background:var(--od-new)"></i>New <i style="background:var(--od-rep)"></i>Repeat</span></div><div class="od-cv"><canvas id="od-c1"></canvas></div></div>
-   <div class="tk-card od-chart"><div class="tk-card-h"><span>Revenue by channel</span></div><div class="od-cv"><canvas id="od-c2"></canvas></div></div>
+   <div class="tk-card od-chart"><div class="tk-card-h"><span>Revenue by channel</span><span class="od-leg"><i style="background:var(--od-new)"></i>New <i style="background:var(--od-rep)"></i>Repeat</span></div><div class="od-cv"><canvas id="od-c2"></canvas></div></div>
    <div class="tk-card od-chart"><div class="tk-card-h"><span>New vs repeat</span><span class="od-leg"><i style="background:var(--od-new)"></i>New <i style="background:var(--od-rep)"></i>Repeat</span></div><div class="od-cv"><canvas id="od-c3"></canvas></div></div>
    <div class="tk-card od-chart od-wide"><div class="tk-card-h"><span>Top packages by revenue</span></div><div class="od-cv od-tall"><canvas id="od-c4"></canvas></div></div>
   </div>
+  <div class="tk-card"><div class="tk-card-h"><span id="od-chx-title">🔀 Channel × new vs repeat</span></div>
+   <div class="tk-scroll" style="max-height:none;overflow-x:auto"><table class="tk-tbl od-tbl" id="od-chx-tbl"></table></div></div>
   <div class="tk-card"><div class="tk-card-h"><span>📅 Monthly breakdown <span style="font-weight:500;color:var(--text3)">· by the date the order was placed · click a month for its packages</span></span></div>
    <div class="tk-scroll" style="max-height:none;overflow-x:auto"><table class="tk-tbl od-tbl" id="od-month-tbl"></table></div></div>
   <div class="tk-card"><div class="tk-card-h"><span id="od-pkg-title">📦 Package breakdown</span></div>
@@ -23365,13 +23367,17 @@ function odOrders(){
   });
 }
 function odAgg(list){
-  var a = {n:0, rev:0, newN:0, newRev:0, repN:0, repRev:0, mzN:0, mzRev:0, dirN:0, dirRev:0, b2bN:0, b2bRev:0, newC:{}, repC:{}, cust:{}};
+  var a = {n:0, rev:0, newN:0, newRev:0, repN:0, repRev:0, mzN:0, mzRev:0, dirN:0, dirRev:0, b2bN:0, b2bRev:0, newC:{}, repC:{}, cust:{}, ch:{}};
+  ['mumz','direct','b2b'].forEach(function(k){ a.ch[k] = {newN:0, newRev:0, repN:0, repRev:0, newC:{}, repC:{}}; });
   list.forEach(function(c){
     a.n++; a.rev += c.rev; a.cust[c.cust] = 1;
+    var x = a.ch[c.chan] || a.ch.direct;
+    if(c.type === 'new'){ x.newN++; x.newRev += c.rev; x.newC[c.cust] = 1; } else { x.repN++; x.repRev += c.rev; x.repC[c.cust] = 1; }
     if(c.type === 'new'){ a.newN++; a.newRev += c.rev; a.newC[c.cust] = 1; } else { a.repN++; a.repRev += c.rev; a.repC[c.cust] = 1; }
     if(c.chan === 'mumz'){ a.mzN++; a.mzRev += c.rev; } else if(c.chan === 'b2b'){ a.b2bN++; a.b2bRev += c.rev; } else { a.dirN++; a.dirRev += c.rev; }
   });
   a.newCust = Object.keys(a.newC).length; a.repCust = Object.keys(a.repC).length; a.custN = Object.keys(a.cust).length;
+  Object.keys(a.ch).forEach(function(k){ var x = a.ch[k]; x.newCust = Object.keys(x.newC).length; x.repCust = Object.keys(x.repC).length; });
   return a;
 }
 function odRender(){
@@ -23410,19 +23416,39 @@ function odRender(){
     + kpi(n0(K.newN) + ' · ' + n0(K.newRev), 'New orders · revenue', 'var(--od-new)')
     + kpi(n0(K.repN) + ' · ' + n0(K.repRev), 'Repeat orders · revenue', 'var(--od-rep)')
     + kpi(n0(K.newCust) + ' / ' + n0(K.repCust), 'New / repeat customers')
-    + kpi(n0(K.mzN) + ' · ' + n0(K.mzRev), 'Mumzworld orders · revenue', '#ff2d95')
-    + kpi(n0(K.dirN) + ' · ' + n0(K.dirRev), 'Direct orders · revenue');
+    + kpi(n0(K.mzN) + ' · ' + n0(K.mzRev), 'Mumzworld orders · revenue<br>new ' + n0(K.ch.mumz.newN) + ' · repeat ' + n0(K.ch.mumz.repN), '#ff2d95')
+    + kpi(n0(K.dirN) + ' · ' + n0(K.dirRev), 'Direct orders · revenue<br>new ' + n0(K.ch.direct.newN) + ' · repeat ' + n0(K.ch.direct.repN));
+  // channel x new / repeat for the selected period
+  var cx = document.getElementById('od-chx-tbl');
+  if(cx){
+    document.getElementById('od-chx-title').textContent = '🔀 Channel × new vs repeat · ' + periodTxt;
+    var cxRow = function(label, x, tot){
+      var n = x.newN + x.repN, r = x.newRev + x.repRev;
+      return '<tr' + (tot ? ' style="background:var(--bg3);font-weight:700"' : '') + '><td>' + label + '</td>'
+        + '<td>' + n0(n) + '</td><td><b>' + n0(r) + '</b></td><td>' + avg(r, n) + '</td>'
+        + '<td class="od-grp">' + n0(x.newN) + '</td><td>' + n0(x.newRev) + '</td><td>' + avg(x.newRev, x.newN) + '</td><td>' + (n ? Math.round(x.newN / n * 100) + '%' : '—') + '</td>'
+        + '<td class="od-grp">' + n0(x.repN) + '</td><td>' + n0(x.repRev) + '</td><td>' + avg(x.repRev, x.repN) + '</td><td>' + (n ? Math.round(x.repN / n * 100) + '%' : '—') + '</td>'
+        + '<td class="od-grp">' + n0(x.newCust) + '</td><td>' + n0(x.repCust) + '</td></tr>';
+    };
+    var allX = {newN:K.newN, newRev:K.newRev, repN:K.repN, repRev:K.repRev, newCust:K.newCust, repCust:K.repCust};
+    cx.innerHTML = '<thead><tr class="od-h1"><th></th><th colspan="3">All</th><th colspan="4" class="od-grp">New orders</th><th colspan="4" class="od-grp">Repeat orders</th><th colspan="2" class="od-grp">Customers</th></tr>'
+      + '<tr><th>Channel</th><th>Orders</th><th>Revenue</th><th>AOV</th><th class="od-grp">Count</th><th>Revenue</th><th>AOV</th><th>Share</th><th class="od-grp">Count</th><th>Revenue</th><th>AOV</th><th>Share</th><th class="od-grp">New</th><th>Repeat</th></tr></thead><tbody>'
+      + cxRow('🛍️ Mumzworld', K.ch.mumz) + cxRow('Direct', K.ch.direct)
+      + ((K.ch.b2b.newN + K.ch.b2b.repN) ? cxRow('Other B2B', K.ch.b2b) : '')
+      + cxRow('Total', allX, true) + '</tbody>';
+  }
   // monthly table
-  var h1 = '<thead><tr class="od-h1"><th></th><th colspan="3">All orders</th><th colspan="2" class="od-grp">New orders</th><th colspan="2" class="od-grp">Repeat orders</th><th colspan="2" class="od-grp">Customers</th><th colspan="2" class="od-grp">🛍️ Mumzworld</th><th colspan="2" class="od-grp">Direct</th><th colspan="2" class="od-grp">Other B2B</th></tr>'
-    + '<tr><th>Month</th><th>Orders</th><th>Revenue</th><th>AOV</th><th class="od-grp">Count</th><th>Revenue</th><th class="od-grp">Count</th><th>Revenue</th><th class="od-grp">New</th><th>Repeat</th><th class="od-grp">Count</th><th>Revenue</th><th class="od-grp">Count</th><th>Revenue</th><th class="od-grp">Count</th><th>Revenue</th></tr></thead><tbody>';
+  var h1 = '<thead><tr class="od-h1"><th></th><th colspan="3">All orders</th><th colspan="2" class="od-grp">New orders</th><th colspan="2" class="od-grp">Repeat orders</th><th colspan="2" class="od-grp">Customers</th><th colspan="4" class="od-grp">🛍️ Mumzworld · New / Repeat</th><th colspan="4" class="od-grp">Direct · New / Repeat</th><th colspan="2" class="od-grp">Other B2B</th></tr>'
+    + '<tr><th>Month</th><th>Orders</th><th>Revenue</th><th>AOV</th><th class="od-grp">Count</th><th>Revenue</th><th class="od-grp">Count</th><th>Revenue</th><th class="od-grp">New</th><th>Repeat</th>'
+    + '<th class="od-grp">New</th><th>New rev</th><th>Repeat</th><th>Repeat rev</th><th class="od-grp">New</th><th>New rev</th><th>Repeat</th><th>Repeat rev</th><th class="od-grp">Count</th><th>Revenue</th></tr></thead><tbody>';
   var row = function(label, a, cls, click){
     return '<tr class="' + (cls||'') + '"' + (click ? ' onclick="odPick(\'' + click + '\')"' : '') + '><td><b>' + label + '</b></td>'
       + '<td>' + n0(a.n) + '</td><td><b>' + n0(a.rev) + '</b></td><td>' + avg(a.rev, a.n) + '</td>'
       + '<td class="od-grp">' + n0(a.newN) + '</td><td>' + n0(a.newRev) + '</td>'
       + '<td class="od-grp">' + n0(a.repN) + '</td><td>' + n0(a.repRev) + '</td>'
       + '<td class="od-grp">' + n0(a.newCust) + '</td><td>' + n0(a.repCust) + '</td>'
-      + '<td class="od-grp">' + n0(a.mzN) + '</td><td>' + n0(a.mzRev) + '</td>'
-      + '<td class="od-grp">' + n0(a.dirN) + '</td><td>' + n0(a.dirRev) + '</td>'
+      + '<td class="od-grp">' + n0(a.ch.mumz.newN) + '</td><td>' + n0(a.ch.mumz.newRev) + '</td><td>' + n0(a.ch.mumz.repN) + '</td><td>' + n0(a.ch.mumz.repRev) + '</td>'
+      + '<td class="od-grp">' + n0(a.ch.direct.newN) + '</td><td>' + n0(a.ch.direct.newRev) + '</td><td>' + n0(a.ch.direct.repN) + '</td><td>' + n0(a.ch.direct.repRev) + '</td>'
       + '<td class="od-grp">' + n0(a.b2bN) + '</td><td>' + n0(a.b2bRev) + '</td></tr>';
   };
   mt.innerHTML = months.length
@@ -23510,10 +23536,14 @@ function odCharts(m, list, byM, months){
     Object.assign({label:'New', data:nNew, backgroundColor:cNew}, bar),
     Object.assign({label:'Repeat', data:nRep, backgroundColor:cRep}, bar)]}, options:o1});
   // 2. channel
-  var K = odAgg(list), ch = [['Direct', K.dirRev, K.dirN], ['Mumzworld', K.mzRev, K.mzN], ['Other B2B', K.b2bRev, K.b2bN]].filter(function(x){ return x[1] || x[2]; });
-  var o2 = base(false, true);
-  o2.plugins.tooltip.callbacks = {label:function(it){ var x = ch[it.dataIndex]; return ' ' + cur$ + ' ' + fmt(x[1]) + ' · ' + x[2] + ' orders · ' + (K.rev ? Math.round(x[1]/K.rev*100) : 0) + '%'; }};
-  odChart('od-c2', {type:'bar', data:{labels:ch.map(function(x){ return x[0]; }), datasets:[Object.assign({label:'Revenue', data:ch.map(function(x){ return x[1]; }), backgroundColor:cOne}, bar)]}, options:o2});
+  var K = odAgg(list), ch = [['Direct', K.ch.direct], ['Mumzworld', K.ch.mumz], ['Other B2B', K.ch.b2b]].filter(function(x){ return x[1].newN + x[1].repN; });
+  var o2 = base(true, true);
+  o2.plugins.tooltip.callbacks = {
+    title:function(it){ var x = ch[it[0].dataIndex][1]; return ch[it[0].dataIndex][0] + ' · ' + (x.newN + x.repN) + ' orders · ' + cur$ + ' ' + fmt(x.newRev + x.repRev); },
+    label:function(it){ var x = ch[it.dataIndex][1], isNew = it.dataset.label === 'New'; return ' ' + it.dataset.label + ': ' + (isNew ? x.newN : x.repN) + ' orders · ' + cur$ + ' ' + fmt(it.raw); }};
+  odChart('od-c2', {type:'bar', data:{labels:ch.map(function(x){ return x[0]; }), datasets:[
+    Object.assign({label:'New', data:ch.map(function(x){ return x[1].newRev; }), backgroundColor:cNew}, bar),
+    Object.assign({label:'Repeat', data:ch.map(function(x){ return x[1].repRev; }), backgroundColor:cRep}, bar)]}, options:o2});
   // 3. new vs repeat: orders and customers (counts)
   var o3 = base(false, false);
   o3.scales.y.ticks.callback = function(v){ return v; };
