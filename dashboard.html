@@ -11894,6 +11894,13 @@ async function loadData(force=false){
     if(_mzPg&&_mzPg.classList.contains('active'))switchToMumz();
     populateCGHCFilter();
     if(typeof exLoad==='function'){ if(!_ex.loaded) exLoad(); else exMigrate(); }
+    // pages opened before the orders arrived: draw them now
+    try{
+      var _act = function(id){ var e = document.getElementById(id); return e && e.classList.contains('active'); };
+      if(_act('page-odrev') && typeof odRender === 'function') odRender();
+      if(_act('page-pl') && typeof plRender === 'function' && _pl.loaded){ if(typeof _plUECache !== 'undefined') _plUECache = {sig:null, m:{}}; plRender(); }
+      if(_act('page-exclusive') && typeof exRender === 'function') exRender();
+    }catch(e){ console.warn('[refresh after load]', e); }
     if(!rawData.length && typeof vcEmptyState==='function') vcEmptyState();
     var _cntRows=rawData;
     if(_session&&_session.role==='hc'&&_session.homecare){
@@ -23352,7 +23359,13 @@ function odAgg(list){
 }
 function odRender(){
   var mt = document.getElementById('od-month-tbl'); if(!mt) return;
-  if(!(window._lastRows||[]).length){ mt.innerHTML = '<tbody><tr><td class="tk-empty">Order data has not loaded yet.</td></tr></tbody>'; return; }
+  if(!(window._lastRows||[]).length){
+    var msg = '⏳ Loading orders… this page fills in as soon as they arrive.' + (_avLoadError ? ' (Last error: ' + tkEsc(_avLoadError) + ' — click Sync at the top right.)' : '');
+    mt.innerHTML = '<tbody><tr><td class="tk-empty">' + msg + '</td></tr></tbody>';
+    document.getElementById('od-kpis').innerHTML = '<div class="tk-kpi" style="min-width:320px"><div class="tk-kpi-v" style="font-size:14px">⏳ Loading orders…</div><div class="tk-kpi-l">charts and tables appear when the data is in</div></div>';
+    var _ms = document.getElementById('od-month'); if(_ms && !_ms.options.length) _ms.innerHTML = '<option value="">Loading…</option>';
+    return;
+  }
   var chan = (document.getElementById('od-chan')||{}).value || '';
   var orders = odOrders().filter(function(c){ return !chan || c.chan === chan; });
   var byM = {}; orders.forEach(function(c){ (byM[c.month] = byM[c.month] || []).push(c); });
