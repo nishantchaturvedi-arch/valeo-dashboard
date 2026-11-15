@@ -643,6 +643,12 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
   .nav-badge{position:absolute;top:2px;right:4px;font-size:8px;padding:0 4px}
   .nav-grp-btn{position:relative}
 }
+.od-tbl th,.od-tbl td{text-align:right;white-space:nowrap}
+.od-tbl th:first-child,.od-tbl td:first-child{text-align:left}
+.od-tbl tr.od-sel td{background:rgba(47,129,247,.12)}
+.od-tbl tbody tr.od-click{cursor:pointer}
+.od-tbl .od-grp{border-left:1px solid var(--border)}
+.od-tbl thead tr.od-h1 th{text-align:center;background:var(--bg2);color:var(--text3)}
 .ex-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:6px;padding:12px}
 .ex-row{display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:12px;background:var(--bg)}
 .ex-row.on{border-color:rgba(245,158,11,.6);background:rgba(245,158,11,.08)}
@@ -1029,6 +1035,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <button class="main-tab" onclick="switchTab(&#39;penalty&#39;)">⚠️ Penalty Tracker</button>
  <button class="main-tab" onclick="switchTab(&#39;expecting&#39;)">🤰 Expecting Mothers</button>
  <button class="main-tab" onclick="switchTab(&#39;exclusive&#39;)">👑 Exclusive CGs</button>
+ <button class="main-tab" onclick="switchTab(&#39;odrev&#39;)">📈 Revenue by Order Date</button>
 </div>
 
 <!-- ── Availability bar (calendar only) ── -->
@@ -10951,6 +10958,31 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 </div>
 
 <!-- ══ HC TICKET DESK ══ -->
+<div class="page" id="page-odrev">
+ <div class="tk-bar">
+  <div style="font-size:15px;font-weight:700">📈 Revenue by Order Date</div>
+  <label style="font-size:11px;color:var(--text2)">Package table for</label>
+  <select id="od-month" class="tk-inp" onchange="odRender()"></select>
+  <select id="od-chan" class="tk-inp" onchange="odRender()"><option value="">All channels</option><option value="mumz">🛍️ Mumzworld</option><option value="direct">Direct</option><option value="b2b">Other B2B</option></select>
+  <label style="font-size:12px;color:var(--text2);display:flex;align-items:center;gap:5px" title="Also count orders that are created / confirmed but have no homecare or nurse yet"><input type="checkbox" id="od-all" onchange="odRender()"> Include not-yet-assigned orders</label>
+  <button class="tk-btn" onclick="odExport()">⬇ CSV</button>
+  <span id="od-note" style="font-size:11px;color:var(--text3)"></span>
+ </div>
+ <div class="tk-kpis" id="od-kpis"></div>
+ <div class="tk-page">
+  <div class="tk-card"><div class="tk-card-h"><span>📅 Monthly breakdown <span style="font-weight:500;color:var(--text3)">· by the date the order was placed · click a month for its packages</span></span></div>
+   <div class="tk-scroll" style="max-height:none;overflow-x:auto"><table class="tk-tbl od-tbl" id="od-month-tbl"></table></div></div>
+  <div class="tk-card"><div class="tk-card-h"><span id="od-pkg-title">📦 Package breakdown</span></div>
+   <div class="tk-scroll" style="max-height:none;overflow-x:auto"><table class="tk-tbl od-tbl" id="od-pkg-tbl"></table></div></div>
+  <div style="font-size:11px;color:var(--text3);line-height:1.6;padding:2px 4px 16px">
+   <b style="color:var(--text2)">Order</b> = a parent order (Cart_Order_ID); its revenue is the sum of Final_Price of its child orders (cancelled and temp children left out).
+   <b style="color:var(--text2)">Month</b> = Order_Date, when the order was placed — not when the service runs (the P&amp;L uses service dates).
+   <b style="color:var(--text2)">New / Repeat</b> = Type_Of_User on the order. <b style="color:var(--text2)">Customers</b> = distinct customers (phone, else email, else name).
+   <b style="color:var(--text2)">Mumzworld</b> = B2B Client Name Mumzworld; <b style="color:var(--text2)">Other B2B</b> = other B2B partners (e.g. Urban Company); <b style="color:var(--text2)">Direct</b> = everything else.
+   Counted statuses: Nurse Assigned, Completed, HC Assigned (tick the box to add Created / Order Confirmed / HC Unassigned).
+  </div>
+ </div>
+</div>
 <div class="page" id="page-exclusive">
  <div class="tk-bar">
   <div style="font-size:15px;font-weight:700">👑 Exclusive CGs</div>
@@ -12945,13 +12977,13 @@ function switchTab(tab){
   if(_session&&_session.role==='hc'&&tab!=='calendar'&&tab!=='roster'&&tab!=='complaints'&&tab!=='tickets'&&tab!=='leave'&&tab!=='avail'&&tab!=='ops'&&!(tab==='transport'&&trIsShifa())){alert('Access restricted');return;}
   // Client accounts (e.g. Mumzworld): their own order list + tickets only
   if(_session&&_session.role==='client'&&tab!=='mumz'&&tab!=='tickets'){alert('Access restricted');return;}
-  if((tab==='pl'||tab==='exclusive')&&_session&&_session.role!=='master'){alert('Master access only');return;}
+  if((tab==='pl'||tab==='exclusive'||tab==='odrev')&&_session&&_session.role!=='master'){alert('Master access only');return;}
   if(tab==='roster'){setTimeout(switchToRoster,80);}
   if(tab==='daily'){setTimeout(switchToDaily,80);}
   if(tab==='mumz'){setTimeout(switchToMumz,80);}
   var _tabLbl={calendar:'calendar',analytics:'analytics',ops:'operations',planner:'schedule builder',roster:'roster',
     daily:'daily orders',supply:'supply',customleads:'lead tracker',bsleads:'babysitting leads',
-    complaints:'complaint',exclusive:'exclusive cgs',penalty:'penalty',expecting:'expecting',tickets:'hc tickets',leave:'leave applications',
+    complaints:'complaint',exclusive:'exclusive cgs',odrev:'revenue by order date',penalty:'penalty',expecting:'expecting',tickets:'hc tickets',leave:'leave applications',
     mumz:'mumzworld orders', avail:'availability search', transport:'transport charges', pl:'p&l'}[tab]||tab;
   document.querySelectorAll('.main-tab').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase().includes(_tabLbl)));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -12972,6 +13004,7 @@ function switchTab(tab){
   if(tab==='penalty'){if(_session&&_session.role!=='master'){alert('Master access only');return;}loadPenalties();}
   if(tab==='pl'){initPL();}
   if(tab==='exclusive'){initExclusive();}
+  if(tab==='odrev'){odRender();}
 }
 
 
@@ -23247,6 +23280,141 @@ function plExportCSV(){
 
 <script>
 // ═════════════════════════════════════════════════════════════════
+// REVENUE BY ORDER DATE — parent orders (Cart_Order_ID) by the month they were placed
+// ═════════════════════════════════════════════════════════════════
+var OD_OK = ['completed','nurseassigned','hcassigned'];
+var OD_OK_ALL = OD_OK.concat(['created','orderconfirmed','hcunassigned']);
+var _od = {sel:''};
+function odChannel(r){
+  var c = String(r['B2B Client Name']||'').toLowerCase();
+  if(/mumz/.test(c)) return 'mumz';
+  if(c || /^b2b$/i.test(String(r['B2B Flag']||'').trim())) return 'b2b';
+  return 'direct';
+}
+function odCustKey(r){
+  var ph = String(r['Phone Number']||'').replace(/\D/g,'').slice(-9);
+  if(ph.length >= 7) return 'p' + ph;
+  var em = String(r['Email']||'').trim().toLowerCase(); if(em) return 'e' + em;
+  return 'n' + String(r['User Name']||'').trim().toLowerCase();
+}
+function odPkgType(p){ p = String(p||'').toLowerCase(); return /monthly/.test(p) ? 'Monthly' : /weekly/.test(p) ? 'Weekly' : /hourly|hour/.test(p) ? 'Hourly' : 'Other'; }
+// one record per parent order
+function odOrders(){
+  var all = !!(document.getElementById('od-all')||{}).checked, ok = all ? OD_OK_ALL : OD_OK;
+  var excl = ['carezone home healthcare llc','dummy homecare','helpful agency','nifas hc','babysitting ksa','pyramid home health care'];
+  var carts = {};
+  (window._lastRows || []).forEach(function(r){
+    if(!isCountryRow(r)) return;
+    if(!ok.includes(_normKey(r['Order_Status']))) return;
+    if(excl.indexOf(String(r['Homecare']||'').trim().toLowerCase()) >= 0) return;
+    if(/dummy/i.test(String(r['Homecare']||''))) return;
+    var od = String(r['Order_Date']||'').replace('T',' ').slice(0,10); if(!od || od < '2025-01-01') return;
+    var id = String(r['Cart_Order_ID']||r['Child_Order_ID']||'').trim(); if(!id) return;
+    var c = carts[id] || (carts[id] = {id:id, date:od, pkgs:{}, rev:0, children:0, type:'', chan:odChannel(r), cust:odCustKey(r), name:String(r['User Name']||'').trim()});
+    if(od < c.date) c.date = od;
+    c.rev += parseFloat(r['Final_Price']||r['Order_Price']||0) || 0;
+    c.children++;
+    var pk = String(r['Parent_Package']||r['Child_Package']||'Unknown').trim() || 'Unknown';
+    c.pkgs[pk] = (c.pkgs[pk]||0) + 1;
+    var t = String(r['Type_Of_User']||'').trim().toLowerCase(); if(t === 'new' || (!c.type && t)) c.type = t === 'new' ? 'new' : 'repeat';
+    if(odChannel(r) === 'mumz') c.chan = 'mumz';
+  });
+  return Object.values(carts).map(function(c){
+    c.pkg = Object.keys(c.pkgs).sort(function(a,b){ return c.pkgs[b] - c.pkgs[a]; })[0];
+    c.month = c.date.slice(0,7); if(!c.type) c.type = 'repeat';
+    return c;
+  });
+}
+function odAgg(list){
+  var a = {n:0, rev:0, newN:0, newRev:0, repN:0, repRev:0, mzN:0, mzRev:0, dirN:0, dirRev:0, b2bN:0, b2bRev:0, newC:{}, repC:{}, cust:{}};
+  list.forEach(function(c){
+    a.n++; a.rev += c.rev; a.cust[c.cust] = 1;
+    if(c.type === 'new'){ a.newN++; a.newRev += c.rev; a.newC[c.cust] = 1; } else { a.repN++; a.repRev += c.rev; a.repC[c.cust] = 1; }
+    if(c.chan === 'mumz'){ a.mzN++; a.mzRev += c.rev; } else if(c.chan === 'b2b'){ a.b2bN++; a.b2bRev += c.rev; } else { a.dirN++; a.dirRev += c.rev; }
+  });
+  a.newCust = Object.keys(a.newC).length; a.repCust = Object.keys(a.repC).length; a.custN = Object.keys(a.cust).length;
+  return a;
+}
+function odRender(){
+  var mt = document.getElementById('od-month-tbl'); if(!mt) return;
+  if(!(window._lastRows||[]).length){ mt.innerHTML = '<tbody><tr><td class="tk-empty">Order data has not loaded yet.</td></tr></tbody>'; return; }
+  var chan = (document.getElementById('od-chan')||{}).value || '';
+  var orders = odOrders().filter(function(c){ return !chan || c.chan === chan; });
+  var byM = {}; orders.forEach(function(c){ (byM[c.month] = byM[c.month] || []).push(c); });
+  var months = Object.keys(byM).sort().reverse();
+  var sel = document.getElementById('od-month'), cur = _od.sel || sel.value || avToday().slice(0,7);
+  sel.innerHTML = '<option value="all">All months</option>' + months.map(function(m){ return '<option value="' + m + '">' + plMonthLabel(m) + '</option>'; }).join('');
+  sel.value = (cur === 'all' || months.indexOf(cur) >= 0) ? cur : (months[0] || 'all'); _od.sel = sel.value;
+  var n0 = function(x){ return Math.round(x||0).toLocaleString(); }, cur$ = VC.cur;
+  var avg = function(r,n){ return n ? n0(r/n) : '—'; };
+  // KPIs for the selected month (or all)
+  var selList = sel.value === 'all' ? orders : (byM[sel.value] || []), K = odAgg(selList);
+  var kpi = function(v,l,c){ return '<div class="tk-kpi"><div class="tk-kpi-v" style="color:' + (c||'var(--text)') + '">' + v + '</div><div class="tk-kpi-l">' + l + '</div></div>'; };
+  document.getElementById('od-kpis').innerHTML =
+      kpi(n0(K.n), 'Orders · ' + (sel.value === 'all' ? 'all months' : plMonthLabel(sel.value)))
+    + kpi(cur$ + ' ' + n0(K.rev), 'Revenue', '#22c55e')
+    + kpi(avg(K.rev, K.n), 'Avg order value')
+    + kpi(n0(K.newN) + ' · ' + n0(K.newRev), 'New orders · revenue', '#2f81f7')
+    + kpi(n0(K.repN) + ' · ' + n0(K.repRev), 'Repeat orders · revenue', '#a855f7')
+    + kpi(n0(K.newCust) + ' / ' + n0(K.repCust), 'New / repeat customers')
+    + kpi(n0(K.mzN) + ' · ' + n0(K.mzRev), 'Mumzworld orders · revenue', '#ff2d95')
+    + kpi(n0(K.dirN) + ' · ' + n0(K.dirRev), 'Direct orders · revenue');
+  // monthly table
+  var h1 = '<thead><tr class="od-h1"><th></th><th colspan="3">All orders</th><th colspan="2" class="od-grp">New orders</th><th colspan="2" class="od-grp">Repeat orders</th><th colspan="2" class="od-grp">Customers</th><th colspan="2" class="od-grp">🛍️ Mumzworld</th><th colspan="2" class="od-grp">Direct</th><th colspan="2" class="od-grp">Other B2B</th></tr>'
+    + '<tr><th>Month</th><th>Orders</th><th>Revenue</th><th>AOV</th><th class="od-grp">Count</th><th>Revenue</th><th class="od-grp">Count</th><th>Revenue</th><th class="od-grp">New</th><th>Repeat</th><th class="od-grp">Count</th><th>Revenue</th><th class="od-grp">Count</th><th>Revenue</th><th class="od-grp">Count</th><th>Revenue</th></tr></thead><tbody>';
+  var row = function(label, a, cls, click){
+    return '<tr class="' + (cls||'') + '"' + (click ? ' onclick="odPick(\'' + click + '\')"' : '') + '><td><b>' + label + '</b></td>'
+      + '<td>' + n0(a.n) + '</td><td><b>' + n0(a.rev) + '</b></td><td>' + avg(a.rev, a.n) + '</td>'
+      + '<td class="od-grp">' + n0(a.newN) + '</td><td>' + n0(a.newRev) + '</td>'
+      + '<td class="od-grp">' + n0(a.repN) + '</td><td>' + n0(a.repRev) + '</td>'
+      + '<td class="od-grp">' + n0(a.newCust) + '</td><td>' + n0(a.repCust) + '</td>'
+      + '<td class="od-grp">' + n0(a.mzN) + '</td><td>' + n0(a.mzRev) + '</td>'
+      + '<td class="od-grp">' + n0(a.dirN) + '</td><td>' + n0(a.dirRev) + '</td>'
+      + '<td class="od-grp">' + n0(a.b2bN) + '</td><td>' + n0(a.b2bRev) + '</td></tr>';
+  };
+  mt.innerHTML = months.length
+    ? h1 + months.map(function(m){ return row(plMonthLabel(m), odAgg(byM[m]), 'od-click' + (m === sel.value ? ' od-sel' : ''), m); }).join('')
+      + row('Total', odAgg(orders), 'od-tot') + '</tbody>'
+    : '<tbody><tr><td class="tk-empty">No orders.</td></tr></tbody>';
+  var tot = mt.querySelector('tr.od-tot'); if(tot) tot.style.cssText = 'background:var(--bg3);font-weight:700';
+  // package breakdown for the selected month
+  var byP = {}; selList.forEach(function(c){ (byP[c.pkg] = byP[c.pkg] || []).push(c); });
+  var pk = Object.keys(byP).sort(function(a,b){ return odAgg(byP[b]).rev - odAgg(byP[a]).rev; });
+  document.getElementById('od-pkg-title').textContent = '📦 Package breakdown · ' + (sel.value === 'all' ? 'all months' : plMonthLabel(sel.value));
+  var ph = '<thead><tr class="od-h1"><th colspan="2"></th><th colspan="3">All orders</th><th colspan="2" class="od-grp">New</th><th colspan="2" class="od-grp">Repeat</th><th colspan="2" class="od-grp">🛍️ Mumzworld</th><th colspan="2" class="od-grp">Direct</th></tr>'
+    + '<tr><th>Package</th><th style="text-align:left">Type</th><th>Orders</th><th>Revenue</th><th>Share</th><th class="od-grp">Count</th><th>Revenue</th><th class="od-grp">Count</th><th>Revenue</th><th class="od-grp">Count</th><th>Revenue</th><th class="od-grp">Count</th><th>Revenue</th></tr></thead><tbody>';
+  var prow = function(label, type, a, bold){
+    return '<tr' + (bold ? ' style="background:var(--bg3);font-weight:700"' : '') + '><td>' + tkEsc(label) + '</td><td style="text-align:left;color:var(--text3)">' + type + '</td>'
+      + '<td>' + n0(a.n) + '</td><td><b>' + n0(a.rev) + '</b></td><td>' + (K.rev ? Math.round(a.rev / K.rev * 1000)/10 + '%' : '—') + '</td>'
+      + '<td class="od-grp">' + n0(a.newN) + '</td><td>' + n0(a.newRev) + '</td><td class="od-grp">' + n0(a.repN) + '</td><td>' + n0(a.repRev) + '</td>'
+      + '<td class="od-grp">' + n0(a.mzN) + '</td><td>' + n0(a.mzRev) + '</td><td class="od-grp">' + n0(a.dirN) + '</td><td>' + n0(a.dirRev) + '</td></tr>';
+  };
+  // subtotals by package type, then each package
+  var types = {}; pk.forEach(function(p){ var t = odPkgType(p); (types[t] = types[t] || []).push(p); });
+  var body = '';
+  ['Monthly','Weekly','Hourly','Other'].forEach(function(t){
+    if(!types[t]) return;
+    var lst = [].concat.apply([], types[t].map(function(p){ return byP[p]; }));
+    body += prow(t + ' packages', '', odAgg(lst), true);
+    types[t].forEach(function(p){ body += prow(p, t, odAgg(byP[p])); });
+  });
+  document.getElementById('od-pkg-tbl').innerHTML = pk.length ? ph + body + prow('Total', '', K, true) + '</tbody>' : '<tbody><tr><td class="tk-empty">No orders for this month.</td></tr></tbody>';
+  document.getElementById('od-note').textContent = 'Amounts in ' + cur$ + ' · ' + VC.name;
+}
+function odPick(m){ _od.sel = m; var s = document.getElementById('od-month'); if(s) s.value = m; odRender(); var t = document.getElementById('od-pkg-tbl'); if(t) t.closest('.tk-card').scrollIntoView({behavior:'smooth', block:'start'}); }
+function odExport(){
+  var lines = [];
+  ['od-month-tbl','od-pkg-tbl'].forEach(function(id, i){
+    var t = document.getElementById(id); if(!t) return;
+    if(i) lines.push('');
+    [].forEach.call(t.querySelectorAll('tr'), function(tr){ lines.push([].map.call(tr.children, function(td){ var v = td.innerText.replace(/,/g,'').trim(); return /"|,/.test(v) ? '"' + v.replace(/"/g,'""') + '"' : v; }).join(',')); });
+  });
+  var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([lines.join('\n')], {type:'text/csv'}));
+  a.download = 'valeo-revenue-by-order-date.csv'; a.click();
+}
+</script>
+<script>
+// ═════════════════════════════════════════════════════════════════
 // COUNTRY — login picker, header switcher, currency label, UAE-only tab
 // ═════════════════════════════════════════════════════════════════
 var _loginCountry = VALEO_COUNTRY;
@@ -23324,7 +23492,7 @@ var NAV_GROUPS = [
   {id:'sched',   label:'🗓 Scheduling',        short:'🗓 Schedule', tabs:['roster','planner','avail','ops']},
   {id:'hc',      label:'🏥 Homecare Partners', short:'🏥 Partners', tabs:['exclusive','tickets','leave','complaints','penalty','supply']},
   {id:'growth',  label:'🎯 Leads & Clients',   short:'🎯 Leads',    tabs:['customleads','bsleads','expecting','mumz']},
-  {id:'finance', label:'💰 Finance & Reports', short:'💰 Finance',  tabs:['analytics','pl','transport']}
+  {id:'finance', label:'💰 Finance & Reports', short:'💰 Finance',  tabs:['analytics','pl','odrev','transport']}
 ];
 function navTabKey(b){ var m = String(b.getAttribute('onclick')||'').match(/switchTab\(['"]([a-z]+)['"]\)/); return m ? m[1] : ''; }
 function navBuild(){
