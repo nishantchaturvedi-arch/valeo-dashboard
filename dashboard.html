@@ -645,6 +645,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 }
 #page-odrev{--od-new:#3987e5;--od-rep:#d95926;--od-one:#3987e5}
 [data-theme="light"] #page-odrev{--od-new:#2a78d6;--od-rep:#eb6834;--od-one:#2a78d6}
+.od-range{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
 .od-charts{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
 .od-chart.od-wide{grid-column:1 / -1}
 .od-cv{position:relative;height:240px;padding:10px 12px 8px}
@@ -10971,7 +10972,14 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <div class="tk-bar">
   <div style="font-size:15px;font-weight:700">📈 Revenue by Order Date</div>
   <label style="font-size:12px;color:var(--text2);font-weight:600" for="od-month">Month</label>
-  <select id="od-month" class="tk-inp" onchange="_od.sel=this.value;odRender()"></select>
+  <select id="od-month" class="tk-inp" onchange="if(this.value!=='range'){_od.sel=this.value;odRangeClear();}"></select>
+  <span class="od-range" title="Orders placed between these dates (inclusive)">
+   <label style="font-size:12px;color:var(--text2);font-weight:600" for="od-from">or From</label>
+   <input type="date" id="od-from" class="tk-inp" onchange="odRange()">
+   <label style="font-size:12px;color:var(--text2)" for="od-to">To</label>
+   <input type="date" id="od-to" class="tk-inp" onchange="odRange()">
+   <button class="tk-btn" id="od-range-clear" onclick="odRangeClear()" style="display:none">✕ Clear</button>
+  </span>
   <select id="od-chan" class="tk-inp" onchange="odRender()"><option value="">All channels</option><option value="mumz">🛍️ Mumzworld</option><option value="direct">Direct</option><option value="b2b">Other B2B</option></select>
   <label style="font-size:12px;color:var(--text2);display:flex;align-items:center;gap:5px" title="Also count orders that are created / confirmed but have no homecare or nurse yet"><input type="checkbox" id="od-all" onchange="odRender()"> Include not-yet-assigned orders</label>
   <button class="tk-btn" onclick="odExport()">⬇ CSV</button>
@@ -23306,7 +23314,16 @@ function plExportCSV(){
 // ═════════════════════════════════════════════════════════════════
 var OD_OK = ['completed','nurseassigned','hcassigned'];
 var OD_OK_ALL = OD_OK.concat(['created','orderconfirmed','hcunassigned']);
-var _od = {sel:''};
+var _od = {sel:'', from:'', to:''};
+function odRange(){
+  var f = document.getElementById('od-from').value, t = document.getElementById('od-to').value;
+  if(!f && !t){ odRangeClear(); return; }
+  if(!f || !t) return;                       // wait until both ends are set
+  if(t < f){ var x = f; f = t; t = x; document.getElementById('od-from').value = f; document.getElementById('od-to').value = t; }
+  _od.from = f; _od.to = t; odRender();
+}
+function odRangeClear(){ _od.from = ''; _od.to = ''; ['od-from','od-to'].forEach(function(id){ var e = document.getElementById(id); if(e) e.value = ''; }); odRender(); }
+function odFmtD(ds){ return parseInt(ds.slice(8)) + ' ' + MONTHS[+ds.slice(5,7)-1].slice(0,3) + ' ' + ds.slice(0,4); }
 function odChannel(r){
   var c = String(r['B2B Client Name']||'').toLowerCase();
   if(/mumz/.test(c)) return 'mumz';
@@ -23368,18 +23385,26 @@ function odRender(){
   }
   var chan = (document.getElementById('od-chan')||{}).value || '';
   var orders = odOrders().filter(function(c){ return !chan || c.chan === chan; });
+  var allMonths = {}; orders.forEach(function(c){ allMonths[c.month] = 1; });
+  var R = !!(_od.from && _od.to);
+  if(R) orders = orders.filter(function(c){ return c.date >= _od.from && c.date <= _od.to; });
   var byM = {}; orders.forEach(function(c){ (byM[c.month] = byM[c.month] || []).push(c); });
   var months = Object.keys(byM).sort().reverse();
   var sel = document.getElementById('od-month'), cur = _od.sel || sel.value || avToday().slice(0,7);
-  sel.innerHTML = '<option value="all">All months</option>' + months.map(function(m){ return '<option value="' + m + '">' + plMonthLabel(m) + '</option>'; }).join('');
-  sel.value = (cur === 'all' || months.indexOf(cur) >= 0) ? cur : (months[0] || 'all'); _od.sel = sel.value;
+  var mlist = Object.keys(allMonths).sort().reverse();
+  sel.innerHTML = (R ? '<option value="range">📅 ' + odFmtD(_od.from) + ' – ' + odFmtD(_od.to) + '</option>' : '')
+    + '<option value="all">All months</option>' + mlist.map(function(m){ return '<option value="' + m + '">' + plMonthLabel(m) + '</option>'; }).join('');
+  if(R) sel.value = 'range';
+  else { sel.value = (cur === 'all' || mlist.indexOf(cur) >= 0) ? cur : (mlist[0] || 'all'); _od.sel = sel.value; }
+  var _rc = document.getElementById('od-range-clear'); if(_rc) _rc.style.display = R ? '' : 'none';
+  var periodTxt = R ? odFmtD(_od.from) + ' – ' + odFmtD(_od.to) : sel.value === 'all' ? 'all months' : plMonthLabel(sel.value);
   var n0 = function(x){ return Math.round(x||0).toLocaleString(); }, cur$ = VC.cur;
   var avg = function(r,n){ return n ? n0(r/n) : '—'; };
   // KPIs for the selected month (or all)
-  var selList = sel.value === 'all' ? orders : (byM[sel.value] || []), K = odAgg(selList);
+  var selList = (R || sel.value === 'all') ? orders : (byM[sel.value] || []), K = odAgg(selList);
   var kpi = function(v,l,c){ return '<div class="tk-kpi"><div class="tk-kpi-v" style="color:' + (c||'var(--text)') + '">' + v + '</div><div class="tk-kpi-l">' + l + '</div></div>'; };
   document.getElementById('od-kpis').innerHTML =
-      kpi(n0(K.n), 'Orders · ' + (sel.value === 'all' ? 'all months' : plMonthLabel(sel.value)))
+      kpi(n0(K.n), 'Orders · ' + periodTxt)
     + kpi(cur$ + ' ' + n0(K.rev), 'Revenue', '#22c55e')
     + kpi(avg(K.rev, K.n), 'Avg order value')
     + kpi(n0(K.newN) + ' · ' + n0(K.newRev), 'New orders · revenue', 'var(--od-new)')
@@ -23408,7 +23433,7 @@ function odRender(){
   // package breakdown for the selected month
   var byP = {}; selList.forEach(function(c){ (byP[c.pkg] = byP[c.pkg] || []).push(c); });
   var pk = Object.keys(byP).sort(function(a,b){ return odAgg(byP[b]).rev - odAgg(byP[a]).rev; });
-  document.getElementById('od-pkg-title').textContent = '📦 Package breakdown · ' + (sel.value === 'all' ? 'all months' : plMonthLabel(sel.value));
+  document.getElementById('od-pkg-title').textContent = '📦 Package breakdown · ' + periodTxt;
   var ph = '<thead><tr class="od-h1"><th colspan="2"></th><th colspan="3">All orders</th><th colspan="2" class="od-grp">New</th><th colspan="2" class="od-grp">Repeat</th><th colspan="2" class="od-grp">🛍️ Mumzworld</th><th colspan="2" class="od-grp">Direct</th></tr>'
     + '<tr><th>Package</th><th style="text-align:left">Type</th><th>Orders</th><th>Revenue</th><th>Share</th><th class="od-grp">Count</th><th>Revenue</th><th class="od-grp">Count</th><th>Revenue</th><th class="od-grp">Count</th><th>Revenue</th><th class="od-grp">Count</th><th>Revenue</th></tr></thead><tbody>';
   var prow = function(label, type, a, bold){
@@ -23428,7 +23453,7 @@ function odRender(){
   });
   document.getElementById('od-pkg-tbl').innerHTML = pk.length ? ph + body + prow('Total', '', K, true) + '</tbody>' : '<tbody><tr><td class="tk-empty">No orders for this month.</td></tr></tbody>';
   document.getElementById('od-note').textContent = 'Amounts in ' + cur$ + ' · ' + VC.name;
-  odCharts(sel.value, selList, byM, months);
+  odCharts(R ? 'range' : sel.value, selList, byM, months);
 }
 // ── Charts: follow the month picked in the dropdown ──────────────
 var _odCh = {};
@@ -23456,18 +23481,29 @@ function odCharts(m, list, byM, months){
   var bar = {borderRadius:4, borderSkipped:false, maxBarThickness:46, borderWidth:0};
   // 1. revenue over time: by order day for one month, by month for "all months"
   var labels = [], nNew = [], nRep = [], cnt = [];
-  if(m === 'all'){
-    months.slice().reverse().forEach(function(k){ var a = odAgg(byM[k]); labels.push(plMonthLabel(k)); nNew.push(a.newRev); nRep.push(a.repRev); cnt.push(a.n); });
-    document.getElementById('od-c1-t').textContent = 'Revenue by month (order date)';
+  var rDays = m === 'range' ? Math.round((new Date(_od.to+'T12:00:00') - new Date(_od.from+'T12:00:00'))/864e5) + 1 : 0;
+  var tip = [];
+  if(m === 'all' || rDays > 92){
+    months.slice().reverse().forEach(function(k){ var a = odAgg(byM[k]); labels.push(plMonthLabel(k)); tip.push(plMonthLabel(k)); nNew.push(a.newRev); nRep.push(a.repRev); cnt.push(a.n); });
+    document.getElementById('od-c1-t').textContent = 'Revenue by month (order date)' + (m === 'range' ? ' · ' + odFmtD(_od.from) + ' – ' + odFmtD(_od.to) : '');
+  } else if(m === 'range'){
+    var byR = {}; list.forEach(function(c){ (byR[c.date] = byR[c.date] || []).push(c); });
+    var cd = new Date(_od.from+'T12:00:00');
+    for(var i = 0; i < rDays; i++){
+      var dsr = cd.getFullYear() + '-' + pad(cd.getMonth()+1) + '-' + pad(cd.getDate()), ar = odAgg(byR[dsr] || []);
+      labels.push(cd.getDate() + ' ' + MONTHS[cd.getMonth()].slice(0,3)); tip.push(odFmtD(dsr)); nNew.push(ar.newRev); nRep.push(ar.repRev); cnt.push(ar.n);
+      cd.setDate(cd.getDate()+1);
+    }
+    document.getElementById('od-c1-t').textContent = 'Revenue by order day · ' + odFmtD(_od.from) + ' – ' + odFmtD(_od.to);
   } else {
     var dim = new Date(+m.slice(0,4), +m.slice(5,7), 0).getDate(), byD = {};
     list.forEach(function(c){ (byD[c.date] = byD[c.date] || []).push(c); });
-    for(var d = 1; d <= dim; d++){ var ds = m + '-' + pad(d), a = odAgg(byD[ds] || []); labels.push(d); nNew.push(a.newRev); nRep.push(a.repRev); cnt.push(a.n); }
+    for(var d = 1; d <= dim; d++){ var ds = m + '-' + pad(d), a = odAgg(byD[ds] || []); labels.push(d); tip.push(odFmtD(ds)); nNew.push(a.newRev); nRep.push(a.repRev); cnt.push(a.n); }
     document.getElementById('od-c1-t').textContent = 'Revenue by order day · ' + plMonthLabel(m);
   }
   var o1 = base(true, false);
   o1.plugins.tooltip.callbacks = {
-    title:function(it){ var i = it[0].dataIndex; return (m === 'all' ? labels[i] : labels[i] + ' ' + plMonthLabel(m)) + ' · ' + cnt[i] + ' order' + (cnt[i] === 1 ? '' : 's'); },
+    title:function(it){ var i = it[0].dataIndex; return tip[i] + ' · ' + cnt[i] + ' order' + (cnt[i] === 1 ? '' : 's'); },
     label:function(it){ return ' ' + it.dataset.label + ': ' + cur$ + ' ' + fmt(it.raw); },
     footer:function(it){ return 'Total: ' + cur$ + ' ' + fmt(it.reduce(function(t,x){ return t + x.raw; }, 0)); }};
   odChart('od-c1', {type:'bar', data:{labels:labels, datasets:[
