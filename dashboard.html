@@ -643,6 +643,15 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
   .nav-badge{position:absolute;top:2px;right:4px;font-size:8px;padding:0 4px}
   .nav-grp-btn{position:relative}
 }
+#page-odrev{--od-new:#3987e5;--od-rep:#d95926;--od-one:#3987e5}
+[data-theme="light"] #page-odrev{--od-new:#2a78d6;--od-rep:#eb6834;--od-one:#2a78d6}
+.od-charts{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+.od-chart.od-wide{grid-column:1 / -1}
+.od-cv{position:relative;height:240px;padding:10px 12px 8px}
+.od-cv.od-tall{height:320px}
+.od-leg{display:flex;align-items:center;gap:6px;font-weight:500;font-size:11px;color:var(--text2)}
+.od-leg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-left:6px}
+@media(max-width:800px){.od-charts{grid-template-columns:1fr}}
 .od-tbl th,.od-tbl td{text-align:right;white-space:nowrap}
 .od-tbl th:first-child,.od-tbl td:first-child{text-align:left}
 .od-tbl tr.od-sel td{background:rgba(47,129,247,.12)}
@@ -10961,8 +10970,8 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
 <div class="page" id="page-odrev">
  <div class="tk-bar">
   <div style="font-size:15px;font-weight:700">📈 Revenue by Order Date</div>
-  <label style="font-size:11px;color:var(--text2)">Package table for</label>
-  <select id="od-month" class="tk-inp" onchange="odRender()"></select>
+  <label style="font-size:12px;color:var(--text2);font-weight:600" for="od-month">Month</label>
+  <select id="od-month" class="tk-inp" onchange="_od.sel=this.value;odRender()"></select>
   <select id="od-chan" class="tk-inp" onchange="odRender()"><option value="">All channels</option><option value="mumz">🛍️ Mumzworld</option><option value="direct">Direct</option><option value="b2b">Other B2B</option></select>
   <label style="font-size:12px;color:var(--text2);display:flex;align-items:center;gap:5px" title="Also count orders that are created / confirmed but have no homecare or nurse yet"><input type="checkbox" id="od-all" onchange="odRender()"> Include not-yet-assigned orders</label>
   <button class="tk-btn" onclick="odExport()">⬇ CSV</button>
@@ -10970,6 +10979,12 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  </div>
  <div class="tk-kpis" id="od-kpis"></div>
  <div class="tk-page">
+  <div class="od-charts">
+   <div class="tk-card od-chart od-wide"><div class="tk-card-h"><span id="od-c1-t">Revenue by day</span><span class="od-leg"><i style="background:var(--od-new)"></i>New <i style="background:var(--od-rep)"></i>Repeat</span></div><div class="od-cv"><canvas id="od-c1"></canvas></div></div>
+   <div class="tk-card od-chart"><div class="tk-card-h"><span>Revenue by channel</span></div><div class="od-cv"><canvas id="od-c2"></canvas></div></div>
+   <div class="tk-card od-chart"><div class="tk-card-h"><span>New vs repeat</span><span class="od-leg"><i style="background:var(--od-new)"></i>New <i style="background:var(--od-rep)"></i>Repeat</span></div><div class="od-cv"><canvas id="od-c3"></canvas></div></div>
+   <div class="tk-card od-chart od-wide"><div class="tk-card-h"><span>Top packages by revenue</span></div><div class="od-cv od-tall"><canvas id="od-c4"></canvas></div></div>
+  </div>
   <div class="tk-card"><div class="tk-card-h"><span>📅 Monthly breakdown <span style="font-weight:500;color:var(--text3)">· by the date the order was placed · click a month for its packages</span></span></div>
    <div class="tk-scroll" style="max-height:none;overflow-x:auto"><table class="tk-tbl od-tbl" id="od-month-tbl"></table></div></div>
   <div class="tk-card"><div class="tk-card-h"><span id="od-pkg-title">📦 Package breakdown</span></div>
@@ -23354,8 +23369,8 @@ function odRender(){
       kpi(n0(K.n), 'Orders · ' + (sel.value === 'all' ? 'all months' : plMonthLabel(sel.value)))
     + kpi(cur$ + ' ' + n0(K.rev), 'Revenue', '#22c55e')
     + kpi(avg(K.rev, K.n), 'Avg order value')
-    + kpi(n0(K.newN) + ' · ' + n0(K.newRev), 'New orders · revenue', '#2f81f7')
-    + kpi(n0(K.repN) + ' · ' + n0(K.repRev), 'Repeat orders · revenue', '#a855f7')
+    + kpi(n0(K.newN) + ' · ' + n0(K.newRev), 'New orders · revenue', 'var(--od-new)')
+    + kpi(n0(K.repN) + ' · ' + n0(K.repRev), 'Repeat orders · revenue', 'var(--od-rep)')
     + kpi(n0(K.newCust) + ' / ' + n0(K.repCust), 'New / repeat customers')
     + kpi(n0(K.mzN) + ' · ' + n0(K.mzRev), 'Mumzworld orders · revenue', '#ff2d95')
     + kpi(n0(K.dirN) + ' · ' + n0(K.dirRev), 'Direct orders · revenue');
@@ -23400,7 +23415,74 @@ function odRender(){
   });
   document.getElementById('od-pkg-tbl').innerHTML = pk.length ? ph + body + prow('Total', '', K, true) + '</tbody>' : '<tbody><tr><td class="tk-empty">No orders for this month.</td></tr></tbody>';
   document.getElementById('od-note').textContent = 'Amounts in ' + cur$ + ' · ' + VC.name;
+  odCharts(sel.value, selList, byM, months);
 }
+// ── Charts: follow the month picked in the dropdown ──────────────
+var _odCh = {};
+function odCss(n){ return getComputedStyle(document.getElementById('page-odrev')).getPropertyValue(n).trim(); }
+function odChart(id, cfg){
+  if(typeof Chart === 'undefined') return;
+  if(_odCh[id]) _odCh[id].destroy();
+  var el = document.getElementById(id); if(!el) return;
+  _odCh[id] = new Chart(el, cfg);
+}
+function odCharts(m, list, byM, months){
+  if(typeof Chart === 'undefined') return;
+  var cNew = odCss('--od-new'), cRep = odCss('--od-rep'), cOne = odCss('--od-one');
+  var ink = odCss('--text2') || '#8b949e', grid = odCss('--border') || '#30363d', cur$ = VC.cur;
+  var fmt = function(v){ return Math.round(v).toLocaleString(); };
+  var base = function(stacked, horiz){
+    var val = {stacked:stacked, beginAtZero:true, grid:{color:grid, drawTicks:false}, border:{display:false},
+               ticks:{color:ink, font:{size:10}, padding:6, callback:function(v){ return v >= 1000 ? Math.round(v/1000) + 'k' : v; }}};
+    var cat = {stacked:stacked, grid:{display:false}, border:{color:grid}, ticks:{color:ink, font:{size:10}, autoSkip:!horiz, maxRotation:0}};
+    return {responsive:true, maintainAspectRatio:false, animation:{duration:250}, indexAxis:horiz ? 'y' : 'x',
+      interaction:{mode:'index', intersect:false}, plugins:{legend:{display:false},
+        tooltip:{backgroundColor:'rgba(13,17,23,.92)', titleColor:'#fff', bodyColor:'#e6edf3', padding:10, boxPadding:4}},
+      scales: horiz ? {x:val, y:cat} : {x:cat, y:val}};
+  };
+  var bar = {borderRadius:4, borderSkipped:false, maxBarThickness:46, borderWidth:0};
+  // 1. revenue over time: by order day for one month, by month for "all months"
+  var labels = [], nNew = [], nRep = [], cnt = [];
+  if(m === 'all'){
+    months.slice().reverse().forEach(function(k){ var a = odAgg(byM[k]); labels.push(plMonthLabel(k)); nNew.push(a.newRev); nRep.push(a.repRev); cnt.push(a.n); });
+    document.getElementById('od-c1-t').textContent = 'Revenue by month (order date)';
+  } else {
+    var dim = new Date(+m.slice(0,4), +m.slice(5,7), 0).getDate(), byD = {};
+    list.forEach(function(c){ (byD[c.date] = byD[c.date] || []).push(c); });
+    for(var d = 1; d <= dim; d++){ var ds = m + '-' + pad(d), a = odAgg(byD[ds] || []); labels.push(d); nNew.push(a.newRev); nRep.push(a.repRev); cnt.push(a.n); }
+    document.getElementById('od-c1-t').textContent = 'Revenue by order day · ' + plMonthLabel(m);
+  }
+  var o1 = base(true, false);
+  o1.plugins.tooltip.callbacks = {
+    title:function(it){ var i = it[0].dataIndex; return (m === 'all' ? labels[i] : labels[i] + ' ' + plMonthLabel(m)) + ' · ' + cnt[i] + ' order' + (cnt[i] === 1 ? '' : 's'); },
+    label:function(it){ return ' ' + it.dataset.label + ': ' + cur$ + ' ' + fmt(it.raw); },
+    footer:function(it){ return 'Total: ' + cur$ + ' ' + fmt(it.reduce(function(t,x){ return t + x.raw; }, 0)); }};
+  odChart('od-c1', {type:'bar', data:{labels:labels, datasets:[
+    Object.assign({label:'New', data:nNew, backgroundColor:cNew}, bar),
+    Object.assign({label:'Repeat', data:nRep, backgroundColor:cRep}, bar)]}, options:o1});
+  // 2. channel
+  var K = odAgg(list), ch = [['Direct', K.dirRev, K.dirN], ['Mumzworld', K.mzRev, K.mzN], ['Other B2B', K.b2bRev, K.b2bN]].filter(function(x){ return x[1] || x[2]; });
+  var o2 = base(false, true);
+  o2.plugins.tooltip.callbacks = {label:function(it){ var x = ch[it.dataIndex]; return ' ' + cur$ + ' ' + fmt(x[1]) + ' · ' + x[2] + ' orders · ' + (K.rev ? Math.round(x[1]/K.rev*100) : 0) + '%'; }};
+  odChart('od-c2', {type:'bar', data:{labels:ch.map(function(x){ return x[0]; }), datasets:[Object.assign({label:'Revenue', data:ch.map(function(x){ return x[1]; }), backgroundColor:cOne}, bar)]}, options:o2});
+  // 3. new vs repeat: orders and customers (counts)
+  var o3 = base(false, false);
+  o3.scales.y.ticks.callback = function(v){ return v; };
+  o3.plugins.tooltip.callbacks = {label:function(it){ return ' ' + it.dataset.label + ': ' + fmt(it.raw) + (it.dataIndex === 0 ? ' orders · ' + cur$ + ' ' + fmt(it.dataset.label === 'New' ? K.newRev : K.repRev) : ' customers'); }};
+  odChart('od-c3', {type:'bar', data:{labels:['Orders', 'Customers'], datasets:[
+    Object.assign({label:'New', data:[K.newN, K.newCust], backgroundColor:cNew}, bar),
+    Object.assign({label:'Repeat', data:[K.repN, K.repCust], backgroundColor:cRep}, bar)]}, options:o3});
+  // 4. top packages
+  var byP = {}; list.forEach(function(c){ (byP[c.pkg] = byP[c.pkg] || []).push(c); });
+  var top = Object.keys(byP).map(function(p){ var a = odAgg(byP[p]); return [p, a.rev, a.n]; }).sort(function(a,b){ return b[1] - a[1]; }).slice(0, 10);
+  var o4 = base(false, true);
+  o4.scales.y.ticks.callback = function(v, i){ var t = top[i] ? top[i][0] : ''; return t.length > 42 ? t.slice(0, 40) + '…' : t; };
+  o4.plugins.tooltip.callbacks = {title:function(it){ return top[it[0].dataIndex][0]; }, label:function(it){ var x = top[it.dataIndex]; return ' ' + cur$ + ' ' + fmt(x[1]) + ' · ' + x[2] + ' orders'; }};
+  odChart('od-c4', {type:'bar', data:{labels:top.map(function(x){ return x[0]; }), datasets:[Object.assign({label:'Revenue', data:top.map(function(x){ return x[1]; }), backgroundColor:cOne}, bar)]}, options:o4});
+}
+// redraw in the new colours when the theme is switched
+if(window.MutationObserver) new MutationObserver(function(){ var p = document.getElementById('page-odrev'); if(p && p.classList.contains('active')) odRender(); })
+  .observe(document.documentElement, {attributes:true, attributeFilter:['data-theme']});
 function odPick(m){ _od.sel = m; var s = document.getElementById('od-month'); if(s) s.value = m; odRender(); var t = document.getElementById('od-pkg-tbl'); if(t) t.closest('.tk-card').scrollIntoView({behavior:'smooth', block:'start'}); }
 function odExport(){
   var lines = [];
