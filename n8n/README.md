@@ -4,8 +4,8 @@
 
 `open-orders-daily-slack.json` posts, every day at 22:00 Asia/Dubai, the orders whose confirmed
 date has passed but whose status is still not COMPLETED (same rules as the dashboard's
-⏰ Open Orders page: cancelled / temp orders and excluded homecares left out; UAE and Qatar
-sections). The message lists the 40 oldest per country and links to `dashboard.html#openorders`.
+⏰ Open Orders page: cancelled / temp orders and excluded homecares left out). UAE orders only —
+Qatar is not included. The message lists the 40 oldest and links to `dashboard.html#openorders`.
 
 Set-up in n8n (feelvaleo.app.n8n.cloud):
 1. Workflows → Import from file → `open-orders-daily-slack.json`.

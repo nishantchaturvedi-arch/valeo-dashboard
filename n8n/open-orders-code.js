@@ -1,14 +1,13 @@
 // n8n Code node ("Run Once for All Items") — builds the daily Slack message of open orders.
 // Same rules as the dashboard's ⏰ Open Orders page:
 //   open = Order_Status not COMPLETED, not CANCELLED / TEMP_ORDER, and the confirmed date
-//   (Confirmed_DateTime, else Booked_Slot) is before today (Asia/Dubai, Asia/Qatar for Qatar).
+//   (Confirmed_DateTime, else Booked_Slot) is before today (Asia/Dubai). UAE orders only.
 // Excluded / dummy homecares are left out, as on the dashboard.
 const DASH = 'https://nishantchaturvedi-arch.github.io/valeo-dashboard/dashboard.html#openorders';
 const MAX_LINES = 40;                       // orders listed per country (oldest first); totals cover all
 const EXCL = ['carezone home healthcare llc','dummy homecare','helpful agency','nifas hc','babysitting ksa','pyramid home health care'];
 const COUNTRIES = [
   {code:'AE', name:'UAE',   cur:'AED', tz:'Asia/Dubai', match:['uae','ae','are','unitedarabemirates']},
-  {code:'QA', name:'Qatar', cur:'QAR', tz:'Asia/Qatar', match:['qatar','qa','qat','stateofqatar']},
 ];
 const norm = v => String(v == null ? '' : v).toLowerCase().replace(/[\s_\-]+/g, '');
 const todayIn = tz => new Intl.DateTimeFormat('en-CA', {timeZone:tz, year:'numeric', month:'2-digit', day:'2-digit'}).format(new Date());
