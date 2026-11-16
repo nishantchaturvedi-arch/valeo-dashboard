@@ -24380,7 +24380,10 @@ async function rhRestore(k){
   var _sm = window.saveManualCG;
   if(typeof _sm === 'function') window.saveManualCG = async function(){ var r = await _sm.apply(this, arguments); try{ reRenderAll(); }catch(e){} return r; };
   // landing page: Roster View (client accounts and deep links pick their own page)
-  function land(){ if(!_session) return; if(!document.querySelector('.page.active')) switchTab('roster'); rhBadge(); }
+  function land(){ if(!_session) return;
+    var h = String(location.hash||'').replace('#','').toLowerCase();   // links from Slack, e.g. dashboard.html#openorders
+    if(h === 'openorders' && _session.role === 'master'){ switchTab('openorders'); rhBadge(); return; }
+    if(!document.querySelector('.page.active')) switchTab('roster'); rhBadge(); }
   var _as = window.applySessionUI;
   if(typeof _as === 'function') window.applySessionUI = function(){ var r = _as.apply(this, arguments); setTimeout(land, 900); return r; };
   setTimeout(land, 900);
