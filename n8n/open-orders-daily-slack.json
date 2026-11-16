@@ -1,0 +1,117 @@
+{
+  "name": "Valeo — Open orders to Slack (daily 10 PM)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 22 * * *"
+            }
+          ]
+        }
+      },
+      "id": "a1f0c001-0000-4000-8000-000000000001",
+      "name": "Every day 10 PM (Dubai)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://dashboard-api-beta-three.vercel.app/api/metabase?fresh={{ Date.now() }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "a1f0c001-0000-4000-8000-000000000002",
+      "name": "Get orders (dashboard API)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n Code node (\"Run Once for All Items\") — builds the daily Slack message of open orders.\n// Same rules as the dashboard's ⏰ Open Orders page:\n//   open = Order_Status not COMPLETED, not CANCELLED / TEMP_ORDER, and the confirmed date\n//   (Confirmed_DateTime, else Booked_Slot) is before today (Asia/Dubai, Asia/Qatar for Qatar).\n// Excluded / dummy homecares are left out, as on the dashboard.\nconst DASH = 'https://nishantchaturvedi-arch.github.io/valeo-dashboard/dashboard.html#openorders';\nconst MAX_LINES = 40;                       // orders listed per country (oldest first); totals cover all\nconst EXCL = ['carezone home healthcare llc','dummy homecare','helpful agency','nifas hc','babysitting ksa','pyramid home health care'];\nconst COUNTRIES = [\n  {code:'AE', name:'UAE',   cur:'AED', tz:'Asia/Dubai', match:['uae','ae','are','unitedarabemirates']},\n  {code:'QA', name:'Qatar', cur:'QAR', tz:'Asia/Qatar', match:['qatar','qa','qat','stateofqatar']},\n];\nconst norm = v => String(v == null ? '' : v).toLowerCase().replace(/[\\s_\\-]+/g, '');\nconst todayIn = tz => new Intl.DateTimeFormat('en-CA', {timeZone:tz, year:'numeric', month:'2-digit', day:'2-digit'}).format(new Date());\n\nlet rows = $input.all().map(i => i.json);\nif (rows.length === 1 && Array.isArray(rows[0])) rows = rows[0];                       // whole array in one item\nif (rows.length && rows[0] && rows[0].json) rows = rows.map(r => r.json);               // [{json:{...}}] shape\nif (rows.length === 1 && Array.isArray(rows[0].data)) rows = rows[0].data;              // {data:[...]} shape\n\nfunction openOrders(c) {\n  const today = todayIn(c.tz);\n  return rows.filter(r => {\n    const ck = Object.keys(r).filter(k => /country/i.test(k));\n    if (ck.length ? !ck.some(k => c.match.includes(norm(r[k]))) : c.code !== 'AE') return false;\n    const st = norm(r.Order_Status);\n    if (st === 'completed' || st === 'cancelled' || st === 'temporder') return false;\n    const hc = String(r.Homecare || '').replace(/ /g, ' ').trim();\n    if (EXCL.includes(hc.toLowerCase()) || /dummy/i.test(hc)) return false;\n    const d = String(r.Confirmed_DateTime || r.Booked_Slot || '').replace('T', ' ').slice(0, 10);\n    return d && d < today;\n  }).map(r => {\n    const cd = String(r.Confirmed_DateTime || r.Booked_Slot || '').replace('T', ' ');\n    const d = cd.slice(0, 10);\n    return {date:d, time:cd.slice(11, 16), status:String(r.Order_Status || '').trim(), child:String(r.Child_Order_ID || ''), cart:String(r.Cart_Order_ID || ''),\n      client:String(r['User Name'] || '').trim(), hc:String(r.Homecare || '').replace(/ /g, ' ').trim(), nurse:String(r.Nurse_Assigned || '').trim(),\n      price:parseFloat(r.Final_Price || r.Order_Price || 0) || 0,\n      overdue:Math.round((new Date(today + 'T12:00:00') - new Date(d + 'T12:00:00')) / 864e5)};\n  }).sort((a, b) => a.date.localeCompare(b.date) || a.cart.localeCompare(b.cart) || a.child.localeCompare(b.child));\n}\n\nconst n0 = x => Math.round(x || 0).toLocaleString('en-US');\nconst parts = [], counts = {};\nfor (const c of COUNTRIES) {\n  const list = openOrders(c);\n  counts[c.code] = list.length;\n  if (!list.length) { if (c.code === 'AE') parts.push(`*${c.name}* ✅ No open orders — everything up to yesterday is completed.`); continue; }\n  const parents = new Set(list.map(o => o.cart)).size, value = list.reduce((t, o) => t + o.price, 0), noNurse = list.filter(o => !o.nurse).length;\n  const byS = {}, byHC = {};\n  list.forEach(o => { byS[o.status] = (byS[o.status] || 0) + 1; const h = o.hc || 'No homecare'; byHC[h] = (byHC[h] || 0) + 1; });\n  const lines = list.slice(0, MAX_LINES).map(o =>\n    `• \\`${o.date}${o.time ? ' ' + o.time : ''}\\` *${o.overdue}d* · #${o.child} · ${o.client || 'Client'} · ${o.hc || '_no homecare_'} · ${o.nurse || '_no nurse_'} · ${o.status}`);\n  parts.push(\n    `*${c.name}* — *${list.length}* open order${list.length === 1 ? '' : 's'} (${parents} parent) · ${c.cur} ${n0(value)} · ${noNurse} without a nurse · oldest ${list[0].overdue} days\\n` +\n    `By status: ${Object.entries(byS).sort().map(([s, n]) => `${s.toLowerCase()} ${n}`).join(' · ')}\\n` +\n    `By homecare: ${Object.entries(byHC).sort((a, b) => b[1] - a[1]).map(([h, n]) => `${h} ${n}`).join(' · ')}\\n\\n` +\n    lines.join('\\n') + (list.length > MAX_LINES ? `\\n…and ${list.length - MAX_LINES} more — see the dashboard.` : ''));\n}\nconst total = Object.values(counts).reduce((a, b) => a + b, 0);\nconst text = `:alarm_clock: *Open orders — not marked Completed* (${todayIn('Asia/Dubai')}, 10 PM)\\n` +\n  `Orders whose confirmed date has passed but the status is still not COMPLETED. Please complete them in the admin panel, or cancel if they did not happen.\\n\\n` +\n  parts.join('\\n\\n') + `\\n\\n<${DASH}|Open the full list (download, filters) →>`;\nreturn [{json:{text, total, counts}}];\n"
+      },
+      "id": "a1f0c001-0000-4000-8000-000000000003",
+      "name": "Build open-orders message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0AF2GS4FNF",
+          "mode": "id"
+        },
+        "text": "={{ $json.text }}",
+        "otherOptions": {
+          "mrkdwn": true,
+          "unfurl_links": false
+        }
+      },
+      "id": "a1f0c001-0000-4000-8000-000000000004",
+      "name": "Post to Slack",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [
+        720,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Every day 10 PM (Dubai)": {
+      "main": [
+        [
+          {
+            "node": "Get orders (dashboard API)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get orders (dashboard API)": {
+      "main": [
+        [
+          {
+            "node": "Build open-orders message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build open-orders message": {
+      "main": [
+        [
+          {
+            "node": "Post to Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Dubai"
+  },
+  "active": false
+}
