@@ -1082,6 +1082,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <button class="main-tab" onclick="switchTab(&#39;penalty&#39;)">⚠️ Penalty Tracker</button>
  <button class="main-tab" onclick="switchTab(&#39;expecting&#39;)">🤰 Expecting Mothers</button>
  <button class="main-tab" onclick="switchTab(&#39;exclusive&#39;)">👑 Exclusive CGs</button>
+ <button class="main-tab" onclick="switchTab(&#39;openorders&#39;)">⏰ Open Orders</button>
  <button class="main-tab" onclick="switchTab(&#39;profiles&#39;)">🪪 Caregiver Profiles</button>
  <button class="main-tab" onclick="switchTab(&#39;odrev&#39;)">📈 Revenue by Order Date</button>
 </div>
@@ -11108,6 +11109,34 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
   </div>
  </div>
 </div>
+<div class="page" id="page-openorders">
+ <div class="tk-bar">
+  <div style="font-size:15px;font-weight:700">⏰ Open Orders</div>
+  <label style="font-size:12px;color:var(--text2);font-weight:600" for="oo-month">Month</label>
+  <select id="oo-month" class="tk-inp" onchange="ooPickMonth(this.value)"></select>
+  <span class="od-range"><label style="font-size:12px;color:var(--text2);font-weight:600" for="oo-from">or From</label>
+   <input type="date" id="oo-from" class="tk-inp" onchange="ooRange()"><label style="font-size:12px;color:var(--text2)" for="oo-to">To</label>
+   <input type="date" id="oo-to" class="tk-inp" onchange="ooRange()">
+   <button class="tk-btn" id="oo-range-clear" onclick="ooPickMonth('all')" style="display:none">✕ Clear</button></span>
+  <select id="oo-hc" class="tk-inp" onchange="ooRender()"><option value="">All homecares</option></select>
+  <select id="oo-st" class="tk-inp" onchange="ooRender()"><option value="">All statuses</option></select>
+  <select id="oo-ch" class="tk-inp" onchange="ooRender()"><option value="">All channels</option><option value="mumz">🛍️ Mumzworld</option><option value="direct">Direct</option><option value="b2b">Other B2B</option></select>
+  <input id="oo-q" class="tk-inp" type="text" placeholder="Client, nurse, order #…" oninput="ooRender()" style="width:180px">
+  <label style="font-size:12px;color:var(--text2);display:flex;align-items:center;gap:5px"><input type="checkbox" id="oo-cxl" onchange="ooRender()"> Include cancelled</label>
+  <button class="tk-btn pri" onclick="ooDownload()">⬇ Download</button>
+ </div>
+ <div class="tk-kpis" id="oo-kpis"></div>
+ <div class="tk-page">
+  <div class="tk-card"><div class="tk-card-h"><span>📅 Month-wise · by confirmed date</span><span style="font-weight:500;color:var(--text3);font-size:11px">click a month to list it</span></div>
+   <div class="tk-scroll" style="max-height:none;overflow-x:auto"><table class="tk-tbl od-tbl" id="oo-month-tbl"></table></div></div>
+  <div class="tk-card"><div class="tk-card-h"><span id="oo-list-title">📋 Open orders</span></div>
+   <div class="tk-scroll" style="max-height:620px;overflow:auto"><table class="tk-tbl od-tbl" id="oo-tbl"></table></div></div>
+  <div style="font-size:11px;color:var(--text3);line-height:1.6;padding:2px 4px 16px">
+   <b style="color:var(--text2)">Open order</b> = a child order whose Order_Status is not COMPLETED and whose confirmed date (Confirmed_DateTime, else Booked_Slot) is before today — it should have been completed. Cancelled and temp orders are closed, so they are left out (tick "Include cancelled" to see cancelled ones).
+   Each row is one child order (one service day); <b style="color:var(--text2)">parent orders</b> = distinct Cart_Order_ID. <b style="color:var(--text2)">Days overdue</b> = days since the confirmed date.
+  </div>
+ </div>
+</div>
 <div class="page" id="page-profiles">
  <div class="tk-bar">
   <div style="font-size:15px;font-weight:700">🪪 Caregiver Profiles</div>
@@ -12072,6 +12101,7 @@ async function loadData(force=false){
       if(_act('page-ops') && typeof dyRender === 'function') dyRender();
       if(_act('page-pl') && typeof plRender === 'function' && _pl.loaded){ if(typeof _plUECache !== 'undefined') _plUECache = {sig:null, m:{}}; plRender(); }
       if(_act('page-exclusive') && typeof exRender === 'function') exRender();
+      if(_act('page-openorders') && typeof ooRender === 'function') ooRender();
       if(_act('page-profiles') && typeof cpRender === 'function'){ cpRender(); cpRefreshShared(false); }
     }catch(e){ console.warn('[refresh after load]', e); }
     if(!rawData.length && typeof vcEmptyState==='function') vcEmptyState();
@@ -13175,13 +13205,13 @@ function switchTab(tab){
   if(_session&&_session.role==='hc'&&tab!=='calendar'&&tab!=='roster'&&tab!=='complaints'&&tab!=='tickets'&&tab!=='leave'&&tab!=='avail'&&tab!=='ops'&&!(tab==='transport'&&trIsShifa())){alert('Access restricted');return;}
   // Client accounts (e.g. Mumzworld): their own order list + tickets only
   if(_session&&_session.role==='client'&&tab!=='mumz'&&tab!=='tickets'){alert('Access restricted');return;}
-  if((tab==='pl'||tab==='exclusive'||tab==='odrev'||tab==='profiles')&&_session&&_session.role!=='master'){alert('Master access only');return;}
+  if((tab==='pl'||tab==='exclusive'||tab==='odrev'||tab==='profiles'||tab==='openorders')&&_session&&_session.role!=='master'){alert('Master access only');return;}
   if(tab==='roster'){setTimeout(switchToRoster,80);}
   if(tab==='daily'){setTimeout(switchToDaily,80);}
   if(tab==='mumz'){setTimeout(switchToMumz,80);}
   var _tabLbl={calendar:'calendar',analytics:'utilisation analytics',ops:'operations',planner:'schedule builder',roster:'roster',
     daily:'daily orders',supply:'supply',customleads:'lead tracker',bsleads:'babysitting leads',
-    complaints:'complaint',exclusive:'exclusive cgs',profiles:'caregiver profiles',odrev:'revenue by order date',penalty:'penalty',expecting:'expecting',tickets:'hc tickets',leave:'leave applications',
+    complaints:'complaint',exclusive:'exclusive cgs',openorders:'open orders',profiles:'caregiver profiles',odrev:'revenue by order date',penalty:'penalty',expecting:'expecting',tickets:'hc tickets',leave:'leave applications',
     mumz:'mumzworld orders', avail:'availability search', transport:'transport charges', pl:'p&l'}[tab]||tab;
   document.querySelectorAll('.main-tab').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase().includes(_tabLbl)));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -13202,6 +13232,7 @@ function switchTab(tab){
   if(tab==='penalty'){if(_session&&_session.role!=='master'){alert('Master access only');return;}loadPenalties();}
   if(tab==='pl'){initPL();}
   if(tab==='exclusive'){initExclusive();}
+  if(tab==='openorders'){ooRender();}
   if(tab==='profiles'){cpInit();}
   if(tab==='odrev'){odRender();}
 }
@@ -23816,6 +23847,110 @@ function odExport(){
 </script>
 <script>
 // ═════════════════════════════════════════════════════════════════
+// OPEN ORDERS — not COMPLETED and confirmed date in the past
+// ═════════════════════════════════════════════════════════════════
+var _oo = {month:'all', from:'', to:'', last:[]};
+function ooPickMonth(m){ _oo.month = m; _oo.from = ''; _oo.to = ''; ['oo-from','oo-to'].forEach(function(id){ var e = document.getElementById(id); if(e) e.value = ''; }); ooRender(); }
+function ooRange(){
+  var f = document.getElementById('oo-from').value, t = document.getElementById('oo-to').value;
+  if(!f || !t) return; if(t < f){ var x = f; f = t; t = x; }
+  _oo.from = f; _oo.to = t; ooRender();
+}
+function ooAll(){
+  var today = avToday(), cxl = (document.getElementById('oo-cxl')||{}).checked;
+  var excl = ['carezone home healthcare llc','dummy homecare','helpful agency','nifas hc','babysitting ksa','pyramid home health care'];
+  return (window._lastRows||[]).filter(function(r){
+    if(!isCountryRow(r)) return false;
+    var st = _normKey(r['Order_Status']);
+    if(st === 'completed' || st === 'temporder' || (st === 'cancelled' && !cxl)) return false;
+    var hc = String(r['Homecare']||'').replace(/ /g,' ').trim();
+    if(excl.indexOf(hc.toLowerCase()) >= 0 || /dummy/i.test(hc)) return false;
+    var cd = String(r['Confirmed_DateTime']||r['Booked_Slot']||'').replace('T',' ');
+    return cd.slice(0,10) && cd.slice(0,10) < today;
+  }).map(function(r){
+    var cd = String(r['Confirmed_DateTime']||r['Booked_Slot']||'').replace('T',' '), ds = cd.slice(0,10);
+    var hc = String(r['Homecare']||'').replace(/ /g,' ').trim();
+    return {date:ds, time:cd.length > 10 ? cd.slice(11,16) : '', month:ds.slice(0,7), status:String(r['Order_Status']||'').trim(), child:String(r['Child_Order_ID']||'').trim(), cart:String(r['Cart_Order_ID']||'').trim(),
+      client:String(r['User Name']||'').trim(), phone:String(r['Phone Number']||'').trim(), hc:hc, nurse:String(r['Nurse_Assigned']||'').trim(), pkg:String(r['Parent_Package']||r['Child_Package']||'').trim(),
+      city:String(r['City']||'').trim(), price:parseFloat(r['Final_Price']||r['Order_Price']||0)||0, chan:odChannel(r), type:String(r['Type_Of_User']||'').trim(),
+      source:String(r['Order_Source']||'').trim(), orderDate:String(r['Order_Date']||'').slice(0,10),
+      overdue:Math.round((new Date(avToday()+'T12:00:00') - new Date(ds+'T12:00:00'))/864e5)};
+  });
+}
+function ooRender(){
+  var mt = document.getElementById('oo-month-tbl'); if(!mt) return;
+  if(!(window._lastRows||[]).length){ document.getElementById('oo-kpis').innerHTML = '<div class="tk-kpi" style="min-width:300px"><div class="tk-kpi-v" style="font-size:14px">⏳ Loading orders…</div><div class="tk-kpi-l">the page fills in when the data is in</div></div>'; return; }
+  var all = ooAll(), E = tkEsc, n0 = function(x){ return Math.round(x||0).toLocaleString(); }, cur$ = VC.cur;
+  // filters (homecare / status / channel / search) apply to everything below
+  var fill = function(id, vals, first){ var el = document.getElementById(id), cur = el.value; el.innerHTML = '<option value="">' + first + '</option>' + vals.map(function(v){ return '<option>' + E(v) + '</option>'; }).join(''); el.value = vals.indexOf(cur) >= 0 ? cur : ''; };
+  fill('oo-hc', [...new Set(all.map(function(o){ return o.hc || '(no homecare)'; }))].sort(), 'All homecares');
+  fill('oo-st', [...new Set(all.map(function(o){ return o.status; }))].sort(), 'All statuses');
+  var fh = document.getElementById('oo-hc').value, fs = document.getElementById('oo-st').value, fc = document.getElementById('oo-ch').value, q = String(document.getElementById('oo-q').value||'').toLowerCase().trim();
+  var base = all.filter(function(o){ return (!fh || (o.hc || '(no homecare)') === fh) && (!fs || o.status === fs) && (!fc || o.chan === fc)
+    && (!q || [o.client, o.nurse, o.child, o.cart, o.hc, o.phone].join(' ').toLowerCase().indexOf(q) >= 0); });
+  // month list + period
+  var months = [...new Set(base.map(function(o){ return o.month; }))].sort().reverse(), R = !!(_oo.from && _oo.to);
+  var ms = document.getElementById('oo-month');
+  ms.innerHTML = (R ? '<option value="range">📅 ' + odFmtD(_oo.from) + ' – ' + odFmtD(_oo.to) + '</option>' : '') + '<option value="all">All months</option>' + months.map(function(m){ return '<option value="' + m + '">' + plMonthLabel(m) + '</option>'; }).join('');
+  if(!R && _oo.month !== 'all' && months.indexOf(_oo.month) < 0) _oo.month = 'all';
+  ms.value = R ? 'range' : _oo.month;
+  document.getElementById('oo-range-clear').style.display = R ? '' : 'none';
+  var list = base.filter(function(o){ return R ? (o.date >= _oo.from && o.date <= _oo.to) : (_oo.month === 'all' || o.month === _oo.month); })
+    .sort(function(a,b){ return a.date.localeCompare(b.date) || a.cart.localeCompare(b.cart) || a.child.localeCompare(b.child); });
+  _oo.last = list;
+  var period = R ? odFmtD(_oo.from) + ' – ' + odFmtD(_oo.to) : _oo.month === 'all' ? 'all months' : plMonthLabel(_oo.month);
+  var parents = new Set(list.map(function(o){ return o.cart; })).size, val = list.reduce(function(t,o){ return t + o.price; }, 0);
+  var byS = {}; list.forEach(function(o){ byS[o.status] = (byS[o.status]||0) + 1; });
+  var noNurse = list.filter(function(o){ return !o.nurse; }).length, oldest = list.length ? list[0].overdue : 0;
+  var kpi = function(v,l,c){ return '<div class="tk-kpi"><div class="tk-kpi-v" style="color:' + (c||'var(--text)') + '">' + v + '</div><div class="tk-kpi-l">' + l + '</div></div>'; };
+  document.getElementById('oo-kpis').innerHTML = kpi(n0(list.length), 'Open child orders · ' + period, list.length ? '#d29922' : 'var(--duty)')
+    + kpi(n0(parents), 'Parent orders') + kpi(cur$ + ' ' + n0(val), 'Value') + kpi(n0(noNurse), 'Without a nurse', noNurse ? 'var(--absent)' : '')
+    + kpi(oldest ? oldest + ' days' : '—', 'Oldest overdue', oldest > 7 ? 'var(--absent)' : '')
+    + Object.keys(byS).sort().map(function(st){ return kpi(n0(byS[st]), st.toLowerCase()); }).join('');
+  // month-wise table (follows homecare / status / channel / search filters)
+  var sts = [...new Set(base.map(function(o){ return o.status; }))].sort();
+  var mrow = function(label, arr, m, tot){
+    var bs = {}; arr.forEach(function(o){ bs[o.status] = (bs[o.status]||0) + 1; });
+    return '<tr' + (m ? ' class="od-click' + (m === _oo.month && !R ? ' od-sel' : '') + '" onclick="ooPickMonth(\'' + m + '\')"' : '') + (tot ? ' style="background:var(--bg3);font-weight:700"' : '') + '><td><b>' + label + '</b></td>'
+      + '<td>' + n0(arr.length) + '</td><td>' + n0(new Set(arr.map(function(o){ return o.cart; })).size) + '</td><td>' + n0(arr.reduce(function(t,o){ return t + o.price; }, 0)) + '</td>'
+      + '<td>' + n0(arr.filter(function(o){ return !o.nurse; }).length) + '</td>' + sts.map(function(s, i){ return '<td' + (i ? '' : ' class="od-grp"') + '>' + n0(bs[s]||0) + '</td>'; }).join('') + '</tr>';
+  };
+  mt.innerHTML = months.length ? '<thead><tr><th>Month</th><th>Child orders</th><th>Parent orders</th><th>Value (' + cur$ + ')</th><th>No nurse</th>' + sts.map(function(s, i){ return '<th' + (i ? '' : ' class="od-grp"') + '>' + E(s.toLowerCase()) + '</th>'; }).join('') + '</tr></thead><tbody>'
+    + months.map(function(m){ return mrow(plMonthLabel(m), base.filter(function(o){ return o.month === m; }), m); }).join('') + mrow('Total', base, null, true) + '</tbody>'
+    : '<tbody><tr><td class="tk-empty">✓ No open orders — everything past is completed.</td></tr></tbody>';
+  // list
+  document.getElementById('oo-list-title').textContent = '📋 Open orders · ' + period + ' · ' + list.length;
+  document.getElementById('oo-tbl').innerHTML = '<thead><tr><th>Confirmed date</th><th>Overdue</th><th style="text-align:left">Status</th><th>Child #</th><th>Parent #</th><th style="text-align:left">Client</th><th style="text-align:left">Homecare</th><th style="text-align:left">Nurse</th><th style="text-align:left">Package</th><th style="text-align:left">City</th><th>Value</th><th style="text-align:left">Channel</th></tr></thead><tbody>'
+    + (list.length ? list.map(function(o){
+        return '<tr><td style="text-align:left;white-space:nowrap">' + E(o.date) + (o.time ? ' <span style="color:var(--text3)">' + E(o.time) + '</span>' : '') + '</td>'
+          + '<td style="color:' + (o.overdue > 7 ? 'var(--absent)' : o.overdue > 2 ? 'var(--sick)' : 'var(--text2)') + '">' + o.overdue + 'd</td>'
+          + '<td style="text-align:left"><span class="tk-pill" style="color:' + (/assigned/i.test(o.status) && !/hc/i.test(o.status) ? 'var(--accent)' : 'var(--sick)') + '">' + E(o.status) + '</span></td>'
+          + '<td style="font-family:monospace">#' + E(o.child) + '</td><td style="font-family:monospace;color:var(--text3)">#' + E(o.cart) + '</td>'
+          + '<td style="text-align:left">' + E(o.client) + '</td><td style="text-align:left">' + E(o.hc || '—') + '</td><td style="text-align:left">' + (o.nurse ? E(o.nurse) : '<span style="color:var(--absent)">no nurse</span>') + '</td>'
+          + '<td style="text-align:left;max-width:220px;overflow:hidden;text-overflow:ellipsis" title="' + E(o.pkg) + '">' + E(o.pkg) + '</td><td style="text-align:left">' + E(o.city) + '</td>'
+          + '<td>' + n0(o.price) + '</td><td style="text-align:left">' + (o.chan === 'mumz' ? '🛍️ Mumzworld' : o.chan === 'b2b' ? 'Other B2B' : 'Direct') + '</td></tr>';
+      }).join('') : '<tr><td colspan="12" class="tk-empty">No open orders for this selection.</td></tr>') + '</tbody>';
+}
+function ooDownload(){
+  if(!_oo.last.length && !confirm('There are no open orders for this selection. Download an empty file?')) return;
+  var R = !!(_oo.from && _oo.to), period = R ? _oo.from + '_to_' + _oo.to : _oo.month;
+  var head = ['Confirmed date','Time','Days overdue','Order status','Child order #','Parent order #','Order date','Client','Phone','Homecare','Nurse','Package','City','Value (' + VC.cur + ')','Channel','Customer type','Order source'];
+  var rows = _oo.last.map(function(o){ return [o.date, o.time, o.overdue, o.status, o.child, o.cart, o.orderDate, o.client, o.phone, o.hc, o.nurse, o.pkg, o.city, Math.round(o.price*100)/100, o.chan === 'mumz' ? 'Mumzworld' : o.chan === 'b2b' ? 'Other B2B' : 'Direct', o.type, o.source]; });
+  var bm = {}; _oo.last.forEach(function(o){ var m = bm[o.month] || (bm[o.month] = {n:0, p:new Set(), v:0, nn:0}); m.n++; m.p.add(o.cart); m.v += o.price; if(!o.nurse) m.nn++; });
+  var summ = [['Month','Open child orders','Parent orders','Value (' + VC.cur + ')','Without a nurse']].concat(Object.keys(bm).sort().map(function(m){ var x = bm[m]; return [m, x.n, x.p.size, Math.round(x.v), x.nn]; }));
+  var name = 'valeo-open-orders-' + VC.code.toLowerCase() + '-' + period + '-as-of-' + avToday();
+  if(typeof XLSX !== 'undefined'){
+    var wb = XLSX.utils.book_new(), w1 = XLSX.utils.aoa_to_sheet([head].concat(rows)), w2 = XLSX.utils.aoa_to_sheet(summ);
+    w1['!cols'] = head.map(function(){ return {wch:16}; }); XLSX.utils.book_append_sheet(wb, w1, 'Open orders'); XLSX.utils.book_append_sheet(wb, w2, 'By month');
+    XLSX.writeFile(wb, name + '.xlsx');
+  } else {
+    var csv = [head].concat(rows).map(function(r){ return r.map(function(v){ v = String(v==null?'':v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g,'""') + '"' : v; }).join(','); }).join('\n');
+    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + csv], {type:'text/csv'})); a.download = name + '.csv'; a.click();
+  }
+}
+</script>
+<script>
+// ═════════════════════════════════════════════════════════════════
 // CAREGIVER PROFILES — profile per caregiver (Firestore valeo_cg_profiles),
 // availability from the roster, and a shareable Valeo-branded page
 // (profile.html, public snapshot in valeo_public_profiles).
@@ -24327,7 +24462,7 @@ function vcCurrencyFix(root){
 // ticket / leave badges keep working; navSync() just mirrors their state on the groups.
 // ═════════════════════════════════════════════════════════════════
 var NAV_GROUPS = [
-  {id:'sched',   label:'🗓 Scheduling',        short:'🗓 Schedule', tabs:['roster','planner','avail','ops']},
+  {id:'sched',   label:'🗓 Scheduling',        short:'🗓 Schedule', tabs:['roster','planner','avail','ops','openorders']},
   {id:'hc',      label:'🏥 Homecare Partners', short:'🏥 Partners', tabs:['profiles','exclusive','tickets','leave','complaints','penalty','supply']},
   {id:'growth',  label:'🎯 Leads & Clients',   short:'🎯 Leads',    tabs:['customleads','bsleads','expecting','mumz']},
   {id:'finance', label:'💰 Finance & Reports', short:'💰 Finance',  tabs:['analytics','pl','odrev','transport']}
