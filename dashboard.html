@@ -11132,6 +11132,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
   <div class="tk-card"><div class="tk-card-h"><span id="oo-list-title">📋 Open orders</span></div>
    <div class="tk-scroll" style="max-height:620px;overflow:auto"><table class="tk-tbl od-tbl" id="oo-tbl"></table></div></div>
   <div style="font-size:11px;color:var(--text3);line-height:1.6;padding:2px 4px 16px">
+   <span id="oo-hc-note" style="display:none;color:var(--text2)">These are <b>your</b> orders whose date has passed but are not marked Completed — please complete them in the admin panel, or tell Valeo if one did not happen.<br></span>
    <b style="color:var(--text2)">Open order</b> = a child order whose Order_Status is not COMPLETED and whose confirmed date (Confirmed_DateTime, else Booked_Slot) is before today — it should have been completed. Cancelled and temp orders are closed, so they are left out (tick "Include cancelled" to see cancelled ones).
    Each row is one child order (one service day); <b style="color:var(--text2)">parent orders</b> = distinct Cart_Order_ID. <b style="color:var(--text2)">Days overdue</b> = days since the confirmed date.
   </div>
@@ -13202,10 +13203,11 @@ function switchTab(tab){
   if(tab==='calendar') tab='roster';   // Calendar tab removed
   // HC partner accounts: Calendar + Roster only
   if(tab==='transport'&&!trCanSee()){alert('Access restricted');return;}
-  if(_session&&_session.role==='hc'&&tab!=='calendar'&&tab!=='roster'&&tab!=='complaints'&&tab!=='tickets'&&tab!=='leave'&&tab!=='avail'&&tab!=='ops'&&!(tab==='transport'&&trIsShifa())){alert('Access restricted');return;}
+  if(_session&&_session.role==='hc'&&tab!=='calendar'&&tab!=='roster'&&tab!=='complaints'&&tab!=='tickets'&&tab!=='leave'&&tab!=='avail'&&tab!=='ops'&&tab!=='openorders'&&!(tab==='transport'&&trIsShifa())){alert('Access restricted');return;}
   // Client accounts (e.g. Mumzworld): their own order list + tickets only
   if(_session&&_session.role==='client'&&tab!=='mumz'&&tab!=='tickets'){alert('Access restricted');return;}
-  if((tab==='pl'||tab==='exclusive'||tab==='odrev'||tab==='profiles'||tab==='openorders')&&_session&&_session.role!=='master'){alert('Master access only');return;}
+  if(tab==='openorders'&&_session&&_session.role==='client'){alert('Access restricted');return;}
+  if((tab==='pl'||tab==='exclusive'||tab==='odrev'||tab==='profiles')&&_session&&_session.role!=='master'){alert('Master access only');return;}
   if(tab==='roster'){setTimeout(switchToRoster,80);}
   if(tab==='daily'){setTimeout(switchToDaily,80);}
   if(tab==='mumz'){setTimeout(switchToMumz,80);}
@@ -20619,7 +20621,7 @@ function applySessionUI(){
   var _ocb=document.getElementById('oc-btn'); if(_ocb) _ocb.style.display=(_session.role==='master')?'':'none';
   if(_session.role==='hc'){
     var _shifa=trIsShifa();
-    document.querySelectorAll('.main-tab').forEach(function(t){var txt=t.textContent.trim();if(!txt.includes('Calendar')&&!txt.includes('Roster')&&!txt.includes('Complaint')&&!txt.includes('Tickets')&&!txt.includes('Leave Applications')&&!txt.includes('Operations')&&!(_shifa&&txt.includes('Transport Charges')))t.style.display='none';});
+    document.querySelectorAll('.main-tab').forEach(function(t){var txt=t.textContent.trim();if(!txt.includes('Calendar')&&!txt.includes('Roster')&&!txt.includes('Complaint')&&!txt.includes('Tickets')&&!txt.includes('Leave Applications')&&!txt.includes('Operations')&&!txt.includes('Open Orders')&&!(_shifa&&txt.includes('Transport Charges')))t.style.display='none';});
     // hide "Add Caregiver" but keep the Leave Report / Complaint exports available
     document.querySelectorAll('.add-cg-btn').forEach(function(ab){ if(!ab.classList.contains('lr-open-btn')) ab.style.display='none'; });
   }
@@ -23856,8 +23858,10 @@ function ooRange(){
   if(!f || !t) return; if(t < f){ var x = f; f = t; t = x; }
   _oo.from = f; _oo.to = t; ooRender();
 }
+function ooIsHC(){ return !!(_session && _session.role === 'hc'); }
 function ooAll(){
   var today = avToday(), cxl = (document.getElementById('oo-cxl')||{}).checked;
+  var own = ooIsHC() ? tkSessionHC() : '';      // homecare logins: only their own orders
   var excl = ['carezone home healthcare llc','dummy homecare','helpful agency','nifas hc','babysitting ksa','pyramid home health care'];
   return (window._lastRows||[]).filter(function(r){
     if(!isCountryRow(r)) return false;
@@ -23865,6 +23869,7 @@ function ooAll(){
     if(st === 'completed' || st === 'temporder' || (st === 'cancelled' && !cxl)) return false;
     var hc = String(r['Homecare']||'').replace(/ /g,' ').trim();
     if(excl.indexOf(hc.toLowerCase()) >= 0 || /dummy/i.test(hc)) return false;
+    if(own && !tkHCMatch(hc, own)) return false;
     var cd = String(r['Confirmed_DateTime']||r['Booked_Slot']||'').replace('T',' ');
     return cd.slice(0,10) && cd.slice(0,10) < today;
   }).map(function(r){
@@ -23884,6 +23889,9 @@ function ooRender(){
   // filters (homecare / status / channel / search) apply to everything below
   var fill = function(id, vals, first){ var el = document.getElementById(id), cur = el.value; el.innerHTML = '<option value="">' + first + '</option>' + vals.map(function(v){ return '<option>' + E(v) + '</option>'; }).join(''); el.value = vals.indexOf(cur) >= 0 ? cur : ''; };
   fill('oo-hc', [...new Set(all.map(function(o){ return o.hc || '(no homecare)'; }))].sort(), 'All homecares');
+  var HCV = ooIsHC();
+  document.getElementById('oo-hc').style.display = HCV ? 'none' : '';
+  document.getElementById('oo-ch').style.display = HCV ? 'none' : '';
   fill('oo-st', [...new Set(all.map(function(o){ return o.status; }))].sort(), 'All statuses');
   var fh = document.getElementById('oo-hc').value, fs = document.getElementById('oo-st').value, fc = document.getElementById('oo-ch').value, q = String(document.getElementById('oo-q').value||'').toLowerCase().trim();
   var base = all.filter(function(o){ return (!fh || (o.hc || '(no homecare)') === fh) && (!fs || o.status === fs) && (!fc || o.chan === fc)
@@ -23898,13 +23906,14 @@ function ooRender(){
   var list = base.filter(function(o){ return R ? (o.date >= _oo.from && o.date <= _oo.to) : (_oo.month === 'all' || o.month === _oo.month); })
     .sort(function(a,b){ return a.date.localeCompare(b.date) || a.cart.localeCompare(b.cart) || a.child.localeCompare(b.child); });
   _oo.last = list;
+  var _hn = document.getElementById('oo-hc-note'); if(_hn) _hn.style.display = HCV ? '' : 'none';
   var period = R ? odFmtD(_oo.from) + ' – ' + odFmtD(_oo.to) : _oo.month === 'all' ? 'all months' : plMonthLabel(_oo.month);
   var parents = new Set(list.map(function(o){ return o.cart; })).size, val = list.reduce(function(t,o){ return t + o.price; }, 0);
   var byS = {}; list.forEach(function(o){ byS[o.status] = (byS[o.status]||0) + 1; });
   var noNurse = list.filter(function(o){ return !o.nurse; }).length, oldest = list.length ? list[0].overdue : 0;
   var kpi = function(v,l,c){ return '<div class="tk-kpi"><div class="tk-kpi-v" style="color:' + (c||'var(--text)') + '">' + v + '</div><div class="tk-kpi-l">' + l + '</div></div>'; };
   document.getElementById('oo-kpis').innerHTML = kpi(n0(list.length), 'Open child orders · ' + period, list.length ? '#d29922' : 'var(--duty)')
-    + kpi(n0(parents), 'Parent orders') + kpi(cur$ + ' ' + n0(val), 'Value') + kpi(n0(noNurse), 'Without a nurse', noNurse ? 'var(--absent)' : '')
+    + kpi(n0(parents), 'Parent orders') + (HCV ? '' : kpi(cur$ + ' ' + n0(val), 'Value')) + kpi(n0(noNurse), 'Without a nurse', noNurse ? 'var(--absent)' : '')
     + kpi(oldest ? oldest + ' days' : '—', 'Oldest overdue', oldest > 7 ? 'var(--absent)' : '')
     + Object.keys(byS).sort().map(function(st){ return kpi(n0(byS[st]), st.toLowerCase()); }).join('');
   // month-wise table (follows homecare / status / channel / search filters)
@@ -23912,15 +23921,15 @@ function ooRender(){
   var mrow = function(label, arr, m, tot){
     var bs = {}; arr.forEach(function(o){ bs[o.status] = (bs[o.status]||0) + 1; });
     return '<tr' + (m ? ' class="od-click' + (m === _oo.month && !R ? ' od-sel' : '') + '" onclick="ooPickMonth(\'' + m + '\')"' : '') + (tot ? ' style="background:var(--bg3);font-weight:700"' : '') + '><td><b>' + label + '</b></td>'
-      + '<td>' + n0(arr.length) + '</td><td>' + n0(new Set(arr.map(function(o){ return o.cart; })).size) + '</td><td>' + n0(arr.reduce(function(t,o){ return t + o.price; }, 0)) + '</td>'
+      + '<td>' + n0(arr.length) + '</td><td>' + n0(new Set(arr.map(function(o){ return o.cart; })).size) + '</td>' + (HCV ? '' : '<td>' + n0(arr.reduce(function(t,o){ return t + o.price; }, 0)) + '</td>')
       + '<td>' + n0(arr.filter(function(o){ return !o.nurse; }).length) + '</td>' + sts.map(function(s, i){ return '<td' + (i ? '' : ' class="od-grp"') + '>' + n0(bs[s]||0) + '</td>'; }).join('') + '</tr>';
   };
-  mt.innerHTML = months.length ? '<thead><tr><th>Month</th><th>Child orders</th><th>Parent orders</th><th>Value (' + cur$ + ')</th><th>No nurse</th>' + sts.map(function(s, i){ return '<th' + (i ? '' : ' class="od-grp"') + '>' + E(s.toLowerCase()) + '</th>'; }).join('') + '</tr></thead><tbody>'
+  mt.innerHTML = months.length ? '<thead><tr><th>Month</th><th>Child orders</th><th>Parent orders</th>' + (HCV ? '' : '<th>Value (' + cur$ + ')</th>') + '<th>No nurse</th>' + sts.map(function(s, i){ return '<th' + (i ? '' : ' class="od-grp"') + '>' + E(s.toLowerCase()) + '</th>'; }).join('') + '</tr></thead><tbody>'
     + months.map(function(m){ return mrow(plMonthLabel(m), base.filter(function(o){ return o.month === m; }), m); }).join('') + mrow('Total', base, null, true) + '</tbody>'
     : '<tbody><tr><td class="tk-empty">✓ No open orders — everything past is completed.</td></tr></tbody>';
   // list
   document.getElementById('oo-list-title').textContent = '📋 Open orders · ' + period + ' · ' + list.length;
-  document.getElementById('oo-tbl').innerHTML = '<thead><tr><th>Confirmed date</th><th>Overdue</th><th style="text-align:left">Status</th><th>Child #</th><th>Parent #</th><th style="text-align:left">Client</th><th style="text-align:left">Homecare</th><th style="text-align:left">Nurse</th><th style="text-align:left">Package</th><th style="text-align:left">City</th><th>Value</th><th style="text-align:left">Channel</th></tr></thead><tbody>'
+  document.getElementById('oo-tbl').innerHTML = '<thead><tr><th>Confirmed date</th><th>Overdue</th><th style="text-align:left">Status</th><th>Child #</th><th>Parent #</th><th style="text-align:left">Client</th><th style="text-align:left">Homecare</th><th style="text-align:left">Nurse</th><th style="text-align:left">Package</th><th style="text-align:left">City</th>' + (HCV ? '' : '<th>Value</th><th style="text-align:left">Channel</th>') + '</tr></thead><tbody>'
     + (list.length ? list.map(function(o){
         return '<tr><td style="text-align:left;white-space:nowrap">' + E(o.date) + (o.time ? ' <span style="color:var(--text3)">' + E(o.time) + '</span>' : '') + '</td>'
           + '<td style="color:' + (o.overdue > 7 ? 'var(--absent)' : o.overdue > 2 ? 'var(--sick)' : 'var(--text2)') + '">' + o.overdue + 'd</td>'
@@ -23928,17 +23937,21 @@ function ooRender(){
           + '<td style="font-family:monospace">#' + E(o.child) + '</td><td style="font-family:monospace;color:var(--text3)">#' + E(o.cart) + '</td>'
           + '<td style="text-align:left">' + E(o.client) + '</td><td style="text-align:left">' + E(o.hc || '—') + '</td><td style="text-align:left">' + (o.nurse ? E(o.nurse) : '<span style="color:var(--absent)">no nurse</span>') + '</td>'
           + '<td style="text-align:left;max-width:220px;overflow:hidden;text-overflow:ellipsis" title="' + E(o.pkg) + '">' + E(o.pkg) + '</td><td style="text-align:left">' + E(o.city) + '</td>'
-          + '<td>' + n0(o.price) + '</td><td style="text-align:left">' + (o.chan === 'mumz' ? '🛍️ Mumzworld' : o.chan === 'b2b' ? 'Other B2B' : 'Direct') + '</td></tr>';
-      }).join('') : '<tr><td colspan="12" class="tk-empty">No open orders for this selection.</td></tr>') + '</tbody>';
+          + (HCV ? '' : '<td>' + n0(o.price) + '</td><td style="text-align:left">' + (o.chan === 'mumz' ? '🛍️ Mumzworld' : o.chan === 'b2b' ? 'Other B2B' : 'Direct') + '</td>') + '</tr>';
+      }).join('') : '<tr><td colspan="12" class="tk-empty">' + (HCV ? '✓ No open orders — all your past orders are completed.' : 'No open orders for this selection.') + '</td></tr>') + '</tbody>';
 }
 function ooDownload(){
   if(!_oo.last.length && !confirm('There are no open orders for this selection. Download an empty file?')) return;
   var R = !!(_oo.from && _oo.to), period = R ? _oo.from + '_to_' + _oo.to : _oo.month;
-  var head = ['Confirmed date','Time','Days overdue','Order status','Child order #','Parent order #','Order date','Client','Phone','Homecare','Nurse','Package','City','Value (' + VC.cur + ')','Channel','Customer type','Order source'];
-  var rows = _oo.last.map(function(o){ return [o.date, o.time, o.overdue, o.status, o.child, o.cart, o.orderDate, o.client, o.phone, o.hc, o.nurse, o.pkg, o.city, Math.round(o.price*100)/100, o.chan === 'mumz' ? 'Mumzworld' : o.chan === 'b2b' ? 'Other B2B' : 'Direct', o.type, o.source]; });
+  var HCV = ooIsHC();
+  var head = HCV ? ['Confirmed date','Time','Days overdue','Order status','Child order #','Parent order #','Client','Homecare','Nurse','Package','City']
+                 : ['Confirmed date','Time','Days overdue','Order status','Child order #','Parent order #','Order date','Client','Phone','Homecare','Nurse','Package','City','Value (' + VC.cur + ')','Channel','Customer type','Order source'];
+  var rows = _oo.last.map(function(o){ return HCV ? [o.date, o.time, o.overdue, o.status, o.child, o.cart, o.client, o.hc, o.nurse, o.pkg, o.city]
+    : [o.date, o.time, o.overdue, o.status, o.child, o.cart, o.orderDate, o.client, o.phone, o.hc, o.nurse, o.pkg, o.city, Math.round(o.price*100)/100, o.chan === 'mumz' ? 'Mumzworld' : o.chan === 'b2b' ? 'Other B2B' : 'Direct', o.type, o.source]; });
   var bm = {}; _oo.last.forEach(function(o){ var m = bm[o.month] || (bm[o.month] = {n:0, p:new Set(), v:0, nn:0}); m.n++; m.p.add(o.cart); m.v += o.price; if(!o.nurse) m.nn++; });
-  var summ = [['Month','Open child orders','Parent orders','Value (' + VC.cur + ')','Without a nurse']].concat(Object.keys(bm).sort().map(function(m){ var x = bm[m]; return [m, x.n, x.p.size, Math.round(x.v), x.nn]; }));
-  var name = 'valeo-open-orders-' + VC.code.toLowerCase() + '-' + period + '-as-of-' + avToday();
+  var summ = [HCV ? ['Month','Open child orders','Parent orders','Without a nurse'] : ['Month','Open child orders','Parent orders','Value (' + VC.cur + ')','Without a nurse']]
+    .concat(Object.keys(bm).sort().map(function(m){ var x = bm[m]; return HCV ? [m, x.n, x.p.size, x.nn] : [m, x.n, x.p.size, Math.round(x.v), x.nn]; }));
+  var name = 'valeo-open-orders-' + VC.code.toLowerCase() + (HCV ? '-' + String(tkSessionHC()).replace(/[^A-Za-z0-9]+/g,'_') : '') + '-' + period + '-as-of-' + avToday();
   if(typeof XLSX !== 'undefined'){
     var wb = XLSX.utils.book_new(), w1 = XLSX.utils.aoa_to_sheet([head].concat(rows)), w2 = XLSX.utils.aoa_to_sheet(summ);
     w1['!cols'] = head.map(function(){ return {wch:16}; }); XLSX.utils.book_append_sheet(wb, w1, 'Open orders'); XLSX.utils.book_append_sheet(wb, w2, 'By month');
@@ -24382,7 +24395,7 @@ async function rhRestore(k){
   // landing page: Roster View (client accounts and deep links pick their own page)
   function land(){ if(!_session) return;
     var h = String(location.hash||'').replace('#','').toLowerCase();   // links from Slack, e.g. dashboard.html#openorders
-    if(h === 'openorders' && _session.role === 'master'){ switchTab('openorders'); rhBadge(); return; }
+    if(h === 'openorders' && (_session.role === 'master' || _session.role === 'hc')){ switchTab('openorders'); rhBadge(); return; }
     if(!document.querySelector('.page.active')) switchTab('roster'); rhBadge(); }
   var _as = window.applySessionUI;
   if(typeof _as === 'function') window.applySessionUI = function(){ var r = _as.apply(this, arguments); setTimeout(land, 900); return r; };
