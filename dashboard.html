@@ -655,6 +655,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 @media(max-width:1000px){.ut-split{grid-template-columns:1fr}}
 .ut-pct{display:inline-block;min-width:44px;text-align:center;font-weight:700;font-family:monospace;padding:1px 6px;border-radius:5px;border:1px solid currentColor;font-size:11px}
 .ut-pct.hi{color:var(--duty)}.ut-pct.mid{color:var(--accent)}.ut-pct.lo{color:var(--absent)}.ut-pct.na{color:var(--text3);border-style:dashed}
+.cu-seg{display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.cu-seg button{background:var(--bg3);border:0;color:var(--text2);padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+.cu-seg button.on{background:var(--accent);color:#fff}
 .od-range{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
 .od-charts{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
 .od-chart.od-wide{grid-column:1 / -1}
@@ -1082,6 +1085,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <button class="main-tab" onclick="switchTab(&#39;penalty&#39;)">⚠️ Penalty Tracker</button>
  <button class="main-tab" onclick="switchTab(&#39;expecting&#39;)">🤰 Expecting Mothers</button>
  <button class="main-tab" onclick="switchTab(&#39;exclusive&#39;)">👑 Exclusive CGs</button>
+ <button class="main-tab" onclick="switchTab(&#39;customers&#39;)">👥 Customer Insights</button>
  <button class="main-tab" onclick="switchTab(&#39;openorders&#39;)">⏰ Open Orders</button>
  <button class="main-tab" onclick="switchTab(&#39;profiles&#39;)">🪪 Caregiver Profiles</button>
  <button class="main-tab" onclick="switchTab(&#39;odrev&#39;)">📈 Revenue by Order Date</button>
@@ -11108,6 +11112,35 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
   </div>
  </div>
 </div>
+<div class="page" id="page-customers">
+ <div class="tk-bar">
+  <div style="font-size:15px;font-weight:700">👥 Customer Insights</div>
+  <div class="cu-seg"><button id="cu-t1" class="on" onclick="cuTab(1)">⏱ Hourly-only customers</button><button id="cu-t2" onclick="cuTab(2)">💤 Not booked recently</button></div>
+  <select id="cu-ch" class="tk-inp" onchange="cuRender()"><option value="">All channels</option><option value="mumz">🛍️ Mumzworld</option><option value="direct">Valeo (direct)</option><option value="b2b">Other B2B</option></select>
+  <input id="cu-q" class="tk-inp" type="text" placeholder="Search name, phone, email…" oninput="cuRender()" style="width:200px">
+  <button class="tk-btn pri" onclick="cuDownload()">⬇ Download</button>
+ </div>
+ <div class="tk-bar" id="cu-ctl1" style="border-top:none;padding-top:0">
+  <label style="font-size:12px;color:var(--text2);font-weight:600" for="cu-month">Month</label>
+  <select id="cu-month" class="tk-inp" onchange="cuRender()"></select>
+  <label style="font-size:12px;color:var(--text2)" for="cu-basis">by</label>
+  <select id="cu-basis" class="tk-inp" onchange="cuRender()"><option value="order">order date (when booked)</option><option value="service">service date</option></select>
+  <span style="font-size:11px;color:var(--text3)">Customers whose bookings in the month were all hourly — no weekly or monthly plan.</span>
+ </div>
+ <div class="tk-bar" id="cu-ctl2" style="border-top:none;padding-top:0;display:none">
+  <label style="font-size:12px;color:var(--text2);font-weight:600" for="cu-days">No booking for at least</label>
+  <select id="cu-days" class="tk-inp" onchange="cuRender()"><option value="30">30 days</option><option value="45">45 days</option><option value="60">60 days</option><option value="90">90 days</option></select>
+  <label style="font-size:12px;color:var(--text2)" for="cu-since">last active within</label>
+  <select id="cu-since" class="tk-inp" onchange="cuRender()"><option value="180">6 months</option><option value="90">3 months</option><option value="365">12 months</option><option value="0">any time</option></select>
+  <select id="cu-last" class="tk-inp" onchange="cuRender()"><option value="">Any last package</option><option value="Monthly">Last on a monthly plan</option><option value="Weekly">Last on a weekly plan</option><option value="Hourly">Last booking hourly</option></select>
+  <span style="font-size:11px;color:var(--text3)">No order placed and no service in that period, and nothing booked ahead.</span>
+ </div>
+ <div class="tk-kpis" id="cu-kpis"></div>
+ <div class="tk-page"><div class="tk-card"><div class="tk-card-h"><span id="cu-title"></span></div>
+  <div class="tk-scroll" style="max-height:650px;overflow:auto"><table class="tk-tbl od-tbl" id="cu-tbl"></table></div></div>
+  <div style="font-size:11px;color:var(--text3);line-height:1.6;padding:2px 4px 16px">A customer = one phone number (else email, else name), so name variants like "Noura Alsuwaidi" and "Noura Alsuwaidi Mumzworld" count once. Bookings = child orders (one service day each), cancelled and temp orders left out. Revenue = Final Price. <b style="color:var(--text2)">Hourly</b> = Hourly Babysitting packages (incl. additional hours); weekly / monthly plans and daily elderly care are not hourly.</div>
+ </div>
+</div>
 <div class="page" id="page-openorders">
  <div class="tk-bar">
   <div style="font-size:15px;font-weight:700">⏰ Open Orders</div>
@@ -12102,6 +12135,7 @@ async function loadData(force=false){
       if(_act('page-pl') && typeof plRender === 'function' && _pl.loaded){ if(typeof _plUECache !== 'undefined') _plUECache = {sig:null, m:{}}; plRender(); }
       if(_act('page-exclusive') && typeof exRender === 'function') exRender();
       if(_act('page-openorders') && typeof ooRender === 'function') ooRender();
+      if(_act('page-customers') && typeof cuRender === 'function') cuRender();
       if(_act('page-profiles') && typeof cpRender === 'function'){ cpRender(); cpRefreshShared(false); }
     }catch(e){ console.warn('[refresh after load]', e); }
     if(!rawData.length && typeof vcEmptyState==='function') vcEmptyState();
@@ -13206,13 +13240,13 @@ function switchTab(tab){
   // Client accounts (e.g. Mumzworld): their own order list + tickets only
   if(_session&&_session.role==='client'&&tab!=='mumz'&&tab!=='tickets'){alert('Access restricted');return;}
   if(tab==='openorders'&&_session&&_session.role==='client'){alert('Access restricted');return;}
-  if((tab==='pl'||tab==='exclusive'||tab==='odrev'||tab==='profiles')&&_session&&_session.role!=='master'){alert('Master access only');return;}
+  if((tab==='pl'||tab==='exclusive'||tab==='odrev'||tab==='profiles'||tab==='customers')&&_session&&_session.role!=='master'){alert('Master access only');return;}
   if(tab==='roster'){setTimeout(switchToRoster,80);}
   if(tab==='daily'){setTimeout(switchToDaily,80);}
   if(tab==='mumz'){setTimeout(switchToMumz,80);}
   var _tabLbl={calendar:'calendar',analytics:'utilisation analytics',ops:'operations',planner:'schedule builder',roster:'roster',
     daily:'daily orders',supply:'supply',customleads:'lead tracker',bsleads:'babysitting leads',
-    complaints:'complaint',exclusive:'exclusive cgs',openorders:'open orders',profiles:'caregiver profiles',odrev:'revenue by order date',penalty:'penalty',expecting:'expecting',tickets:'hc tickets',leave:'leave applications',
+    complaints:'complaint',exclusive:'exclusive cgs',customers:'customer insights',openorders:'open orders',profiles:'caregiver profiles',odrev:'revenue by order date',penalty:'penalty',expecting:'expecting',tickets:'hc tickets',leave:'leave applications',
     mumz:'mumzworld orders', avail:'availability search', transport:'transport charges', pl:'p&l'}[tab]||tab;
   document.querySelectorAll('.main-tab').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase().includes(_tabLbl)));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -13233,6 +13267,7 @@ function switchTab(tab){
   if(tab==='penalty'){if(_session&&_session.role!=='master'){alert('Master access only');return;}loadPenalties();}
   if(tab==='pl'){initPL();}
   if(tab==='exclusive'){initExclusive();}
+  if(tab==='customers'){cuRender();}
   if(tab==='openorders'){ooRender();}
   if(tab==='profiles'){cpInit();}
   if(tab==='odrev'){odRender();}
@@ -23848,6 +23883,128 @@ function odExport(){
 </script>
 <script>
 // ═════════════════════════════════════════════════════════════════
+// CUSTOMER INSIGHTS — (1) hourly-only customers in a month, (2) customers
+// with no booking for N days. One customer = one phone (else email, else name).
+// ═════════════════════════════════════════════════════════════════
+var _cu = {tab:1, last:[]};
+function cuTab(n){ _cu.tab = n; document.getElementById('cu-t1').classList.toggle('on', n === 1); document.getElementById('cu-t2').classList.toggle('on', n === 2);
+  document.getElementById('cu-ctl1').style.display = n === 1 ? '' : 'none'; document.getElementById('cu-ctl2').style.display = n === 2 ? '' : 'none'; cuRender(); }
+function cuKind(p){ p = String(p||''); return /monthly/i.test(p) ? 'Monthly' : /weekly/i.test(p) ? 'Weekly' : /hourly|hour\b/i.test(p) ? 'Hourly' : 'Other'; }
+function cuKey(r){ var ph = String(r['Phone Number']||'').replace(/\D/g,'').slice(-9); if(ph.length >= 7) return 'p' + ph;
+  var em = String(r['Email']||'').trim().toLowerCase(); if(em) return 'e' + em; return 'n' + String(r['User Name']||'').trim().toLowerCase().replace(/\s+/g,' '); }
+function cuName(names){ // prefer a real name over "X Mumzworld" / "X Mumz" placeholders
+  var c = {}; names.forEach(function(n){ n = String(n||'').replace(/\s+/g,' ').trim(); if(n) c[n] = (c[n]||0) + 1; });
+  var list = Object.keys(c).sort(function(a,b){ var ma = /mumz/i.test(a), mb = /mumz/i.test(b); return (ma - mb) || (c[b] - c[a]) || (b.length - a.length); });
+  return list[0] || '—';
+}
+// all customers with their bookings (child orders)
+function cuCustomers(){
+  var excl = ['carezone home healthcare llc','dummy homecare','helpful agency','nifas hc','babysitting ksa','pyramid home health care'];
+  var M = {};
+  (window._lastRows||[]).forEach(function(r){
+    if(!isCountryRow(r)) return;
+    var st = _normKey(r['Order_Status']); if(st === 'cancelled' || st === 'temporder') return;
+    var hc = String(r['Homecare']||'').replace(/ /g,' ').trim(); if(excl.indexOf(hc.toLowerCase()) >= 0 || /dummy/i.test(hc)) return;
+    var sd = String(r['Confirmed_DateTime']||r['Booked_Slot']||'').replace('T',' ').slice(0,10), od = String(r['Order_Date']||'').slice(0,10);
+    if(!sd && !od) return;
+    var k = cuKey(r), c = M[k] || (M[k] = {key:k, names:[], phone:'', email:'', city:'', ch:{}, type:'', b:[]});
+    c.names.push(r['User Name']); if(!c.phone) c.phone = String(r['Phone Number']||'').trim(); if(!c.email) c.email = String(r['Email']||'').trim();
+    if(r['City']) c.city = String(r['City']).trim();
+    c.ch[odChannel(r)] = 1; if(/repeat/i.test(String(r['Type_Of_User']||''))) c.rep = true;
+    c.b.push({sd:sd || od, od:od || sd, kind:cuKind(r['Parent_Package']), pkg:String(r['Parent_Package']||'').trim(), hrs:extractHours(r['Child_Package'] || r['Parent_Package']) || 0,
+      price:parseFloat(r['Final_Price']||r['Order_Price']||0)||0, cart:String(r['Cart_Order_ID']||''), nurse:String(r['Nurse_Assigned']||'').trim(), hc:hc});
+  });
+  return Object.values(M).map(function(c){
+    c.name = cuName(c.names); c.chan = c.ch.mumz ? 'mumz' : c.ch.b2b ? 'b2b' : 'direct';
+    c.b.sort(function(a,b){ return a.sd.localeCompare(b.sd); });
+    c.lastSd = c.b[c.b.length-1].sd; c.lastOd = c.b.reduce(function(m,x){ return x.od > m ? x.od : m; }, '');
+    c.first = c.b.reduce(function(m,x){ var v = x.od < x.sd ? x.od : x.sd; return !m || v < m ? v : m; }, '');
+    c.everPlan = c.b.some(function(x){ return x.kind === 'Monthly' || x.kind === 'Weekly'; });
+    c.orders = new Set(c.b.map(function(x){ return x.cart; })).size; c.rev = c.b.reduce(function(t,x){ return t + x.price; }, 0);
+    c.type = (c.rep || c.orders > 1) ? 'Repeat' : 'New';
+    return c;
+  });
+}
+function cuChanLbl(ch){ return ch === 'mumz' ? '🛍️ Mumzworld' : ch === 'b2b' ? 'Other B2B' : 'Valeo'; }
+function cuRender(){
+  var tbl = document.getElementById('cu-tbl'); if(!tbl) return;
+  if(!(window._lastRows||[]).length){ document.getElementById('cu-kpis').innerHTML = '<div class="tk-kpi" style="min-width:300px"><div class="tk-kpi-v" style="font-size:14px">⏳ Loading orders…</div><div class="tk-kpi-l">the page fills in when the data is in</div></div>'; return; }
+  var all = cuCustomers(), E = tkEsc, n0 = function(x){ return Math.round(x||0).toLocaleString(); }, cur$ = VC.cur, today = avToday();
+  var fc = document.getElementById('cu-ch').value, q = String(document.getElementById('cu-q').value||'').toLowerCase().trim();
+  var pass = function(c){ return (!fc || c.chan === fc) && (!q || [c.name, c.phone, c.email, c.names.join(' ')].join(' ').toLowerCase().indexOf(q) >= 0); };
+  var kpi = function(v,l,col){ return '<div class="tk-kpi"><div class="tk-kpi-v" style="color:' + (col||'var(--text)') + '">' + v + '</div><div class="tk-kpi-l">' + l + '</div></div>'; };
+  var rows = [], head, title;
+  if(_cu.tab === 1){
+    var ms = document.getElementById('cu-month'), cur = ms.value || today.slice(0,7), opts = [];
+    for(var i = 0; i < 13; i++){ var dd = new Date(+today.slice(0,4), +today.slice(5,7) - 1 - i, 1); opts.push(dd.getFullYear() + '-' + pad(dd.getMonth()+1)); }
+    ms.innerHTML = opts.map(function(m){ return '<option value="' + m + '">' + plMonthLabel(m) + '</option>'; }).join(''); ms.value = opts.indexOf(cur) >= 0 ? cur : opts[0];
+    var m = ms.value, by = document.getElementById('cu-basis').value;
+    all.forEach(function(c){
+      var inM = c.b.filter(function(x){ return (by === 'order' ? x.od : x.sd).slice(0,7) === m; });
+      if(!inM.length || !inM.every(function(x){ return x.kind === 'Hourly'; }) || !pass(c)) return;
+      var later = c.b.some(function(x){ return x.sd > inM[inM.length-1].sd; });
+      rows.push({c:c, n:inM.length, orders:new Set(inM.map(function(x){ return x.cart; })).size, hrs:inM.reduce(function(t,x){ return t + x.hrs; }, 0), rev:inM.reduce(function(t,x){ return t + x.price; }, 0),
+        first:inM[0].sd, last:inM[inM.length-1].sd, cg:(inM[inM.length-1].nurse || '—'), hc:inM[inM.length-1].hc, later:later});
+    });
+    rows.sort(function(a,b){ return b.rev - a.rev; });
+    var mz = rows.filter(function(r){ return r.c.chan === 'mumz'; }).length;
+    document.getElementById('cu-kpis').innerHTML = kpi(n0(rows.length), 'Hourly-only customers · ' + plMonthLabel(m), '#2f81f7') + kpi(n0(rows.reduce(function(t,r){ return t + r.orders; }, 0)), 'Orders')
+      + kpi(n0(rows.reduce(function(t,r){ return t + r.hrs; }, 0)) + ' h', 'Hours booked') + kpi(cur$ + ' ' + n0(rows.reduce(function(t,r){ return t + r.rev; }, 0)), 'Revenue', '#22c55e')
+      + kpi(mz + ' / ' + (rows.length - mz), 'Mumzworld / Valeo') + kpi(n0(rows.filter(function(r){ return !r.c.everPlan; }).length), 'Never on a weekly / monthly plan', '#f59e0b');
+    title = '⏱ Hourly-only customers · ' + plMonthLabel(m) + ' (by ' + (by === 'order' ? 'order date' : 'service date') + ') · ' + rows.length;
+    head = ['Customer','Phone','Email','City','Channel','Type','Orders','Days booked','Hours','Revenue (' + cur$ + ')','First','Last','Last caregiver','Ever on a plan','Booked after'];
+    tbl.innerHTML = '<thead><tr>' + head.map(function(h, i){ return '<th' + (i < 6 || i > 11 ? ' style="text-align:left"' : '') + '>' + h + '</th>'; }).join('') + '</tr></thead><tbody>'
+      + (rows.length ? rows.map(function(r){ var c = r.c;
+          return '<tr><td style="text-align:left"><b>' + E(c.name) + '</b></td><td style="text-align:left;white-space:nowrap">' + E(c.phone) + '</td><td style="text-align:left">' + E(c.email) + '</td><td style="text-align:left">' + E(c.city) + '</td>'
+            + '<td style="text-align:left">' + cuChanLbl(c.chan) + '</td><td style="text-align:left">' + E(c.type) + '</td><td>' + r.orders + '</td><td>' + r.n + '</td><td>' + n0(r.hrs) + '</td><td>' + n0(r.rev) + '</td>'
+            + '<td>' + r.first.slice(5) + '</td><td>' + r.last.slice(5) + '</td><td style="text-align:left">' + E(r.cg) + ' <span style="color:var(--text3)">· ' + E(r.hc) + '</span></td>'
+            + '<td style="text-align:left">' + (c.everPlan ? 'Yes' : '<span style="color:#f59e0b;font-weight:600">Never</span>') + '</td><td style="text-align:left">' + (r.later ? 'Yes' : 'No') + '</td></tr>';
+        }).join('') : '<tr><td colspan="15" class="tk-empty">No hourly-only customers in this month.</td></tr>') + '</tbody>';
+  } else {
+    var days = +document.getElementById('cu-days').value, since = +document.getElementById('cu-since').value, fl = document.getElementById('cu-last').value;
+    var cut = new Date(new Date(today+'T12:00:00').getTime() - days*864e5).toISOString().slice(0,10);
+    var floor = since ? new Date(new Date(today+'T12:00:00').getTime() - since*864e5).toISOString().slice(0,10) : '';
+    all.forEach(function(c){
+      var lastAct = c.lastSd > c.lastOd ? c.lastSd : c.lastOd;        // latest order placed or service day (incl. future bookings)
+      if(lastAct >= cut || (floor && lastAct < floor) || !pass(c)) return;
+      var lb = c.b[c.b.length-1];
+      if(fl && lb.kind !== fl) return;
+      rows.push({c:c, last:lastAct, since:Math.round((new Date(today+'T12:00:00') - new Date(lastAct+'T12:00:00'))/864e5), lb:lb});
+    });
+    rows.sort(function(a,b){ return b.c.rev - a.c.rev; });
+    var mz2 = rows.filter(function(r){ return r.c.chan === 'mumz'; }).length;
+    var byK = {}; rows.forEach(function(r){ byK[r.lb.kind] = (byK[r.lb.kind]||0) + 1; });
+    document.getElementById('cu-kpis').innerHTML = kpi(n0(rows.length), 'Customers not booked ' + days + '+ days', '#d29922')
+      + kpi(cur$ + ' ' + n0(rows.reduce(function(t,r){ return t + r.c.rev; }, 0)), 'Their lifetime revenue', '#22c55e')
+      + kpi(mz2 + ' / ' + (rows.length - mz2), 'Mumzworld / Valeo')
+      + ['Monthly','Weekly','Hourly'].map(function(k){ return kpi(n0(byK[k]||0), 'Last on ' + k.toLowerCase()); }).join('');
+    title = '💤 No booking for ' + days + '+ days' + (since ? ' · last active in the past ' + (since >= 365 ? '12 months' : since / 30 + ' months') : '') + ' · ' + rows.length;
+    head = ['Customer','Phone','Email','City','Channel','Type','Last active','Days since','Last package','Last caregiver','Customer since','Orders','Days booked','Lifetime revenue (' + cur$ + ')'];
+    tbl.innerHTML = '<thead><tr>' + head.map(function(h, i){ return '<th' + (i < 6 || i === 8 || i === 9 ? ' style="text-align:left"' : '') + '>' + h + '</th>'; }).join('') + '</tr></thead><tbody>'
+      + (rows.length ? rows.map(function(r){ var c = r.c;
+          return '<tr><td style="text-align:left"><b>' + E(c.name) + '</b></td><td style="text-align:left;white-space:nowrap">' + E(c.phone) + '</td><td style="text-align:left">' + E(c.email) + '</td><td style="text-align:left">' + E(c.city) + '</td>'
+            + '<td style="text-align:left">' + cuChanLbl(c.chan) + '</td><td style="text-align:left">' + E(c.type) + '</td><td>' + r.last + '</td><td>' + r.since + '</td>'
+            + '<td style="text-align:left;max-width:220px;overflow:hidden;text-overflow:ellipsis" title="' + E(r.lb.pkg) + '">' + E(r.lb.pkg) + '</td><td style="text-align:left">' + E(r.lb.nurse || '—') + ' <span style="color:var(--text3)">· ' + E(r.lb.hc) + '</span></td>'
+            + '<td>' + c.first + '</td><td>' + c.orders + '</td><td>' + c.b.length + '</td><td>' + n0(c.rev) + '</td></tr>';
+        }).join('') : '<tr><td colspan="14" class="tk-empty">No customers match.</td></tr>') + '</tbody>';
+  }
+  document.getElementById('cu-title').textContent = title;
+  _cu.last = {head:head, rows:[].map.call(tbl.querySelectorAll('tbody tr'), function(tr){ return [].map.call(tr.children, function(td){ return td.innerText.replace(/\s*·\s*/,' · ').trim(); }); }).filter(function(r){ return r.length > 1; }), title:title};
+}
+function cuDownload(){
+  var L = _cu.last; if(!L || !L.head) return;
+  var name = 'valeo-' + (_cu.tab === 1 ? 'hourly-only-customers-' + document.getElementById('cu-month').value : 'customers-not-booked-' + document.getElementById('cu-days').value + 'd') + '-' + VC.code.toLowerCase() + '-' + avToday();
+  if(typeof XLSX !== 'undefined'){
+    var wb = XLSX.utils.book_new(), ws = XLSX.utils.aoa_to_sheet([[L.title], []].concat([L.head]).concat(L.rows));
+    ws['!cols'] = L.head.map(function(){ return {wch:18}; }); XLSX.utils.book_append_sheet(wb, ws, _cu.tab === 1 ? 'Hourly-only' : 'Not booked'); XLSX.writeFile(wb, name + '.xlsx');
+  } else {
+    var csv = [L.head].concat(L.rows).map(function(r){ return r.map(function(v){ v = String(v==null?'':v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g,'""') + '"' : v; }).join(','); }).join('\n');
+    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + csv], {type:'text/csv'})); a.download = name + '.csv'; a.click();
+  }
+}
+</script>
+<script>
+// ═════════════════════════════════════════════════════════════════
 // OPEN ORDERS — not COMPLETED and confirmed date in the past
 // ═════════════════════════════════════════════════════════════════
 var _oo = {month:'all', from:'', to:'', last:[]};
@@ -24479,7 +24636,7 @@ function vcCurrencyFix(root){
 var NAV_GROUPS = [
   {id:'sched',   label:'🗓 Scheduling',        short:'🗓 Schedule', tabs:['roster','planner','avail','ops','openorders']},
   {id:'hc',      label:'🏥 Homecare Partners', short:'🏥 Partners', tabs:['profiles','exclusive','tickets','leave','complaints','penalty','supply']},
-  {id:'growth',  label:'🎯 Leads & Clients',   short:'🎯 Leads',    tabs:['customleads','bsleads','expecting','mumz']},
+  {id:'growth',  label:'🎯 Leads & Clients',   short:'🎯 Leads',    tabs:['customers','customleads','bsleads','expecting','mumz']},
   {id:'finance', label:'💰 Finance & Reports', short:'💰 Finance',  tabs:['analytics','pl','odrev','transport']}
 ];
 function navTabKey(b){ var m = String(b.getAttribute('onclick')||'').match(/switchTab\(['"]([a-z]+)['"]\)/); return m ? m[1] : ''; }
