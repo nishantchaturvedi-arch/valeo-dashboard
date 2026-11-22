@@ -24925,11 +24925,19 @@ function ivParseAoA(aoa){
   }
   if(hi < 0) return {err:'Could not find the header row — it needs columns like Order ID, Customer, Date and Price.'};
   var H = aoa[hi].map(function(h){ return h.toLowerCase(); }), find = function(re, not){ for(var j = 0; j < H.length; j++) if(re.test(H[j]) && !(not && not.test(H[j]))) return j; return -1; };
-  var lastPrice = -1; H.forEach(function(h, j){ if(/price|amount|cost|total|aed/.test(h) && !/unit|per\s*h/.test(h)) lastPrice = j; });
+  // amount claimed: the final / payable / net / total column wins over a plain "Amount" (often the full monthly fee)
+  var lastPrice = -1, finalPrice = -1;
+  H.forEach(function(h, j){
+    if(/unit|per\s*h|rate\b|^paid\s*days?$/.test(h)) return;
+    if(/final|payable|net\b|grand|total/.test(h) && !/^(total\s*)?days?$/.test(h)) finalPrice = j;
+    else if(/price|amount|cost|aed|charge/.test(h)) lastPrice = j;
+  });
+  if(finalPrice >= 0) lastPrice = finalPrice;
   var col = {order:find(/order\s*(id|no|#|number)?$|^order|booking|invoice\s*ref|reference/, /date|status|type/), sub:find(/cust(omer)?\s*id|sub|child/),
-    name:find(/customer|client|patient|name/, /id|staff|nurse|caregiver/), date:find(/date|day/, /order\s*date|created/), time:find(/time/),
+    name:find(/customer|client|patient|name/, /id|staff|nurse|caregiver/), date:find(/date|day/, /order\s*date|created|start|join|paid|payable|holiday|leave/), time:find(/time/),
     staff:find(/staff|nurse|caregiver|\bcg\b|babysitter|nanny|assigned/), price:lastPrice, phone:find(/phone|mobile|contact|number/, /order|id/), service:find(/service|package|plan/)};
-  if(col.date < 0) col.date = find(/date/);
+  if(col.date < 0) col.date = find(/^date$|service\s*date|visit\s*date/);
+  col.pdays = find(/^paid\s*days?$|days?\s*paid|payable\s*days?$/, /final/); col.hol = find(/holiday|leave|absent|unpaid/);
   if(col.price < 0) return {err:'Could not find a Price / Amount column.'};
   var lines = [];
   for(var r = hi + 1; r < aoa.length; r++){
@@ -24937,8 +24945,9 @@ function ivParseAoA(aoa){
     if(!row.filter(Boolean).length) continue;
     if(row.some(function(c){ return /\btotal\b/i.test(c); })) continue;
     var price = ivAmt(g('price')); if(isNaN(price)) continue;
+    if(!['order','sub','name','staff','phone'].some(function(k){ return String(g(k)).trim(); })) continue;   // unlabelled total row
     lines.push({i:lines.length, order:g('order').replace(/^#/,'').replace(/\.0+$/,''), sub:g('sub').replace(/^#/,'').replace(/\.0+$/,''), name:g('name'), date:ivParseDate(g('date')),
-      time:g('time'), staff:g('staff'), price:price, phone:g('phone'), service:g('service'), raw:row});
+      time:g('time'), staff:g('staff'), price:price, phone:g('phone'), service:g('service'), pdays:g('pdays'), hol:g('hol'), raw:row});
   }
   return {cols:col, head:aoa[hi], lines:lines};
 }
@@ -24975,9 +24984,22 @@ function ivApplyParsed(res, src){
 function ivClearSOA(){ delete _iv.soa[ivMonth() + '|' + tkNorm(document.getElementById('iv-hc').value)]; ivRender(); }
 function ivClearMW(){ _iv.mw = null; ivRender(); }
 
+// best caregiver for a name on their SOA: most words in common ("Kathleen Faith AUH" ≠ "Kathleen Anee Dubai")
+function ivNameWords(s){ return String(s||'').toLowerCase().replace(/[^a-z\s]/g,' ').split(/\s+/).filter(function(w){ return w.length > 1 && !/^(auh|dxb|shj|dubai|abu|dhabi|sharjah|ad)$/.test(w); }); }
+function ivBestCG(name, ret, usedRet){
+  var a = ivNameWords(name); if(!a.length) return null;
+  var best = null, bs = 0;
+  ret.forEach(function(x){
+    var b = ivNameWords(x.cg), s = a.filter(function(w){ return b.indexOf(w) >= 0; }).length;
+    if(!s || (a[0] !== b[0] && s < 2)) return;                     // first name must match, or two words do
+    var sc = s * 10 - (usedRet[x.cg] ? 100 : 0) - Math.abs(a.length - b.length);
+    if(sc > bs){ bs = sc; best = x; }
+  });
+  return bs > 0 ? best : null;
+}
 // ── matching a homecare SOA line to our orders ───────────────────
 function ivMatchHC(hc, p, soa, rows, ret){
-  var ix = ivIndex(), used = {}, out = [];
+  var ix = ivIndex(), used = {}, out = [], usedRet = {};
   var calc = function(r){ return ivCalc(hc, r); };
   soa.lines.forEach(function(L){
     var hit = [], how = '';
@@ -25000,14 +25022,20 @@ function ivMatchHC(hc, p, soa, rows, ret){
     var o = {L:L, how:how, rows:hit.map(calc), exp:0, ok:0, status:'', cls:'', notes:[]};
     if(!hit.length){
       // a monthly-fee line for an exclusive caregiver?
-      var rt = L.staff && ret.find(function(x){ return ivFirst(x.cg) === ivFirst(L.staff); });
-      if(rt && !L.order && !L.sub){ o.ret = rt; o.exp = rt.exp; o.how = 'Exclusive CG'; rt.claimed = (rt.claimed||0) + L.price; }
+      var rt = (L.staff || L.name) && !L.order && !L.sub ? ivBestCG(L.staff || L.name, ret, usedRet) : null;
+      if(rt){ usedRet[rt.cg] = 1; o.ret = rt; o.exp = rt.exp; o.how = 'Exclusive CG'; rt.claimed = (rt.claimed||0) + L.price; }
+      else if(!L.price){ o.status = '✅ Nothing claimed'; o.cls = 'good'; o.ok = 0; o.exp = 0; o.notes.push('not on our roster this month'); out.push(o); return; }
       else { o.status = '❌ Not in our orders'; o.cls = 'bad'; o.ok = 0; out.push(o); return; }
     }
     if(o.ret){
+      var rr = o.ret, theirs = [];
+      if(L.hol !== '' && L.hol != null) theirs.push(L.hol + ' holiday');
+      if(L.pdays !== '' && L.pdays != null) theirs.push(L.pdays + ' paid days');
+      o.notes.push((theirs.length ? 'Their: ' + theirs.join(', ') + ' · ' : '') + 'Ours: ' + (rr.ded || 0) + ' leave, ' + (rr.days != null ? rr.days + ' paid days' : '—') + (rr.cg.toLowerCase() !== String(L.staff||L.name).toLowerCase() ? ' (' + rr.cg + ')' : ''));
+      if(rr.note && /⚠/.test(rr.note)) o.notes.push(rr.note.split(' · ').filter(function(s){ return /⚠/.test(s); }).join(' · '));
       if(o.exp == null){ o.status = '🔍 Monthly fee not set'; o.cls = 'warn'; o.ok = L.price; }
       else if(Math.abs(L.price - o.exp) <= Math.max(2, o.exp * 0.01)){ o.status = '✅ Matched (monthly fee)'; o.cls = 'good'; o.ok = L.price; }
-      else { o.status = '⚠ Monthly fee differs'; o.cls = 'warn'; o.ok = o.exp; }
+      else { o.status = '⚠ Monthly fee differs (' + (L.price > o.exp ? '+' : '−') + ivAED(Math.abs(L.price - o.exp)) + ')'; o.cls = 'warn'; o.ok = Math.min(L.price, o.exp); }
       out.push(o); return;
     }
     hit.forEach(function(r){ used[String(r['Child_Order_ID']||'')] = 1; });
