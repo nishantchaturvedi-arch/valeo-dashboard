@@ -701,6 +701,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .cp-share{background:var(--bg3);border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.6}
 .cp-share input{width:100%;font-family:monospace;font-size:11px;padding:6px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);margin:6px 0}
 .ex-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:6px;padding:12px}
+.ex-dt{background:none;border:1px solid var(--border);border-radius:5px;cursor:pointer;font-size:10px;padding:0 4px;margin-left:4px;line-height:16px}
 .ex-row{display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:12px;background:var(--bg)}
 .ex-row.on{border-color:rgba(245,158,11,.6);background:rgba(245,158,11,.08)}
 .ex-row.locked{cursor:default}
@@ -12744,21 +12745,44 @@ function getAnalyticsData(){
 // one for other homecares, keyed by full name + homecare.
 var EX_DEFAULT_HCS = ['shifa'];
 var EX_LEGACY_NAMES = ['alysa','christine','maribel','soe'];   // old first-name list, migrated once
-var _ex = {hcs:EX_DEFAULT_HCS.slice(), add:{}, remove:{}, loaded:false, migrated:false};
-(function(){ try{ var c = JSON.parse(localStorage.getItem(ckey('valeo_exclusive_v2'))||'null'); if(c){ _ex.hcs = c.hcs||_ex.hcs; _ex.add = c.add||{}; _ex.remove = c.remove||{}; _ex.migrated = !!c.migrated; } }catch(e){} })();
+var _ex = {hcs:EX_DEFAULT_HCS.slice(), add:{}, remove:{}, per:{}, loaded:false, migrated:false};
+(function(){ try{ var c = JSON.parse(localStorage.getItem(ckey('valeo_exclusive_v2'))||'null'); if(c){ _ex.hcs = c.hcs||_ex.hcs; _ex.add = c.add||{}; _ex.remove = c.remove||{}; _ex.per = c.per||{}; _ex.migrated = !!c.migrated; } }catch(e){} })();
 function exKey(cg, hc){ return tkNorm(cg) + '|' + tkNorm(hc); }
 function exHCWide(hc){ var n = tkNorm(hc); return _ex.hcs.some(function(h){ return n.indexOf(h) === 0; }); }
-function isExclusiveCG(cg, hc){
+// Exclusive on a given day (ds = 'YYYY-MM-DD'; default today). A caregiver with exclusive periods
+// ("exclusive from 1 Nov", "1–20 Oct") is exclusive only inside them — this wins over the homecare-wide
+// default and the on/off list, so a caregiver can switch mid-month.
+function exPeriods(cg, hc){ var p = _ex.per && _ex.per[exKey(cg, hc)]; return Array.isArray(p) && p.length ? p : null; }
+function exInPeriods(per, ds){ return per.some(function(x){ return (!x.from || ds >= x.from) && (!x.to || ds <= x.to); }); }
+function isExclusiveCG(cg, hc, ds){
   if(!cg) return false;
+  var per = exPeriods(cg, hc);
+  if(per) return exInPeriods(per, ds || avToday());
   var k = exKey(cg, hc);
   if(exHCWide(hc)) return true;            // e.g. Shifa — always exclusive
   return !!_ex.add[k] && !_ex.remove[k];
+}
+// exclusive on any day between from and to (inclusive)
+function isExclusiveInRange(cg, hc, from, to){
+  var per = exPeriods(cg, hc);
+  if(!per) return isExclusiveCG(cg, hc);
+  return per.some(function(x){ return (!x.from || x.from <= to) && (!x.to || x.to >= from); });
+}
+// per-day tester for loops: function(ds) → true when exclusive that day
+function exDayTester(cg, hc){
+  var per = exPeriods(cg, hc);
+  if(per) return function(ds){ return exInPeriods(per, ds); };
+  var on = isExclusiveCG(cg, hc); return function(){ return on; };
+}
+function exPeriodTxt(per){
+  var f = function(d){ return d ? parseInt(d.slice(8)) + ' ' + MONTHS[+d.slice(5,7)-1].slice(0,3) + (d.slice(0,4) !== avToday().slice(0,4) ? ' ' + d.slice(2,4) : '') : ''; };
+  return per.map(function(x){ return x.from && x.to ? f(x.from) + '–' + f(x.to) : x.from ? 'from ' + f(x.from) : x.to ? 'until ' + f(x.to) : 'always'; }).join(', ');
 }
 async function exLoad(){
   try{
     if(!_db) await initFirebase(); if(!_db) return;
     var d = await _db.collection('valeo_exclusive').doc('config').get();
-    if(d.exists){ var v = d.data()||{}; _ex.hcs = v.hcs || EX_DEFAULT_HCS.slice(); _ex.add = v.add||{}; _ex.remove = v.remove||{}; _ex.migrated = true; }
+    if(d.exists){ var v = d.data()||{}; _ex.hcs = v.hcs || EX_DEFAULT_HCS.slice(); _ex.add = v.add||{}; _ex.remove = v.remove||{}; _ex.per = v.per||{}; _ex.migrated = true; }
     _ex.loaded = true; exCache();
     if(!d.exists) exMigrate();
     exRefresh();
@@ -12773,16 +12797,21 @@ function exMigrate(){
   });
   _ex.migrated = true; exSave();
 }
-function exCache(){ try{ localStorage.setItem(ckey('valeo_exclusive_v2'), JSON.stringify({hcs:_ex.hcs, add:_ex.add, remove:_ex.remove, migrated:_ex.migrated})); }catch(e){} }
+function exCache(){ try{ localStorage.setItem(ckey('valeo_exclusive_v2'), JSON.stringify({hcs:_ex.hcs, add:_ex.add, remove:_ex.remove, per:_ex.per, migrated:_ex.migrated})); }catch(e){} }
 async function exSave(){
   exCache();
-  try{ if(!_db) await initFirebase(); if(_db) await _db.collection('valeo_exclusive').doc('config').set({hcs:_ex.hcs, add:_ex.add, remove:_ex.remove, updated_at:new Date().toISOString(), updated_by:(_session&&_session.username)||''}); }
+  try{ if(!_db) await initFirebase(); if(_db) await _db.collection('valeo_exclusive').doc('config').set({hcs:_ex.hcs, add:_ex.add, remove:_ex.remove, per:_ex.per||{}, updated_at:new Date().toISOString(), updated_by:(_session&&_session.username)||''}); }
   catch(e){ alert('Could not save the exclusive list: ' + e.message); }
 }
 function exSet(cg, hc, on){
   if(!tkIsMaster()){ alert('Only Valeo can change exclusive caregivers.'); return; }
-  if(exHCWide(hc)) return;                 // whole homecare is exclusive
   var k = exKey(cg, hc);
+  if(exPeriods(cg, hc)){
+    if(!confirm(cg + ' has exclusive dates (' + exPeriodTxt(exPeriods(cg, hc)) + ').\nSwitching ' + (on ? 'on' : 'off') + ' removes the dates and makes the change for all days. Continue?')){ exRefresh(); return; }
+    delete _ex.per[k];
+    if(exHCWide(hc)){ exSave(); exRefresh(); return; }
+  }
+  if(exHCWide(hc)) return;                 // whole homecare is exclusive
   if(on){ _ex.add[k] = 1; delete _ex.remove[k]; } else { delete _ex.add[k]; }
   exSave(); exRefresh();
 }
@@ -12797,6 +12826,12 @@ function exRefresh(){
   var pp = document.getElementById('page-pl'); if(pp && pp.classList.contains('active') && typeof plRender === 'function') plRender();
 }
 // every caregiver we know, with homecare
+// exclusive at any point in the analytics month
+function exAnaOn(cg, hc){
+  try{ var y = typeof anaYr !== 'undefined' ? anaYr : new Date().getFullYear(), m = typeof anaMo !== 'undefined' ? anaMo : new Date().getMonth();
+    var f = y + '-' + pad(m+1) + '-01', l = y + '-' + pad(m+1) + '-' + pad(new Date(y, m+1, 0).getDate());
+    return isExclusiveInRange(cg, hc, f, l); }catch(e){ return isExclusiveCG(cg, hc); }
+}
 function exAllCGs(){
   var m = {};
   (rawData||[]).forEach(function(r){ if(r.caregiver){ var k = exKey(r.caregiver, r.homecare); if(!m[k]) m[k] = {name:r.caregiver, hc:r.homecare||'—', last:''}; if(r.date > m[k].last) m[k].last = r.date; } });
@@ -12806,6 +12841,34 @@ function exAllCGs(){
 
 // ── Exclusive CGs page ───────────────────────────────────────────
 function initExclusive(){ if(!_ex.loaded) exLoad(); exRender(); }
+// ── exclusive dates editor ───────────────────────────────────────
+var _exDt = null;
+function exDatesOpen(cg, hc){
+  if(!tkIsMaster()){ alert('Only Valeo can change exclusive caregivers.'); return; }
+  var per = exPeriods(cg, hc);
+  _exDt = {cg:cg, hc:hc, rows:per ? per.map(function(x){ return {from:x.from||'', to:x.to||''}; }) : [{from:'', to:''}]};
+  var m = document.getElementById('ex-dt-modal');
+  if(!m){ m = document.createElement('div'); m.id = 'ex-dt-modal'; m.className = 'tk-modal'; m.onclick = function(e){ if(e.target === m) m.classList.remove('show'); }; document.body.appendChild(m); }
+  exDatesDraw(); m.classList.add('show');
+}
+function exDatesDraw(){
+  var m = document.getElementById('ex-dt-modal'), E = tkEsc, d = _exDt;
+  m.innerHTML = '<div class="tk-modal-box" style="width:520px"><div style="font-size:14px;font-weight:700">📅 Exclusive dates — ' + E(d.cg) + '</div>'
+    + '<div style="font-size:11px;color:var(--text2);margin:4px 0 12px;line-height:1.6">' + E(d.hc) + '. The caregiver is exclusive only between these dates; outside them the caregiver is paid per booking. Leave "to" empty for open-ended (e.g. exclusive from 1 Nov). Utilisation, P&amp;L hours and Invoicing switch on the same day.</div>'
+    + d.rows.map(function(r, i){ return '<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;font-size:12px">From <input type="date" class="tk-inp" value="' + E(r.from) + '" onchange="_exDt.rows[' + i + '].from=this.value"> to <input type="date" class="tk-inp" value="' + E(r.to) + '" onchange="_exDt.rows[' + i + '].to=this.value"> <button class="tk-x" title="Remove" onclick="_exDt.rows.splice(' + i + ',1);exDatesDraw()">✕</button></div>'; }).join('')
+    + '<button class="tk-btn" onclick="_exDt.rows.push({from:\'\',to:\'\'});exDatesDraw()">+ Another period</button>'
+    + '<div style="display:flex;gap:8px;justify-content:space-between;margin-top:16px"><button class="tk-btn" onclick="exDatesClear()">Remove dates (back to on/off)</button>'
+    + '<span style="display:flex;gap:8px"><button class="tk-btn" onclick="document.getElementById(\'ex-dt-modal\').classList.remove(\'show\')">Cancel</button><button class="tk-btn pri" onclick="exDatesSave()">Save</button></span></div></div>';
+}
+function exDatesSave(){
+  var d = _exDt, rows = d.rows.filter(function(r){ return r.from || r.to; });
+  for(var i = 0; i < rows.length; i++) if(rows[i].from && rows[i].to && rows[i].to < rows[i].from){ alert('A period ends before it starts: ' + rows[i].from + ' → ' + rows[i].to); return; }
+  var k = exKey(d.cg, d.hc); _ex.per = _ex.per || {};
+  if(rows.length) _ex.per[k] = rows.sort(function(a,b){ return (a.from||'').localeCompare(b.from||''); }); else delete _ex.per[k];
+  document.getElementById('ex-dt-modal').classList.remove('show');
+  exSave(); invalidateRosterIndex && invalidateRosterIndex(); exRefresh();
+}
+function exDatesClear(){ _exDt.rows = []; exDatesSave(); }
 function exRender(){
   var box = document.getElementById('ex-body'); if(!box) return;
   var q = String((document.getElementById('ex-search')||{}).value||'').toLowerCase().trim();
@@ -12814,7 +12877,7 @@ function exRender(){
   var today = avToday(), groups = {}, nEx = 0, nAll = 0;
   exAllCGs().forEach(function(c){
     var ex = getCGExit(c.name, c.hc); if(hideExited && ex && ex <= today) return;
-    var on = isExclusiveCG(c.name, c.hc); nAll++; if(on) nEx++;
+    var on = isExclusiveCG(c.name, c.hc) || !!(exPeriods(c.name, c.hc) && isExclusiveInRange(c.name, c.hc, today, '9999-12-31')); nAll++; if(on) nEx++;
     if(only && !on) return;
     if(q && (c.name + ' ' + c.hc).toLowerCase().indexOf(q) < 0) return;
     (groups[c.hc] = groups[c.hc] || []).push(Object.assign({on:on, exit:ex}, c));
@@ -12833,9 +12896,12 @@ function exRender(){
       + (wide ? '<span class="tk-pill" style="color:#f59e0b">👑 All caregivers exclusive (default)</span>' : '') + '</div>'
       + '<div class="ex-grid">' + list.map(function(c){
           var sn = c.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'"), sh = c.hc.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-          return '<label class="ex-row' + (c.on ? ' on' : '') + (wide || !canEdit ? ' locked' : '') + '">'
-            + '<input type="checkbox"' + (c.on ? ' checked' : '') + (wide || !canEdit ? ' disabled' : '') + ' onchange="exSet(\'' + E(sn) + '\',\'' + E(sh) + '\',this.checked)">'
+          var per = exPeriods(c.name, c.hc), lock = (wide && !per) || !canEdit;
+          return '<label class="ex-row' + (c.on ? ' on' : '') + (lock ? ' locked' : '') + '">'
+            + '<input type="checkbox"' + (c.on ? ' checked' : '') + (lock ? ' disabled' : '') + ' onchange="exSet(\'' + E(sn) + '\',\'' + E(sh) + '\',this.checked)">'
             + '<span class="ex-name">' + E(c.name) + '</span>'
+            + (canEdit ? '<button type="button" class="ex-dt" title="Exclusive only between dates (mid-month switch)" onclick="event.preventDefault();event.stopPropagation();exDatesOpen(\'' + E(sn) + '\',\'' + E(sh) + '\')">📅</button>' : '')
+            + (per ? '<span class="ex-sub" style="color:#f59e0b" title="Exclusive only on these dates">👑 ' + E(exPeriodTxt(per)) + '</span>' : '')
             + (function(){ var m = avToday().slice(0,7), n = Object.keys(overrides||{}).filter(function(k){ var o = overrides[k]; return o && o.type === 'hcbusy' && k.split('|')[0] === c.name && String(o.date || k.split('|')[1]).slice(0,7) === m; }).length;
               return n && c.on ? '<span class="ex-sub stale" title="Marked busy with the homecare\'s own client this month — Valeo pays for these hours">🏠 ' + n + 'd with HC</span>' : ''; })()
             + (c.exit ? '<span class="ex-sub">left ' + E(c.exit) + '</span>' : c.last ? '<span class="ex-sub' + (c.last < stale ? ' stale" title="No order for 60+ days — if this caregiver has left, set an end date (Roster ▸ 🚪) so she is not counted as paid 288 h' : '') + '">last order ' + E(c.last) + '</span>' : '<span class="ex-sub">manual</span>')
@@ -12857,8 +12923,8 @@ function renderAnalyticsData(){
   const clients = new Set(data.filter(r=>r.client_name).map(r=>r.client_name)).size;
 
   // Exclusive vs Non-exclusive
-  var _exclData    = data.filter(function(r){return isExclusiveCG(r.caregiver,r.homecare);});
-  var _nonExclData = data.filter(function(r){return !isExclusiveCG(r.caregiver,r.homecare);});
+  var _exclData    = data.filter(function(r){return isExclusiveCG(r.caregiver,r.homecare,r.date);});
+  var _nonExclData = data.filter(function(r){return !isExclusiveCG(r.caregiver,r.homecare,r.date);});
 
 
   document.getElementById('kpi-grid').innerHTML = `
@@ -13116,7 +13182,7 @@ function renderAnalyticsData(){
         var k=e[0],v=e[1],maxHrs=e[2],pct=e[3],pr=e[5]||{full:true,days:0,span:0};
         const col = pct>=70?'var(--duty)':pct>=40?'var(--accent)':'var(--sick)';
         const emoji = pct>=70?'🟢':pct>=40?'🔵':'🔴';
-        var _exTag = isExclusiveCG(k,e[4]) ? ' <span style="font-size:8px;padding:1px 3px;border-radius:3px;background:rgba(245,158,11,.25);color:#f59e0b">EX</span>' : '';
+        var _exTag = exAnaOn(k,e[4]) ? ' <span style="font-size:8px;padding:1px 3px;border-radius:3px;background:rgba(245,158,11,.25);color:#f59e0b">EX</span>' : '';
         var _prTag = pr.full ? '' : ' <span style="font-size:8px;padding:1px 3px;border-radius:3px;background:rgba(210,153,34,.2);color:var(--sick)" title="Pro-rata: available '+pr.days+' of '+pr.span+' days">'+pr.days+'/'+pr.span+'d</span>';
         return `<div class="bar-row" style="margin-bottom:4px" title="${k} — ${v}h worked of ${maxHrs}h possible (${pr.days}/${pr.span} days available)">
           <div class="bar-label" title="${k}" style="width:100px;min-width:100px;font-size:11px;overflow:hidden;text-overflow:ellipsis">${emoji} ${k.split(' ')[0]}${_exTag}</div>
@@ -13148,7 +13214,7 @@ function renderAnalyticsData(){
     (window._cgS_full||[]).forEach(function(e){
       if((e[5]?e[5].days:1)<=0) return; // no available days in this period
 
-      if(isExclusiveCG(e[0],e[4])){ eP.push(e[3]);eH.push(e[1]);eM.push(e[2]); }
+      if(exAnaOn(e[0],e[4])){ eP.push(e[3]);eH.push(e[1]);eM.push(e[2]); }
       else{ nP.push(e[3]);nH.push(e[1]);nM.push(e[2]); }
     });
     var sm=function(a){return a.reduce(function(s,x){return s+x;},0);};
@@ -19814,9 +19880,10 @@ function rosterUtilCell(c){
   if(c.exclusive === false){
     return '<span class="r-util na" title="Not exclusive — shared with the homecare, paid per booked hour, so no utilisation %. Hours served on Valeo orders in this range'+(c.hcbusy?'; '+c.hcbusy+' day(s) busy with the homecare\'s own client':'')+'.">'+Math.round(c.hrs)+'h</span>';
   }
+  if(c.exPart){ c = {hrs:c.exHrs, cap:c.exCap, avail:c.exAvail, days:c.days, _part:c.exDays}; }
   if(!c.cap) return '<span class="r-util na" title="No available hours in this range">—</span>';
   var p=Math.min(Math.round(c.hrs/c.cap*100),100), cls=p>=70?'hi':p>=40?'mid':'lo';
-  var pr=(c.days && c.avail<c.days) ? ' · pro rata '+c.avail+' of '+c.days+' days' : '';
+  var pr=(c.days && c.avail<c.days) ? ' · pro rata '+c.avail+' of '+c.days+' days'+(c._part?' (exclusive on '+c._part+' of them)':'') : '';
   return '<span class="r-util '+cls+'" title="Utilisation: '+Math.round(c.hrs)+'h worked of '+Math.round(c.cap)+'h available'+pr+'. Capacity is 288h a month per caregiver, counted only from their start date to their end date (pauses excluded); sick, leave and week-off days count as available.">'+p+'%'+(pr?'<sup>pr</sup>':'')+'</span>';
 }
 function toggleShowExited(){
@@ -19990,7 +20057,7 @@ function renderRoster(){
   Object.entries(hcGroups).sort().forEach(function(hce){
     var hcName=hce[0],cgs=hce[1].sort();
     var _gw=0,_ga=0;
-    cgs.forEach(function(n){ var hv=cgMap[n]?cgMap[n].homecare:''; var c=_cnt[n]=rosterRangeCounts(n,hv,dates,dayMap,woLookup); c.exclusive=isExclusiveCG(n,hv); if(!c.exclusive) return; _gw+=c.hrs; _ga+=c.cap; });
+    cgs.forEach(function(n){ var hv=cgMap[n]?cgMap[n].homecare:''; var c=_cnt[n]=rosterRangeCounts(n,hv,dates,dayMap,woLookup); c.exclusive=c.exDays>0; c.exPart=c.exclusive&&c.exDays<dates.length; if(!c.exclusive) return; _gw+=c.exHrs; _ga+=c.exCap; });
     _totW+=_gw; _totA+=_ga;
     html+='<tr class="roster-hc-hdr"><td colspan="'+(dates.length+2)+'">'+hcName+' &mdash; '+cgs.length+' caregivers'
       +(isClientView?'':' &nbsp;·&nbsp; '+(_ga?'exclusive utilisation '+rosterUtilCell({hrs:_gw,cap:_ga}):'<span style="opacity:.8">no exclusive caregivers — no utilisation %</span>'))+'</td></tr>';
@@ -22119,13 +22186,13 @@ function setCGFilter(f){
   var filtered = (window._cgS_full||[]).filter(function(e){
     if((e[5]?e[5].days:1)<=0) return false; // not available at all this period
     if(f==='all') return true;
-    return f==='exclusive' ? isExclusiveCG(e[0],e[4]) : !isExclusiveCG(e[0],e[4]);
+    return f==='exclusive' ? exAnaOn(e[0],e[4]) : !exAnaOn(e[0],e[4]);
   });
   el.innerHTML = filtered.length ? filtered.map(function(e){
     var k=e[0],v=e[1],maxHrs=e[2],pct=e[3],pr=e[5]||{full:true,days:0,span:0};
     var col=pct>=70?'var(--duty)':pct>=40?'var(--accent)':'var(--sick)';
     var emoji=pct>=70?'🟢':pct>=40?'🔵':'🔴';
-    var exTag=isExclusiveCG(k,e[4])?'<span style="font-size:8px;padding:1px 3px;border-radius:3px;background:rgba(245,158,11,.25);color:#f59e0b;margin-left:2px">EX</span>':'';
+    var exTag=exAnaOn(k,e[4])?'<span style="font-size:8px;padding:1px 3px;border-radius:3px;background:rgba(245,158,11,.25);color:#f59e0b;margin-left:2px">EX</span>':'';
     var prTag=pr.full?'':'<span style="font-size:8px;padding:1px 3px;border-radius:3px;background:rgba(210,153,34,.2);color:var(--sick);margin-left:3px">'+pr.days+'/'+pr.span+'d</span>';
     return '<div class="bar-row" style="margin-bottom:4px" title="'+k+' — '+v+'h of '+maxHrs+'h possible ('+pr.days+'/'+pr.span+' days available)">'
       +'<div class="bar-label" title="'+k+'" style="width:100px;min-width:100px;font-size:11px;overflow:hidden;text-overflow:ellipsis">'+emoji+' '+k.split(' ')[0]+exTag+'</div>'
@@ -22577,16 +22644,20 @@ function rosterRangeCounts(cg, hc, dates, idx, wo){
   idx = idx || rosterDayIndex();
   wo  = wo  || rosterWoLookup();
   var _st = rosterCGStart(cg, hc);   // joining date, or first order when none is set
-  var c = {duty:0, manual:0, dayoff:0, weekoff:0, sick:0, paid:0, unpaid:0, holiday:0, cancelled:0, pause:0, hcbusy:0, worked:0, avail:0, hrs:0, cap:0, capPaid:0, days:dates.length};
+  var c = {duty:0, manual:0, dayoff:0, weekoff:0, sick:0, paid:0, unpaid:0, holiday:0, cancelled:0, pause:0, hcbusy:0, worked:0, avail:0, hrs:0, cap:0, capPaid:0, days:dates.length,
+           exDays:0, exAvail:0, exHrs:0, exCap:0, exCapPaid:0};
+  var _exOn = exDayTester(cg, hc);
   for(var i=0; i<dates.length; i++){
     var ds = dates[i];
     var r  = rosterDay(cg, hc, ds, idx, wo);
+    var _xd = _exOn(ds); if(_xd) c.exDays++;
     if(r.code !== 'pre' && r.code !== 'exited' && r.code !== 'pause' && !(_st.date && ds < _st.date)){
       c.capPaid += rosterCapPerDay(ds);       // what an exclusive CG is paid for
+      if(_xd) c.exCapPaid += rosterCapPerDay(ds);
       if(r.code === 'hcbusy'){ c.hcbusy++; }  // with the homecare's own client: not available to Valeo
-      else { c.avail++; c.cap += rosterCapPerDay(ds); }   // sick, leave and week-off days stay in capacity
+      else { c.avail++; c.cap += rosterCapPerDay(ds); if(_xd){ c.exAvail++; c.exCap += rosterCapPerDay(ds); } }   // sick, leave and week-off days stay in capacity
     }
-    if(r.code === 'duty' || r.code === 'manual') c.hrs += rosterDayHours(r);
+    if(r.code === 'duty' || r.code === 'manual'){ var _h = rosterDayHours(r); c.hrs += _h; if(_xd) c.exHrs += _h; }
     switch(r.code){
       case 'duty':      c.duty++;   c.worked++; break;
       case 'manual':    c.manual++; c.worked++; break;
@@ -23420,13 +23491,15 @@ function plPaidHours(p, rows){
   for(var d = 1; d <= dim; d++) dates.push(p + '-' + pad(d));
   var idx = rosterDayIndex(), wo = rosterWoLookup();
   Object.keys(rows).forEach(function(k){ var a = rows[k]; a.paid = 0; a.exPaid = 0; a.exServed = 0; a.exUsed = 0; a.exOver = 0; a.nEx = 0;
-    Object.keys(a.cgs||{}).forEach(function(cg){ if(!isExclusiveCG(cg, a.name)) a.paid += a.cgs[cg]; }); });
+    Object.keys(a.cgs||{}).forEach(function(cg){ if(!isExclusiveInRange(cg, a.name, dates[0], dates[dates.length-1])) a.paid += a.cgs[cg]; }); });
   exAllCGs().forEach(function(c){
-    if(!isExclusiveCG(c.name, c.hc)) return;
-    var _rc = rosterRangeCounts(c.name, c.hc, dates, idx, wo), cap = _rc.capPaid; if(cap <= 0) return;
+    if(!isExclusiveInRange(c.name, c.hc, dates[0], dates[dates.length-1])) return;
+    var _rc = rosterRangeCounts(c.name, c.hc, dates, idx, wo), cap = _rc.exCapPaid;
     var k = tkNorm(c.hc);
     if(!rows[k]) rows[k] = {name:c.hc, bookings:0, wdays:0, hrs:0, sp:0, cost:0, inv:0, ncg:0, cgs:{}, paid:0, exPaid:0, exServed:0, exUsed:0, exOver:0, nEx:0};
-    var a = rows[k], sv = (a.cgs && a.cgs[c.name]) || 0;
+    var a = rows[k], all = (a.cgs && a.cgs[c.name]) || 0, sv = all;
+    if(_rc.exDays < dates.length){ sv = Math.min(all, _rc.exHrs); a.paid += Math.max(0, all - sv); }   // switched mid-month: non-exclusive days paid per booked hour
+    if(cap <= 0) return;
     a.nEx++; a.exPaid += cap; a.paid += cap; a.exServed += sv; a.exBusy = (a.exBusy||0) + _rc.hcbusy;
     a.exUsed += Math.min(sv, cap);                 // paid hours actually used
     a.exOver += Math.max(sv - cap, 0);             // worked beyond the 288h we pay — not paid extra
@@ -24836,7 +24909,7 @@ function ivCalc(hc, r){
   if(ov && IV_LEAVE[ov.type]){ o.flags.push(cg.split(' ')[0] + ' on ' + ov.type + ' leave per roster'); o.kind = 'leave'; return o; }
   if(st !== 'completed'){ o.kind = ds > today ? 'upcoming' : 'open'; o.flags.push(ds > today ? 'Upcoming' : 'Not marked completed'); }
   else o.kind = 'ok';
-  if(cg && isExclusiveCG(cg, o.hc || hc)){ o.ex = true; o.basis = 'Exclusive — monthly fee'; o.exp = 0; }
+  if(cg && isExclusiveCG(cg, o.hc || hc, ds)){ o.ex = true; o.basis = 'Exclusive — monthly fee'; o.exp = 0; }
   else {
     o.rate = ivRate(hc, r);
     if(o.rate != null){ o.exp = o.rate; o.basis = 'Rate card'; if(o.field && Math.abs(o.field - o.rate) > 1 && ivShare(r) === 1) o.flags.push('Order cost field says ' + ivAED(o.field)); }
@@ -24864,12 +24937,14 @@ function ivRetainers(hc, p){
   var idx = rosterDayIndex(), wo = rosterWoLookup(), out = [], ded = (document.getElementById('iv-busyded')||{}).checked;
   var seen = {};
   exAllCGs().forEach(function(c){
-    if(!tkHCMatch(c.hc, hc) || !isExclusiveCG(c.name, c.hc)) return;
+    if(!tkHCMatch(c.hc, hc) || !isExclusiveInRange(c.name, c.hc, p + '-01', p + '-' + pad(dim))) return;
+    var exOn = exDayTester(c.name, c.hc);
     var k = tkNorm(c.name); if(seen[k]) return; seen[k] = 1;
     var st = rosterCGStart(c.name, c.hc).date, n = {act:0, work:0, leave:0, busy:0, wo:0, codes:{}, last:''};
     for(var d = 1; d <= dim; d++){
       var ds = p + '-' + pad(d), r = rosterDay(c.name, c.hc, ds, idx, wo);
       if(r.code === 'pre' || r.code === 'exited' || r.code === 'pause' || (st && ds < st)) continue;
+      if(!exOn(ds)) continue;                               // not exclusive that day: paid per booking instead
       n.act++;
       if(r.code === 'duty' || r.code === 'manual'){ n.work++; n.last = ds; }
       else if(IV_LEAVE[r.code]){ n.leave++; n.codes[r.code] = (n.codes[r.code]||0) + 1; }
@@ -24894,7 +24969,8 @@ function ivRetainers(hc, p){
       if(paidLv) lv.push(paidLv + ' paid leave' + (hasPay ? ' at ' + ivAED(+cfg.pay) : ''));
       if(cd.off) lv.push(cd.off + ' day off (not deducted)');
       var inferred = st && st.slice(0,7) === p && !getCGJoin(c.name, c.hc);
-      o.note = (n.act < dim ? 'active ' + n.act + ' of ' + dim + ' days' : 'full month')
+      var per = exPeriods(c.name, c.hc);
+      o.note = (n.act < dim ? 'active ' + n.act + ' of ' + dim + ' days' : 'full month') + (per ? ' · exclusive ' + exPeriodTxt(per) : '')
         + (inferred ? ' · ⚠ no start date on the roster — counted from first booking ' + ivFmtD(st) + '; set the start date if the caregiver was paid from earlier' : '')
         + (lv.length ? ' · ' + lv.join(', ') : '')
         + (n.busy ? ' · ' + n.busy + ' day(s) with HC\'s own client' + (ded ? ' (deducted)' : '') : '')
