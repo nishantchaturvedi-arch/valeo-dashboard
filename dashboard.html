@@ -1089,6 +1089,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <button class="main-tab" onclick="switchTab(&#39;openorders&#39;)">⏰ Open Orders</button>
  <button class="main-tab" onclick="switchTab(&#39;profiles&#39;)">🪪 Caregiver Profiles</button>
  <button class="main-tab" onclick="switchTab(&#39;odrev&#39;)">📈 Revenue by Order Date</button>
+ <button class="main-tab" onclick="switchTab(&#39;invoicing&#39;)">🧾 Invoicing</button>
 </div>
 
 <!-- ── Availability bar (calendar only) ── -->
@@ -11141,6 +11142,58 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
   <div style="font-size:11px;color:var(--text3);line-height:1.6;padding:2px 4px 16px">A customer = one phone number (else email, else name), so name variants like "Noura Alsuwaidi" and "Noura Alsuwaidi Mumzworld" count once. Bookings = child orders (one service day each), cancelled and temp orders left out. Revenue = Final Price. <b style="color:var(--text2)">Hourly</b> = Hourly Babysitting packages (incl. additional hours); weekly / monthly plans and daily elderly care are not hourly.</div>
  </div>
 </div>
+<div class="page" id="page-invoicing">
+ <div class="tk-bar">
+  <div style="font-size:15px;font-weight:700">🧾 Invoicing</div>
+  <div class="cu-seg"><button id="iv-t1" class="on" onclick="ivTab(1)">🏥 Homecare statement</button><button id="iv-t2" onclick="ivTab(2)">🛍️ Mumzworld billing</button><button id="iv-t3" onclick="ivTab(3)">💲 Rate card</button></div>
+  <label style="font-size:12px;color:var(--text2);font-weight:600" for="iv-month">Month</label>
+  <select id="iv-month" class="tk-inp" onchange="ivRender()"></select>
+  <span id="iv-status" style="font-size:11px;color:var(--text3)"></span>
+ </div>
+ <!-- 1. Homecare statement / reconciliation -->
+ <div id="iv-p1">
+  <div class="tk-bar" style="border-top:none;padding-top:0">
+   <label style="font-size:12px;color:var(--text2);font-weight:600" for="iv-hc">Homecare</label>
+   <select id="iv-hc" class="tk-inp" onchange="ivHCChanged()"></select>
+   <button class="tk-btn" onclick="ivUploadPick('hc')">⬆ Upload homecare SOA (Excel / CSV)</button>
+   <button class="tk-btn" onclick="ivPasteOpen('hc')">📋 Paste SOA rows</button>
+   <button class="tk-btn" id="iv-clear" onclick="ivClearSOA()" style="display:none">✕ Clear upload</button>
+   <button class="tk-btn pri" onclick="ivDownloadHC()">⬇ Download SOA (Excel)</button>
+   <button class="tk-btn" onclick="ivPrintHC()">🖨 PDF</button>
+   <label style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:5px" title="Exclusive caregivers marked on the roster as busy with the homecare's own client"><input type="checkbox" id="iv-busyded" onchange="ivRender()"> Deduct days CG was with HC's own client</label>
+  </div>
+  <div class="tk-kpis" id="iv-kpis"></div>
+  <div class="tk-page" id="iv-body"></div>
+ </div>
+ <!-- 2. Mumzworld -->
+ <div id="iv-p2" style="display:none">
+  <div class="tk-bar" style="border-top:none;padding-top:0">
+   <label style="font-size:12px;color:var(--text2)" for="iv-mw-basis">by</label>
+   <select id="iv-mw-basis" class="tk-inp" onchange="ivRender()"><option value="service">service date (days served in the month)</option><option value="order">order date (whole order in the month it was placed)</option></select>
+   <button class="tk-btn" onclick="ivUploadPick('mw')">⬆ Upload Mumzworld order list</button>
+   <button class="tk-btn" onclick="ivPasteOpen('mw')">📋 Paste rows</button>
+   <button class="tk-btn" id="iv-mw-clear" onclick="ivClearMW()" style="display:none">✕ Clear upload</button>
+   <input id="iv-mw-q" class="tk-inp" type="text" placeholder="Search name, phone, order #…" oninput="ivRender()" style="width:190px">
+   <button class="tk-btn pri" onclick="ivDownloadMW()">⬇ Statement (Excel)</button>
+   <button class="tk-btn" onclick="ivPrintMW()">🖨 PDF</button>
+  </div>
+  <div class="tk-kpis" id="iv-mw-kpis"></div>
+  <div class="tk-page" id="iv-mw-body"></div>
+ </div>
+ <!-- 3. Rate card -->
+ <div id="iv-p3" style="display:none">
+  <div class="tk-page" id="iv-rc-body"></div>
+ </div>
+ <input type="file" id="iv-file" accept=".xlsx,.xls,.csv" style="display:none" onchange="ivFile(this)">
+ <div class="tk-modal" id="iv-paste-modal" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="tk-modal-box">
+   <div style="font-size:14px;font-weight:700;margin-bottom:6px">📋 Paste statement rows</div>
+   <div style="font-size:11px;color:var(--text2);margin-bottom:10px;line-height:1.6">Copy the table from Excel, Google Sheets or the PDF (including the header row: Order ID, Customer, Date, Assigned Staff, Price…) and paste below.</div>
+   <textarea id="iv-paste" class="tk-inp" style="width:100%;height:260px;font-family:monospace;font-size:11px" placeholder="Order ID	Cust ID	Customer Name	Date	…	Price"></textarea>
+   <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px"><button class="tk-btn" onclick="document.getElementById('iv-paste-modal').classList.remove('show')">Cancel</button><button class="tk-btn pri" onclick="ivPasteApply()">Match</button></div>
+  </div>
+ </div>
+</div>
 <div class="page" id="page-openorders">
  <div class="tk-bar">
   <div style="font-size:15px;font-weight:700">⏰ Open Orders</div>
@@ -12136,6 +12189,7 @@ async function loadData(force=false){
       if(_act('page-exclusive') && typeof exRender === 'function') exRender();
       if(_act('page-openorders') && typeof ooRender === 'function') ooRender();
       if(_act('page-customers') && typeof cuRender === 'function') cuRender();
+      if(_act('page-invoicing') && typeof ivRender === 'function'){ _iv.idx = null; ivRender(); }
       if(_act('page-profiles') && typeof cpRender === 'function'){ cpRender(); cpRefreshShared(false); }
     }catch(e){ console.warn('[refresh after load]', e); }
     if(!rawData.length && typeof vcEmptyState==='function') vcEmptyState();
@@ -13240,13 +13294,13 @@ function switchTab(tab){
   // Client accounts (e.g. Mumzworld): their own order list + tickets only
   if(_session&&_session.role==='client'&&tab!=='mumz'&&tab!=='tickets'){alert('Access restricted');return;}
   if(tab==='openorders'&&_session&&_session.role==='client'){alert('Access restricted');return;}
-  if((tab==='pl'||tab==='exclusive'||tab==='odrev'||tab==='profiles'||tab==='customers')&&_session&&_session.role!=='master'){alert('Master access only');return;}
+  if((tab==='pl'||tab==='exclusive'||tab==='odrev'||tab==='profiles'||tab==='customers'||tab==='invoicing')&&_session&&_session.role!=='master'){alert('Master access only');return;}
   if(tab==='roster'){setTimeout(switchToRoster,80);}
   if(tab==='daily'){setTimeout(switchToDaily,80);}
   if(tab==='mumz'){setTimeout(switchToMumz,80);}
   var _tabLbl={calendar:'calendar',analytics:'utilisation analytics',ops:'operations',planner:'schedule builder',roster:'roster',
     daily:'daily orders',supply:'supply',customleads:'lead tracker',bsleads:'babysitting leads',
-    complaints:'complaint',exclusive:'exclusive cgs',customers:'customer insights',openorders:'open orders',profiles:'caregiver profiles',odrev:'revenue by order date',penalty:'penalty',expecting:'expecting',tickets:'hc tickets',leave:'leave applications',
+    complaints:'complaint',exclusive:'exclusive cgs',customers:'customer insights',openorders:'open orders',profiles:'caregiver profiles',odrev:'revenue by order date',invoicing:'invoicing',penalty:'penalty',expecting:'expecting',tickets:'hc tickets',leave:'leave applications',
     mumz:'mumzworld orders', avail:'availability search', transport:'transport charges', pl:'p&l'}[tab]||tab;
   document.querySelectorAll('.main-tab').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase().includes(_tabLbl)));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -13271,6 +13325,7 @@ function switchTab(tab){
   if(tab==='openorders'){ooRender();}
   if(tab==='profiles'){cpInit();}
   if(tab==='odrev'){odRender();}
+  if(tab==='invoicing'){initInvoicing();}
 }
 
 
@@ -24629,6 +24684,709 @@ function vcCurrencyFix(root){
 </script>
 <script>
 // ═════════════════════════════════════════════════════════════════
+// INVOICING — (1) homecare statement: what Valeo owes each homecare for a month,
+// built from the orders + roster + rate card, and matched line by line against the
+// SOA the homecare sends; (2) Mumzworld billing: what Mumzworld owes Valeo, matched
+// to Mumzworld's own order list by phone; (3) rate card (from the costing sheet).
+// ═════════════════════════════════════════════════════════════════
+// Costing sheet defaults. [type, hours, days, Unicare, Bayti, Zakha, Nasmat, Carezone, Magical Hands, Caresynq, One Call (Tintu), Mumzworld]
+// HC columns = "Prices: Dubai" cost price per package; One Call = "Tintu" tab; Mumzworld = "mumzworld new" (1 June onwards).
+var IV_PK = [
+ ['h',4,1,196,168,168,160,168,168,168,160,220],['h',5,1,225,200,200,200,200,200,200,200,238],['h',6,1,222,228,210,210,210,210,210,240,273],
+ ['h',7,1,259,266,245,245,245,245,245,280,319],['h',8,1,296,304,280,280,280,280,280,320,356],['h',9,1,333,342,315,315,315,315,315,315,400],
+ ['h',10,1,370,370,350,350,350,350,350,350,424],['h',11,1,407,407,385,385,385,385,385,385,467],['h',12,1,420,432,408,384,408,408,408,408,485],
+ ['h',24,1,768,792,720,720,720,720,720,720,null],
+ ['w',6,5,1110,1110,1050,1050,1050,1050,1050,1200,1500],['w',7,5,1295,1295,1225,1225,1225,1225,1225,1400,null],['w',8,5,1480,1480,1400,1400,1400,1400,1400,1600,1702],
+ ['w',9,5,1665,1665,1575,1575,1575,1440,1440,1440,1915],['w',10,5,1850,1750,1750,1750,1750,1600,1600,1600,2128],['w',11,5,2035,1925,1925,1925,1925,1760,1760,1760,2340],
+ ['w',12,5,2100,2040,1920,1920,1920,1920,1920,1920,2553],['w',24,5,3840,3840,3360,3360,3360,3360,3360,3360,null],
+ ['w',6,6,1332,1368,1224,1224,1224,1080,1080,1440,1800],['w',7,6,1554,1596,1386,1386,1386,1260,1260,1680,null],['w',8,6,1776,1824,1584,1584,1584,1440,1440,1920,2042],
+ ['w',9,6,1998,2052,1782,1782,1782,1620,1620,2160,2298],['w',10,6,2220,2160,1920,1920,1920,1800,1800,1800,2553],['w',11,6,2442,2376,2178,2178,2178,1980,1980,1980,2808],
+ ['w',12,6,2448,2448,2160,2160,2160,2160,2160,2160,2880],['w',24,6,4320,4464,4032,4032,4032,4032,4032,4032,4608],
+ ['m',6,20,3600,3720,3360,3360,3360,3360,3360,4200,5400],['m',7,20,4200,4200,3780,3780,3780,3780,3780,4900,null],['m',8,20,4800,4960,4320,4480,4480,4320,4320,5600,6000],
+ ['m',9,20,5400,5400,4680,4680,4680,4680,4680,5580,6400],['m',10,20,6000,5800,5200,5200,5200,5200,5200,5600,6900],['m',11,20,6160,6160,5280,5280,5280,5280,5280,5500,null],
+ ['m',12,20,6480,6720,5760,5760,5760,5760,5760,5760,7452],['m',24,20,12480,12000,11040,11040,11040,11040,11040,11040,null],
+ ['m',6,24,4320,4320,3744,3744,3744,3744,3744,5040,6400],['m',7,24,4872,4704,4368,4368,4368,4368,4368,5880,null],['m',8,24,5568,5376,4992,4992,4992,4992,4992,6720,6600],
+ ['m',9,24,6048,5616,5400,5400,5400,5400,5400,5400,6955],['m',10,24,6480,6240,6000,6000,6000,6000,6000,6000,7452],['m',11,24,6864,6600,6336,6336,6336,6336,6336,6336,null],
+ ['m',12,24,7488,7200,6912,6912,6912,6912,6912,6912,8611],['m',24,24,13824,13824,12672,12096,12672,12672,12672,12672,null],
+ ['m',6,28,4032,4872,4200,4200,4200,4200,4200,5040,6600],['m',7,28,4704,5488,4900,4900,4900,4900,4900,5880,null],['m',8,28,5376,6272,5600,5600,5600,5600,5600,6720,6800],
+ ['m',9,28,6048,6552,6048,6048,6048,6048,6048,6048,7000],['m',10,28,6720,7280,6720,6720,6720,6720,6720,6720,7560],['m',11,28,7392,7700,6776,6776,6776,6776,6776,6776,null],
+ ['m',12,28,8064,8400,7392,7392,7392,7392,7392,7392,9072],['m',24,28,15456,15456,14112,14112,14112,14112,14112,14112,null]
+];
+var IV_COLS0 = [{id:'unicare',label:'Unicare',match:'unicare'},{id:'bayti',label:'Bayti',match:'bayti'},{id:'zakha',label:'Zakha',match:'zakha'},
+  {id:'nasmat',label:'Nasmat',match:'nasmat'},{id:'carezone',label:'Carezone',match:'carezone'},{id:'magical',label:'Magical Hands',match:'magical'},
+  {id:'caresynq',label:'Caresynq',match:'caresynq'},{id:'onecall',label:'One Call (Tintu)',match:'onecall'}];
+// Exclusive caregivers: fixed monthly fee per caregiver for 24 working days, pro-rata by active days.
+// paid = leave days a month the homecare is still paid for; pay = what such a day is paid (blank = full day rate;
+// Shifa: only the caregiver's salary — fill in when known).
+var IV_EX0 = [{match:'shifa',label:'Shifa',amt:6200,days:24,paid:1,pay:''},{match:'unicare',label:'Unicare',amt:6500,days:24,paid:0,pay:''},
+  {match:'caresynq',label:'Caresynq',amt:6000,days:24,paid:0,pay:''},{match:'mahara',label:'Mahara',amt:6500,days:24,paid:0,pay:''}];
+var IV_DISC0 = {'2026-11':10};   // Mumzworld promo: % off the Valeo→Mumzworld price for orders placed that month
+var IV_EXCL = ['carezone home healthcare llc','dummy homecare','helpful agency','nifas hc','babysitting ksa','pyramid home health care'];
+var IV_LEAVE = {sick:1, off:1, holiday:1, paid:1, unpaid:1};
+var _iv = {tab:1, rc:null, rcLoaded:false, soa:{}, mw:null, mwDocs:{}, mwLoaded:false, recon:{}, idx:null, upTarget:'hc'};
+
+function ivDefaults(){
+  var rc = {cols:JSON.parse(JSON.stringify(IV_COLS0)), cost:{}, mz:{}, ex:JSON.parse(JSON.stringify(IV_EX0)), disc:JSON.parse(JSON.stringify(IV_DISC0))};
+  IV_PK.forEach(function(p){ var k = p[0] + '|' + p[1] + '|' + p[2];
+    IV_COLS0.forEach(function(c, i){ if(p[3+i] != null) (rc.cost[c.id] = rc.cost[c.id] || {})[k] = p[3+i]; });
+    if(p[11] != null) rc.mz[k] = p[11]; });
+  return rc;
+}
+function ivRC(){ if(!_iv.rc){ try{ _iv.rc = JSON.parse(localStorage.getItem(ckey('valeo_rate_card'))||'null'); }catch(e){} if(!_iv.rc) _iv.rc = ivDefaults(); } return _iv.rc; }
+async function ivLoadRC(){
+  if(_iv.rcLoaded) return;
+  try{
+    if(!_db) await initFirebase(); if(!_db) return;
+    var d = await _db.collection('valeo_rate_cards').doc('config').get();
+    if(d.exists && d.data() && d.data().rc){ _iv.rc = d.data().rc; try{ localStorage.setItem(ckey('valeo_rate_card'), JSON.stringify(_iv.rc)); }catch(e){} }
+    _iv.rcLoaded = true;
+  }catch(e){ console.warn('[iv] rate card', e); }
+}
+async function ivSaveRC(){
+  try{ localStorage.setItem(ckey('valeo_rate_card'), JSON.stringify(_iv.rc)); }catch(e){}
+  try{
+    if(!_db) await initFirebase(); if(!_db) throw new Error('Firebase not connected');
+    await _db.collection('valeo_rate_cards').doc('config').set({rc:_iv.rc, updated_at:new Date().toISOString(), updated_by:(_session&&_session.username)||''});
+    ivMsg('✓ Rate card saved');
+  }catch(e){ ivMsg('Could not save the rate card — ' + e.message, true); }
+}
+function ivMsg(t, err){ var s = document.getElementById('iv-status'); if(s){ s.textContent = t; s.style.color = err ? 'var(--absent)' : 'var(--duty)'; } }
+
+// ── helpers ──────────────────────────────────────────────────────
+function ivN(x){ return Math.round((+x||0) * 100) / 100; }
+function ivAED(x){ var n = Math.round(+x||0); return (n < 0 ? '−' : '') + Math.abs(n).toLocaleString(); }
+function ivAmt(x){ var t = String(x==null?'':x).replace(/aed|qar|dhs?|[\s, ]/gi,''); return /^-?\d*\.?\d+$/.test(t) ? parseFloat(t) : NaN; }
+function ivHC(r){ return String(r['Homecare']||'').replace(/ /g,' ').trim(); }
+function ivExcludedHC(hc){ var l = hc.toLowerCase(); return IV_EXCL.indexOf(l) >= 0 || /dummy/i.test(hc); }
+function ivSvc(r){ return String(r['Confirmed_DateTime']||r['Booked_Slot']||'').replace('T',' '); }
+function ivPh(s){ var d = String(s||'').replace(/\D/g,'').slice(-9); return d.length >= 7 ? d : ''; }
+function ivFirst(s){ return String(s||'').toLowerCase().replace(/[^a-z\s]/g,' ').trim().split(/\s+/)[0] || ''; }
+function ivFmtD(ds){ return ds && MONTHS[+String(ds).slice(5,7)-1] ? parseInt(ds.slice(8,10)) + ' ' + MONTHS[+ds.slice(5,7)-1].slice(0,3) + ' ' + ds.slice(0,4) : ''; }
+function ivFmtT(s){ var m = String(s||'').match(/(\d{2}):(\d{2})/); if(!m) return ''; var h = +m[1], ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return h + ':' + m[2] + ' ' + ap; }
+function ivMonth(){ return (document.getElementById('iv-month')||{}).value || avToday().slice(0,7); }
+function ivMonthLbl(p){ return MONTHS[+p.slice(5,7)-1] + ' ' + p.slice(0,4); }
+// package → rate-card key "type|hours|days" (monthly days = days a week × 4)
+function ivPkgKey(pkg){
+  var p = String(pkg||'').toLowerCase(); if(!p || /elderly|nurse|doctor|lab/.test(p)) return null;
+  if(/additional/.test(p)) return 'add';
+  var t = /monthly/.test(p) ? 'm' : /weekly/.test(p) ? 'w' : /hour/.test(p) ? 'h' : ''; if(!t) return null;
+  var h = extractHours(p) || (t === 'h' ? 0 : 4); if(!h) return null;
+  var dm = p.match(/(\d+)\s*days?/), d = t === 'h' ? 1 : dm ? +dm[1] : 0; if(!d) return null;
+  return t + '|' + h + '|' + (t === 'm' ? d * 4 : d);
+}
+function ivPkgLbl(k){ var a = k.split('|'); return a[0] === 'h' ? 'Hourly ' + a[1] + 'h' : a[0] === 'w' ? 'Weekly ' + a[1] + 'h × ' + a[2] + ' days' : 'Monthly ' + a[1] + 'h × ' + (a[2]/4) + ' days × 4 wks'; }
+function ivCol(hc){ var n = tkNorm(hc); return (ivRC().cols||[]).find(function(c){ return c.match && n.indexOf(tkNorm(c.match)) >= 0; }) || null; }
+function ivExCfg(hc){ var n = tkNorm(hc); return (ivRC().ex||[]).find(function(c){ return c.match && n.indexOf(tkNorm(c.match)) === 0; }) || null; }
+function ivDisc(p){ var v = (ivRC().disc||{})[p]; return v ? +v : 0; }
+
+// share of a package a single row stands for: "… : 5/28)" → 1/28; old multi-row carts → 1/rows; hourly → 1
+function ivIndex(){
+  var rows = window._lastRows || [], sig = rows.length;
+  if(_iv.idx && _iv.idx.sig === sig) return _iv.idx;
+  var ix = {sig:sig, child:{}, cart:{}, cartN:{}, phone:{}};
+  rows.forEach(function(r){
+    if(!isCountryRow(r)) return;
+    var ch = String(r['Child_Order_ID']||'').trim(), ca = String(r['Cart_Order_ID']||'').trim();
+    if(ch) ix.child[ch] = r;
+    if(ca){ (ix.cart[ca] = ix.cart[ca] || []).push(r);
+      var st = _normKey(r['Order_Status']); if(st !== 'cancelled' && st !== 'temporder'){ var k = ca + '|' + r['Parent_Package']; ix.cartN[k] = (ix.cartN[k]||0) + 1; } }
+    var ph = ivPh(r['Phone Number']); if(ph) (ix.phone[ph] = ix.phone[ph] || []).push(r);
+  });
+  _iv.idx = ix; return ix;
+}
+function ivShare(r){
+  var m = String(r['Child_Package']||'').match(/:\s*(\d+)\s*\/\s*(\d+)\s*\)/); if(m && +m[2] > 0) return 1 / +m[2];
+  var k = ivPkgKey(r['Parent_Package']); if(!k || k === 'add' || k[0] === 'h') return 1;
+  var n = ivIndex().cartN[String(r['Cart_Order_ID']||'').trim() + '|' + r['Parent_Package']] || 1;
+  return 1 / n;
+}
+// rate-card cost of one row for this homecare (null = no rate)
+function ivRate(hc, r){
+  var col = ivCol(hc); if(!col) return null;
+  var tab = (ivRC().cost||{})[col.id] || {}, k = ivPkgKey(r['Parent_Package']); if(!k) return null;
+  if(k === 'add'){ var h4 = tab['h|4|1']; return h4 ? ivN(h4 / 4 * (extractHours(r['Child_Package']||r['Parent_Package']) || 1)) : null; }
+  var v = tab[k]; return v == null || v === '' ? null : ivN(+v * ivShare(r));
+}
+function ivMzRate(r){
+  var k = ivPkgKey(r['Parent_Package']); if(!k) return null;
+  var tab = ivRC().mz || {};
+  var v = k === 'add' ? (tab['h|4|1'] ? tab['h|4|1'] / 4 * (extractHours(r['Child_Package']||r['Parent_Package']) || 1) : null) : tab[k];
+  if(v == null || v === '') return null;
+  var d = ivDisc(String(r['Order_Date']||'').slice(0,7));
+  return ivN(+v * (k === 'add' ? 1 : ivShare(r)) * (1 - d/100));
+}
+
+// ── 1. HOMECARE: one row of our data → what we expect to pay ─────
+function ivCalc(hc, r){
+  var ds = ivSvc(r).slice(0,10), today = avToday(), st = _normKey(r['Order_Status']);
+  var cg = String(r['Nurse_Assigned']||'').trim(), child = String(r['Child_Order_ID']||'').trim();
+  var o = {r:r, cart:String(r['Cart_Order_ID']||'').trim(), child:child, name:String(r['User Name']||'').trim(), phone:String(r['Phone Number']||'').trim(),
+    date:ds, time:ivFmtT(ivSvc(r)), addr:[r['Address Line 1'], r['Address Line 2'], r['City']].filter(function(x){ return x && String(x).trim(); }).join(', '),
+    pkg:String(r['Parent_Package']||'').trim(), status:String(r['Order_Status']||'').trim(), cg:cg, hc:ivHC(r), field:parseFloat(r['Homecare_Cost'])||0,
+    rate:null, exp:0, basis:'', flags:[], billable:false, ex:false};
+  if(st === 'cancelled' || st === 'temporder'){ o.flags.push('Cancelled in our system'); o.kind = 'cancelled'; return o; }
+  var ov = cg && overrides[cg + '|' + ds], ovb = child && overrides[child + '|' + ds];
+  if(ovb && ovb.type === 'removed'){ o.flags.push('Booking removed on the roster'); o.kind = 'leave'; return o; }
+  if(ov && IV_LEAVE[ov.type]){ o.flags.push(cg.split(' ')[0] + ' on ' + ov.type + ' leave per roster'); o.kind = 'leave'; return o; }
+  if(st !== 'completed'){ o.kind = ds > today ? 'upcoming' : 'open'; o.flags.push(ds > today ? 'Upcoming' : 'Not marked completed'); }
+  else o.kind = 'ok';
+  if(cg && isExclusiveCG(cg, o.hc || hc)){ o.ex = true; o.basis = 'Exclusive — monthly fee'; o.exp = 0; }
+  else {
+    o.rate = ivRate(hc, r);
+    if(o.rate != null){ o.exp = o.rate; o.basis = 'Rate card'; if(o.field && Math.abs(o.field - o.rate) > 1 && ivShare(r) === 1) o.flags.push('Order cost field says ' + ivAED(o.field)); }
+    else if(o.field){ o.exp = o.field; o.basis = 'Order cost field'; }
+    else { o.exp = null; o.basis = 'No rate'; o.flags.push('No rate for this package — add it in Rate card'); }
+  }
+  if(!cg) o.flags.push('No caregiver assigned');
+  o.billable = o.kind === 'ok';
+  return o;
+}
+function ivHCRows(hc, p){
+  var out = [];
+  (window._lastRows||[]).forEach(function(r){
+    if(!isCountryRow(r) || !tkHCMatch(ivHC(r), hc)) return;
+    if(ivSvc(r).slice(0,7) !== p) return;
+    var st = _normKey(r['Order_Status']); if(st === 'temporder') return;
+    out.push(ivCalc(hc, r));
+  });
+  out.sort(function(a,b){ return (a.date + a.time).localeCompare(b.date + b.time) || a.child.localeCompare(b.child); });
+  return out;
+}
+// exclusive caregivers of this homecare: monthly fee pro-rata, less unpaid leave
+function ivRetainers(hc, p){
+  var cfg = ivExCfg(hc), y = +p.slice(0,4), m = +p.slice(5,7) - 1, dim = new Date(y, m+1, 0).getDate();
+  var idx = rosterDayIndex(), wo = rosterWoLookup(), out = [], ded = (document.getElementById('iv-busyded')||{}).checked;
+  var seen = {};
+  exAllCGs().forEach(function(c){
+    if(!tkHCMatch(c.hc, hc) || !isExclusiveCG(c.name, c.hc)) return;
+    var k = tkNorm(c.name); if(seen[k]) return; seen[k] = 1;
+    var st = rosterCGStart(c.name, c.hc).date, n = {act:0, work:0, leave:0, busy:0, wo:0, codes:{}, last:''};
+    for(var d = 1; d <= dim; d++){
+      var ds = p + '-' + pad(d), r = rosterDay(c.name, c.hc, ds, idx, wo);
+      if(r.code === 'pre' || r.code === 'exited' || r.code === 'pause' || (st && ds < st)) continue;
+      n.act++;
+      if(r.code === 'duty' || r.code === 'manual'){ n.work++; n.last = ds; }
+      else if(IV_LEAVE[r.code]){ n.leave++; n.codes[r.code] = (n.codes[r.code]||0) + 1; }
+      else if(r.code === 'hcbusy') n.busy++;
+      else if(r.code === 'weekoff') n.wo++;
+    }
+    if(!n.work && !n.leave && !n.busy) return;          // not on the roster this month
+    var o = {cg:c.name, hc:c.hc, act:n.act, dim:dim, work:n.work, leave:n.leave, busy:n.busy, codes:n.codes, cfg:cfg, exp:null, note:''};
+    var mEnd = p + '-' + pad(dim), gone = n.last && !getCGExit(c.name, c.hc) && mEnd < avToday() && (new Date(mEnd) - new Date(n.last)) / 864e5 > 7;
+    if(cfg && +cfg.amt){
+      var amt = +cfg.amt, day = amt / (+cfg.days || 24), paidN = Math.min(n.leave, +cfg.paid || 0), unpaidN = n.leave - paidN;
+      var pay = cfg.pay === '' || cfg.pay == null ? day : +cfg.pay;
+      o.base = amt * n.act / dim; o.day = day;
+      o.deduct = unpaidN * day + paidN * Math.max(0, day - pay) + (ded ? n.busy * day : 0);
+      o.exp = ivN(Math.max(0, o.base - o.deduct));
+      o.note = (n.act < dim ? n.act + '/' + dim + ' days active' : 'full month')
+        + (n.leave ? ' · ' + n.leave + ' leave day' + (n.leave > 1 ? 's' : '') + ' (' + Object.keys(n.codes).map(function(k){ return n.codes[k] + ' ' + k; }).join(', ') + ')' + (paidN ? ', ' + paidN + ' paid' + (cfg.pay !== '' && cfg.pay != null ? ' at ' + ivAED(pay) : '') : '') : '')
+        + (n.busy ? ' · ' + n.busy + ' day(s) with HC\'s own client' + (ded ? ' (deducted)' : '') : '')
+        + (gone ? ' · ⚠ last booking ' + ivFmtD(n.last) + ' — if the caregiver left, set the end date on the roster' : '');
+    } else o.note = 'Set the monthly fee for ' + hc + ' in Rate card';
+    out.push(o);
+  });
+  return out.sort(function(a,b){ return a.cg.localeCompare(b.cg); });
+}
+
+// ── parsing an uploaded / pasted statement ───────────────────────
+function ivParseDate(s){
+  s = String(s||'').trim(); if(!s) return '';
+  var m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/); if(m) return m[1] + '-' + pad(+m[2]) + '-' + pad(+m[3]);
+  m = s.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})/);   // UAE: day/month/year
+  if(m){ var y = +m[3] < 100 ? 2000 + +m[3] : +m[3]; return y + '-' + pad(+m[2]) + '-' + pad(+m[1]); }
+  var t = Date.parse(s.replace(/(\d)(st|nd|rd|th)\b/,'$1')); if(!isNaN(t)){ var d = new Date(t); return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()); }
+  return '';
+}
+function ivParseAoA(aoa){
+  aoa = (aoa||[]).map(function(r){ return (r||[]).map(function(c){
+    if(c instanceof Date){ var d = new Date(c.getTime() + 60000); return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) + (d.getHours() || d.getMinutes() > 1 ? ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) : ''); }
+    return c == null ? '' : String(c).trim(); }); });
+  var hi = -1;
+  for(var i = 0; i < Math.min(aoa.length, 25); i++){
+    var t = aoa[i].join(' | ').toLowerCase();
+    if(/price|amount|cost|total|aed/.test(t) && /order|customer|client|name|date|phone/.test(t) && aoa[i].filter(Boolean).length >= 3){ hi = i; break; }
+  }
+  if(hi < 0) return {err:'Could not find the header row — it needs columns like Order ID, Customer, Date and Price.'};
+  var H = aoa[hi].map(function(h){ return h.toLowerCase(); }), find = function(re, not){ for(var j = 0; j < H.length; j++) if(re.test(H[j]) && !(not && not.test(H[j]))) return j; return -1; };
+  var lastPrice = -1; H.forEach(function(h, j){ if(/price|amount|cost|total|aed/.test(h) && !/unit|per\s*h/.test(h)) lastPrice = j; });
+  var col = {order:find(/order\s*(id|no|#|number)?$|^order|booking|invoice\s*ref|reference/, /date|status|type/), sub:find(/cust(omer)?\s*id|sub|child/),
+    name:find(/customer|client|patient|name/, /id|staff|nurse|caregiver/), date:find(/date|day/, /order\s*date|created/), time:find(/time/),
+    staff:find(/staff|nurse|caregiver|\bcg\b|babysitter|nanny|assigned/), price:lastPrice, phone:find(/phone|mobile|contact|number/, /order|id/), service:find(/service|package|plan/)};
+  if(col.date < 0) col.date = find(/date/);
+  if(col.price < 0) return {err:'Could not find a Price / Amount column.'};
+  var lines = [];
+  for(var r = hi + 1; r < aoa.length; r++){
+    var row = aoa[r], g = function(k){ return col[k] >= 0 ? (row[col[k]]||'') : ''; };
+    if(!row.filter(Boolean).length) continue;
+    if(row.some(function(c){ return /\btotal\b/i.test(c); })) continue;
+    var price = ivAmt(g('price')); if(isNaN(price)) continue;
+    lines.push({i:lines.length, order:g('order').replace(/^#/,'').replace(/\.0+$/,''), sub:g('sub').replace(/^#/,'').replace(/\.0+$/,''), name:g('name'), date:ivParseDate(g('date')),
+      time:g('time'), staff:g('staff'), price:price, phone:g('phone'), service:g('service'), raw:row});
+  }
+  return {cols:col, head:aoa[hi], lines:lines};
+}
+function ivUploadPick(t){ _iv.upTarget = t; var f = document.getElementById('iv-file'); f.value = ''; f.click(); }
+function ivFile(inp){
+  var f = inp.files && inp.files[0]; if(!f) return;
+  var rd = new FileReader();
+  rd.onload = function(e){
+    try{
+      var wb = XLSX.read(new Uint8Array(e.target.result), {type:'array', cellDates:true});
+      var ws = wb.Sheets[wb.SheetNames[0]];
+      var aoa = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:''});
+      ivApplyParsed(ivParseAoA(aoa), f.name);
+    }catch(err){ alert('Could not read ' + f.name + ': ' + err.message); }
+  };
+  rd.readAsArrayBuffer(f);
+}
+function ivPasteOpen(t){ _iv.upTarget = t; document.getElementById('iv-paste').value = ''; document.getElementById('iv-paste-modal').classList.add('show'); setTimeout(function(){ document.getElementById('iv-paste').focus(); }, 50); }
+function ivPasteApply(){
+  var txt = document.getElementById('iv-paste').value;
+  var aoa = txt.split(/\r?\n/).map(function(l){ return l.indexOf('\t') >= 0 ? l.split('\t') : l.split(/\s{2,}|,(?=(?:[^"]*"[^"]*")*[^"]*$)/); });
+  document.getElementById('iv-paste-modal').classList.remove('show');
+  ivApplyParsed(ivParseAoA(aoa), 'pasted rows');
+}
+function ivApplyParsed(res, src){
+  if(res.err){ alert(res.err); return; }
+  if(!res.lines.length){ alert('No priced rows found in ' + src + '.'); return; }
+  res.src = src;
+  if(_iv.upTarget === 'mw') _iv.mw = res;
+  else { var hc = document.getElementById('iv-hc').value; if(!hc){ alert('Choose the homecare first.'); return; } _iv.soa[ivMonth() + '|' + tkNorm(hc)] = res; }
+  ivMsg('✓ ' + res.lines.length + ' lines read from ' + src);
+  ivRender();
+}
+function ivClearSOA(){ delete _iv.soa[ivMonth() + '|' + tkNorm(document.getElementById('iv-hc').value)]; ivRender(); }
+function ivClearMW(){ _iv.mw = null; ivRender(); }
+
+// ── matching a homecare SOA line to our orders ───────────────────
+function ivMatchHC(hc, p, soa, rows, ret){
+  var ix = ivIndex(), used = {}, out = [];
+  var calc = function(r){ return ivCalc(hc, r); };
+  soa.lines.forEach(function(L){
+    var hit = [], how = '';
+    [L.sub, L.order].forEach(function(id){
+      if(hit.length || !id) return;
+      if(ix.child[id]){ hit = [ix.child[id]]; how = 'Order ID'; return; }
+      if(ix.cart[id]){
+        var all = ix.cart[id].filter(function(r){ var s = _normKey(r['Order_Status']); return s !== 'temporder'; });
+        var same = L.date ? all.filter(function(r){ return ivSvc(r).slice(0,10) === L.date; }) : [];
+        var inM = all.filter(function(r){ return ivSvc(r).slice(0,7) === p; });
+        hit = same.length ? same : inM.length ? inM : all; how = 'Order ID';
+      }
+    });
+    if(!hit.length && ivPh(L.phone) && L.date){ hit = (ix.phone[ivPh(L.phone)]||[]).filter(function(r){ return ivSvc(r).slice(0,10) === L.date && tkHCMatch(ivHC(r), hc); }); if(hit.length) how = 'Phone + date'; }
+    if(!hit.length && L.name && L.date){
+      var fn = ivFirst(L.name);
+      hit = rows.filter(function(o){ return o.date === L.date && fn && ivFirst(o.name) === fn; }).map(function(o){ return o.r; });
+      if(hit.length) how = 'Name + date';
+    }
+    var o = {L:L, how:how, rows:hit.map(calc), exp:0, ok:0, status:'', cls:'', notes:[]};
+    if(!hit.length){
+      // a monthly-fee line for an exclusive caregiver?
+      var rt = L.staff && ret.find(function(x){ return ivFirst(x.cg) === ivFirst(L.staff); });
+      if(rt && !L.order && !L.sub){ o.ret = rt; o.exp = rt.exp; o.how = 'Exclusive CG'; rt.claimed = (rt.claimed||0) + L.price; }
+      else { o.status = '❌ Not in our orders'; o.cls = 'bad'; o.ok = 0; out.push(o); return; }
+    }
+    if(o.ret){
+      if(o.exp == null){ o.status = '🔍 Monthly fee not set'; o.cls = 'warn'; o.ok = L.price; }
+      else if(Math.abs(L.price - o.exp) <= Math.max(2, o.exp * 0.01)){ o.status = '✅ Matched (monthly fee)'; o.cls = 'good'; o.ok = L.price; }
+      else { o.status = '⚠ Monthly fee differs'; o.cls = 'warn'; o.ok = o.exp; }
+      out.push(o); return;
+    }
+    hit.forEach(function(r){ used[String(r['Child_Order_ID']||'')] = 1; });
+    var R = o.rows, other = R.filter(function(x){ return x.hc && !tkHCMatch(x.hc, hc); });
+    o.exp = R.reduce(function(t,x){ return t + (x.billable || x.kind === 'open' ? (x.exp||0) : 0); }, 0);
+    var noRate = R.some(function(x){ return x.exp == null && x.kind !== 'cancelled' && x.kind !== 'leave'; });
+    var staffOk = !L.staff || R.some(function(x){ return ivFirst(x.cg) && ivFirst(x.cg) === ivFirst(L.staff); });
+    if(!staffOk) o.notes.push('Our roster: ' + (R.map(function(x){ return x.cg; }).filter(Boolean).join(', ') || 'no CG'));
+    if(R.length > 1) o.notes.push(R.length + ' service days');
+    if(other.length === R.length){ o.status = '❌ Order is with ' + other[0].hc; o.cls = 'bad'; }
+    else if(R.every(function(x){ return x.kind === 'cancelled'; })){ o.status = '❌ Cancelled'; o.cls = 'bad'; }
+    else if(R.every(function(x){ return x.kind === 'cancelled' || x.kind === 'leave'; })){ o.status = '❌ ' + (R.find(function(x){ return x.kind === 'leave'; }).flags[0]); o.cls = 'bad'; }
+    else if(R.every(function(x){ return x.ex || x.kind === 'cancelled' || x.kind === 'leave'; })){ o.status = '⚠ Exclusive CG — paid in monthly fee'; o.cls = 'warn'; }
+    else if(R.some(function(x){ return x.kind === 'upcoming'; })){ o.status = '⚠ Not served yet'; o.cls = 'warn'; }
+    else if(noRate){ o.status = '🔍 No rate — check'; o.cls = 'warn'; o.ok = L.price; o.exp = null; }
+    else if(Math.abs(L.price - o.exp) <= Math.max(2, o.exp * 0.01)){ o.status = R.some(function(x){ return x.kind === 'open'; }) ? '⚠ Matched — not marked completed' : '✅ Matched'; o.cls = R.some(function(x){ return x.kind === 'open'; }) ? 'warn' : 'good'; o.ok = L.price; }
+    else { o.status = '⚠ Amount differs (' + (L.price > o.exp ? '+' : '−') + ivAED(Math.abs(L.price - o.exp)) + ')'; o.cls = 'warn'; o.ok = Math.min(L.price, o.exp); }
+    if(o.cls === 'bad' || /Exclusive|Not served/.test(o.status)) o.ok = 0;
+    if(!staffOk && o.cls === 'good'){ o.status = '⚠ Matched — different caregiver'; o.cls = 'warn'; }
+    out.push(o);
+  });
+  var missing = rows.filter(function(o){ return o.billable && !o.ex && !used[o.child]; });
+  return {lines:out, missing:missing};
+}
+
+// ── rendering ────────────────────────────────────────────────────
+function ivTab(n){
+  _iv.tab = n; [1,2,3].forEach(function(i){ document.getElementById('iv-t' + i).classList.toggle('on', i === n); document.getElementById('iv-p' + i).style.display = i === n ? '' : 'none'; });
+  ivRender();
+}
+async function initInvoicing(){
+  if(_session && _session.role !== 'master'){ alert('Master access only'); return; }
+  var ms = document.getElementById('iv-month');
+  if(ms && !ms.options.length){
+    var cur = avToday().slice(0,7), opts = [], y = 2025, m = 1;
+    var last = (function(){ var d = new Date(+cur.slice(0,4), +cur.slice(5,7), 1); return d.getFullYear() + '-' + pad(d.getMonth()+1); })();
+    while((y + '-' + pad(m)) <= last){ opts.unshift(y + '-' + pad(m)); m++; if(m > 12){ m = 1; y++; } }
+    var prev = (function(){ var d = new Date(+cur.slice(0,4), +cur.slice(5,7) - 2, 1); return d.getFullYear() + '-' + pad(d.getMonth()+1); })();
+    ms.innerHTML = opts.map(function(p){ return '<option value="' + p + '"' + (p === prev ? ' selected' : '') + '>' + ivMonthLbl(p) + (p === cur ? ' (this month)' : '') + '</option>'; }).join('');
+  }
+  ivFillHC();
+  ivRender();
+  if(!_iv.rcLoaded){ await ivLoadRC(); ivRender(); }
+  if(!_ex.loaded && typeof exLoad === 'function'){ exLoad().then(ivRender); }
+}
+function ivFillHC(){
+  var s = document.getElementById('iv-hc'); if(!s) return;
+  var cnt = {}; (window._lastRows||[]).forEach(function(r){ var h = ivHC(r); if(h && isCountryRow(r)) cnt[tkNorm(h)] = (cnt[tkNorm(h)]||0) + 1; });
+  var list = plHCList().filter(function(h){ return !ivExcludedHC(h) && cnt[tkNorm(h)]; });
+  var sig = list.join('|'); if(s.getAttribute('data-sig') === sig) return; s.setAttribute('data-sig', sig);
+  var cur = s.value;
+  s.innerHTML = list.map(function(h){ return '<option value="' + tkEsc(h) + '">' + tkEsc(h) + '</option>'; }).join('');
+  if(cur && list.indexOf(cur) >= 0) s.value = cur;
+}
+function ivHCChanged(){ ivRender(); }
+async function ivLoadRecon(p, hc){
+  var k = p + '__' + tkNorm(hc); if(_iv.recon[k] !== undefined) return;
+  _iv.recon[k] = null;
+  try{ if(!_db) await initFirebase(); if(!_db) return; var d = await _db.collection('valeo_invoice_recon').doc(k).get(); _iv.recon[k] = d.exists ? d.data() : null; ivRender(); }catch(e){ console.warn('[iv] recon', e); }
+}
+function ivRender(){
+  if(!document.getElementById('page-invoicing')) return;
+  if(!(window._lastRows||[]).length){
+    var w = '<div class="tk-kpi" style="min-width:300px"><div class="tk-kpi-v" style="font-size:14px">⏳ Loading orders…</div><div class="tk-kpi-l">the page fills in when the data is in</div></div>';
+    ['iv-kpis','iv-mw-kpis'].forEach(function(id){ document.getElementById(id).innerHTML = w; });
+    if(_iv.tab === 3) ivRenderRC();
+    return;
+  }
+  ivFillHC();
+  if(_iv.tab === 1) ivRenderHC(); else if(_iv.tab === 2) ivRenderMW(); else ivRenderRC();
+}
+var IV_CLS = {good:'color:var(--duty)', warn:'color:var(--sick)', bad:'color:var(--absent)'};
+function ivKpi(v, l, col){ return '<div class="tk-kpi"><div class="tk-kpi-v" style="font-size:17px;color:' + (col||'var(--text)') + '">' + v + '</div><div class="tk-kpi-l">' + l + '</div></div>'; }
+function ivHCModel(){
+  var hc = document.getElementById('iv-hc').value, p = ivMonth();
+  if(!hc) return null;
+  var rows = ivHCRows(hc, p), ret = ivRetainers(hc, p);
+  var lines = rows.filter(function(o){ return o.billable && !o.ex; });
+  var exRows = rows.filter(function(o){ return o.billable && o.ex; });
+  var soa = _iv.soa[p + '|' + tkNorm(hc)] || null, rec = soa ? ivMatchHC(hc, p, soa, rows, ret) : null;
+  var expOrders = lines.reduce(function(t,o){ return t + (o.exp||0); }, 0), expRet = ret.reduce(function(t,o){ return t + (o.exp||0); }, 0);
+  return {hc:hc, p:p, rows:rows, lines:lines, exRows:exRows, ret:ret, soa:soa, rec:rec, expOrders:expOrders, expRet:expRet, exp:expOrders + expRet,
+    open:rows.filter(function(o){ return o.kind === 'open'; }), noRate:lines.filter(function(o){ return o.exp == null; })};
+}
+function ivRenderHC(){
+  var M = ivHCModel(), body = document.getElementById('iv-body'), E = tkEsc;
+  if(!M){ body.innerHTML = '<div class="tk-empty">Choose a homecare.</div>'; return; }
+  ivLoadRecon(M.p, M.hc);
+  document.getElementById('iv-clear').style.display = M.soa ? '' : 'none';
+  var claimed = M.rec ? M.rec.lines.reduce(function(t,o){ return t + o.L.price; }, 0) : 0;
+  var okAmt = M.rec ? M.rec.lines.reduce(function(t,o){ return t + (o.ok||0); }, 0) : 0;
+  var k = ivKpi(ivAED(M.exp), 'Expected — ' + ivMonthLbl(M.p), 'var(--accent)')
+    + ivKpi(ivAED(M.expOrders), M.lines.length + ' completed orders (per booking)')
+    + (M.ret.length ? ivKpi(ivAED(M.expRet), M.ret.length + ' exclusive CGs (monthly fee)', '#f59e0b') : '')
+    + (M.open.length ? ivKpi(M.open.length, 'past days not marked completed', 'var(--sick)') : '')
+    + (M.noRate.length ? ivKpi(M.noRate.length, 'orders with no rate', 'var(--absent)') : '');
+  if(M.rec){
+    var dif = claimed - M.exp;
+    k += ivKpi(ivAED(claimed), 'Homecare claims (' + M.rec.lines.length + ' lines)', 'var(--text)')
+      + ivKpi((dif > 0 ? '+' : '') + ivAED(dif), 'Claimed vs expected', Math.abs(dif) < 2 ? 'var(--duty)' : 'var(--absent)')
+      + ivKpi(ivAED(okAmt), 'Approvable after checks', 'var(--duty)');
+  }
+  document.getElementById('iv-kpis').innerHTML = k;
+  var h = '';
+  // reconciliation
+  var saved = _iv.recon[M.p + '__' + tkNorm(M.hc)];
+  if(M.rec){
+    var R = M.rec, cnt = {good:0, warn:0, bad:0}; R.lines.forEach(function(o){ cnt[o.cls] = (cnt[o.cls]||0) + 1; });
+    h += '<div class="tk-card"><div class="tk-card-h"><span>🔎 Homecare SOA vs our data — ' + E(M.soa.src) + ' · <span style="color:var(--duty)">' + cnt.good + ' matched</span> · <span style="color:var(--sick)">' + cnt.warn + ' to check</span> · <span style="color:var(--absent)">' + cnt.bad + ' not payable</span></span>'
+      + '<span style="display:flex;gap:6px;align-items:center"><span style="font-size:11px;color:var(--text2);font-weight:400">Approve</span><input id="iv-approve" class="tk-inp" style="width:110px" value="' + Math.round(okAmt) + '">'
+      + '<button class="tk-btn pri" onclick="ivPost()">✓ Approve &amp; post to P&amp;L</button></span></div>'
+      + '<div class="tk-scroll" style="max-height:480px"><table class="tk-tbl"><thead><tr><th>#</th><th>Their order / cust ID</th><th>Customer</th><th>Date</th><th>Their staff</th><th style="text-align:right">Claimed</th><th style="text-align:right">Expected</th><th>Matched by</th><th>Result</th><th>Notes</th></tr></thead><tbody>'
+      + R.lines.map(function(o, i){ var L = o.L;
+          return '<tr><td>' + (i+1) + '</td><td>' + E([L.order, L.sub].filter(Boolean).join(' / ') || '—') + '</td><td>' + E(L.name) + '</td><td>' + (L.date ? ivFmtD(L.date) : '') + '</td><td>' + E(L.staff) + '</td>'
+            + '<td style="text-align:right">' + ivAED(L.price) + '</td><td style="text-align:right">' + (o.exp == null ? '—' : ivAED(o.exp)) + '</td><td>' + E(o.how||'—') + '</td>'
+            + '<td style="font-weight:600;' + IV_CLS[o.cls] + '">' + E(o.status) + '</td><td style="font-size:10px;color:var(--text2)">' + E(o.notes.concat(o.rows.length === 1 ? o.rows[0].flags.filter(function(f){ return !/Not marked|Upcoming/.test(f); }) : []).join(' · ')) + '</td></tr>';
+        }).join('') + '</tbody></table></div></div>';
+    if(R.missing.length){
+      h += '<div class="tk-card"><div class="tk-card-h"><span>🟡 Completed in our data but not on their SOA — ' + R.missing.length + ' order(s), ' + ivAED(R.missing.reduce(function(t,o){ return t + (o.exp||0); }, 0)) + '</span><span style="font-size:10px;color:var(--text3);font-weight:400">they may bill these next month</span></div>'
+        + '<div class="tk-scroll" style="max-height:260px">' + ivStmtTable(R.missing, false) + '</div></div>';
+    }
+    var rUn = M.ret.filter(function(x){ return !x.claimed; });
+    if(rUn.length && R.lines.some(function(o){ return o.ret; })) h += '<div class="tk-card"><div class="tk-card-h"><span>🟡 Exclusive CGs not on their SOA: ' + rUn.map(function(x){ return E(x.cg); }).join(', ') + '</span></div></div>';
+  } else {
+    h += '<div class="tk-hero"><div><div class="tk-hero-t">Statement for ' + E(M.hc) + ' — ' + ivMonthLbl(M.p) + '</div><div class="tk-hero-s">Built from orders served this month (status Completed), the roster (leave / removed days left out) and the rate card. '
+      + 'Send it to the homecare to confirm, or upload the SOA they sent you to match it line by line.</div></div>'
+      + '<div style="display:flex;gap:8px"><button class="tk-btn big" onclick="ivUploadPick(\'hc\')">⬆ Upload their SOA</button><button class="tk-btn big" onclick="ivPasteOpen(\'hc\')">📋 Paste</button></div></div>';
+  }
+  if(saved) h += '<div style="font-size:11px;color:var(--text2);margin:-6px 0 12px">Last approved for ' + ivMonthLbl(M.p) + ': <b>AED ' + ivAED(saved.approved) + '</b> (claimed ' + ivAED(saved.claimed) + ', expected ' + ivAED(saved.expected) + ') by ' + E(saved.by||'') + ' on ' + E(String(saved.at||'').slice(0,10)) + ' — posted to P&amp;L.</div>';
+  // exclusive monthly fees
+  if(M.ret.length){
+    h += '<div class="tk-card"><div class="tk-card-h"><span>👑 Exclusive caregivers — monthly fee' + (M.ret[0].cfg ? ' (AED ' + ivAED(M.ret[0].cfg.amt) + ' / ' + (M.ret[0].cfg.days||24) + ' days' + (+M.ret[0].cfg.paid ? ', ' + M.ret[0].cfg.paid + ' paid leave/month' : ', leave unpaid') + ')' : '') + '</span><span>AED ' + ivAED(M.expRet) + '</span></div>'
+      + '<div class="tk-scroll" style="max-height:340px"><table class="tk-tbl"><thead><tr><th>Caregiver</th><th style="text-align:right">Active days</th><th style="text-align:right">Days worked</th><th style="text-align:right">Leave</th><th style="text-align:right">With HC client</th><th style="text-align:right">Pro-rata fee</th><th style="text-align:right">Deduction</th><th style="text-align:right">Payable</th>' + (M.rec ? '<th style="text-align:right">Claimed</th>' : '') + '<th>Basis</th></tr></thead><tbody>'
+      + M.ret.map(function(x){ return '<tr><td>' + E(x.cg) + '</td><td style="text-align:right">' + x.act + '/' + x.dim + '</td><td style="text-align:right">' + x.work + '</td><td style="text-align:right">' + (x.leave||'') + '</td><td style="text-align:right">' + (x.busy||'') + '</td>'
+          + '<td style="text-align:right">' + (x.base != null ? ivAED(x.base) : '—') + '</td><td style="text-align:right">' + (x.deduct ? '−' + ivAED(x.deduct) : '') + '</td><td style="text-align:right;font-weight:700">' + (x.exp != null ? ivAED(x.exp) : '—') + '</td>'
+          + (M.rec ? '<td style="text-align:right">' + (x.claimed ? ivAED(x.claimed) : '') + '</td>' : '') + '<td style="font-size:10px;color:var(--text2)">' + E(x.note) + '</td></tr>'; }).join('')
+      + '</tbody></table></div></div>';
+  }
+  // our statement
+  h += '<div class="tk-card"><div class="tk-card-h"><span>📄 Our statement — completed orders per booking · ' + M.lines.length + ' lines · AED ' + ivAED(M.expOrders) + '</span><span style="font-size:10px;color:var(--text3);font-weight:400">' + (M.exRows.length ? M.exRows.length + ' bookings by exclusive CGs are covered by the monthly fee' : '') + '</span></div>'
+    + '<div class="tk-scroll" style="max-height:520px">' + (M.lines.length ? ivStmtTable(M.lines, true) : '<div class="tk-empty">No completed per-booking orders this month.</div>') + '</div></div>';
+  if(M.open.length) h += '<div class="tk-card"><div class="tk-card-h"><span>⏰ Past days not marked completed — ' + M.open.length + ' (not in the statement until completed)</span></div><div class="tk-scroll" style="max-height:260px">' + ivStmtTable(M.open, false) + '</div></div>';
+  h += '<div style="font-size:11px;color:var(--text3);line-height:1.6;padding:2px 4px 16px">Expected cost per booking = rate card for this homecare (Prices: Dubai / Tintu) ÷ the days in the package for daily rows; when the package has no rate, the order\'s Homecare_Cost is used. '
+    + 'Exclusive caregivers are paid the monthly fee × active days ÷ days in month, less leave beyond the paid allowance (sick, off, paid, unpaid, holiday on the roster). Cancelled orders, bookings removed from the roster and days the caregiver was on leave are never payable.</div>';
+  body.innerHTML = h;
+}
+function ivStmtTable(list, flags){
+  var E = tkEsc;
+  return '<table class="tk-tbl"><thead><tr><th>Order ID</th><th>Sub-order</th><th>Customer</th><th>Date</th><th>Time</th><th>Location</th><th>Service</th><th>Status</th><th>Assigned staff</th><th style="text-align:right">Price</th><th>Basis</th>' + (flags ? '<th>Remarks</th>' : '') + '</tr></thead><tbody>'
+    + list.map(function(o){ return '<tr><td>' + E(o.cart) + '</td><td>' + E(o.child) + '</td><td>' + E(o.name) + '</td><td>' + ivFmtD(o.date) + '</td><td>' + E(o.time) + '</td><td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + E(o.addr) + '">' + E(o.addr) + '</td>'
+      + '<td>' + E(o.pkg) + '</td><td>' + E(o.status) + '</td><td>' + E(o.cg) + '</td><td style="text-align:right;font-weight:600">' + (o.exp == null ? '—' : ivAED(o.exp)) + '</td><td style="font-size:10px;color:var(--text2)">' + E(o.basis) + '</td>'
+      + (flags ? '<td style="font-size:10px;color:var(--sick)">' + E(o.flags.join(' · ')) + '</td>' : '') + '</tr>'; }).join('') + '</tbody></table>';
+}
+async function ivPost(){
+  var M = ivHCModel(); if(!M || !M.rec) return;
+  var v = ivAmt(document.getElementById('iv-approve').value);
+  if(isNaN(v) || v < 0){ alert('Type the approved amount, e.g. 23450'); return; }
+  if(!confirm('Approve AED ' + ivAED(v) + ' for ' + M.hc + ' — ' + ivMonthLbl(M.p) + '?\nThis sets the homecare cost in the P&L for that month.')) return;
+  try{
+    if(!_db) await initFirebase(); if(!_db) throw new Error('Firebase not connected');
+    var snap = await _db.collection(_PL_INV).where('period', '==', M.p).get(), mine = [];
+    snap.forEach(function(d){ var x = Object.assign({_id:d.id}, d.data()); if(tkHCMatch(x.homecare, M.hc)) mine.push(x); });
+    var files = mine.filter(function(i){ return !i.quick; }).reduce(function(t,i){ return t + (+i.amount||0); }, 0);
+    var quick = mine.find(function(i){ return i.quick; }), rest = ivN(v - files), now = new Date().toISOString(), by = (_session&&_session.username)||'';
+    if(rest < 0) throw new Error(M.hc + ' already has AED ' + ivAED(files) + ' in uploaded invoice files for this month — delete one in P&L to go lower');
+    if(quick) await _db.collection(_PL_INV).doc(quick._id).set({amount:rest, updated_at:now, updated_by:by, source:'invoicing'}, {merge:true});
+    else if(rest) await _db.collection(_PL_INV).add({period:M.p, homecare:M.hc, invoice_no:'', invoice_date:'', amount:rest, vat:0, attachment:null, quick:true, source:'invoicing', created_at:now, created_by:by});
+    var claimed = M.rec.lines.reduce(function(t,o){ return t + o.L.price; }, 0), cnt = {good:0, warn:0, bad:0}; M.rec.lines.forEach(function(o){ cnt[o.cls]++; });
+    var doc = {period:M.p, homecare:M.hc, approved:v, claimed:ivN(claimed), expected:ivN(M.exp), lines:M.rec.lines.length, matched:cnt.good, check:cnt.warn, rejected:cnt.bad, missing:M.rec.missing.length, file:M.soa.src, at:now, by:by};
+    await _db.collection('valeo_invoice_recon').doc(M.p + '__' + tkNorm(M.hc)).set(doc);
+    _iv.recon[M.p + '__' + tkNorm(M.hc)] = doc;
+    if(typeof _pl !== 'undefined' && _pl.loaded){ _pl.loaded = false; }   // P&L reloads with the new figure
+    ivMsg('✓ Approved AED ' + ivAED(v) + ' for ' + M.hc + ' — P&L updated'); ivRender();
+  }catch(e){ alert('Could not post: ' + e.message); }
+}
+function ivSOAaoa(M){
+  var aoa = [['VALEO - ' + M.hc + ' - ' + ivMonthLbl(M.p) + ' SOA'], [], ['Order ID','Sub-order ID','Customer Name','Date','Time','Location/Address','Service Type','Status','Assigned Staff','Price','Remarks']];
+  M.lines.forEach(function(o){ aoa.push([o.cart, o.child, o.name, o.date, o.time, o.addr, o.pkg, o.status, o.cg, o.exp == null ? '' : ivN(o.exp), o.flags.join('; ')]); });
+  aoa.push(['','','','','','','','','Total (per booking)', ivN(M.expOrders)]);
+  if(M.ret.length){
+    aoa.push([]); aoa.push(['Exclusive caregivers — monthly fee']); aoa.push(['Caregiver','Active days','Days worked','Leave days','With HC client','Pro-rata fee','Deduction','','','Payable','Basis']);
+    M.ret.forEach(function(x){ aoa.push([x.cg, x.act + '/' + x.dim, x.work, x.leave, x.busy, x.base != null ? ivN(x.base) : '', x.deduct ? ivN(x.deduct) : '', '', '', x.exp != null ? ivN(x.exp) : '', x.note]); });
+    aoa.push(['','','','','','','','','Total (monthly fees)', ivN(M.expRet)]);
+  }
+  aoa.push([]); aoa.push(['','','','','','','','','Total Amount', ivN(M.exp)]);
+  return aoa;
+}
+function ivDownloadHC(){
+  var M = ivHCModel(); if(!M) return;
+  var wb = XLSX.utils.book_new(), ws = XLSX.utils.aoa_to_sheet(ivSOAaoa(M));
+  ws['!cols'] = [10,10,22,11,9,34,34,12,20,10,30].map(function(w){ return {wch:w}; });
+  XLSX.utils.book_append_sheet(wb, ws, 'SOA');
+  if(M.rec){
+    var a = [['Their order','Their cust ID','Customer','Date','Their staff','Claimed','Expected','Matched by','Result','Notes']];
+    M.rec.lines.forEach(function(o){ a.push([o.L.order, o.L.sub, o.L.name, o.L.date, o.L.staff, o.L.price, o.exp == null ? '' : ivN(o.exp), o.how, o.status, o.notes.join('; ')]); });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(a), 'Reconciliation');
+    if(M.rec.missing.length){ var b = [['Order ID','Sub-order','Customer','Date','Caregiver','Expected']]; M.rec.missing.forEach(function(o){ b.push([o.cart, o.child, o.name, o.date, o.cg, o.exp]); }); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(b), 'Not on their SOA'); }
+  }
+  XLSX.writeFile(wb, 'Valeo_SOA_' + M.hc.replace(/[^A-Za-z0-9]+/g,'_').slice(0,30) + '_' + M.p + '.xlsx');
+}
+function ivPrint(title, sub, head, rows, totals){
+  var w = window.open('', '_blank'); if(!w){ alert('Please allow pop-ups to create the PDF.'); return; }
+  var logo = new URL('assets/valeo-logo.jpg', location.href).href, E = tkEsc;
+  w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>' + E(title) + '</title><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet"><style>'
+    + '@page{size:A4 landscape;margin:12mm}body{font-family:Poppins,Arial,sans-serif;color:#0E3A5E;margin:0;font-size:10px}header{display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #FFB900;padding-bottom:8px;margin-bottom:12px}'
+    + 'header img{height:42px}h1{font-size:16px;margin:0}.s{color:#5a6b7b;font-size:10px}table{width:100%;border-collapse:collapse}th{background:#0E3A5E;color:#fff;text-align:left;padding:5px 6px;font-size:9px}td{padding:4px 6px;border-bottom:1px solid #e6e1d6}'
+    + 'tr:nth-child(even) td{background:#FFFCF7}.r{text-align:right}.tot td{font-weight:700;background:#FFF3D1!important;border-top:2px solid #FFB900}</style></head><body>'
+    + '<header><div><h1>' + E(title) + '</h1><div class="s">' + E(sub) + '</div></div><img src="' + logo + '" alt="Valeo"></header><table><thead><tr>'
+    + head.map(function(h, i){ return '<th' + (/price|amount|payable|fee/i.test(h) ? ' class="r"' : '') + '>' + E(h) + '</th>'; }).join('') + '</tr></thead><tbody>'
+    + rows.map(function(r){ return '<tr' + (r._tot ? ' class="tot"' : '') + '>' + r.map(function(c, i){ return '<td' + (/price|amount|payable|fee/i.test(head[i]||'') ? ' class="r"' : '') + '>' + E(c == null ? '' : c) + '</td>'; }).join('') + '</tr>'; }).join('')
+    + '</tbody></table><div class="s" style="margin-top:10px">Generated ' + new Date().toISOString().slice(0,10) + ' · Valeo Health</div><script>window.onload=function(){setTimeout(function(){window.print()},400)}<\/script></body></html>');
+  w.document.close();
+}
+function ivPrintHC(){
+  var M = ivHCModel(); if(!M) return;
+  var rows = M.lines.map(function(o){ return [o.cart, o.child, o.name, ivFmtD(o.date), o.time, o.addr, o.pkg, o.status, o.cg, o.exp == null ? '' : ivAED(o.exp)]; });
+  M.ret.forEach(function(x){ rows.push(['', '', 'Monthly fee — exclusive CG', '', '', x.note, '', '', x.cg, x.exp == null ? '' : ivAED(x.exp)]); });
+  var t = ['', '', '', '', '', '', '', '', 'Total Amount', 'AED ' + ivAED(M.exp)]; t._tot = 1; rows.push(t);
+  ivPrint('VALEO — ' + ivMonthLbl(M.p) + ' SOA', M.hc, ['Order ID','Sub-order','Customer Name','Date','Time','Location/Address','Service Type','Status','Assigned Staff','Price'], rows);
+}
+
+// ── 2. MUMZWORLD ─────────────────────────────────────────────────
+function ivMWModel(){
+  var p = ivMonth(), basis = document.getElementById('iv-mw-basis').value, today = avToday(), C = {};
+  (window._lastRows||[]).forEach(function(r){
+    if(!isCountryRow(r) || odChannel(r) !== 'mumz') return;
+    var st = _normKey(r['Order_Status']); if(st === 'cancelled' || st === 'temporder') return;
+    var hc = ivHC(r); if(hc && ivExcludedHC(hc)) return;
+    var sd = ivSvc(r).slice(0,10), od = String(r['Order_Date']||'').slice(0,10);
+    if((basis === 'order' ? od : sd).slice(0,7) !== p) return;
+    var id = String(r['Cart_Order_ID']||r['Child_Order_ID']||'').trim();
+    var c = C[id] || (C[id] = {cart:id, names:[], phone:String(r['Phone Number']||'').trim(), ph:ivPh(r['Phone Number']), od:od, pkg:String(r['Parent_Package']||'').trim(), from:sd, to:sd, days:0, done:0, open:0, up:0, amt:0, served:0, exp:0, noRate:false, cgs:{}, hcs:{}});
+    c.names.push(r['User Name']); if(sd < c.from) c.from = sd; if(sd > c.to) c.to = sd;
+    var fp = parseFloat(r['Final_Price']||r['Order_Price']||0) || 0, ex = ivMzRate(r);
+    c.days++; c.amt += fp; if(ex == null) c.noRate = true; else c.exp += ex;
+    if(st === 'completed'){ c.done++; c.served += fp; } else if(sd > today) c.up++; else { c.open++; c.served += fp; }
+    var cg = String(r['Nurse_Assigned']||'').trim(); if(cg) c.cgs[cg] = 1; if(hc) c.hcs[hc] = 1;
+  });
+  var list = Object.values(C).map(function(c){ c.name = cuName(c.names); c.diff = c.noRate ? null : ivN(c.amt - c.exp); return c; })
+    .sort(function(a,b){ return a.from.localeCompare(b.from) || a.cart.localeCompare(b.cart); });
+  var M = {p:p, basis:basis, list:list, total:list.reduce(function(t,c){ return t + c.amt; }, 0), served:list.reduce(function(t,c){ return t + c.served; }, 0)};
+  if(_iv.mw) M.rec = ivMatchMW(M);
+  return M;
+}
+// Mumzworld's own list: their order ID differs, so match on phone (+ date when the phone has several orders)
+function ivMatchMW(M){
+  var byPh = {}; M.list.forEach(function(c){ if(c.ph) (byPh[c.ph] = byPh[c.ph] || []).push(c); });
+  var used = {}, out = [];
+  var dist = function(c, d){ if(!d) return 0; if(d >= c.from && d <= c.to) return 0; var a = Math.abs(new Date(d) - new Date(c.from)) / 864e5, b = Math.abs(new Date(d) - new Date(c.to)) / 864e5; return Math.min(a, b); };
+  _iv.mw.lines.forEach(function(L){
+    var cand = (byPh[ivPh(L.phone)] || []).filter(function(c){ return !used[c.cart]; }), how = 'Phone';
+    if(!cand.length && L.name){ var fn = ivFirst(L.name); cand = M.list.filter(function(c){ return !used[c.cart] && fn && c.names.some(function(n){ return ivFirst(n) === fn; }); }); how = 'Name'; }
+    if(cand.length > 1){
+      cand = cand.slice().sort(function(a,b){ return dist(a, L.date) - dist(b, L.date) || Math.abs(a.amt - L.price) - Math.abs(b.amt - L.price); });
+      how += ' + date';
+    }
+    var c = cand[0]; if(c && L.date && dist(c, L.date) > 3 && how.indexOf('Name') === 0) c = null;
+    var o = {L:L, c:c || null, how:c ? how : ''};
+    if(!c){ o.status = '❌ Not in our Mumzworld orders'; o.cls = 'bad'; }
+    else { used[c.cart] = 1;
+      var d = L.price - c.amt;
+      if(Math.abs(d) <= Math.max(2, c.amt * 0.01)){ o.status = '✅ Matched'; o.cls = 'good'; }
+      else { o.status = '⚠ Amount differs (' + (d > 0 ? '+' : '−') + ivAED(Math.abs(d)) + ')'; o.cls = 'warn'; } }
+    out.push(o);
+  });
+  return {lines:out, ours:M.list.filter(function(c){ return !used[c.cart]; })};
+}
+async function ivLoadMWDocs(){
+  if(_iv.mwLoaded) return; _iv.mwLoaded = true;
+  try{ if(!_db) await initFirebase(); if(!_db) return; var s = await _db.collection('valeo_mw_invoices').get(); s.forEach(function(d){ _iv.mwDocs[d.id] = d.data(); }); ivRender(); }
+  catch(e){ console.warn('[iv] mw docs', e); _iv.mwLoaded = false; }
+}
+async function ivSaveMWDoc(){
+  var p = ivMonth(), g = function(id){ return String(document.getElementById(id).value||'').trim(); };
+  var d = Object.assign({}, _iv.mwDocs[p]||{}, {period:p, invoice_no:g('iv-mw-no'), raised:g('iv-mw-raised'), amount:ivAmt(g('iv-mw-amt'))||0, paid:ivAmt(g('iv-mw-paid'))||0, paid_date:g('iv-mw-pdate'), notes:g('iv-mw-notes'), updated_at:new Date().toISOString(), updated_by:(_session&&_session.username)||''});
+  var M = ivMWModel(); if(M.rec){ var map = {}; M.rec.lines.forEach(function(o){ if(o.c && (o.L.order || o.L.sub)) map[o.L.order || o.L.sub] = o.c.cart; }); d.map = Object.assign({}, d.map||{}, map); }
+  try{ if(!_db) await initFirebase(); if(!_db) throw new Error('Firebase not connected'); await _db.collection('valeo_mw_invoices').doc(p).set(d); _iv.mwDocs[p] = d; ivMsg('✓ Saved Mumzworld invoice for ' + ivMonthLbl(p)); ivRender(); }
+  catch(e){ alert('Could not save: ' + e.message); }
+}
+function ivRenderMW(){
+  ivLoadMWDocs();
+  var M = ivMWModel(), E = tkEsc, q = String(document.getElementById('iv-mw-q').value||'').toLowerCase().trim(), doc = _iv.mwDocs[M.p] || {};
+  document.getElementById('iv-mw-clear').style.display = _iv.mw ? '' : 'none';
+  var outstanding = Object.values(_iv.mwDocs).reduce(function(t,d){ return t + Math.max(0, (+d.amount||0) - (+d.paid||0)); }, 0);
+  var diffN = M.list.filter(function(c){ return c.diff != null && Math.abs(c.diff) > Math.max(2, c.amt * 0.01); }).length;
+  var k = ivKpi(ivAED(M.total), 'Mumzworld — ' + ivMonthLbl(M.p) + ' (' + M.list.length + ' orders)', 'var(--accent)')
+    + ivKpi(ivAED(M.served), 'Served to date') + ivKpi(ivAED(M.total - M.served), 'Still upcoming this month', 'var(--text2)')
+    + (diffN ? ivKpi(diffN, 'orders off the Mumzworld rate card', 'var(--sick)') : '')
+    + ivKpi(doc.invoice_no ? (+doc.paid >= +doc.amount && +doc.amount ? 'Paid' : 'Raised') : 'Not raised', 'Invoice status', doc.invoice_no ? (+doc.paid >= +doc.amount && +doc.amount ? 'var(--duty)' : '#f59e0b') : 'var(--text3)')
+    + ivKpi(ivAED(outstanding), 'Outstanding (all months)', outstanding ? 'var(--absent)' : 'var(--duty)');
+  if(M.rec) k += ivKpi(M.rec.lines.filter(function(o){ return o.cls === 'good'; }).length + '/' + M.rec.lines.length, 'their lines matched', 'var(--duty)');
+  document.getElementById('iv-mw-kpis').innerHTML = k;
+  var v = function(x){ return E(x == null ? '' : String(x)); };
+  var h = '<div class="tk-card"><div class="tk-card-h"><span>🧾 Invoice to Mumzworld — ' + ivMonthLbl(M.p) + '</span><button class="tk-btn pri" onclick="ivSaveMWDoc()">💾 Save</button></div><div style="padding:12px 14px;display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;font-size:11px;color:var(--text2)">'
+    + '<label>Invoice no.<br><input id="iv-mw-no" class="tk-inp" style="width:120px" value="' + v(doc.invoice_no) + '"></label>'
+    + '<label>Raised on<br><input id="iv-mw-raised" type="date" class="tk-inp" value="' + v(doc.raised) + '"></label>'
+    + '<label>Amount (AED)<br><input id="iv-mw-amt" class="tk-inp" style="width:110px" value="' + v(doc.amount != null ? doc.amount : Math.round(M.total)) + '"></label>'
+    + '<label>Received (AED)<br><input id="iv-mw-paid" class="tk-inp" style="width:110px" value="' + v(doc.paid||'') + '"></label>'
+    + '<label>Received on<br><input id="iv-mw-pdate" type="date" class="tk-inp" value="' + v(doc.paid_date) + '"></label>'
+    + '<label style="flex:1;min-width:180px">Notes<br><input id="iv-mw-notes" class="tk-inp" style="width:100%" value="' + v(doc.notes) + '"></label></div>';
+  var months = Object.keys(_iv.mwDocs).sort().reverse();
+  if(months.length) h += '<table class="tk-tbl"><thead><tr><th>Month</th><th>Invoice</th><th>Raised</th><th style="text-align:right">Amount</th><th style="text-align:right">Received</th><th style="text-align:right">Outstanding</th><th>Received on</th></tr></thead><tbody>'
+    + months.map(function(m){ var d = _iv.mwDocs[m], o = Math.max(0, (+d.amount||0) - (+d.paid||0)); return '<tr><td>' + ivMonthLbl(m) + '</td><td>' + E(d.invoice_no||'') + '</td><td>' + E(d.raised||'') + '</td><td style="text-align:right">' + ivAED(d.amount) + '</td><td style="text-align:right">' + ivAED(d.paid) + '</td><td style="text-align:right;font-weight:700;color:' + (o ? 'var(--absent)' : 'var(--duty)') + '">' + ivAED(o) + '</td><td>' + E(d.paid_date||'') + '</td></tr>'; }).join('') + '</tbody></table>';
+  h += '</div>';
+  if(M.rec){
+    var R = M.rec;
+    h += '<div class="tk-card"><div class="tk-card-h"><span>🔎 Mumzworld list vs our orders — ' + E(_iv.mw.src) + ' (matched on phone; date breaks ties)</span></div><div class="tk-scroll" style="max-height:420px"><table class="tk-tbl"><thead><tr><th>Their order</th><th>Customer</th><th>Phone</th><th>Date</th><th style="text-align:right">Their amount</th><th>Our order</th><th>Our dates</th><th style="text-align:right">Our amount</th><th>Matched by</th><th>Result</th></tr></thead><tbody>'
+      + R.lines.map(function(o){ var L = o.L, c = o.c; return '<tr><td>' + E(L.order || L.sub || '—') + '</td><td>' + E(L.name) + '</td><td>' + E(L.phone) + '</td><td>' + (L.date ? ivFmtD(L.date) : '') + '</td><td style="text-align:right">' + ivAED(L.price) + '</td>'
+        + '<td>' + (c ? E(c.cart) : '') + '</td><td>' + (c ? ivFmtD(c.from) + (c.to !== c.from ? ' → ' + ivFmtD(c.to) : '') : '') + '</td><td style="text-align:right">' + (c ? ivAED(c.amt) : '') + '</td><td>' + E(o.how) + '</td><td style="font-weight:600;' + IV_CLS[o.cls] + '">' + E(o.status) + '</td></tr>'; }).join('')
+      + '</tbody></table></div></div>';
+    if(R.ours.length) h += '<div class="tk-card"><div class="tk-card-h"><span>🟡 In our data but not in their list — ' + R.ours.length + ' orders, AED ' + ivAED(R.ours.reduce(function(t,c){ return t + c.amt; }, 0)) + '</span></div><div class="tk-scroll" style="max-height:300px">' + ivMWTable(R.ours) + '</div></div>';
+  }
+  var list = M.list.filter(function(c){ return !q || [c.name, c.phone, c.cart, c.names.join(' ')].join(' ').toLowerCase().indexOf(q) >= 0; });
+  h += '<div class="tk-card"><div class="tk-card-h"><span>📄 Statement — ' + list.length + ' orders · AED ' + ivAED(list.reduce(function(t,c){ return t + c.amt; }, 0)) + '</span><span style="font-size:10px;color:var(--text3);font-weight:400">one line per Valeo order (parent) · amount = Final Price of the days in this month</span></div>'
+    + '<div class="tk-scroll" style="max-height:560px">' + ivMWTable(list) + '</div></div>'
+    + '<div style="font-size:11px;color:var(--text3);line-height:1.6;padding:2px 4px 16px">Mumzworld orders = B2B client "Mumzworld". Cancelled and temp orders left out. "Rate card" = Valeo price to Mumzworld from the costing sheet (1 June onwards), less the month\'s promo discount (e.g. 10% for orders placed in Nov 2026) — set in Rate card. '
+    + 'Many Mumzworld bookings carry the same Mumzworld phone number; for those the match falls back to the service date and amount.</div>';
+  document.getElementById('iv-mw-body').innerHTML = h;
+}
+function ivMWTable(list){
+  var E = tkEsc;
+  return '<table class="tk-tbl"><thead><tr><th>Valeo order</th><th>Customer</th><th>Phone</th><th>Package</th><th>Dates</th><th style="text-align:right">Days</th><th>Caregiver / HC</th><th style="text-align:right">Amount</th><th style="text-align:right">Rate card</th><th>Status</th></tr></thead><tbody>'
+    + list.map(function(c){ var off = c.diff != null && Math.abs(c.diff) > Math.max(2, c.amt * 0.01);
+      return '<tr><td>' + E(c.cart) + '</td><td>' + E(c.name) + '</td><td>' + E(c.phone) + '</td><td>' + E(c.pkg) + '</td><td>' + ivFmtD(c.from) + (c.to !== c.from ? ' → ' + ivFmtD(c.to) : '') + '</td><td style="text-align:right">' + c.days + '</td>'
+        + '<td style="font-size:10px">' + E(Object.keys(c.cgs).join(', ') || '—') + '<br><span style="color:var(--text3)">' + E(Object.keys(c.hcs).join(', ')) + '</span></td><td style="text-align:right;font-weight:700">' + ivAED(c.amt) + '</td>'
+        + '<td style="text-align:right;' + (off ? 'color:var(--sick);font-weight:600' : 'color:var(--text3)') + '" title="' + (c.noRate ? 'No Mumzworld price for this package' : off ? 'Differs from rate card by ' + ivAED(c.diff) : '') + '">' + (c.noRate ? '—' : ivAED(c.exp)) + '</td>'
+        + '<td style="font-size:10px">' + (c.done === c.days ? '<span style="color:var(--duty)">Completed</span>' : [c.done ? c.done + ' done' : '', c.open ? '<span style="color:var(--sick)">' + c.open + ' not completed</span>' : '', c.up ? c.up + ' upcoming' : ''].filter(Boolean).join(' · ')) + '</td></tr>'; }).join('') + '</tbody></table>';
+}
+function ivMWaoa(M){
+  var a = [['VALEO - Mumzworld - ' + ivMonthLbl(M.p) + ' Statement'], [], ['Valeo Order ID','Customer Name','Phone','Package','From','To','Days','Assigned Staff','Status','Amount (AED)']];
+  M.list.forEach(function(c){ a.push([c.cart, c.name, c.phone, c.pkg, c.from, c.to, c.days, Object.keys(c.cgs).join(', '), c.done === c.days ? 'Completed' : c.up ? 'Ongoing' : 'Not completed', ivN(c.amt)]); });
+  a.push(['','','','','','','','','Total Amount', ivN(M.total)]);
+  return a;
+}
+function ivDownloadMW(){
+  var M = ivMWModel(), wb = XLSX.utils.book_new(), ws = XLSX.utils.aoa_to_sheet(ivMWaoa(M));
+  ws['!cols'] = [12,24,15,40,11,11,6,24,13,12].map(function(w){ return {wch:w}; });
+  XLSX.utils.book_append_sheet(wb, ws, 'Statement');
+  if(M.rec){ var a = [['Their order','Customer','Phone','Date','Their amount','Our order','Our amount','Matched by','Result']];
+    M.rec.lines.forEach(function(o){ a.push([o.L.order || o.L.sub, o.L.name, o.L.phone, o.L.date, o.L.price, o.c ? o.c.cart : '', o.c ? ivN(o.c.amt) : '', o.how, o.status]); });
+    M.rec.ours.forEach(function(c){ a.push(['', c.name, c.phone, c.from, '', c.cart, ivN(c.amt), '', '🟡 Not in their list']); });
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(a), 'Reconciliation'); }
+  XLSX.writeFile(wb, 'Valeo_Mumzworld_Statement_' + M.p + '.xlsx');
+}
+function ivPrintMW(){
+  var M = ivMWModel();
+  var rows = M.list.map(function(c){ return [c.cart, c.name, c.phone, c.pkg, ivFmtD(c.from) + (c.to !== c.from ? ' – ' + ivFmtD(c.to) : ''), c.days, Object.keys(c.cgs).join(', '), ivAED(c.amt)]; });
+  var t = ['', '', '', '', '', '', 'Total Amount', 'AED ' + ivAED(M.total)]; t._tot = 1; rows.push(t);
+  ivPrint('VALEO — Mumzworld Statement · ' + ivMonthLbl(M.p), 'Babysitting services ' + (M.basis === 'order' ? 'ordered' : 'delivered') + ' in ' + ivMonthLbl(M.p), ['Valeo Order','Customer','Phone','Package','Dates','Days','Caregiver','Amount (AED)'], rows);
+}
+
+// ── 3. RATE CARD ─────────────────────────────────────────────────
+function ivRenderRC(){
+  var rc = ivRC(), E = tkEsc, keys = IV_PK.map(function(p){ return p[0] + '|' + p[1] + '|' + p[2]; });
+  var inp = function(path, val, w){ return '<input class="tk-inp" style="width:' + (w||64) + 'px;padding:3px 5px;font-size:11px;text-align:right" value="' + E(val == null ? '' : val) + '" onchange="ivRCSet(\'' + path + '\', this.value)">'; };
+  var h = '<div class="tk-hero"><div><div class="tk-hero-t">Rate card</div><div class="tk-hero-s">Loaded from the costing sheet (Prices: Dubai, Tintu, mumzworld new). Change any figure and press Save — statements recalculate straight away.</div></div>'
+    + '<div style="display:flex;gap:8px"><button class="tk-btn" onclick="ivRCReset()">↺ Reset to sheet</button><button class="tk-btn pri big" onclick="ivSaveRC()">💾 Save rate card</button></div></div>';
+  h += '<div class="tk-card"><div class="tk-card-h"><span>👑 Exclusive caregivers — monthly fee per caregiver</span><button class="tk-btn" onclick="ivRCAddEx()">+ Homecare</button></div><table class="tk-tbl"><thead><tr><th>Homecare (name starts with)</th><th style="text-align:right">Monthly fee AED</th><th style="text-align:right">Working days</th><th style="text-align:right">Paid leave days / month</th><th style="text-align:right">Pay per paid leave day</th><th></th></tr></thead><tbody>'
+    + rc.ex.map(function(x, i){ return '<tr><td><input class="tk-inp" style="width:140px;padding:3px 5px;font-size:11px" value="' + E(x.match) + '" onchange="ivRCSet(\'ex.' + i + '.match\', this.value)"></td><td style="text-align:right">' + inp('ex.' + i + '.amt', x.amt) + '</td><td style="text-align:right">' + inp('ex.' + i + '.days', x.days) + '</td><td style="text-align:right">' + inp('ex.' + i + '.paid', x.paid) + '</td><td style="text-align:right">' + inp('ex.' + i + '.pay', x.pay, 90) + '</td><td><button class="tk-x" onclick="ivRCDelEx(' + i + ')">✕</button></td></tr>'; }).join('')
+    + '</tbody></table><div style="font-size:10px;color:var(--text3);padding:6px 14px 10px">Payable = fee × active days ÷ days in month − (leave days beyond the paid allowance × fee ÷ working days). Pay per paid leave day blank = full day rate; for Shifa enter the caregiver\'s daily salary when known (only the salary is paid on those days).</div></div>';
+  var disc = rc.disc || {};
+  h += '<div class="tk-card"><div class="tk-card-h"><span>🛍️ Mumzworld promo discount by order month</span><button class="tk-btn" onclick="ivRCAddDisc()">+ Month</button></div><div style="padding:10px 14px;display:flex;gap:14px;flex-wrap:wrap;font-size:11px">'
+    + (Object.keys(disc).sort().map(function(m){ return '<span>' + ivMonthLbl(m) + ' ' + inp('disc.' + m, disc[m], 44) + ' % <button class="tk-x" onclick="ivRCDelDisc(\'' + m + '\')">✕</button></span>'; }).join('') || '<span style="color:var(--text3)">No promo months</span>') + '</div></div>';
+  h += '<div class="tk-card"><div class="tk-card-h"><span>📦 Package rates — homecare cost per package, and Valeo price to Mumzworld</span><button class="tk-btn" onclick="ivRCAddCol()">+ Homecare column</button></div><div class="tk-scroll" style="max-height:640px"><table class="tk-tbl"><thead><tr><th>Package</th>'
+    + rc.cols.map(function(c, i){ return '<th style="text-align:right" title="Applies to homecares whose name contains: ' + E(c.match) + '">' + E(c.label) + ' <button class="tk-x" style="font-size:9px" onclick="ivRCDelCol(' + i + ')">✕</button></th>'; }).join('') + '<th style="text-align:right;color:var(--accent)">Mumzworld</th></tr></thead><tbody>'
+    + keys.map(function(k){ return '<tr><td style="white-space:nowrap">' + ivPkgLbl(k) + '</td>' + rc.cols.map(function(c){ return '<td style="text-align:right">' + inp('cost.' + c.id + '.' + k, (rc.cost[c.id]||{})[k]) + '</td>'; }).join('') + '<td style="text-align:right">' + inp('mz.' + k, rc.mz[k]) + '</td></tr>'; }).join('')
+    + '</tbody></table></div><div style="font-size:10px;color:var(--text3);padding:6px 14px 10px">Additional-hour bookings are costed at the 4-hour rate ÷ 4 per hour. Homecares without a column (e.g. Mahara, Golden Care, EMS Care) fall back to the order\'s Homecare_Cost.</div></div>';
+  document.getElementById('iv-rc-body').innerHTML = h;
+}
+function ivRCSet(path, val){
+  var rc = ivRC(), a = path.split('.'), v = String(val).trim();
+  var num = v === '' ? '' : ivAmt(v);
+  if(a[0] === 'ex'){ var x = rc.ex[+a[1]]; x[a[2]] = a[2] === 'match' ? v : (isNaN(num) ? '' : num); }
+  else if(a[0] === 'disc'){ if(v === '' || isNaN(num)) delete rc.disc[a[1]]; else rc.disc[a[1]] = num; }
+  else if(a[0] === 'cost'){ var t = rc.cost[a[1]] = rc.cost[a[1]] || {}, k = a.slice(2).join('.'); if(v === '' || isNaN(num)) delete t[k]; else t[k] = num; }
+  else if(a[0] === 'mz'){ var k2 = a.slice(1).join('.'); if(v === '' || isNaN(num)) delete rc.mz[k2]; else rc.mz[k2] = num; }
+  ivMsg('Unsaved changes — press Save rate card');
+}
+function ivRCAddEx(){ var n = String(prompt('Homecare name (as it appears in orders, e.g. Golden Care)')||'').trim(); if(!n) return; ivRC().ex.push({match:n.toLowerCase(), label:n, amt:'', days:24, paid:0, pay:''}); ivRenderRC(); }
+function ivRCDelEx(i){ ivRC().ex.splice(i, 1); ivRenderRC(); }
+function ivRCAddDisc(){ var m = String(prompt('Month (YYYY-MM)', avToday().slice(0,7))||'').trim(); if(!/^\d{4}-\d{2}$/.test(m)) return; var d = ivAmt(prompt('Discount % for Mumzworld orders placed in ' + m, '10')); if(isNaN(d)) return; ivRC().disc[m] = d; ivRenderRC(); }
+function ivRCDelDisc(m){ delete ivRC().disc[m]; ivRenderRC(); }
+function ivRCAddCol(){
+  var n = String(prompt('Homecare name (as in orders, e.g. Mahara HC AD)')||'').trim(); if(!n) return;
+  var rc = ivRC(), from = String(prompt('Copy rates from which column? (' + rc.cols.map(function(c){ return c.label; }).join(', ') + ') — leave blank to start empty')||'').trim().toLowerCase();
+  var id = 'c' + Date.now().toString(36), src = rc.cols.find(function(c){ return c.label.toLowerCase() === from || c.id === from; });
+  rc.cols.push({id:id, label:n, match:n.toLowerCase().split(/\s+/)[0]});
+  rc.cost[id] = src ? JSON.parse(JSON.stringify(rc.cost[src.id]||{})) : {};
+  ivRenderRC(); ivMsg('Unsaved changes — press Save rate card');
+}
+function ivRCDelCol(i){ var rc = ivRC(); if(!confirm('Remove the ' + rc.cols[i].label + ' column?')) return; delete rc.cost[rc.cols[i].id]; rc.cols.splice(i, 1); ivRenderRC(); }
+function ivRCReset(){ if(!confirm('Replace every rate with the costing-sheet figures?')) return; _iv.rc = ivDefaults(); ivRenderRC(); ivMsg('Reset — press Save rate card to keep it'); }
+</script>
+<script>
+// ═════════════════════════════════════════════════════════════════
 // GROUPED NAVIGATION — the .main-tab buttons are moved into a few dropdowns.
 // The buttons themselves are untouched, so switchTab(), role-based hiding and the
 // ticket / leave badges keep working; navSync() just mirrors their state on the groups.
@@ -24637,7 +25395,7 @@ var NAV_GROUPS = [
   {id:'sched',   label:'🗓 Scheduling',        short:'🗓 Schedule', tabs:['roster','planner','avail','ops','openorders']},
   {id:'hc',      label:'🏥 Homecare Partners', short:'🏥 Partners', tabs:['profiles','exclusive','tickets','leave','complaints','penalty','supply']},
   {id:'growth',  label:'🎯 Leads & Clients',   short:'🎯 Leads',    tabs:['customers','customleads','bsleads','expecting','mumz']},
-  {id:'finance', label:'💰 Finance & Reports', short:'💰 Finance',  tabs:['analytics','pl','odrev','transport']}
+  {id:'finance', label:'💰 Finance & Reports', short:'💰 Finance',  tabs:['analytics','pl','invoicing','odrev','transport']}
 ];
 function navTabKey(b){ var m = String(b.getAttribute('onclick')||'').match(/switchTab\(['"]([a-z]+)['"]\)/); return m ? m[1] : ''; }
 function navBuild(){
