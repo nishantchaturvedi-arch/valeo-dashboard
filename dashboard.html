@@ -24893,7 +24893,9 @@ function ivRetainers(hc, p){
       if(cd.holiday) lv.push(cd.holiday + ' holiday'); if(cd.unpaid) lv.push(cd.unpaid + ' unpaid');
       if(paidLv) lv.push(paidLv + ' paid leave' + (hasPay ? ' at ' + ivAED(+cfg.pay) : ''));
       if(cd.off) lv.push(cd.off + ' day off (not deducted)');
+      var inferred = st && st.slice(0,7) === p && !getCGJoin(c.name, c.hc);
       o.note = (n.act < dim ? 'active ' + n.act + ' of ' + dim + ' days' : 'full month')
+        + (inferred ? ' · ⚠ no start date on the roster — counted from first booking ' + ivFmtD(st) + '; set the start date if the caregiver was paid from earlier' : '')
         + (lv.length ? ' · ' + lv.join(', ') : '')
         + (n.busy ? ' · ' + n.busy + ' day(s) with HC\'s own client' + (ded ? ' (deducted)' : '') : '')
         + (gone ? ' · ⚠ last booking ' + ivFmtD(n.last) + ' — if the caregiver left, set the end date on the roster' : '');
