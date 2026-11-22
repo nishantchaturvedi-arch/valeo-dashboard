@@ -12783,10 +12783,24 @@ async function exLoad(){
     if(!_db) await initFirebase(); if(!_db) return;
     var d = await _db.collection('valeo_exclusive').doc('config').get();
     if(d.exists){ var v = d.data()||{}; _ex.hcs = v.hcs || EX_DEFAULT_HCS.slice(); _ex.add = v.add||{}; _ex.remove = v.remove||{}; _ex.per = v.per||{}; _ex.migrated = true; }
-    _ex.loaded = true; exCache();
+    _ex.loaded = true; _ex.loadErr = ''; exCache();
     if(!d.exists) exMigrate();
     exRefresh();
-  }catch(e){ console.warn('[exclusive] load', e); }
+  }catch(e){ console.warn('[exclusive] load', e); _ex.loadErr = e && e.message || 'could not reach the database'; exRefresh(); }
+}
+// Changes are blocked until the saved list has loaded: saving early would overwrite it with the defaults.
+function exReady(){
+  if(_ex.loaded) return true;
+  alert('The saved exclusive list has not loaded yet' + (_ex.loadErr ? ' (' + _ex.loadErr + ')' : '') + '.\nChanges are blocked so your saved list is not overwritten. Try again once it loads — use "Retry" on the Exclusive CGs page.');
+  return false;
+}
+function exRetry(){ _ex.loadErr = ''; exRefresh(); exLoad(); }
+function exWarnHTML(){
+  if(_ex.loaded) return '';
+  return '<div style="margin:0 0 14px;padding:10px 14px;border:1px solid rgba(248,81,73,.4);background:rgba(248,81,73,.1);border-radius:8px;font-size:12px;line-height:1.6">'
+    + '⚠ <b>The saved exclusive list could not be loaded' + (_ex.loadErr ? ' — ' + tkEsc(_ex.loadErr) : ' yet') + '.</b> Only the defaults are shown (every Shifa caregiver exclusive); caregivers you marked exclusive at other homecares and any exclusive dates are missing, '
+    + 'so utilisation, P&amp;L hours and Invoicing treat them as non-exclusive. Changes are blocked until it loads. '
+    + '<button class="tk-btn" style="margin-left:6px" onclick="exRetry()">↻ Retry</button></div>';
 }
 // first run: turn the old first-name list into named caregivers so nobody changes status
 function exMigrate(){
@@ -12799,12 +12813,14 @@ function exMigrate(){
 }
 function exCache(){ try{ localStorage.setItem(ckey('valeo_exclusive_v2'), JSON.stringify({hcs:_ex.hcs, add:_ex.add, remove:_ex.remove, per:_ex.per, migrated:_ex.migrated})); }catch(e){} }
 async function exSave(){
+  if(!_ex.loaded) return;               // never overwrite the saved list with defaults
   exCache();
   try{ if(!_db) await initFirebase(); if(_db) await _db.collection('valeo_exclusive').doc('config').set({hcs:_ex.hcs, add:_ex.add, remove:_ex.remove, per:_ex.per||{}, updated_at:new Date().toISOString(), updated_by:(_session&&_session.username)||''}); }
   catch(e){ alert('Could not save the exclusive list: ' + e.message); }
 }
 function exSet(cg, hc, on){
   if(!tkIsMaster()){ alert('Only Valeo can change exclusive caregivers.'); return; }
+  if(!exReady()){ exRefresh(); return; }
   var k = exKey(cg, hc);
   if(exPeriods(cg, hc)){
     if(!confirm(cg + ' has exclusive dates (' + exPeriodTxt(exPeriods(cg, hc)) + ').\nSwitching ' + (on ? 'on' : 'off') + ' removes the dates and makes the change for all days. Continue?')){ exRefresh(); return; }
@@ -12845,6 +12861,7 @@ function initExclusive(){ if(!_ex.loaded) exLoad(); exRender(); }
 var _exDt = null;
 function exDatesOpen(cg, hc){
   if(!tkIsMaster()){ alert('Only Valeo can change exclusive caregivers.'); return; }
+  if(!exReady()) return;
   var per = exPeriods(cg, hc);
   _exDt = {cg:cg, hc:hc, rows:per ? per.map(function(x){ return {from:x.from||'', to:x.to||''}; }) : [{from:'', to:''}]};
   var m = document.getElementById('ex-dt-modal');
@@ -12886,10 +12903,10 @@ function exRender(){
     + '<div class="tk-kpi"><div class="tk-kpi-v">' + (nAll - nEx) + '</div><div class="tk-kpi-l">Not exclusive</div></div>'
     + '<div class="tk-kpi"><div class="tk-kpi-v">' + nAll + '</div><div class="tk-kpi-l">Caregivers</div></div>';
   var hcs = Object.keys(groups).sort(function(a,b){ return (exHCWide(b)?1:0) - (exHCWide(a)?1:0) || a.localeCompare(b); });
-  if(!hcs.length){ box.innerHTML = '<div class="tk-empty">' + (nAll ? 'No caregivers match.' : 'No caregivers yet — order data has not loaded.') + '</div>'; return; }
+  if(!hcs.length){ box.innerHTML = exWarnHTML() + '<div class="tk-empty">' + (nAll ? 'No caregivers match.' : 'No caregivers yet — order data has not loaded.') + '</div>'; return; }
   var E = tkEsc, canEdit = tkIsMaster();
   var stale = new Date(Date.now() - 60*864e5).toISOString().slice(0,10);
-  box.innerHTML = hcs.map(function(hc){
+  box.innerHTML = exWarnHTML() + hcs.map(function(hc){
     var list = groups[hc].sort(function(a,b){ return (b.on?1:0) - (a.on?1:0) || a.name.localeCompare(b.name); });
     var wide = exHCWide(hc), n = list.filter(function(c){ return c.on; }).length;
     return '<div class="tk-card"><div class="tk-card-h"><span>' + E(hc) + ' <span style="font-weight:500;color:var(--text3)">· ' + n + ' of ' + list.length + ' exclusive</span></span>'
@@ -25255,7 +25272,7 @@ function ivRenderHC(){
       + ivKpi(ivAED(okAmt - M.penDed), 'Approvable after checks' + (M.penDed ? ' & penalties' : ''), 'var(--duty)');
   }
   document.getElementById('iv-kpis').innerHTML = k;
-  var h = '';
+  var h = typeof exWarnHTML === 'function' ? exWarnHTML() : '';
   // reconciliation
   var saved = _iv.recon[M.p + '__' + tkNorm(M.hc)];
   if(M.rec){
