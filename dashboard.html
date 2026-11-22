@@ -24719,8 +24719,13 @@ var IV_COLS0 = [{id:'unicare',label:'Unicare',match:'unicare'},{id:'bayti',label
 // Exclusive caregivers: fixed monthly fee per caregiver for 24 working days, pro-rata by active days.
 // paid = leave days a month the homecare is still paid for; pay = what such a day is paid (blank = full day rate;
 // Shifa: only the caregiver's salary — fill in when known).
-var IV_EX0 = [{match:'shifa',label:'Shifa',amt:6200,days:24,paid:1,pay:''},{match:'unicare',label:'Unicare',amt:6500,days:24,paid:0,pay:''},
-  {match:'caresynq',label:'Caresynq',amt:6000,days:24,paid:0,pay:''},{match:'mahara',label:'Mahara',amt:6500,days:24,paid:0,pay:''}];
+var IV_EX0 = [{match:'shifa',label:'Shifa',amt:6200,div:30,paid:1,pay:''},{match:'unicare',label:'Unicare',amt:6500,div:30,paid:0,pay:''},
+  {match:'caresynq',label:'Caresynq',amt:6000,div:30,paid:0,pay:''},{match:'mahara',label:'Mahara',amt:6500,div:30,paid:0,pay:''}];
+// How a roster day counts for an exclusive caregiver's monthly fee (as in the homecare invoice sheet):
+// paid days = active days in the month (capped at 30) − leave days; fee = monthly × paid days ÷ 30.
+// Week-offs and day-offs are never deducted. Sick: the first N a month are paid (Shifa 1). Paid leave:
+// not deducted, unless a "pay per paid leave day" is set (then only that is paid). Holiday / unpaid: deducted.
+var IV_EX_DED = {sick:'sick', holiday:'holiday', unpaid:'unpaid', paid:'paid'};
 var IV_DISC0 = {'2026-11':10};   // Mumzworld promo: % off the Valeo→Mumzworld price for orders placed that month
 var IV_EXCL = ['carezone home healthcare llc','dummy homecare','helpful agency','nifas hc','babysitting ksa','pyramid home health care'];
 var IV_LEAVE = {sick:1, off:1, holiday:1, paid:1, unpaid:1};
@@ -24872,16 +24877,24 @@ function ivRetainers(hc, p){
       else if(r.code === 'weekoff') n.wo++;
     }
     if(!n.work && !n.leave && !n.busy) return;          // not on the roster this month
-    var o = {cg:c.name, hc:c.hc, act:n.act, dim:dim, work:n.work, leave:n.leave, busy:n.busy, codes:n.codes, cfg:cfg, exp:null, note:''};
+    var o = {cg:c.name, hc:c.hc, act:n.act, dim:dim, work:n.work, leave:n.leave, busy:n.busy, wo:n.wo, codes:n.codes, off:(n.codes.off||0), cfg:cfg, exp:null, note:''};
     var mEnd = p + '-' + pad(dim), gone = n.last && !getCGExit(c.name, c.hc) && mEnd < avToday() && (new Date(mEnd) - new Date(n.last)) / 864e5 > 7;
     if(cfg && +cfg.amt){
-      var amt = +cfg.amt, day = amt / (+cfg.days || 24), paidN = Math.min(n.leave, +cfg.paid || 0), unpaidN = n.leave - paidN;
-      var pay = cfg.pay === '' || cfg.pay == null ? day : +cfg.pay;
-      o.base = amt * n.act / dim; o.day = day;
-      o.deduct = unpaidN * day + paidN * Math.max(0, day - pay) + (ded ? n.busy * day : 0);
-      o.exp = ivN(Math.max(0, o.base - o.deduct));
-      o.note = (n.act < dim ? n.act + '/' + dim + ' days active' : 'full month')
-        + (n.leave ? ' · ' + n.leave + ' leave day' + (n.leave > 1 ? 's' : '') + ' (' + Object.keys(n.codes).map(function(k){ return n.codes[k] + ' ' + k; }).join(', ') + ')' + (paidN ? ', ' + paidN + ' paid' + (cfg.pay !== '' && cfg.pay != null ? ' at ' + ivAED(pay) : '') : '') : '')
+      var amt = +cfg.amt, div = +cfg.div || 30, day = amt / div, cd = n.codes;
+      var sick = cd.sick||0, sickPaid = Math.min(sick, +cfg.paid || 0), paidLv = cd.paid||0;
+      var hasPay = !(cfg.pay === '' || cfg.pay == null);
+      o.ded = (sick - sickPaid) + (cd.holiday||0) + (cd.unpaid||0) + (ded ? n.busy : 0);   // whole days not paid
+      o.days = Math.max(0, Math.min(div, n.act) - o.ded);                                // paid days (of 30)
+      o.partial = hasPay ? (sickPaid + paidLv) * Math.max(0, day - +cfg.pay) : 0;        // paid leave at salary only
+      o.base = amt; o.day = day; o.div = div;
+      o.exp = ivN(Math.max(0, amt * o.days / div - o.partial));
+      var lv = [];
+      if(sick) lv.push(sick + ' sick' + (sickPaid ? ' (' + sickPaid + ' paid' + (hasPay ? ' at ' + ivAED(+cfg.pay) : '') + ')' : ''));
+      if(cd.holiday) lv.push(cd.holiday + ' holiday'); if(cd.unpaid) lv.push(cd.unpaid + ' unpaid');
+      if(paidLv) lv.push(paidLv + ' paid leave' + (hasPay ? ' at ' + ivAED(+cfg.pay) : ''));
+      if(cd.off) lv.push(cd.off + ' day off (not deducted)');
+      o.note = (n.act < dim ? 'active ' + n.act + ' of ' + dim + ' days' : 'full month')
+        + (lv.length ? ' · ' + lv.join(', ') : '')
         + (n.busy ? ' · ' + n.busy + ' day(s) with HC\'s own client' + (ded ? ' (deducted)' : '') : '')
         + (gone ? ' · ⚠ last booking ' + ivFmtD(n.last) + ' — if the caregiver left, set the end date on the roster' : '');
     } else o.note = 'Set the monthly fee for ' + hc + ' in Rate card';
@@ -25176,10 +25189,10 @@ function ivRenderHC(){
     + '</div>';
   // exclusive monthly fees
   if(M.ret.length){
-    h += '<div class="tk-card"><div class="tk-card-h"><span>👑 Exclusive caregivers — monthly fee' + (M.ret[0].cfg ? ' (AED ' + ivAED(M.ret[0].cfg.amt) + ' / ' + (M.ret[0].cfg.days||24) + ' days' + (+M.ret[0].cfg.paid ? ', ' + M.ret[0].cfg.paid + ' paid leave/month' : ', leave unpaid') + ')' : '') + '</span><span>AED ' + ivAED(M.expRet) + '</span></div>'
-      + '<div class="tk-scroll" style="max-height:340px"><table class="tk-tbl"><thead><tr><th>Caregiver</th><th style="text-align:right">Active days</th><th style="text-align:right">Days worked</th><th style="text-align:right">Leave</th><th style="text-align:right">With HC client</th><th style="text-align:right">Pro-rata fee</th><th style="text-align:right">Deduction</th><th style="text-align:right">Payable</th>' + (M.rec ? '<th style="text-align:right">Claimed</th>' : '') + '<th>Basis</th></tr></thead><tbody>'
-      + M.ret.map(function(x){ return '<tr><td>' + E(x.cg) + '</td><td style="text-align:right">' + x.act + '/' + x.dim + '</td><td style="text-align:right">' + x.work + '</td><td style="text-align:right">' + (x.leave||'') + '</td><td style="text-align:right">' + (x.busy||'') + '</td>'
-          + '<td style="text-align:right">' + (x.base != null ? ivAED(x.base) : '—') + '</td><td style="text-align:right">' + (x.deduct ? '−' + ivAED(x.deduct) : '') + '</td><td style="text-align:right;font-weight:700">' + (x.exp != null ? ivAED(x.exp) : '—') + '</td>'
+    h += '<div class="tk-card"><div class="tk-card-h"><span>👑 Exclusive caregivers — monthly fee' + (M.ret[0].cfg ? ' (AED ' + ivAED(M.ret[0].cfg.amt) + ' × paid days ÷ ' + (+M.ret[0].cfg.div||30) + (+M.ret[0].cfg.paid ? ', ' + M.ret[0].cfg.paid + ' paid sick day/month' : '') + ' · week-offs & day-offs not deducted)' : '') + '</span><span>AED ' + ivAED(M.expRet) + '</span></div>'
+      + '<div class="tk-scroll" style="max-height:340px"><table class="tk-tbl"><thead><tr><th>Caregiver</th><th style="text-align:right">Active days</th><th style="text-align:right">Days worked</th><th style="text-align:right">Week-off / day-off</th><th style="text-align:right">Leave deducted</th><th style="text-align:right">Paid days</th><th style="text-align:right">Monthly fee</th><th style="text-align:right">Payable</th>' + (M.rec ? '<th style="text-align:right">Claimed</th>' : '') + '<th>Basis</th></tr></thead><tbody>'
+      + M.ret.map(function(x){ return '<tr><td>' + E(x.cg) + '</td><td style="text-align:right">' + x.act + '/' + x.dim + '</td><td style="text-align:right">' + x.work + '</td><td style="text-align:right">' + ((x.wo + x.off) || '') + '</td><td style="text-align:right;color:var(--absent)">' + (x.ded || '') + '</td>'
+          + '<td style="text-align:right;font-weight:600">' + (x.days != null ? x.days + '/' + x.div : '—') + '</td><td style="text-align:right">' + (x.base != null ? ivAED(x.base) : '—') + '</td><td style="text-align:right;font-weight:700">' + (x.exp != null ? ivAED(x.exp) : '—') + '</td>'
           + (M.rec ? '<td style="text-align:right">' + (x.claimed ? ivAED(x.claimed) : '') + '</td>' : '') + '<td style="font-size:10px;color:var(--text2)">' + E(x.note) + '</td></tr>'; }).join('')
       + '</tbody></table></div></div>';
   }
@@ -25230,8 +25243,8 @@ function ivSOAaoa(M){
   M.lines.forEach(function(o){ aoa.push([o.cart, o.child, o.name, o.date, o.time, o.addr, o.pkg, o.status, o.cg, o.exp == null ? '' : ivN(o.exp), o.flags.join('; ')]); });
   aoa.push(['','','','','','','','','Total (per booking)', ivN(M.expOrders)]);
   if(M.ret.length){
-    aoa.push([]); aoa.push(['Exclusive caregivers — monthly fee']); aoa.push(['Caregiver','Active days','Days worked','Leave days','With HC client','Pro-rata fee','Deduction','','','Payable','Basis']);
-    M.ret.forEach(function(x){ aoa.push([x.cg, x.act + '/' + x.dim, x.work, x.leave, x.busy, x.base != null ? ivN(x.base) : '', x.deduct ? ivN(x.deduct) : '', '', '', x.exp != null ? ivN(x.exp) : '', x.note]); });
+    aoa.push([]); aoa.push(['Exclusive caregivers — monthly fee']); aoa.push(['Caregiver','Active days','Days worked','Week-off / day-off','Leave deducted','Paid days','Monthly fee','','','Payable','Basis']);
+    M.ret.forEach(function(x){ aoa.push([x.cg, x.act + '/' + x.dim, x.work, (x.wo + x.off) || '', x.ded || '', x.days != null ? x.days + '/' + x.div : '', x.base != null ? ivN(x.base) : '', '', '', x.exp != null ? ivN(x.exp) : '', x.note]); });
     aoa.push(['','','','','','','','','Total (monthly fees)', ivN(M.expRet)]);
   }
   if(M.pen.some(function(x){ return x.inc; })){
@@ -25413,9 +25426,9 @@ function ivRenderRC(){
   var inp = function(path, val, w){ return '<input class="tk-inp" style="width:' + (w||64) + 'px;padding:3px 5px;font-size:11px;text-align:right" value="' + E(val == null ? '' : val) + '" onchange="ivRCSet(\'' + path + '\', this.value)">'; };
   var h = '<div class="tk-hero"><div><div class="tk-hero-t">Rate card</div><div class="tk-hero-s">Loaded from the costing sheet (Prices: Dubai, Tintu, mumzworld new). Change any figure and press Save — statements recalculate straight away.</div></div>'
     + '<div style="display:flex;gap:8px"><button class="tk-btn" onclick="ivRCReset()">↺ Reset to sheet</button><button class="tk-btn pri big" onclick="ivSaveRC()">💾 Save rate card</button></div></div>';
-  h += '<div class="tk-card"><div class="tk-card-h"><span>👑 Exclusive caregivers — monthly fee per caregiver</span><button class="tk-btn" onclick="ivRCAddEx()">+ Homecare</button></div><table class="tk-tbl"><thead><tr><th>Homecare (name starts with)</th><th style="text-align:right">Monthly fee AED</th><th style="text-align:right">Working days</th><th style="text-align:right">Paid leave days / month</th><th style="text-align:right">Pay per paid leave day</th><th></th></tr></thead><tbody>'
-    + rc.ex.map(function(x, i){ return '<tr><td><input class="tk-inp" style="width:140px;padding:3px 5px;font-size:11px" value="' + E(x.match) + '" onchange="ivRCSet(\'ex.' + i + '.match\', this.value)"></td><td style="text-align:right">' + inp('ex.' + i + '.amt', x.amt) + '</td><td style="text-align:right">' + inp('ex.' + i + '.days', x.days) + '</td><td style="text-align:right">' + inp('ex.' + i + '.paid', x.paid) + '</td><td style="text-align:right">' + inp('ex.' + i + '.pay', x.pay, 90) + '</td><td><button class="tk-x" onclick="ivRCDelEx(' + i + ')">✕</button></td></tr>'; }).join('')
-    + '</tbody></table><div style="font-size:10px;color:var(--text3);padding:6px 14px 10px">Payable = fee × active days ÷ days in month − (leave days beyond the paid allowance × fee ÷ working days). Pay per paid leave day blank = full day rate; for Shifa enter the caregiver\'s daily salary when known (only the salary is paid on those days).</div></div>';
+  h += '<div class="tk-card"><div class="tk-card-h"><span>👑 Exclusive caregivers — monthly fee per caregiver</span><button class="tk-btn" onclick="ivRCAddEx()">+ Homecare</button></div><table class="tk-tbl"><thead><tr><th>Homecare (name starts with)</th><th style="text-align:right">Monthly fee AED</th><th style="text-align:right">Day rate = fee ÷</th><th style="text-align:right">Paid sick days / month</th><th style="text-align:right">Pay per paid leave day</th><th></th></tr></thead><tbody>'
+    + rc.ex.map(function(x, i){ return '<tr><td><input class="tk-inp" style="width:140px;padding:3px 5px;font-size:11px" value="' + E(x.match) + '" onchange="ivRCSet(\'ex.' + i + '.match\', this.value)"></td><td style="text-align:right">' + inp('ex.' + i + '.amt', x.amt) + '</td><td style="text-align:right">' + inp('ex.' + i + '.div', x.div || 30) + '</td><td style="text-align:right">' + inp('ex.' + i + '.paid', x.paid) + '</td><td style="text-align:right">' + inp('ex.' + i + '.pay', x.pay, 90) + '</td><td><button class="tk-x" onclick="ivRCDelEx(' + i + ')">✕</button></td></tr>'; }).join('')
+    + '</tbody></table><div style="font-size:10px;color:var(--text3);padding:6px 14px 10px">Paid days = active days in the month (max 30) − leave days (holiday, unpaid, sick beyond the paid sick days). Payable = fee × paid days ÷ 30. Week-offs and day-offs are never deducted; paid leave is not deducted. Pay per paid leave day: blank = full day rate; for Shifa enter the caregiver\'s daily salary when known (only the salary is paid on paid sick / paid leave days).</div></div>';
   var disc = rc.disc || {};
   h += '<div class="tk-card"><div class="tk-card-h"><span>🛍️ Mumzworld promo discount by order month</span><button class="tk-btn" onclick="ivRCAddDisc()">+ Month</button></div><div style="padding:10px 14px;display:flex;gap:14px;flex-wrap:wrap;font-size:11px">'
     + (Object.keys(disc).sort().map(function(m){ return '<span>' + ivMonthLbl(m) + ' ' + inp('disc.' + m, disc[m], 44) + ' % <button class="tk-x" onclick="ivRCDelDisc(\'' + m + '\')">✕</button></span>'; }).join('') || '<span style="color:var(--text3)">No promo months</span>') + '</div></div>';
@@ -25434,7 +25447,7 @@ function ivRCSet(path, val){
   else if(a[0] === 'mz'){ var k2 = a.slice(1).join('.'); if(v === '' || isNaN(num)) delete rc.mz[k2]; else rc.mz[k2] = num; }
   ivMsg('Unsaved changes — press Save rate card');
 }
-function ivRCAddEx(){ var n = String(prompt('Homecare name (as it appears in orders, e.g. Golden Care)')||'').trim(); if(!n) return; ivRC().ex.push({match:n.toLowerCase(), label:n, amt:'', days:24, paid:0, pay:''}); ivRenderRC(); }
+function ivRCAddEx(){ var n = String(prompt('Homecare name (as it appears in orders, e.g. Golden Care)')||'').trim(); if(!n) return; ivRC().ex.push({match:n.toLowerCase(), label:n, amt:'', div:30, paid:0, pay:''}); ivRenderRC(); }
 function ivRCDelEx(i){ ivRC().ex.splice(i, 1); ivRenderRC(); }
 function ivRCAddDisc(){ var m = String(prompt('Month (YYYY-MM)', avToday().slice(0,7))||'').trim(); if(!/^\d{4}-\d{2}$/.test(m)) return; var d = ivAmt(prompt('Discount % for Mumzworld orders placed in ' + m, '10')); if(isNaN(d)) return; ivRC().disc[m] = d; ivRenderRC(); }
 function ivRCDelDisc(m){ delete ivRC().disc[m]; ivRenderRC(); }
