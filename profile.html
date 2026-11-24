@@ -7,6 +7,7 @@
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="cv-template.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <style>
@@ -57,7 +58,13 @@ footer{text-align:center;color:var(--muted);font-size:12px;margin-top:26px}
 footer b{color:var(--orange);letter-spacing:.2em;font-weight:600}
 .msg{padding:60px 20px;text-align:center;color:var(--muted)}
 @media(max-width:560px){.top{padding:0 16px 16px}.facts{padding:0 16px 18px}section{padding:16px}.photo{width:108px;height:108px}h1{font-size:22px}.cal{gap:4px}.day{padding:6px 2px}}
-@media print{body{background:#fff}.cta{display:none}}
+.wrap{max-width:860px}
+.cvwrap{width:100%;overflow:hidden;margin-top:14px;border-radius:12px;box-shadow:0 6px 24px rgba(14,58,94,.12)}
+.cvin{width:816px;transform-origin:0 0}
+.cvin .vcv-page{margin-bottom:0}
+button.btn{border:0;cursor:pointer;font-family:inherit}
+button.btn:disabled{opacity:.6}
+@media print{body{background:#fff}.cta,header,footer{display:none}.cvwrap{box-shadow:none;height:auto!important}.cvin{transform:none!important}}
 </style>
 </head>
 <body>
@@ -72,42 +79,28 @@ var COUNTRY = {ae:{name:'UAE', site:'https://feelvaleo.com/en-ae/'}, qa:{name:'Q
 var CITY_PAGE = {DXB:'dubai', AUH:'abu-dhabi', SHJ:'dubai', Alain:'abu-dhabi', RAK:'dubai'};
 function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
 function q(k){ return new URLSearchParams(location.search).get(k) || ''; }
+function fit(){
+  var w = document.querySelector('.cvwrap'), i = document.querySelector('.cvin'); if(!w || !i) return;
+  var s = Math.min(1, w.clientWidth / 816); i.style.transform = 'scale(' + s + ')'; w.style.height = Math.ceil(i.offsetHeight * s) + 'px';
+}
 function render(p){
   var c = COUNTRY[(p.country||'ae').toLowerCase()] || COUNTRY.ae;
   document.getElementById('ctry').textContent = c.name;
-  document.title = (p.name || 'Caregiver') + ' · Valeo caregiver profile';
-  var ini = String(p.name||'?').trim().split(/\s+/).map(function(w){ return w[0]; }).slice(0,2).join('').toUpperCase();
-  var facts = [];
-  if(p.experience_years) facts.push(['<b>' + esc(p.experience_years) + '+ years</b><span>Experience</span>']);
-  if((p.languages||[]).length) facts.push(['<b>' + esc(p.languages.slice(0,3).join(', ')) + (p.languages.length > 3 ? '…' : '') + '</b><span>Languages</span>']);
-  if(p.nationality) facts.push(['<b>' + esc(p.nationality) + '</b><span>Nationality</span>']);
-  if(p.age) facts.push(['<b>' + esc(p.age) + '</b><span>Age</span>']);
-  var chips = function(a, cls){ return (a||[]).map(function(x){ return '<span class="chip' + (cls ? ' ' + cls : '') + '">' + esc(x) + '</span>'; }).join(''); };
-  var cal = '';
-  if((p.availability||[]).length){
-    var lbl = {free:'Available', part:'Part free', busy:'Booked'};
-    cal = '<section><h2>Availability · next ' + p.availability.length + ' days</h2><div class="cal">'
-      + p.availability.map(function(d){ var dt = new Date(d.d + 'T12:00:00');
-          return '<div class="day ' + d.s + '" title="' + esc(dt.toDateString()) + '"><div class="dw">' + dt.toLocaleDateString('en-GB',{weekday:'short'}) + '</div><div class="dn">' + dt.getDate() + '</div><div class="ds">' + (lbl[d.s]||'') + '</div></div>'; }).join('')
-      + '</div><div class="legend"><span><i style="background:var(--free)"></i>Available</span><span><i style="background:var(--part)"></i>Partly available</span><span><i style="background:var(--busy)"></i>Booked / unavailable</span></div>'
-      + '<div class="asof">Updated ' + esc(p.as_of ? new Date(p.as_of).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '') + ' · availability can change, please confirm when booking.</div></section>';
-  }
+  document.title = (p.name || 'Caregiver') + ' · Valeo caregiver CV';
   var book = c.site + (CITY_PAGE[p.city] ? CITY_PAGE[p.city] + '/babysitting' : (p.country === 'qa' ? '' : 'dubai/babysitting'));
+  window._cv = p;
   document.getElementById('root').innerHTML =
-    '<div class="hero"><div class="band"></div><div class="top">'
-      + (p.photo ? '<img class="photo" src="' + esc(p.photo) + '" alt="' + esc(p.name) + '">' : '<div class="photo">' + esc(ini) + '</div>')
-      + '<div class="who"><h1>' + esc(p.name || 'Caregiver') + '</h1><p class="headline">' + esc(p.headline || 'Babysitter & newborn care') + '</p><span class="verified">✓ Valeo vetted caregiver</span></div></div>'
-      + (facts.length ? '<div class="facts">' + facts.map(function(f){ return '<div class="fact">' + f[0] + '</div>'; }).join('') + '</div>' : '')
-    + '</div>'
-    + (p.bio ? '<section><h2>About me</h2><p class="bio">' + esc(p.bio) + '</p></section>' : '')
-    + ((p.specialties||[]).length ? '<section><h2>Specialities</h2><div class="chips">' + chips(p.specialties) + '</div></section>' : '')
-    + ((p.certifications||[]).length || p.education ? '<section><h2>Certifications & training</h2><div class="chips">' + chips(p.certifications, 'cert') + '</div>' + (p.education ? '<p class="bio" style="margin-top:10px;color:var(--muted)">' + esc(p.education) + '</p>' : '') + '</section>' : '')
-    + ((p.languages||[]).length > 3 ? '<section><h2>Languages</h2><div class="chips">' + chips(p.languages) + '</div></section>' : '')
-    + cal
-    + '<section style="text-align:center"><h2 style="justify-content:center">Book ' + esc(String(p.name||'').split(' ')[0] || 'a caregiver') + ' with Valeo</h2>'
-      + '<div style="color:var(--muted);font-size:14px">Flexible hourly, weekly and monthly babysitting plans, at home.</div>'
-      + '<div class="cta" style="justify-content:center"><a class="btn" href="' + esc(book) + '" target="_blank" rel="noopener">Book on feelvaleo.com</a>'
-      + (p.cv && p.cv.url ? '<a class="btn alt" href="' + esc(p.cv.url) + '" target="_blank" rel="noopener">View CV</a>' : '') + '</div></section>';
+    '<div class="cta"><button class="btn" id="dl" onclick="dl()">⬇ Download PDF</button>'
+    + '<a class="btn alt" href="' + esc(book) + '" target="_blank" rel="noopener">Book on feelvaleo.com</a>'
+    + (p.cv && p.cv.url ? '<a class="btn alt" href="' + esc(p.cv.url) + '" target="_blank" rel="noopener">Original CV</a>' : '') + '</div>'
+    + '<div class="cvwrap"><div class="cvin">' + valeoCV.html(p) + '</div></div>';
+  fit(); setTimeout(fit, 400); window.addEventListener('resize', fit);
+  if(document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+}
+function dl(){
+  var b = document.getElementById('dl'); b.disabled = true; b.textContent = 'Preparing PDF…';
+  valeoCV.download(window._cv).then(function(){ b.textContent = '⬇ Download PDF'; b.disabled = false; })
+    .catch(function(e){ b.textContent = '⬇ Download PDF'; b.disabled = false; alert('Could not make the PDF: ' + e.message); });
 }
 (function(){
   if(q('preview')){ try{ var d = JSON.parse(localStorage.getItem('valeo_profile_preview') || 'null'); if(d){ render(d); return; } }catch(e){} }
