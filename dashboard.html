@@ -1097,6 +1097,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
  <button class="main-tab" onclick="switchTab(&#39;exclusive&#39;)">👑 Exclusive CGs</button>
  <button class="main-tab" onclick="switchTab(&#39;customers&#39;)">👥 Customer Insights</button>
  <button class="main-tab" onclick="switchTab(&#39;openorders&#39;)">⏰ Open Orders</button>
+ <button class="main-tab" onclick="switchTab(&#39;unassigned&#39;)">🚨 Unassigned Orders</button>
  <button class="main-tab" onclick="switchTab(&#39;profiles&#39;)">🪪 Caregiver Profiles</button>
  <button class="main-tab" onclick="switchTab(&#39;odrev&#39;)">📈 Revenue by Order Date</button>
  <button class="main-tab" onclick="switchTab(&#39;invoicing&#39;)">🧾 Invoicing</button>
@@ -11204,6 +11205,31 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
   </div>
  </div>
 </div>
+<div class="page" id="page-unassigned">
+ <div class="tk-bar">
+  <div style="font-size:15px;font-weight:700">🚨 Unassigned Orders</div>
+  <select id="ua-win" class="tk-inp" onchange="uaWin(this.value)">
+   <option value="7">Next 7 days</option><option value="3">Next 3 days</option><option value="14">Next 14 days</option><option value="30">Next 30 days</option><option value="up">All upcoming</option><option value="past">Past dates (still unassigned)</option><option value="range">Date range…</option>
+  </select>
+  <span class="od-range" id="ua-range" style="display:none"><label style="font-size:12px;color:var(--text2)" for="ua-from">From</label><input type="date" id="ua-from" class="tk-inp" onchange="uaRender()"><label style="font-size:12px;color:var(--text2)" for="ua-to">To</label><input type="date" id="ua-to" class="tk-inp" onchange="uaRender()"></span>
+  <select id="ua-type" class="tk-inp" onchange="uaRender()"><option value="">Both: no homecare or no nurse</option><option value="nohc">No homecare assigned</option><option value="nonurse">Homecare assigned, no nurse</option></select>
+  <select id="ua-hc" class="tk-inp" onchange="uaRender()"><option value="">All homecares</option></select>
+  <select id="ua-ch" class="tk-inp" onchange="uaRender()"><option value="">All channels</option><option value="mumz">🛍️ Mumzworld</option><option value="direct">Direct</option><option value="b2b">Other B2B</option></select>
+  <input id="ua-q" class="tk-inp" type="text" placeholder="Client, order #, phone…" oninput="uaRender()" style="width:180px">
+  <button class="tk-btn pri" onclick="uaDownload()">⬇ Download</button>
+ </div>
+ <div class="tk-kpis" id="ua-kpis"></div>
+ <div class="tk-page">
+  <div class="tk-card"><div class="tk-card-h"><span>📅 Day-wise</span><span style="font-weight:500;color:var(--text3);font-size:11px">click a day to list it</span></div>
+   <div class="tk-scroll" style="max-height:none;overflow-x:auto"><table class="tk-tbl od-tbl" id="ua-day-tbl"></table></div></div>
+  <div class="tk-card"><div class="tk-card-h"><span id="ua-list-title">📋 Unassigned orders</span><button class="tk-btn" id="ua-day-clear" onclick="uaPickDay('')" style="display:none">✕ Show all days</button></div>
+   <div class="tk-scroll" style="max-height:620px;overflow:auto"><table class="tk-tbl od-tbl" id="ua-tbl"></table></div></div>
+  <div style="font-size:11px;color:var(--text3);line-height:1.6;padding:2px 4px 16px">
+   <span id="ua-hc-note" style="display:none;color:var(--text2)">These are <b>your</b> orders that still have no nurse assigned — please assign a nurse in the admin panel, or tell Valeo if you cannot cover one.<br></span>
+   <b style="color:var(--text2)">Unassigned</b> = a child order (one service day) that is not completed, cancelled or a temp order, and has <b>no homecare</b> or <b>no nurse</b> assigned. Dates are the confirmed service date (Confirmed_DateTime, else Booked_Slot). <b style="color:var(--text2)">Starts in</b> = time left before the booking starts — red when under 24 hours.
+  </div>
+ </div>
+</div>
 <div class="page" id="page-openorders">
  <div class="tk-bar">
   <div style="font-size:15px;font-weight:700">⏰ Open Orders</div>
@@ -12205,6 +12231,7 @@ async function loadData(force=false){
       if(_act('page-pl') && typeof plRender === 'function' && _pl.loaded){ if(typeof _plUECache !== 'undefined') _plUECache = {sig:null, m:{}}; plRender(); }
       if(_act('page-exclusive') && typeof exRender === 'function') exRender();
       if(_act('page-openorders') && typeof ooRender === 'function') ooRender();
+      if(_act('page-unassigned') && typeof uaRender === 'function') uaRender();
       if(_act('page-customers') && typeof cuRender === 'function') cuRender();
       if(_act('page-invoicing') && typeof ivRender === 'function'){ _iv.idx = null; ivRender(); }
       if(_act('page-profiles') && typeof cpRender === 'function'){ cpRender(); }
@@ -13389,7 +13416,7 @@ function switchTab(tab){
   if(tab==='calendar') tab='roster';   // Calendar tab removed
   // HC partner accounts: Calendar + Roster only
   if(tab==='transport'&&!trCanSee()){alert('Access restricted');return;}
-  if(_session&&_session.role==='hc'&&tab!=='calendar'&&tab!=='roster'&&tab!=='complaints'&&tab!=='tickets'&&tab!=='leave'&&tab!=='avail'&&tab!=='ops'&&tab!=='openorders'&&!(tab==='transport'&&trIsShifa())){alert('Access restricted');return;}
+  if(_session&&_session.role==='hc'&&tab!=='calendar'&&tab!=='roster'&&tab!=='complaints'&&tab!=='tickets'&&tab!=='leave'&&tab!=='avail'&&tab!=='ops'&&tab!=='openorders'&&tab!=='unassigned'&&!(tab==='transport'&&trIsShifa())){alert('Access restricted');return;}
   // Client accounts (e.g. Mumzworld): their own order list + tickets only
   if(_session&&_session.role==='client'&&tab!=='mumz'&&tab!=='tickets'){alert('Access restricted');return;}
   if(tab==='openorders'&&_session&&_session.role==='client'){alert('Access restricted');return;}
@@ -13399,7 +13426,7 @@ function switchTab(tab){
   if(tab==='mumz'){setTimeout(switchToMumz,80);}
   var _tabLbl={calendar:'calendar',analytics:'utilisation analytics',ops:'operations',planner:'schedule builder',roster:'roster',
     daily:'daily orders',supply:'supply',customleads:'lead tracker',bsleads:'babysitting leads',
-    complaints:'complaint',exclusive:'exclusive cgs',customers:'customer insights',openorders:'open orders',profiles:'caregiver profiles',odrev:'revenue by order date',invoicing:'invoicing',penalty:'penalty',expecting:'expecting',tickets:'hc tickets',leave:'leave applications',
+    complaints:'complaint',exclusive:'exclusive cgs',customers:'customer insights',openorders:'open orders',unassigned:'unassigned orders',profiles:'caregiver profiles',odrev:'revenue by order date',invoicing:'invoicing',penalty:'penalty',expecting:'expecting',tickets:'hc tickets',leave:'leave applications',
     mumz:'mumzworld orders', avail:'availability search', transport:'transport charges', pl:'p&l'}[tab]||tab;
   document.querySelectorAll('.main-tab').forEach(b=>b.classList.toggle('active',b.textContent.toLowerCase().includes(_tabLbl)));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -13422,6 +13449,7 @@ function switchTab(tab){
   if(tab==='exclusive'){initExclusive();}
   if(tab==='customers'){cuRender();}
   if(tab==='openorders'){ooRender();}
+  if(tab==='unassigned'){uaRender();}
   if(tab==='profiles'){cpInit();}
   if(tab==='odrev'){odRender();}
   if(tab==='invoicing'){initInvoicing();}
@@ -20810,7 +20838,7 @@ function applySessionUI(){
   var _ocb=document.getElementById('oc-btn'); if(_ocb) _ocb.style.display=(_session.role==='master')?'':'none';
   if(_session.role==='hc'){
     var _shifa=trIsShifa();
-    document.querySelectorAll('.main-tab').forEach(function(t){var txt=t.textContent.trim();if(!txt.includes('Calendar')&&!txt.includes('Roster')&&!txt.includes('Complaint')&&!txt.includes('Tickets')&&!txt.includes('Leave Applications')&&!txt.includes('Operations')&&!txt.includes('Open Orders')&&!(_shifa&&txt.includes('Transport Charges')))t.style.display='none';});
+    document.querySelectorAll('.main-tab').forEach(function(t){var txt=t.textContent.trim();if(!txt.includes('Calendar')&&!txt.includes('Roster')&&!txt.includes('Complaint')&&!txt.includes('Tickets')&&!txt.includes('Leave Applications')&&!txt.includes('Operations')&&!txt.includes('Open Orders')&&!txt.includes('Unassigned Orders')&&!(_shifa&&txt.includes('Transport Charges')))t.style.display='none';});
     // hide "Add Caregiver" but keep the Leave Report / Complaint exports available
     document.querySelectorAll('.add-cg-btn').forEach(function(ab){ if(!ab.classList.contains('lr-open-btn')) ab.style.display='none'; });
   }
@@ -25729,12 +25757,126 @@ function ivRCReset(){ if(!confirm('Replace every rate with the costing-sheet fig
 </script>
 <script>
 // ═════════════════════════════════════════════════════════════════
+// UNASSIGNED ORDERS — open child orders with no homecare or no nurse
+// ═════════════════════════════════════════════════════════════════
+var _ua = {win:'7', day:'', last:[]};
+function uaWin(v){ _ua.win = v; _ua.day = ''; document.getElementById('ua-range').style.display = v === 'range' ? '' : 'none';
+  if(v === 'range' && !document.getElementById('ua-from').value){ document.getElementById('ua-from').value = avToday(); document.getElementById('ua-to').value = uaAdd(avToday(), 14); }
+  uaRender(); }
+function uaPickDay(d){ _ua.day = _ua.day === d ? '' : d; uaRender(); }
+function uaAdd(ds, n){ var d = new Date(ds + 'T12:00:00'); d.setDate(d.getDate() + n); return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()); }
+function uaNowStr(){ return new Intl.DateTimeFormat('sv-SE', {timeZone:AV_TZ, year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit'}).format(new Date()).replace(' ', 'T'); }
+function uaHoursTo(ds, tm){ var a = new Date(uaNowStr() + ':00Z'), b = new Date(ds + 'T' + (tm || '00:00') + ':00Z'); return (b - a) / 36e5; }
+function uaAll(){
+  var own = ooIsHC() ? tkSessionHC() : '';
+  var excl = ['carezone home healthcare llc','dummy homecare','helpful agency','nifas hc','babysitting ksa','pyramid home health care'];
+  return (window._lastRows||[]).map(function(r){
+    if(!isCountryRow(r)) return null;
+    var st = _normKey(r['Order_Status']); if(st === 'completed' || st === 'temporder' || st === 'cancelled') return null;
+    var hc = String(r['Homecare']||'').replace(/ /g,' ').trim(), nurse = String(r['Nurse_Assigned']||'').trim();
+    if(hc && (excl.indexOf(hc.toLowerCase()) >= 0 || /dummy/i.test(hc))) return null;
+    if(hc && nurse) return null;                                 // fully assigned
+    if(own && (!hc || !tkHCMatch(hc, own))) return null;         // homecare logins: their own orders without a nurse
+    var cd = String(r['Confirmed_DateTime']||r['Booked_Slot']||'').replace('T',' '), ds = cd.slice(0,10); if(!ds) return null;
+    var tm = cd.length > 10 ? cd.slice(11,16) : '';
+    return {date:ds, time:tm, kind:hc ? 'nonurse' : 'nohc', status:String(r['Order_Status']||'').trim(), child:String(r['Child_Order_ID']||'').trim(), cart:String(r['Cart_Order_ID']||'').trim(),
+      client:String(r['User Name']||'').trim(), phone:String(r['Phone Number']||'').trim(), hc:hc, pkg:String(r['Parent_Package']||r['Child_Package']||'').trim(),
+      city:String(r['City']||'').trim(), addr:[r['Address Line 1'], r['Address Line 2']].filter(function(x){ return x && String(x).trim(); }).join(', '),
+      price:parseFloat(r['Final_Price']||r['Order_Price']||0)||0, chan:odChannel(r), type:String(r['Type_Of_User']||'').trim(), orderDate:String(r['Order_Date']||'').slice(0,10),
+      hrs:uaHoursTo(ds, tm)};
+  }).filter(Boolean);
+}
+function uaInWindow(o){
+  var t = avToday(), w = _ua.win;
+  if(w === 'past') return o.date < t;
+  if(w === 'range'){ var f = document.getElementById('ua-from').value, to = document.getElementById('ua-to').value; if(!f || !to) return o.date >= t; if(to < f){ var x = f; f = to; to = x; } return o.date >= f && o.date <= to; }
+  if(o.date < t) return false;
+  if(w === 'up') return true;
+  return o.date <= uaAdd(t, +w - 1);
+}
+function uaStarts(h){ if(h < 0) return {t:Math.round(-h/24) >= 1 ? Math.round(-h/24) + 'd ago' : 'started', c:'var(--absent)'};
+  return {t:h < 1 ? Math.max(1, Math.round(h*60)) + ' min' : h < 48 ? Math.round(h) + ' h' : Math.round(h/24) + ' days', c:h < 24 ? 'var(--absent)' : h < 72 ? 'var(--sick)' : 'var(--text2)'}; }
+function uaRender(){
+  var dt = document.getElementById('ua-day-tbl'); if(!dt) return;
+  if(!(window._lastRows||[]).length){ document.getElementById('ua-kpis').innerHTML = '<div class="tk-kpi" style="min-width:300px"><div class="tk-kpi-v" style="font-size:14px">⏳ Loading orders…</div><div class="tk-kpi-l">the page fills in when the data is in</div></div>'; return; }
+  var HCV = ooIsHC(), E = tkEsc, n0 = function(x){ return Math.round(x||0).toLocaleString(); }, cur$ = VC.cur;
+  var all = uaAll().filter(uaInWindow);
+  var hs = document.getElementById('ua-hc'), hcur = hs.value, hcs = [...new Set(all.filter(function(o){ return o.hc; }).map(function(o){ return o.hc; }))].sort();
+  hs.innerHTML = '<option value="">All homecares</option>' + hcs.map(function(h){ return '<option>' + E(h) + '</option>'; }).join(''); hs.value = hcs.indexOf(hcur) >= 0 ? hcur : '';
+  ['ua-hc','ua-ch','ua-type'].forEach(function(id){ document.getElementById(id).style.display = HCV ? 'none' : ''; });
+  document.getElementById('ua-hc-note').style.display = HCV ? '' : 'none';
+  var ft = HCV ? '' : document.getElementById('ua-type').value, fh = hs.value, fc = document.getElementById('ua-ch').value, q = String(document.getElementById('ua-q').value||'').toLowerCase().trim();
+  var base = all.filter(function(o){ return (!ft || o.kind === ft) && (!fh || o.hc === fh) && (!fc || o.chan === fc) && (!q || [o.client, o.child, o.cart, o.phone, o.hc].join(' ').toLowerCase().indexOf(q) >= 0); })
+    .sort(function(a,b){ return (a.date + a.time).localeCompare(b.date + b.time) || a.cart.localeCompare(b.cart); });
+  var days = [...new Set(base.map(function(o){ return o.date; }))].sort();
+  if(_ua.day && days.indexOf(_ua.day) < 0) _ua.day = '';
+  var list = _ua.day ? base.filter(function(o){ return o.date === _ua.day; }) : base;
+  _ua.last = list;
+  var nohc = list.filter(function(o){ return o.kind === 'nohc'; }), nonurse = list.filter(function(o){ return o.kind === 'nonurse'; });
+  var urgent = list.filter(function(o){ return o.hrs < 24; }), parents = new Set(list.map(function(o){ return o.cart; })).size, val = list.reduce(function(t,o){ return t + o.price; }, 0);
+  var kpi = function(v,l,c){ return '<div class="tk-kpi"><div class="tk-kpi-v" style="color:' + (c||'var(--text)') + '">' + v + '</div><div class="tk-kpi-l">' + l + '</div></div>'; };
+  var winLbl = document.getElementById('ua-win').selectedOptions[0].textContent.replace('…','');
+  document.getElementById('ua-kpis').innerHTML = kpi(n0(list.length), 'Unassigned bookings · ' + (_ua.day ? odFmtD(_ua.day) : winLbl), list.length ? 'var(--absent)' : 'var(--duty)')
+    + kpi(n0(parents), 'Parent orders')
+    + (HCV ? '' : kpi(n0(nohc.length), 'No homecare', nohc.length ? 'var(--absent)' : ''))
+    + kpi(n0(nonurse.length), HCV ? 'Need a nurse' : 'Homecare, no nurse', nonurse.length ? '#d29922' : '')
+    + kpi(n0(urgent.length), 'Start within 24 h', urgent.length ? 'var(--absent)' : '')
+    + (HCV ? '' : kpi(cur$ + ' ' + n0(val), 'Value at risk'));
+  // day-wise
+  var drow = function(label, arr, d, tot){
+    var a = arr.filter(function(o){ return o.kind === 'nohc'; }).length, b = arr.length - a;
+    return '<tr' + (d ? ' class="od-click' + (d === _ua.day ? ' od-sel' : '') + '" onclick="uaPickDay(\'' + d + '\')"' : '') + (tot ? ' style="background:var(--bg3);font-weight:700"' : '') + '><td><b>' + label + '</b></td>'
+      + '<td>' + n0(arr.length) + '</td><td>' + n0(new Set(arr.map(function(o){ return o.cart; })).size) + '</td>'
+      + (HCV ? '' : '<td style="color:' + (a ? 'var(--absent)' : 'var(--text3)') + '">' + n0(a) + '</td>') + '<td style="color:' + (b ? '#d29922' : 'var(--text3)') + '">' + n0(b) + '</td>'
+      + (HCV ? '' : '<td>' + n0(arr.reduce(function(t,o){ return t + o.price; }, 0)) + '</td><td>' + n0(arr.filter(function(o){ return o.chan === 'mumz'; }).length) + '</td>') + '</tr>';
+  };
+  var dl = function(d){ var t = avToday(); return d === t ? 'Today · ' + odFmtD(d) : d === uaAdd(t, 1) ? 'Tomorrow · ' + odFmtD(d) : new Date(d + 'T12:00:00').toLocaleDateString('en-GB', {weekday:'short'}) + ' · ' + odFmtD(d); };
+  dt.innerHTML = days.length ? '<thead><tr><th>Date</th><th>Bookings</th><th>Parent orders</th>' + (HCV ? '' : '<th>No homecare</th>') + '<th>' + (HCV ? 'Need a nurse' : 'No nurse') + '</th>' + (HCV ? '' : '<th>Value (' + cur$ + ')</th><th>Mumzworld</th>') + '</tr></thead><tbody>'
+    + days.map(function(d){ return drow(dl(d), base.filter(function(o){ return o.date === d; }), d); }).join('') + drow('Total', base, null, true) + '</tbody>'
+    : '<tbody><tr><td class="tk-empty">✓ Every booking in this period has a homecare and a nurse.</td></tr></tbody>';
+  document.getElementById('ua-day-clear').style.display = _ua.day ? '' : 'none';
+  document.getElementById('ua-list-title').textContent = '📋 Unassigned orders · ' + (_ua.day ? dl(_ua.day) : winLbl) + ' · ' + list.length;
+  document.getElementById('ua-tbl').innerHTML = '<thead><tr><th style="text-align:left">Date</th><th>Starts in</th><th style="text-align:left">Missing</th><th style="text-align:left">Status</th><th>Child #</th><th>Parent #</th><th style="text-align:left">Client</th>' + (HCV ? '' : '<th style="text-align:left">Phone</th>') + '<th style="text-align:left">Homecare</th><th style="text-align:left">Package</th><th style="text-align:left">City / area</th>' + (HCV ? '' : '<th>Value</th><th style="text-align:left">Channel</th>') + '</tr></thead><tbody>'
+    + (list.length ? list.map(function(o){ var s = uaStarts(o.hrs);
+        return '<tr><td style="text-align:left;white-space:nowrap">' + E(o.date) + (o.time ? ' <span style="color:var(--text3)">' + E(o.time) + '</span>' : '') + '</td>'
+          + '<td style="font-weight:600;color:' + s.c + ';white-space:nowrap">' + s.t + '</td>'
+          + '<td style="text-align:left">' + (o.kind === 'nohc' ? '<span class="tk-pill" style="color:var(--absent)">No homecare</span>' : '<span class="tk-pill" style="color:#d29922">No nurse</span>') + '</td>'
+          + '<td style="text-align:left;font-size:10px;color:var(--text2)">' + E(o.status) + '</td>'
+          + '<td style="font-family:monospace">#' + E(o.child) + '</td><td style="font-family:monospace;color:var(--text3)">#' + E(o.cart) + '</td>'
+          + '<td style="text-align:left">' + E(o.client) + (/new/i.test(o.type) ? ' <span class="tk-badge" style="background:rgba(47,129,247,.15);color:var(--accent)">NEW</span>' : '') + '</td>'
+          + (HCV ? '' : '<td style="text-align:left;white-space:nowrap">' + E(o.phone) + '</td>')
+          + '<td style="text-align:left">' + (o.hc ? E(o.hc) : '<span style="color:var(--absent)">—</span>') + '</td>'
+          + '<td style="text-align:left;max-width:220px;overflow:hidden;text-overflow:ellipsis" title="' + E(o.pkg) + '">' + E(o.pkg) + '</td>'
+          + '<td style="text-align:left;max-width:200px;overflow:hidden;text-overflow:ellipsis" title="' + E(o.addr) + '">' + E(o.city) + (o.addr ? ' <span style="color:var(--text3)">· ' + E(o.addr) + '</span>' : '') + '</td>'
+          + (HCV ? '' : '<td>' + n0(o.price) + '</td><td style="text-align:left">' + (o.chan === 'mumz' ? '🛍️ Mumzworld' : o.chan === 'b2b' ? 'Other B2B' : 'Direct') + '</td>') + '</tr>';
+      }).join('') : '<tr><td colspan="13" class="tk-empty">' + (HCV ? '✓ All your bookings in this period have a nurse.' : '✓ Every booking in this period has a homecare and a nurse.') + '</td></tr>') + '</tbody>';
+}
+function uaDownload(){
+  if(!_ua.last.length && !confirm('There are no unassigned orders for this selection. Download an empty file?')) return;
+  var HCV = ooIsHC();
+  var head = HCV ? ['Date','Time','Starts in (hours)','Missing','Order status','Child order #','Parent order #','Client','Homecare','Package','City','Address']
+                 : ['Date','Time','Starts in (hours)','Missing','Order status','Child order #','Parent order #','Order date','Client','Phone','Customer type','Homecare','Package','City','Address','Value (' + VC.cur + ')','Channel'];
+  var rows = _ua.last.map(function(o){ var miss = o.kind === 'nohc' ? 'No homecare' : 'No nurse', h = Math.round(o.hrs);
+    return HCV ? [o.date, o.time, h, miss, o.status, o.child, o.cart, o.client, o.hc, o.pkg, o.city, o.addr]
+      : [o.date, o.time, h, miss, o.status, o.child, o.cart, o.orderDate, o.client, o.phone, o.type, o.hc, o.pkg, o.city, o.addr, Math.round(o.price*100)/100, o.chan === 'mumz' ? 'Mumzworld' : o.chan === 'b2b' ? 'Other B2B' : 'Direct']; });
+  var name = 'valeo-unassigned-orders-' + VC.code.toLowerCase() + (HCV ? '-' + String(tkSessionHC()).replace(/[^A-Za-z0-9]+/g,'_') : '') + '-as-of-' + avToday();
+  if(typeof XLSX !== 'undefined'){
+    var wb = XLSX.utils.book_new(), ws = XLSX.utils.aoa_to_sheet([head].concat(rows)); ws['!cols'] = head.map(function(){ return {wch:16}; });
+    XLSX.utils.book_append_sheet(wb, ws, 'Unassigned'); XLSX.writeFile(wb, name + '.xlsx');
+  } else {
+    var csv = [head].concat(rows).map(function(r){ return r.map(function(v){ v = String(v==null?'':v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g,'""') + '"' : v; }).join(','); }).join('\n');
+    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + csv], {type:'text/csv'})); a.download = name + '.csv'; a.click();
+  }
+}
+</script>
+<script>
+// ═════════════════════════════════════════════════════════════════
 // GROUPED NAVIGATION — the .main-tab buttons are moved into a few dropdowns.
 // The buttons themselves are untouched, so switchTab(), role-based hiding and the
 // ticket / leave badges keep working; navSync() just mirrors their state on the groups.
 // ═════════════════════════════════════════════════════════════════
 var NAV_GROUPS = [
-  {id:'sched',   label:'🗓 Scheduling',        short:'🗓 Schedule', tabs:['roster','planner','avail','ops','openorders']},
+  {id:'sched',   label:'🗓 Scheduling',        short:'🗓 Schedule', tabs:['roster','planner','avail','ops','openorders','unassigned']},
   {id:'hc',      label:'🏥 Homecare Partners', short:'🏥 Partners', tabs:['profiles','exclusive','tickets','leave','complaints','penalty','supply']},
   {id:'growth',  label:'🎯 Leads & Clients',   short:'🎯 Leads',    tabs:['customers','customleads','bsleads','expecting','mumz']},
   {id:'finance', label:'💰 Finance & Reports', short:'💰 Finance',  tabs:['analytics','pl','invoicing','odrev','transport']}
