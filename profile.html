@@ -58,9 +58,9 @@ footer{text-align:center;color:var(--muted);font-size:12px;margin-top:26px}
 footer b{color:var(--orange);letter-spacing:.2em;font-weight:600}
 .msg{padding:60px 20px;text-align:center;color:var(--muted)}
 @media(max-width:560px){.top{padding:0 16px 16px}.facts{padding:0 16px 18px}section{padding:16px}.photo{width:108px;height:108px}h1{font-size:22px}.cal{gap:4px}.day{padding:6px 2px}}
-.wrap{max-width:860px}
-.cvwrap{width:100%;overflow:hidden;margin-top:14px;border-radius:12px;box-shadow:0 6px 24px rgba(14,58,94,.12)}
-.cvin{width:816px;transform-origin:0 0}
+.wrap{max-width:1160px}
+.cvwrap{width:100%;overflow:hidden;margin-top:14px}
+.cvin{width:1123px;transform-origin:0 0}
 .cvin .vcv-page{margin-bottom:0}
 button.btn{border:0;cursor:pointer;font-family:inherit}
 button.btn:disabled{opacity:.6}
@@ -81,7 +81,7 @@ function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, function(c){ ret
 function q(k){ return new URLSearchParams(location.search).get(k) || ''; }
 function fit(){
   var w = document.querySelector('.cvwrap'), i = document.querySelector('.cvin'); if(!w || !i) return;
-  var s = Math.min(1, w.clientWidth / 816); i.style.transform = 'scale(' + s + ')'; w.style.height = Math.ceil(i.offsetHeight * s) + 'px';
+  var s = Math.min(1, w.clientWidth / (valeoCV.W || 1123)); i.style.transform = 'scale(' + s + ')'; w.style.height = Math.ceil(i.offsetHeight * s) + 'px';
 }
 function render(p){
   var c = COUNTRY[(p.country||'ae').toLowerCase()] || COUNTRY.ae;
