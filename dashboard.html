@@ -700,7 +700,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .cp-cal div{border-radius:6px;padding:5px 2px;text-align:center;font-size:10px;line-height:1.3}
 .cp-cal b{display:block;font-size:13px}
 .cp-prev{width:100%;overflow:hidden;border-radius:8px;border:1px solid var(--border);background:#0E3A5E}
-.cp-prev-in{width:816px;transform-origin:0 0}
+.cp-prev-in{width:1123px;transform-origin:0 0}
 .cp-prev .vcv-page{margin-bottom:12px}
 .cp-adj{display:flex;flex-direction:column;gap:2px;margin-top:6px;font-size:11px;color:var(--text2)}
 .cp-adj label{display:flex;align-items:center;gap:8px}.cp-adj input{flex:1}
@@ -11287,7 +11287,7 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
     <div class="cp-cv"><b>📄 Caregiver's own CV</b> <span id="cp-cv-name" style="color:var(--text3)">none</span>
      <label class="tk-btn" style="display:inline-block;cursor:pointer;margin-left:6px">⬆ Upload CV (PDF)<input type="file" accept="application/pdf,image/*" onchange="cpPickCV(this)" style="display:none"></label>
      <button class="tk-btn" id="cp-cv-view" onclick="cpViewCV()" style="display:none">View</button>
-     <div id="cp-cv-msg" style="font-size:11px;margin-top:6px;color:var(--text3)">Upload a PDF CV: the photo, objective, skills, education and experience are filled in from it — please check.</div>
+     <div id="cp-cv-msg" style="font-size:11px;margin-top:6px;color:var(--text3)">Upload a PDF CV: the photo, details, summary, skills, experience and education are filled in from it — please check.</div>
      <label style="font-size:12px;color:var(--text2);display:flex;gap:6px;align-items:center;margin-top:6px"><input type="checkbox" id="cp-cv-public"> Also show their original CV on the shared link</label></div>
     <div class="cp-photo-row"><div class="cp-photo" id="cp-photo"></div>
      <div style="flex:1;min-width:0"><label class="tk-btn" style="display:inline-block;cursor:pointer">📷 Upload photo<input type="file" accept="image/*" onchange="cpPickPhoto(this)" style="display:none"></label>
@@ -11302,18 +11302,25 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
       <div style="font-size:11px;color:var(--text3);margin-top:4px">Head and shoulders, plain background works best.</div></div></div>
     <div class="tr-grid">
      <div id="cp-new-hc-row" style="display:none;grid-column:1/-1"><label class="qt-lbl" for="cp-new-hc">Homecare</label><select id="cp-new-hc" class="qt-input"></select></div>
-     <div><label class="qt-lbl" for="cp-name">Name</label><input id="cp-name" class="qt-input" type="text"></div>
-     <div><label class="qt-lbl" for="cp-headline">Role</label><input id="cp-headline" class="qt-input" type="text" placeholder="e.g. Infant Caregiver"></div>
-     <div><label class="qt-lbl" for="cp-loc">Location</label><input id="cp-loc" class="qt-input" type="text" placeholder="Dubai, UAE"></div>
-     <div><label class="qt-lbl" for="cp-certline">Certified</label><input id="cp-certline" class="qt-input" type="text" placeholder="Basic Life Support (2025)"></div>
-     <div><label class="qt-lbl" for="cp-exp">Years of experience <span class="ri-opt">(optional)</span></label><input id="cp-exp" class="qt-input" type="number" min="0" max="50"></div>
-     <div><label class="qt-lbl" for="cp-lang">Languages <span class="ri-opt">(optional)</span></label><input id="cp-lang" class="qt-input" type="text" placeholder="English, Tagalog"></div>
+     <div><label class="qt-lbl" for="cp-name">Full name</label><input id="cp-name" class="qt-input" type="text"></div>
+     <div><label class="qt-lbl" for="cp-headline">Headline</label><input id="cp-headline" class="qt-input" type="text" placeholder="Certified Newborn and Infant Care Specialist"></div>
+     <div><label class="qt-lbl" for="cp-nat">Nationality</label><input id="cp-nat" class="qt-input" type="text" placeholder="Philippines"></div>
+     <div><label class="qt-lbl" for="cp-lang">Languages</label><input id="cp-lang" class="qt-input" type="text" placeholder="English (Good), Tagalog (Native)"></div>
+     <div><label class="qt-lbl" for="cp-gender">Gender</label><input id="cp-gender" class="qt-input" type="text" placeholder="Female"></div>
+     <div><label class="qt-lbl" for="cp-exp">Experience (years)</label><input id="cp-exp" class="qt-input" type="number" min="0" max="50"></div>
+     <div style="grid-column:1/-1"><label class="qt-lbl" for="cp-loc">Based in</label><input id="cp-loc" class="qt-input" type="text" placeholder="Dubai, UAE"></div>
     </div>
-    <label class="qt-lbl" for="cp-bio">Objective</label><textarea id="cp-bio" class="qt-input" rows="4" placeholder="Attentive and dependable Infant Caregiver with over 6 years of experience…"></textarea>
-    <label class="qt-lbl" for="cp-skills">Skills <span class="ri-opt">(one per line)</span></label><textarea id="cp-skills" class="qt-input" rows="5" placeholder="Infant feeding &amp; bottle preparation&#10;First aid &amp; Basic Life Support"></textarea>
-    <label class="qt-lbl" for="cp-edu">Educational background <span class="ri-opt">(one per line: title — school, place (year))</span></label><textarea id="cp-edu" class="qt-input" rows="3" placeholder="B.S. Information Technology — AMA Computer College, Iloilo, Philippines (2013)&#10;Basic Life Support Certificate — 2025"></textarea>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px"><label class="qt-lbl" style="margin:0">Professional experience</label><button class="tk-btn" onclick="cpAddJob()">+ Add job</button></div>
+    <label class="qt-lbl" for="cp-bio">Professional summary</label><textarea id="cp-bio" class="qt-input" rows="4" placeholder="Caring and dependable nanny with hands-on experience looking after newborns, infants and toddlers…"></textarea>
+    <label class="qt-lbl" for="cp-skills">Key skills <span class="ri-opt">(one per line — text before a colon is the title, e.g. "Newborn care: feeding, bathing, sleep routines")</span></label><textarea id="cp-skills" class="qt-input" rows="5" placeholder="Newborn care: bottle preparation, burping, sterilisation and night feeds&#10;Sleep routines: structured naps, soothing and settling"></textarea>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px"><label class="qt-lbl" style="margin:0">Work experience</label><button class="tk-btn" onclick="cpAddJob()">+ Add a job</button></div>
     <div id="cp-jobs"></div>
+    <label class="qt-lbl" for="cp-edu">Education <span class="ri-opt">(one per line)</span></label><textarea id="cp-edu" class="qt-input" rows="2" placeholder="Diploma in Early Childhood Care, Philippines (2014)"></textarea>
+    <label class="qt-lbl" for="cp-train">Training and certificates <span class="ri-opt">(one per line)</span></label><textarea id="cp-train" class="qt-input" rows="3" placeholder="Pediatric First Aid and CPR (Certified), 2023&#10;Newborn Care Specialist Course, 2021"></textarea>
+    <label class="qt-lbl" style="margin-top:6px">Text on the CV</label>
+    <input id="cp-b1" class="qt-input" type="text" placeholder="Page 1 banner, first line — e.g. Dedicated. Nurturing. Trustworthy.">
+    <input id="cp-b2" class="qt-input" type="text" placeholder="Page 1 banner, second line — e.g. Delivering loving care and a safe, healthy environment for every child.">
+    <input id="cp-quote" class="qt-input" type="text" placeholder="Closing quote on the last page (empty = first sentence of the summary)">
+    <div style="font-size:11px;color:var(--text3);margin:-4px 0 8px">Empty banner lines are left out.</div>
    </div>
    <div>
     <div class="cp-side-h">CV preview <span style="font-weight:400;color:var(--text3)">(Valeo format)</span></div>
@@ -24334,7 +24341,7 @@ async function cpInit(force){
   cpRender();
 }
 // how complete the CV is
-function cpComplete(p){ if(!p) return 0; var f = [p.photo, p.objective || p.bio, (p.skills||p.specialties||[]).length, (Array.isArray(p.education) ? p.education.length : p.education), (p.experience||[]).length, p.headline || p.role, p.location]; return Math.round(f.filter(Boolean).length / f.length * 100); }
+function cpComplete(p){ if(!p) return 0; var f = [p.photo, p.summary || p.objective || p.bio, (p.skills||p.specialties||[]).length, (Array.isArray(p.education) ? p.education.length : p.education), (p.jobs||p.experience||[]).length, p.headline || p.role, p.location, p.nationality, (p.languages||[]).length]; return Math.round(f.filter(Boolean).length / f.length * 100); }
 // caregivers on the roster + new caregivers created here
 function cpList(){
   var list = (typeof utCaregivers === 'function' ? utCaregivers(lvDateList(avToday(), avToday())) : []).map(function(c){ return {name:c.name, hc:c.hc}; });
@@ -24368,24 +24375,29 @@ function cpRender(){
   }).join('') : '<div class="tk-empty">No caregivers match.</div>';
 }
 // ── editor ───────────────────────────────────────────────────────
-function cpEduText(edu){ return (Array.isArray(edu) ? edu : (edu ? [{title:edu, detail:''}] : [])).map(function(e){ return e.title + (e.detail ? ' — ' + e.detail : ''); }).join('\n'); }
-function cpEduParse(t){ return String(t||'').split(/\n+/).map(function(l){ l = l.trim(); if(!l) return null; var m = l.split(/\s+[—–|]\s+|\s+-\s+/); return {title:m[0].trim(), detail:m.slice(1).join(' — ').trim()}; }).filter(Boolean); }
+function cpLines(v){ return (Array.isArray(v) ? v : String(v||'').split(/\n+/)).map(function(x){ return String(x||'').replace(/^[\s•●▪\-*·]+/, '').trim(); }).filter(Boolean); }
+// languages: split on commas that are not inside brackets ("English (Good), Tagalog (Native)")
+function cpLangs(v){ return String(v||'').split(/,(?![^(]*\))/).map(function(x){ return x.trim(); }).filter(Boolean); }
 function cpJobsDraw(jobs){
-  var E = tkEsc;
+  var E = tkEsc, n = (jobs||[]).length;
   document.getElementById('cp-jobs').innerHTML = (jobs||[]).map(function(j, i){
-    return '<div class="cp-job" data-i="' + i + '"><div style="display:flex;gap:6px"><input class="qt-input cp-j-t" placeholder="Infant & Child Caregiver – Sidra Home Healthcare" value="' + E(j.title||'') + '"><button class="tk-x" title="Remove job" onclick="cpDelJob(' + i + ')">✕</button></div>'
-      + '<input class="qt-input cp-j-s" placeholder="Dubai, UAE (January 2024 – February 2026)" value="' + E(j.sub||'') + '">'
-      + '<textarea class="qt-input cp-j-b" rows="3" placeholder="One duty per line">' + E((j.bullets||[]).join('\n')) + '</textarea></div>';
-  }).join('') || '<div style="font-size:11px;color:var(--text3);margin:6px 0 10px">No jobs yet — upload a CV or + Add job.</div>';
+    return '<div class="cp-job" data-i="' + i + '"><label class="qt-lbl">Job title</label><input class="qt-input cp-j-t" placeholder="Nanny, Newborn and Infant Care" value="' + E(j.title||'') + '">'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><div><label class="qt-lbl">Employer</label><input class="qt-input cp-j-e" placeholder="Private family" value="' + E(j.employer||'') + '"></div>'
+      + '<div><label class="qt-lbl">Location</label><input class="qt-input cp-j-l" placeholder="Dubai, UAE" value="' + E(j.location||'') + '"></div></div>'
+      + '<label class="qt-lbl">Dates</label><input class="qt-input cp-j-d" placeholder="2021 to 2024" value="' + E(j.dates||'') + '">'
+      + '<label class="qt-lbl">Duties (one per line)</label><textarea class="qt-input cp-j-b" rows="3">' + E((j.duties||[]).join('\n')) + '</textarea>'
+      + '<div style="display:flex;gap:6px;justify-content:flex-end"><button class="tk-btn" onclick="cpMoveJob(' + i + ',-1)"' + (i ? '' : ' disabled') + '>Up</button><button class="tk-btn" onclick="cpMoveJob(' + i + ',1)"' + (i < n-1 ? '' : ' disabled') + '>Down</button><button class="tk-btn" onclick="cpDelJob(' + i + ')">Remove</button></div></div>';
+  }).join('') || '<div style="font-size:11px;color:var(--text3);margin:6px 0 10px">No jobs yet — upload a CV or + Add a job.</div>';
 }
 function cpJobsRead(){
   return [].map.call(document.querySelectorAll('#cp-jobs .cp-job'), function(d){
-    return {title:d.querySelector('.cp-j-t').value.trim(), sub:d.querySelector('.cp-j-s').value.trim(),
-      bullets:d.querySelector('.cp-j-b').value.split(/\n+/).map(function(x){ return x.replace(/^[\s•●▪\-*·]+/, '').trim(); }).filter(Boolean)};
-  }).filter(function(j){ return j.title || j.sub || j.bullets.length; });
+    var g = function(c){ return d.querySelector(c).value.trim(); };
+    return {title:g('.cp-j-t'), employer:g('.cp-j-e'), location:g('.cp-j-l'), dates:g('.cp-j-d'), duties:cpLines(d.querySelector('.cp-j-b').value)};
+  }).filter(function(j){ return j.title || j.employer || j.duties.length; });
 }
-function cpAddJob(){ var j = cpJobsRead(); j.push({title:'', sub:'', bullets:[]}); cpJobsDraw(j); cpLive(); }
+function cpAddJob(){ var j = cpJobsRead(); j.push({title:'', employer:'', location:'', dates:'', duties:[]}); cpJobsDraw(j); cpLive(); }
 function cpDelJob(i){ var j = cpJobsRead(); j.splice(i, 1); cpJobsDraw(j); cpLive(); }
+function cpMoveJob(i, d){ var j = cpJobsRead(), k = i + d; if(k < 0 || k >= j.length) return; var x = j[i]; j[i] = j[k]; j[k] = x; cpJobsDraw(j); cpLive(); }
 function cpNewHCs(){ var s = {}; cpList().forEach(function(c){ if(c.hc !== CP_NEW_HC) s[c.hc] = 1; }); return Object.keys(s).sort(); }
 function cpNew(){ cpOpen('', '', true); }
 function cpOpen(cg, hc, isNew){
@@ -24397,14 +24409,16 @@ function cpOpen(cg, hc, isNew){
   if(isNew) document.getElementById('cp-new-hc').innerHTML = '<option value="">' + CP_NEW_HC + ' / not decided</option>' + cpNewHCs().map(function(h){ return '<option>' + tkEsc(h) + '</option>'; }).join('');
   var v = function(i, x){ document.getElementById(i).value = x == null ? '' : x; };
   var city = !isNew && typeof getCGCity === 'function' ? CP_CITY[getCGCity(cg, hc)] || '' : '';
+  var N = window.valeoCV ? valeoCV.norm(p) : {};
   v('cp-name', p.display_name || cg); v('cp-headline', p.headline || p.role || ''); v('cp-loc', p.location || city);
-  v('cp-certline', p.certified || (p.certifications||[]).slice(0,2).join(', ')); v('cp-exp', p.experience_years || ''); v('cp-lang', (p.languages||[]).join(', '));
-  v('cp-bio', p.objective || p.bio || ''); v('cp-skills', (p.skills && p.skills.length ? p.skills : (p.specialties||[])).join('\n')); v('cp-edu', cpEduText(p.education));
-  cpJobsDraw(p.experience || []);
+  v('cp-nat', p.nationality || ''); v('cp-gender', p.gender || ''); v('cp-exp', p.experience_years || ''); v('cp-lang', (N.languages || p.languages || []).join(', '));
+  v('cp-bio', N.summary || ''); v('cp-skills', (N.skills || []).join('\n')); v('cp-edu', (N.education || []).join('\n')); v('cp-train', (N.training || []).join('\n'));
+  v('cp-b1', p.banner1 == null ? 'Dedicated. Nurturing. Trustworthy.' : p.banner1); v('cp-b2', p.banner2 == null ? 'Delivering loving care and a safe, healthy environment for every child.' : p.banner2); v('cp-quote', p.quote || '');
+  cpJobsDraw(N.jobs || []);
   document.getElementById('cp-cv-public').checked = !!p.cv_public;
   document.getElementById('cp-adj').style.display = 'none'; document.getElementById('cp-uni').style.display = 'none';
   document.getElementById('cp-cv-msg').style.color = 'var(--text3)';
-  document.getElementById('cp-cv-msg').textContent = 'Upload a PDF CV: the photo, objective, skills, education and experience are filled in from it — please check.';
+  document.getElementById('cp-cv-msg').textContent = 'Upload a PDF CV: the photo, details, summary, skills, experience and education are filled in from it — please check.';
   cpSetPhoto(p.photo || '', true); cpShowCV();
   cpShareBox(); document.getElementById('cp-msg').textContent = '';
   document.getElementById('cp-modal').style.display = 'flex';
@@ -24583,19 +24597,29 @@ function cpParseCV(lines){
 function cpFillFromCV(res){
   var r = cpParseCV(res.lines || []), n = 0, set = function(id, v){ var el = document.getElementById(id); if(v && !String(el.value||'').trim()){ el.value = v; n++; } };
   if(_cp.cur.isNew) set('cp-name', r.name);
-  set('cp-headline', r.role); set('cp-loc', r.location); set('cp-certline', r.certified); set('cp-exp', r.years);
-  set('cp-bio', r.objective); set('cp-skills', (r.skills||[]).join('\n')); set('cp-edu', cpEduText(r.education));
-  if((r.experience||[]).length && !cpJobsRead().length){ cpJobsDraw(r.experience); n++; }
+  var txt = (res.lines || []).map(function(l){ return l.t; }).join('\n');
+  var grab = function(re){ var m = txt.match(re); return m ? m[1].replace(/\s+(role|location|certified|gender|nationality|languages?|email|phone|date of birth|age)\s*:.*$/i, '').trim() : ''; };
+  set('cp-headline', r.role); set('cp-loc', r.location || grab(/(?:based in|location|address)\s*:\s*([^\n]+)/i)); set('cp-exp', r.years);
+  set('cp-nat', grab(/nationality\s*:\s*([^\n]+)/i) || (/philippin|filipin/i.test(txt) ? 'Philippines' : ''));
+  set('cp-gender', grab(/gender\s*:\s*([^\n]+)/i) || grab(/sex\s*:\s*([^\n]+)/i));
+  set('cp-lang', grab(/languages?\s*(?:spoken)?\s*:\s*([^\n]+)/i));
+  set('cp-bio', r.objective); set('cp-skills', (r.skills||[]).join('\n'));
+  var edu = [], tr = [];
+  (r.education||[]).forEach(function(e){ var line = [e.title, e.detail].filter(Boolean).join(', '); (/certif|course|training|support|aid|cpr|nc\s*ii/i.test(e.title) ? tr : edu).push(line); });
+  if(r.certified && !tr.length) tr.push(r.certified);
+  set('cp-edu', edu.join('\n')); set('cp-train', tr.join('\n'));
+  if((r.experience||[]).length && !cpJobsRead().length){ cpJobsDraw(valeoCV.norm({experience:r.experience}).jobs); n++; }
   return n;
 }
 function cpCollect(){
   var g = function(i){ return String(document.getElementById(i).value||'').trim(); }, list = function(v){ return v.split(/[,;\/]+/).map(function(x){ return x.trim(); }).filter(Boolean); };
   var p = _cp.draft;
-  p.display_name = g('cp-name') || (_cp.cur && _cp.cur.cg) || ''; p.headline = g('cp-headline'); p.role = p.headline; p.location = g('cp-loc'); p.certified = g('cp-certline');
-  p.experience_years = g('cp-exp'); p.languages = list(g('cp-lang'));
-  p.objective = g('cp-bio'); p.bio = p.objective;
-  p.skills = g('cp-skills').split(/\n+/).map(function(x){ return x.replace(/^[\s•●▪\-*·]+/, '').trim(); }).filter(Boolean);
-  p.education = cpEduParse(g('cp-edu')); p.experience = cpJobsRead();
+  p.display_name = g('cp-name') || (_cp.cur && _cp.cur.cg) || ''; p.headline = g('cp-headline'); p.role = p.headline; p.location = g('cp-loc');
+  p.nationality = g('cp-nat'); p.gender = g('cp-gender'); p.experience_years = g('cp-exp'); p.languages = cpLangs(g('cp-lang'));
+  p.summary = g('cp-bio'); p.objective = p.summary; p.bio = p.summary;
+  p.skills = cpLines(g('cp-skills')); p.education = cpLines(g('cp-edu')); p.training = cpLines(g('cp-train'));
+  p.jobs = cpJobsRead(); delete p.experience; delete p.certified;
+  p.banner1 = g('cp-b1'); p.banner2 = g('cp-b2'); p.quote = g('cp-quote');
   p.cv_public = document.getElementById('cp-cv-public').checked;
   return p;
 }
@@ -24606,7 +24630,7 @@ function cpLive(now){
     var box = document.getElementById('cp-prev'); if(!box || !window.valeoCV) return;
     var p = cpCollect();
     box.innerHTML = '<div class="cp-prev-in">' + valeoCV.html(p) + '</div>';
-    var inn = box.firstChild, sc = (box.clientWidth || 380) / 816;
+    var inn = box.firstChild, sc = (box.clientWidth || 380) / ((window.valeoCV && valeoCV.W) || 1123);
     valeoCV.fit && valeoCV.fit(inn); inn.style.transform = 'scale(' + sc + ')'; box.style.height = Math.ceil(inn.offsetHeight * sc) + 'px';
   }, now === true ? 0 : 250);
 }
@@ -24619,7 +24643,8 @@ async function cpDownload(){
 function cpPublicDoc(p){
   return {name:p.display_name || p.caregiver || '', headline:p.headline || '', role:p.role || p.headline || '', location:p.location || '', certified:p.certified || '',
     photo:p.photo || '', experience_years:p.experience_years || '', languages:p.languages || [], objective:p.objective || p.bio || '', bio:p.objective || p.bio || '',
-    skills:p.skills || [], education:Array.isArray(p.education) ? p.education : [], experience:p.experience || [],
+    skills:p.skills || [], education:Array.isArray(p.education) ? p.education : [], training:p.training || [], jobs:p.jobs || [], experience:p.experience || [],
+    nationality:p.nationality || '', gender:p.gender || '', summary:p.summary || p.objective || p.bio || '', banner1:p.banner1, banner2:p.banner2, quote:p.quote || '',
     as_of:new Date().toISOString(), country:VC.code.toLowerCase(), format:'cv',
     cv:(p.cv_public && p.cv && p.cv.mode === 'storage') ? {url:p.cv.url, name:p.cv.name} : null};
 }
