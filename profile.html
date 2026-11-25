@@ -94,8 +94,8 @@ function render(p){
     + '<a class="btn alt" href="' + esc(book) + '" target="_blank" rel="noopener">Book on feelvaleo.com</a>'
     + (p.cv && p.cv.url ? '<a class="btn alt" href="' + esc(p.cv.url) + '" target="_blank" rel="noopener">Original CV</a>' : '') + '</div>'
     + '<div class="cvwrap"><div class="cvin">' + valeoCV.html(p) + '</div></div>';
-  fit(); setTimeout(fit, 400); window.addEventListener('resize', fit);
-  if(document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+  valeoCV.fit(document.querySelector('.cvin')); fit(); setTimeout(function(){ valeoCV.fit(document.querySelector('.cvin')); fit(); }, 400); window.addEventListener('resize', fit);
+  if(document.fonts && document.fonts.ready) document.fonts.ready.then(function(){ valeoCV.fit(document.querySelector('.cvin')); fit(); });
 }
 function dl(){
   var b = document.getElementById('dl'); b.disabled = true; b.textContent = 'Preparing PDF…';

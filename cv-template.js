@@ -57,19 +57,20 @@
     + '.vcv-info{position:absolute;left:384px;top:163px;width:374px;background:#E8EAED;border-radius:14px;padding:22px 24px;display:flex;flex-direction:column;gap:12px;font-size:16px}'
     + '.vcv-info div{display:flex;align-items:center;gap:12px;line-height:1.3}'
     + '.vcv-info .vcv-ic{width:18px;height:18px;flex-shrink:0}'
-    + '.vcv-panel1{position:absolute;left:34px;right:34px;top:395px;bottom:0;background:#fff;border-radius:28px 28px 0 0;padding:94px 50px 30px}'
-    + '.vcv-panel2{position:absolute;left:34px;right:34px;top:34px;bottom:58px;background:#fff;border-radius:0 0 28px 28px;padding:40px 50px 30px}'
-    + '.vcv h3{margin:0 0 4px;color:' + YELLOW + ';font-weight:800;font-size:19px;letter-spacing:.2px;text-transform:uppercase}'
-    + '.vcv-sec{margin-bottom:20px}'
-    + '.vcv p{margin:0;font-size:14.5px;line-height:1.55}'
-    + '.vcv-skills{display:grid;grid-template-columns:1fr 1fr;column-gap:24px;font-size:14.5px;line-height:1.55}'
+    + '.vcv-panel1{position:absolute;left:34px;right:34px;top:395px;bottom:0;background:#fff;border-radius:28px 28px 0 0;padding:94px 50px 26px;display:flex;flex-direction:column;overflow:hidden;--k:1}'
+    + '.vcv-panel2{position:absolute;left:34px;right:34px;top:34px;bottom:58px;background:#fff;border-radius:0 0 28px 28px;padding:40px 50px 26px;display:flex;flex-direction:column;overflow:hidden;--k:1}'
+    + '.vcv h3{margin:0 0 4px;color:' + YELLOW + ';font-weight:800;font-size:calc(19px * var(--k));letter-spacing:.2px;text-transform:uppercase}'
+    + '.vcv-body{flex:0 0 auto}'
+    + '.vcv-sec{margin-bottom:calc(20px * var(--k))}'
+    + '.vcv p{margin:0;font-size:calc(14.5px * var(--k));line-height:1.55}'
+    + '.vcv-skills{display:grid;grid-template-columns:1fr 1fr;column-gap:24px;font-size:calc(14.5px * var(--k));line-height:1.55}'
     + '.vcv-skills div:before{content:"\\2022"}'
-    + '.vcv-edu b,.vcv-job b{display:block;font-weight:700;font-size:14.5px;line-height:1.4}'
-    + '.vcv-edu div{margin-bottom:10px;font-size:14.5px;line-height:1.45}'
-    + '.vcv-job{margin-bottom:16px}'
-    + '.vcv-job ul{margin:4px 0 0;padding-left:26px;font-size:14.5px;line-height:1.55}'
-    + '.vcv-logo{position:absolute;left:50%;bottom:40px;transform:translateX(-50%);width:150px;text-align:center}'
-    + '.vcv-logo img{width:150px;height:auto;display:block;margin:0 auto}'
+    + '.vcv-edu b,.vcv-job b{display:block;font-weight:700;font-size:calc(14.5px * var(--k));line-height:1.4}'
+    + '.vcv-edu div{margin-bottom:10px;font-size:calc(14.5px * var(--k));line-height:1.45}'
+    + '.vcv-job{margin-bottom:calc(16px * var(--k))}'
+    + '.vcv-job ul{margin:4px 0 0;padding-left:26px;font-size:calc(14.5px * var(--k));line-height:1.55}'
+    + '.vcv-logo{margin-top:auto;padding-top:18px;flex:0 0 auto;width:100%;text-align:center}'
+    + '.vcv-logo img{width:130px;height:auto;display:block;margin:0 auto}'
     + '.vcv-foot{position:absolute;left:0;right:0;bottom:20px;text-align:center;font-size:10px;letter-spacing:.25em;color:rgba(255,255,255,.55)}';
   function css(){ return '<style>' + CSS + '</style>'; }
   function ini(n){ return String(n || '?').trim().split(/\s+/).map(function(w){ return w[0]; }).slice(0, 2).join('').toUpperCase(); }
@@ -92,8 +93,8 @@
     var page1 = '<div class="vcv-page vcv-p1"><div class="vcv-hello">Hello, I’m</div><div class="vcv-name' + (nm.length > 11 ? ' long' : '') + '">' + esc(nm) + '</div>'
       + '<div class="vcv-photo"' + (p.photo ? ' style="background-image:url(\'' + esc(p.photo) + '\')"' : '') + '>' + (p.photo ? '' : esc(ini(p.name))) + '</div>'
       + '<div class="vcv-info">' + info.join('') + '</div>'
-      + '<div class="vcv-panel1">' + (p.objective ? '<div class="vcv-sec"><h3>Objective</h3><p>' + esc(p.objective) + '</p></div>' : '') + skills + edu + (exp ? '' : logo) + '</div></div>';
-    var page2 = exp ? '<div class="vcv-page vcv-p2"><div class="vcv-panel2">' + exp + logo + '</div></div>' : '';
+      + '<div class="vcv-panel1"><div class="vcv-body">' + (p.objective ? '<div class="vcv-sec"><h3>Objective</h3><p>' + esc(p.objective) + '</p></div>' : '') + skills + edu + '</div>' + (exp ? '' : logo) + '</div></div>';
+    var page2 = exp ? '<div class="vcv-page vcv-p2"><div class="vcv-panel2"><div class="vcv-body">' + exp + '</div>' + logo + '</div></div>' : '';
     return '<div class="vcv">' + css() + page1 + page2 + '</div>';
   }
   function load(src){ return new Promise(function(res, rej){ var s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = function(){ rej(new Error('could not load the PDF maker')); }; document.head.appendChild(s); }); }
@@ -107,6 +108,8 @@
     document.body.appendChild(box);
     try{
       if(document.fonts && document.fonts.ready) await document.fonts.ready;
+      fit(box);
+      [].forEach.call(box.querySelectorAll('.vcv-page'), function(pg){ pg.style.height = '1055px'; pg.style.pageBreakAfter = 'auto'; pg.style.breakAfter = 'auto'; });
       await Promise.all([].map.call(box.querySelectorAll('img'), function(im){ return im.complete ? 0 : new Promise(function(r){ im.onload = im.onerror = r; }); }));
       await window.html2pdf().set({
         margin: 0, filename: filename || ('Valeo_CV_' + String(p.name).replace(/[^A-Za-z0-9]+/g, '_') + '.pdf'),
@@ -116,5 +119,28 @@
       }).from(box.firstChild).save();
     } finally { box.remove(); }
   }
-  window.valeoCV = {html:html, download:download, norm:norm};
+  // call after the CV is in the page: shrinks a panel's text until it and the logo fit
+  function over(pn){ var b = pn.querySelector('.vcv-body'), l = pn.querySelector('.vcv-logo'), cs = getComputedStyle(pn);
+    var room = pn.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+    return (b ? b.offsetHeight : 0) + (l ? l.offsetHeight : 0) > room + 1; }
+  function shrink(pn, min){ var k = 1; pn.style.setProperty('--k', 1); while(over(pn) && k > min){ k = Math.round((k - 0.03) * 100) / 100; pn.style.setProperty('--k', k); } return !over(pn); }
+  function fit(root){
+    root = root || document;
+    [].forEach.call(root.querySelectorAll('.vcv'), function(cv){
+      var p1 = cv.querySelector('.vcv-panel1');
+      if(p1 && !shrink(p1, 0.82)){
+        // page 1 is full: move the last sections (education first) and the logo to page 2
+        var p2 = cv.querySelector('.vcv-panel2');
+        if(!p2){ var pg = document.createElement('div'); pg.className = 'vcv-page vcv-p2'; pg.innerHTML = '<div class="vcv-panel2"><div class="vcv-body"></div></div>'; cv.appendChild(pg); p2 = pg.firstChild; }
+        var b2 = p2.querySelector('.vcv-body'), lg = p1.querySelector('.vcv-logo');
+        if(lg && !p2.querySelector('.vcv-logo')) p2.appendChild(lg); else if(lg) lg.remove();
+        var secs = p1.querySelectorAll('.vcv-body > .vcv-sec'), i = secs.length - 1, moved = [];
+        while(i > 0 && !shrink(p1, 0.82)){ moved.unshift(secs[i]); secs[i].remove(); i--; }
+        moved.reverse().forEach(function(sec){ b2.insertBefore(sec, b2.firstChild); });
+        shrink(p1, 0.7);
+      }
+      var q = cv.querySelector('.vcv-panel2'); if(q) shrink(q, 0.7);
+    });
+  }
+  window.valeoCV = {html:html, download:download, norm:norm, fit:fit};
 })();

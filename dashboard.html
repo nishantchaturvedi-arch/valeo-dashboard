@@ -24582,7 +24582,7 @@ function cpLive(now){
     var p = cpCollect();
     box.innerHTML = '<div class="cp-prev-in">' + valeoCV.html(p) + '</div>';
     var inn = box.firstChild, sc = (box.clientWidth || 380) / 816;
-    inn.style.transform = 'scale(' + sc + ')'; box.style.height = Math.ceil(inn.offsetHeight * sc) + 'px';
+    valeoCV.fit && valeoCV.fit(inn); inn.style.transform = 'scale(' + sc + ')'; box.style.height = Math.ceil(inn.offsetHeight * sc) + 'px';
   }, now === true ? 0 : 250);
 }
 async function cpDownload(){
