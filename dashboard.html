@@ -706,6 +706,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-
 .cp-adj label{display:flex;align-items:center;gap:8px}.cp-adj input{flex:1}
 .cp-job{border:1px solid var(--border);border-radius:8px;padding:8px;margin:6px 0 10px;display:flex;flex-direction:column;gap:6px}
 .cp-job .qt-input{margin:0}
+.cp-uni{margin-top:8px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px;font-size:11px}
+.cp-uni .cp-uni-imgs{display:flex;gap:8px;margin:6px 0}
+.cp-uni img{width:110px;height:110px;object-fit:cover;border-radius:10px;border:1px solid var(--border)}
 .cp-share{background:var(--bg3);border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.6}
 .cp-share input{width:100%;font-family:monospace;font-size:11px;padding:6px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);margin:6px 0}
 .ex-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:6px;padding:12px}
@@ -11289,6 +11292,8 @@ body.dragging .cal-cell .cal-ev{pointer-events:none;}
     <div class="cp-photo-row"><div class="cp-photo" id="cp-photo"></div>
      <div style="flex:1;min-width:0"><label class="tk-btn" style="display:inline-block;cursor:pointer">📷 Upload photo<input type="file" accept="image/*" onchange="cpPickPhoto(this)" style="display:none"></label>
       <button class="tk-btn" onclick="cpSetPhoto('')">Remove</button>
+      <button class="tk-btn pri" id="cp-uni-btn" onclick="cpUniform()" title="AI: put this caregiver in the Valeo navy uniform">👔 Valeo uniform</button>
+      <div id="cp-uni" class="cp-uni" style="display:none"></div>
       <div id="cp-adj" class="cp-adj" style="display:none">
        <label>Zoom <input type="range" id="cp-z" min="1" max="3" step="0.05" value="1" oninput="cpCrop()"></label>
        <label>Left / right <input type="range" id="cp-x" min="0" max="1" step="0.01" value="0.5" oninput="cpCrop()"></label>
@@ -24397,7 +24402,7 @@ function cpOpen(cg, hc, isNew){
   v('cp-bio', p.objective || p.bio || ''); v('cp-skills', (p.skills && p.skills.length ? p.skills : (p.specialties||[])).join('\n')); v('cp-edu', cpEduText(p.education));
   cpJobsDraw(p.experience || []);
   document.getElementById('cp-cv-public').checked = !!p.cv_public;
-  document.getElementById('cp-adj').style.display = 'none';
+  document.getElementById('cp-adj').style.display = 'none'; document.getElementById('cp-uni').style.display = 'none';
   document.getElementById('cp-cv-msg').style.color = 'var(--text3)';
   document.getElementById('cp-cv-msg').textContent = 'Upload a PDF CV: the photo, objective, skills, education and experience are filled in from it — please check.';
   cpSetPhoto(p.photo || '', true); cpShowCV();
@@ -24426,6 +24431,26 @@ function cpCrop(){
   var s = 600, cv = document.createElement('canvas'); cv.width = s; cv.height = s;
   var g = cv.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, s, s); g.drawImage(img, sx, sy, side, side, 0, 0, s, s);
   cpSetPhoto(cv.toDataURL('image/jpeg', 0.85));
+}
+// AI: put the photo in the Valeo navy uniform (server route /api/uniform holds the Gemini key)
+async function cpUniform(){
+  var ph = _cp.draft && _cp.draft.photo, box = document.getElementById('cp-uni'), btn = document.getElementById('cp-uni-btn');
+  if(!ph){ alert('Add a photo first (upload the CV or a photo).'); return; }
+  box.style.display = ''; box.innerHTML = '⏳ Dressing in the Valeo uniform… this takes about 10–20 seconds.'; btn.disabled = true;
+  try{
+    var r = await fetch(VALEO_API_BASE + '/api/uniform', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({photo:ph})});
+    var j = {}; try{ j = await r.json(); }catch(e){}
+    if(r.status === 404) throw new Error('the uniform service is not set up yet — add api/uniform.js and the Gemini key to the Vercel API (see vercel-api/README.md)');
+    if(!r.ok || !j.photo) throw new Error(j.error || ('server error ' + r.status));
+    _cp.uni = j.photo;
+    box.innerHTML = '<b>Check the result</b> — the face must be unchanged.<div class="cp-uni-imgs"><div><img src="' + tkEsc(ph) + '" alt="before"><div style="text-align:center;color:var(--text3)">Before</div></div><div><img src="' + tkEsc(j.photo) + '" alt="after"><div style="text-align:center;color:var(--text3)">Valeo uniform</div></div></div>'
+      + '<button class="tk-btn pri" onclick="cpUniformUse()">✓ Use this photo</button> <button class="tk-btn" onclick="cpUniform()">↻ Try again</button> <button class="tk-btn" onclick="document.getElementById(\'cp-uni\').style.display=\'none\'">Keep original</button>';
+  }catch(e){ box.innerHTML = '<span style="color:var(--absent)">Could not change the uniform: ' + tkEsc(e.message || 'network error') + '</span>'; }
+  finally{ btn.disabled = false; }
+}
+function cpUniformUse(){
+  var u = _cp.uni; if(!u) return;
+  var img = new Image(); img.onload = function(){ cpUseSource(img); document.getElementById('cp-uni').style.display = 'none'; }; img.src = u;
 }
 function cpPickPhoto(input){
   var f = input.files && input.files[0]; input.value = ''; if(!f) return;
