@@ -9,9 +9,8 @@ The person reviews it in the dashboard and chooses **Use this photo** or **Keep 
 
 1. Get a Gemini API key at <https://aistudio.google.com/apikey> (Google AI Studio → Create API key).
    Image editing uses a paid tier, so billing must be enabled on the key's Google Cloud project.
-2. Copy `api/uniform.js` into the Vercel API project (the repo behind `dashboard-api-beta-three.vercel.app`) as `api/uniform.js`,
-   and put the reference photo of a caregiver in the Valeo uniform next to it as `api/uniform-ref.jpg`
-   (kept in the API project, not in this public repo).
+2. Copy both files in `api/` — `uniform.js` and the reference photo `uniform-ref.jpg` — into the
+   Vercel API project (the repo behind `dashboard-api-beta-three.vercel.app`) as `api/uniform.js` and `api/uniform-ref.jpg`.
 3. In Vercel → that project → **Settings → Environment Variables**, add `GEMINI_API_KEY` = your key (Production).
 4. Redeploy the project.
 
