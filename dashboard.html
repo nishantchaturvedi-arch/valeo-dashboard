@@ -11991,6 +11991,8 @@ function expandOrders(orders){
 // Status: Order_Status compared without case/spaces/underscores.
 const ALLOWED_ORDER_STATUSES = ['nurseassigned','completed'];
 function _normKey(v){ return String(v==null?'':v).toLowerCase().replace(/[\s_\-]+/g,''); }
+// order status as one key; every kind of cancel (CANCELLED, SYSTEM_CANCELLED, …) reads as 'cancelled'
+function _stKey(r){ var s = _normKey(r && r['Order_Status']); return /cancel/.test(s) ? 'cancelled' : s; }
 // Country: any column whose name contains "country". Rows with no country column
 // are UAE (the original sheet is UAE-only), so Qatar never shows them.
 function isCountryRow(r){
@@ -12045,7 +12047,7 @@ async function loadData(force=false){
       if(!isCountryRow(r)) return false;
       if(String(r['Nurse_Assigned']||'').trim()) return false;
       var hc = String(r['Homecare']||'').trim(); if(!hc) return false;
-      var st = _normKey(r['Order_Status']);
+      var st = _stKey(r);
       return st !== 'cancelled' && st !== 'temporder' && st !== 'completed';
     }).map(function(r){
       var slot = String(r['Confirmed_DateTime']||r['Booked_Slot']||r['Order_Date']||'').replace('T',' ');
@@ -23855,7 +23857,7 @@ function odOrders(){
   var carts = {};
   (window._lastRows || []).forEach(function(r){
     if(!isCountryRow(r)) return;
-    if(OD_SKIP.includes(_normKey(r['Order_Status']))) return;
+    if(OD_SKIP.includes(_stKey(r))) return;
     if(excl.indexOf(String(r['Homecare']||'').trim().toLowerCase()) >= 0) return;
     if(/dummy/i.test(String(r['Homecare']||''))) return;
     var od = String(r['Order_Date']||'').replace('T',' ').slice(0,10); if(!od || od < '2025-01-01') return;
@@ -24105,7 +24107,7 @@ function cuCustomers(){
   var M = {};
   (window._lastRows||[]).forEach(function(r){
     if(!isCountryRow(r)) return;
-    var st = _normKey(r['Order_Status']); if(st === 'cancelled' || st === 'temporder') return;
+    var st = _stKey(r); if(st === 'cancelled' || st === 'temporder') return;
     var hc = String(r['Homecare']||'').replace(/ /g,' ').trim(); if(excl.indexOf(hc.toLowerCase()) >= 0 || /dummy/i.test(hc)) return;
     var sd = String(r['Confirmed_DateTime']||r['Booked_Slot']||'').replace('T',' ').slice(0,10), od = String(r['Order_Date']||'').slice(0,10);
     if(!sd && !od) return;
@@ -24223,7 +24225,7 @@ function ooAll(){
   var excl = ['carezone home healthcare llc','dummy homecare','helpful agency','nifas hc','babysitting ksa','pyramid home health care'];
   return (window._lastRows||[]).filter(function(r){
     if(!isCountryRow(r)) return false;
-    var st = _normKey(r['Order_Status']);
+    var st = _stKey(r);
     if(st === 'completed' || st === 'temporder' || (st === 'cancelled' && !cxl)) return false;
     var hc = String(r['Homecare']||'').replace(/ /g,' ').trim();
     if(excl.indexOf(hc.toLowerCase()) >= 0 || /dummy/i.test(hc)) return false;
@@ -25105,7 +25107,7 @@ function ivIndex(){
     var ch = String(r['Child_Order_ID']||'').trim(), ca = String(r['Cart_Order_ID']||'').trim();
     if(ch) ix.child[ch] = r;
     if(ca){ (ix.cart[ca] = ix.cart[ca] || []).push(r);
-      var st = _normKey(r['Order_Status']); if(st !== 'cancelled' && st !== 'temporder'){ var k = ca + '|' + r['Parent_Package']; ix.cartN[k] = (ix.cartN[k]||0) + 1; } }
+      var st = _stKey(r); if(st !== 'cancelled' && st !== 'temporder'){ var k = ca + '|' + r['Parent_Package']; ix.cartN[k] = (ix.cartN[k]||0) + 1; } }
     var ph = ivPh(r['Phone Number']); if(ph) (ix.phone[ph] = ix.phone[ph] || []).push(r);
   });
   _iv.idx = ix; return ix;
@@ -25134,7 +25136,7 @@ function ivMzRate(r){
 
 // ── 1. HOMECARE: one row of our data → what we expect to pay ─────
 function ivCalc(hc, r){
-  var ds = ivSvc(r).slice(0,10), today = avToday(), st = _normKey(r['Order_Status']);
+  var ds = ivSvc(r).slice(0,10), today = avToday(), st = _stKey(r);
   var cg = String(r['Nurse_Assigned']||'').trim(), child = String(r['Child_Order_ID']||'').trim();
   var o = {r:r, cart:String(r['Cart_Order_ID']||'').trim(), child:child, name:String(r['User Name']||'').trim(), phone:String(r['Phone Number']||'').trim(),
     date:ds, time:ivFmtT(ivSvc(r)), addr:[r['Address Line 1'], r['Address Line 2'], r['City']].filter(function(x){ return x && String(x).trim(); }).join(', '),
@@ -25162,7 +25164,7 @@ function ivHCRows(hc, p){
   (window._lastRows||[]).forEach(function(r){
     if(!isCountryRow(r) || !tkHCMatch(ivHC(r), hc)) return;
     if(ivSvc(r).slice(0,7) !== p) return;
-    var st = _normKey(r['Order_Status']); if(st === 'temporder') return;
+    var st = _stKey(r); if(st === 'temporder') return;
     out.push(ivCalc(hc, r));
   });
   out.sort(function(a,b){ return (a.date + a.time).localeCompare(b.date + b.time) || a.child.localeCompare(b.child); });
@@ -25320,7 +25322,7 @@ function ivMatchHC(hc, p, soa, rows, ret){
       if(hit.length || !id) return;
       if(ix.child[id]){ hit = [ix.child[id]]; how = 'Order ID'; return; }
       if(ix.cart[id]){
-        var all = ix.cart[id].filter(function(r){ var s = _normKey(r['Order_Status']); return s !== 'temporder'; });
+        var all = ix.cart[id].filter(function(r){ var s = _stKey(r); return s !== 'temporder'; });
         var same = L.date ? all.filter(function(r){ return ivSvc(r).slice(0,10) === L.date; }) : [];
         var inM = all.filter(function(r){ return ivSvc(r).slice(0,7) === p; });
         hit = same.length ? same : inM.length ? inM : all; how = 'Order ID';
@@ -25638,7 +25640,7 @@ function ivMWModel(){
   var p = ivMonth(), basis = document.getElementById('iv-mw-basis').value, today = avToday(), C = {};
   (window._lastRows||[]).forEach(function(r){
     if(!isCountryRow(r) || odChannel(r) !== 'mumz') return;
-    var st = _normKey(r['Order_Status']); if(st === 'cancelled' || st === 'temporder') return;
+    var st = _stKey(r); if(st === 'cancelled' || st === 'temporder') return;
     var hc = ivHC(r); if(hc && ivExcludedHC(hc)) return;
     var sd = ivSvc(r).slice(0,10), od = String(r['Order_Date']||'').slice(0,10);
     if((basis === 'order' ? od : sd).slice(0,7) !== p) return;
@@ -25822,7 +25824,7 @@ function uaAll(){
   var excl = ['carezone home healthcare llc','dummy homecare','helpful agency','nifas hc','babysitting ksa','pyramid home health care'];
   return (window._lastRows||[]).map(function(r){
     if(!isCountryRow(r)) return null;
-    var st = _normKey(r['Order_Status']); if(st === 'completed' || st === 'temporder' || st === 'cancelled') return null;
+    var st = _stKey(r); if(st === 'completed' || st === 'temporder' || st === 'cancelled') return null;
     var hc = String(r['Homecare']||'').replace(/ /g,' ').trim(), nurse = String(r['Nurse_Assigned']||'').trim();
     if(hc && (excl.indexOf(hc.toLowerCase()) >= 0 || /dummy/i.test(hc))) return null;
     if(hc && nurse) return null;                                 // fully assigned
