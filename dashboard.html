@@ -25041,7 +25041,7 @@ var IV_EX_DED = {sick:'sick', holiday:'holiday', unpaid:'unpaid', paid:'paid'};
 var IV_DISC0 = {'2026-11':10};   // Mumzworld promo: % off the Valeo→Mumzworld price for orders placed that month
 var IV_EXCL = ['carezone home healthcare llc','dummy homecare','helpful agency','nifas hc','babysitting ksa','pyramid home health care'];
 var IV_LEAVE = {sick:1, off:1, holiday:1, paid:1, unpaid:1};
-var _iv = {tab:1, rc:null, rcLoaded:false, soa:{}, mw:null, mwDocs:{}, mwLoaded:false, recon:{}, idx:null, upTarget:'hc', penLoaded:false, penOff:{}};
+var _iv = {tab:1, rc:null, rcLoaded:false, soa:{}, mw:null, mwDocs:{}, mwLoaded:false, recon:{}, idx:null, upTarget:'hc', penLoaded:false, penOff:{}, okEdit:{}};
 
 function ivDefaults(){
   var rc = {cols:JSON.parse(JSON.stringify(IV_COLS0)), cost:{}, mz:{}, ex:JSON.parse(JSON.stringify(IV_EX0)), disc:JSON.parse(JSON.stringify(IV_DISC0))};
@@ -25498,6 +25498,7 @@ function ivHCModel(){
   var lines = rows.filter(function(o){ return o.billable && !o.ex; });
   var exRows = rows.filter(function(o){ return o.billable && o.ex; });
   var soa = _iv.soa[p + '|' + tkNorm(hc)] || null, rec = soa ? ivMatchHC(hc, p, soa, rows, ret) : null;
+  if(rec) rec.lines.forEach(function(o, i){ var e = _iv.okEdit[ivEditKey({p:p, hc:hc, soa:soa}, i)]; o.fin = e == null ? (o.ok||0) : e; o.edited = e != null; });
   var expOrders = lines.reduce(function(t,o){ return t + (o.exp||0); }, 0), expRet = ret.reduce(function(t,o){ return t + (o.exp||0); }, 0);
   var pen = ivPenalties(hc, p), penDed = pen.reduce(function(t,x){ return t + (x.inc ? x.amt : 0); }, 0);
   return {hc:hc, p:p, rows:rows, lines:lines, exRows:exRows, ret:ret, soa:soa, rec:rec, expOrders:expOrders, expRet:expRet, exp:expOrders + expRet,
@@ -25510,7 +25511,8 @@ function ivRenderHC(){
   ivLoadRecon(M.p, M.hc); ivEnsurePen();
   document.getElementById('iv-clear').style.display = M.soa ? '' : 'none';
   var claimed = M.rec ? M.rec.lines.reduce(function(t,o){ return t + o.L.price; }, 0) : 0;
-  var okAmt = M.rec ? M.rec.lines.reduce(function(t,o){ return t + (o.ok||0); }, 0) : 0;
+  if(M.rec) M.rec.lines.forEach(function(o, i){ var e = _iv.okEdit[ivEditKey(M, i)]; o.fin = e == null ? (o.ok||0) : e; o.edited = e != null; });
+  var okAmt = M.rec ? M.rec.lines.reduce(function(t,o){ return t + (o.fin||0); }, 0) : 0;
   var k = ivKpi(ivAED(M.exp), 'Expected — ' + ivMonthLbl(M.p), 'var(--accent)')
     + ivKpi(ivAED(M.expOrders), M.lines.length + ' completed orders (per booking)')
     + (M.ret.length ? ivKpi(ivAED(M.expRet), M.ret.length + ' exclusive CGs (monthly fee)', '#f59e0b') : '')
@@ -25527,18 +25529,21 @@ function ivRenderHC(){
   var h = typeof exWarnHTML === 'function' ? exWarnHTML() : '';
   // reconciliation
   var saved = _iv.recon[M.p + '__' + tkNorm(M.hc)];
+  if(saved && (saved.items||[]).length) h += ivFinalCard(saved);
   if(M.rec){
     var R = M.rec, cnt = {good:0, warn:0, bad:0}; R.lines.forEach(function(o){ cnt[o.cls] = (cnt[o.cls]||0) + 1; });
     h += '<div class="tk-card"><div class="tk-card-h"><span>🔎 Homecare SOA vs our data — ' + E(M.soa.src) + ' · <span style="color:var(--duty)">' + cnt.good + ' matched</span> · <span style="color:var(--sick)">' + cnt.warn + ' to check</span> · <span style="color:var(--absent)">' + cnt.bad + ' not payable</span></span>'
       + '<span style="display:flex;gap:6px;align-items:center"><span style="font-size:11px;color:var(--text2);font-weight:400">Approve</span><input id="iv-approve" class="tk-inp" style="width:110px" value="' + Math.max(0, Math.round(okAmt - M.penDed)) + '">'
       + '<button class="tk-btn pri" onclick="ivPost()">✓ Approve &amp; post to P&amp;L</button></span></div>'
-      + '<div class="tk-scroll" style="max-height:480px"><table class="tk-tbl"><thead><tr><th>#</th><th>Their order / cust ID</th><th>Our order #</th><th>Customer</th><th>Date</th><th>Their staff</th><th style="text-align:right">Claimed</th><th style="text-align:right">Expected</th><th>Matched by</th><th>Result</th><th>Notes</th></tr></thead><tbody>'
+      + '<div class="tk-scroll" style="max-height:480px"><table class="tk-tbl"><thead><tr><th>#</th><th>Their order / cust ID</th><th>Our order #</th><th>Customer</th><th>Date</th><th>Their staff</th><th style="text-align:right">Claimed</th><th style="text-align:right">Expected</th><th style="text-align:right">Approved</th><th>Matched by</th><th>Result</th><th>Notes</th></tr></thead><tbody>'
       + R.lines.map(function(o, i){ var L = o.L;
           var our = ivOurIds(o), ourH = our.carts.length ? '<span style="font-family:monospace">#' + our.carts.map(E).join(', #') + '</span>' + (our.subs.length ? '<div style="font-size:9px;color:var(--text3)" title="' + E(our.subs.join(', ')) + '">' + (our.subs.length <= 3 ? 'sub #' + our.subs.map(E).join(', #') : our.subs.length + ' service days') + '</div>' : '')
             : o.ret ? '<span style="font-size:10px;color:var(--text3)">monthly fee</span>'
             : (o.sugg && o.sugg.length ? '<div style="font-size:10px;color:var(--sick)">maybe:</div>' + o.sugg.map(function(x){ return '<div style="font-size:10px;font-family:monospace" title="' + E(x.name + ' · ' + x.d + ' · ' + x.hc + ' · ' + x.st) + '">#' + E(x.id) + ' <span style="font-family:inherit;color:var(--text3)">' + E(ivFmtD(x.d)) + ' · ' + E(x.st) + '</span></div>'; }).join('') : '—');
           return '<tr><td>' + (i+1) + '</td><td>' + E([L.order, L.sub].filter(Boolean).join(' / ') || '—') + '</td><td>' + ourH + '</td><td>' + E(L.name) + '</td><td>' + (L.date ? ivFmtD(L.date) : '') + '</td><td>' + E(L.staff) + '</td>'
-            + '<td style="text-align:right">' + ivAED(L.price) + '</td><td style="text-align:right">' + (o.exp == null ? '—' : ivAED(o.exp)) + '</td><td>' + E(o.how||'—') + '</td>'
+            + '<td style="text-align:right">' + ivAED(L.price) + '</td><td style="text-align:right">' + (o.exp == null ? '—' : ivAED(o.exp)) + '</td>'
+            + '<td style="text-align:right"><input class="tk-inp" style="width:78px;padding:3px 5px;font-size:11px;text-align:right' + (_iv.okEdit[ivEditKey(M, i)] != null ? ';border-color:#FFB900' : '') + '" value="' + Math.round(o.fin) + '" title="Amount Valeo pays for this line — edit to override" onchange="ivOkSet(' + i + ', this.value)"></td>'
+            + '<td>' + E(o.how||'—') + '</td>'
             + '<td style="font-weight:600;' + IV_CLS[o.cls] + '">' + E(o.status) + '</td><td style="font-size:10px;color:var(--text2)">' + E(o.notes.concat(o.rows.length === 1 ? o.rows[0].flags.filter(function(f){ return !/Not marked|Upcoming/.test(f); }) : []).join(' · ')) + '</td></tr>';
         }).join('') + '</tbody></table></div></div>';
     if(R.missing.length){
@@ -25552,7 +25557,7 @@ function ivRenderHC(){
       + 'Send it to the homecare to confirm, or upload the SOA they sent you to match it line by line.</div></div>'
       + '<div style="display:flex;gap:8px"><button class="tk-btn big" onclick="ivUploadPick(\'hc\')">⬆ Upload their SOA</button><button class="tk-btn big" onclick="ivPasteOpen(\'hc\')">📋 Paste</button></div></div>';
   }
-  if(saved) h += '<div style="font-size:11px;color:var(--text2);margin:-6px 0 12px">Last approved for ' + ivMonthLbl(M.p) + ': <b>AED ' + ivAED(saved.approved) + '</b> (claimed ' + ivAED(saved.claimed) + ', expected ' + ivAED(saved.expected) + ') by ' + E(saved.by||'') + ' on ' + E(String(saved.at||'').slice(0,10)) + ' — posted to P&amp;L.</div>';
+  if(saved && !(saved.items||[]).length) h += '<div style="font-size:11px;color:var(--text2);margin:-6px 0 12px">Last approved for ' + ivMonthLbl(M.p) + ': <b>AED ' + ivAED(saved.approved) + '</b> (claimed ' + ivAED(saved.claimed) + ', expected ' + ivAED(saved.expected) + ') by ' + E(saved.by||'') + ' on ' + E(String(saved.at||'').slice(0,10)) + ' — posted to P&amp;L.</div>';
   // penalties
   h += '<div class="tk-card"><div class="tk-card-h"><span>⚠️ Penalties — ' + (M.pen.length ? M.pen.filter(function(x){ return x.inc; }).length + ' deducted · AED ' + ivAED(M.penDed) : 'none for ' + ivMonthLbl(M.p)) + '</span>'
     + '<span style="display:flex;gap:6px;align-items:center"><span style="font-size:10px;color:var(--text3);font-weight:400">from the Penalty tab · amounts editable here</span><button class="tk-btn" onclick="ivPenAdd()">+ Add penalty</button></span></div>'
@@ -25589,6 +25594,85 @@ function ivStmtTable(list, flags){
       + '<td>' + E(o.pkg) + '</td><td>' + E(o.status) + '</td><td>' + E(o.cg) + '</td><td style="text-align:right;font-weight:600">' + (o.exp == null ? '—' : ivAED(o.exp)) + '</td><td style="font-size:10px;color:var(--text2)">' + E(o.basis) + '</td>'
       + (flags ? '<td style="font-size:10px;color:var(--sick)">' + E(o.flags.join(' · ')) + '</td>' : '') + '</tr>'; }).join('') + '</tbody></table>';
 }
+// ── finalised statement ──────────────────────────────────────────
+function ivEditKey(M, i){ return M.p + '|' + tkNorm(M.hc) + '|' + (M.soa ? M.soa.src : '') + '|' + i; }
+function ivOkSet(i, v){ var M = ivHCModel(); if(!M) return; var n = ivAmt(v); var k = ivEditKey(M, i);
+  if(String(v).trim() === '' || isNaN(n)) delete _iv.okEdit[k]; else _iv.okEdit[k] = Math.max(0, n); ivRender(); }
+// plain-language reason for the homecare, per line
+function ivRemark(o){
+  var L = o.L, s = o.status || '', fin = o.fin == null ? (o.ok||0) : o.fin;
+  if(o.edited) return fin >= L.price ? 'Approved as billed' : fin ? 'Approved AED ' + ivAED(fin) + ' (billed ' + ivAED(L.price) + ')' : 'Not payable (reviewed by Valeo)';
+  if(/Duplicate/.test(s)) return s.replace(/^❌\s*/, '') + ' — billed twice, not payable';
+  if(/Cancelled/.test(s)) return 'Booking cancelled in our system — not payable';
+  if(/Not in our orders/.test(s)) return 'No matching booking found — please share the Valeo order number' + (o.sugg && o.sugg.length ? ' (possible: #' + o.sugg.map(function(x){ return x.id; }).join(', #') + ')' : '');
+  if(/Order is with/.test(s)) return s.replace(/^❌\s*/, '') + ' — not payable to you';
+  if(/on .*leave|removed on the roster/i.test(s)) return 'Caregiver on leave / booking removed that day — not payable';
+  if(/Exclusive/.test(s)) return 'Exclusive caregiver — covered by the monthly fee';
+  if(/Not served/.test(s)) return 'Not served yet — bill next month';
+  if(/differs/.test(s)) return fin < L.price ? 'Paid at the agreed rate AED ' + ivAED(fin) + ' (billed ' + ivAED(L.price) + ')' : 'Amount adjusted to AED ' + ivAED(fin);
+  if(/different caregiver/.test(s)) return 'Paid — caregiver on our record differs, please confirm';
+  if(/not marked completed/.test(s)) return 'Paid — please mark the booking completed';
+  if(/No rate|not set/.test(s)) return 'Paid as billed — rate to be confirmed';
+  return fin === L.price ? 'As billed' : 'Approved AED ' + ivAED(fin);
+}
+function ivFinalCard(d){
+  var E = tkEsc, it = d.items || [];
+  return '<div class="tk-card" style="border-color:rgba(63,185,80,.5)"><div class="tk-card-h"><span>✅ Final statement — ' + E(d.homecare) + ' · ' + ivMonthLbl(d.period) + ' · approved <b>AED ' + ivAED(d.approved) + '</b> of ' + ivAED(d.claimed) + ' claimed'
+    + ' <span style="font-weight:400;color:var(--text3)">· by ' + E(d.by||'') + ' on ' + E(String(d.at||'').slice(0,10)) + '</span></span>'
+    + '<span style="display:flex;gap:6px"><button class="tk-btn" onclick="ivFinalXlsx()">⬇ Excel</button><button class="tk-btn" onclick="ivFinalPrint()">🖨 PDF</button><button class="tk-btn pri" onclick="ivFinalEmail()">✉ Email to homecare</button></span></div>'
+    + '<div class="tk-scroll" style="max-height:380px"><table class="tk-tbl"><thead><tr><th>#</th><th>Their ref</th><th>Our order #</th><th>Customer</th><th>Date</th><th>Staff</th><th style="text-align:right">Claimed</th><th style="text-align:right">Approved</th><th>Remark</th></tr></thead><tbody>'
+    + it.map(function(x){ return '<tr><td>' + x.n + '</td><td>' + E(x.their || '—') + '</td><td style="font-family:monospace">' + (x.our ? '#' + E(x.our.split(', ').join(', #')) : '—') + '</td><td>' + E(x.customer) + '</td><td>' + (x.date ? ivFmtD(x.date) : '') + '</td><td>' + E(x.staff||'') + '</td>'
+      + '<td style="text-align:right">' + ivAED(x.claimed) + '</td><td style="text-align:right;font-weight:700;color:' + (x.approved >= x.claimed ? 'var(--duty)' : x.approved ? 'var(--sick)' : 'var(--absent)') + '">' + ivAED(x.approved) + '</td><td style="font-size:11px">' + E(x.remark) + '</td></tr>'; }).join('')
+    + ((d.penalty_items||[]).length ? d.penalty_items.map(function(x){ return '<tr><td></td><td colspan="5" style="color:var(--absent)">Penalty · ' + E(x.reason) + ' · ' + E(x.cg) + ' · ' + (x.date ? ivFmtD(x.date) : '') + '</td><td></td><td style="text-align:right;color:var(--absent)">−' + ivAED(x.amount) + '</td><td></td></tr>'; }).join('') : '')
+    + '<tr style="background:var(--bg3);font-weight:700"><td></td><td colspan="5">Total</td><td style="text-align:right">' + ivAED(d.claimed) + '</td><td style="text-align:right">' + ivAED(d.approved) + '</td><td></td></tr>'
+    + '</tbody></table></div></div>';
+}
+function ivFinalDoc(){ var M = ivHCModel(); return M ? _iv.recon[M.p + '__' + tkNorm(M.hc)] : null; }
+function ivFinalXlsx(){
+  var d = ivFinalDoc(); if(!d) return;
+  var a = [['VALEO - ' + d.homecare + ' - ' + ivMonthLbl(d.period) + ' - Final statement'], ['Approved AED ' + ivN(d.approved) + ' of AED ' + ivN(d.claimed) + ' claimed · ' + String(d.at||'').slice(0,10)], [],
+    ['#','Their ref','Valeo order #','Valeo sub-orders','Customer','Date','Staff','Claimed','Approved','Remark']];
+  (d.items||[]).forEach(function(x){ a.push([x.n, x.their, x.our, x.subs, x.customer, x.date, x.staff, x.claimed, x.approved, x.remark]); });
+  (d.penalty_items||[]).forEach(function(x){ a.push(['', '', '', '', 'Penalty: ' + x.reason, x.date, x.cg, '', -x.amount, '']); });
+  a.push([]); a.push(['', '', '', '', '', '', 'Total', d.claimed, d.approved, '']);
+  var wb = XLSX.utils.book_new(), ws = XLSX.utils.aoa_to_sheet(a); ws['!cols'] = [4,12,12,18,22,11,18,10,10,60].map(function(w){ return {wch:w}; });
+  XLSX.utils.book_append_sheet(wb, ws, 'Final statement'); XLSX.writeFile(wb, 'Valeo_Final_Statement_' + d.homecare.replace(/[^A-Za-z0-9]+/g,'_').slice(0,30) + '_' + d.period + '.xlsx');
+}
+function ivFinalPrint(){
+  var d = ivFinalDoc(); if(!d) return;
+  var rows = (d.items||[]).map(function(x){ return [x.n, x.our ? '#' + x.our : '—', x.customer, x.date ? ivFmtD(x.date) : '', x.staff||'', ivAED(x.claimed), ivAED(x.approved), x.remark]; });
+  (d.penalty_items||[]).forEach(function(x){ rows.push(['', '', 'Penalty — ' + x.reason, x.date ? ivFmtD(x.date) : '', x.cg, '', '−' + ivAED(x.amount), '']); });
+  var tr = ['', '', '', '', 'Total', 'AED ' + ivAED(d.claimed), 'AED ' + ivAED(d.approved), '']; tr._tot = 1; rows.push(tr);
+  ivPrint('VALEO — ' + ivMonthLbl(d.period) + ' final statement', d.homecare, ['#','Valeo order','Customer','Date','Staff','Claimed (AED)','Approved (AED)','Remark'], rows);
+}
+// a short email to the homecare with the outcome, ready to paste
+function ivFinalEmailText(d){
+  var it = d.items || [], mon = ivMonthLbl(d.period);
+  var grp = function(f){ return it.filter(f); };
+  var cut = grp(function(x){ return x.approved > 0 && x.approved < x.claimed; }), no = grp(function(x){ return !x.approved && x.claimed; }), ok = grp(function(x){ return x.approved >= x.claimed && x.claimed; });
+  var ln = function(x){ return '- ' + x.customer + (x.date ? ', ' + ivFmtD(x.date) : '') + (x.our ? ' (Valeo #' + x.our + ')' : '') + ': billed AED ' + ivAED(x.claimed) + ' → ' + (x.approved ? 'AED ' + ivAED(x.approved) : 'not payable') + ' — ' + x.remark; };
+  var b = ['Dear ' + d.homecare + ' team,', '', 'Thank you for the ' + mon + ' statement. We have checked it against our bookings:', '',
+    'Billed: AED ' + ivAED(d.claimed), 'Approved: AED ' + ivAED(d.approved) + (d.penalties ? ' (after penalties of AED ' + ivAED(d.penalties) + ')' : ''), ''];
+  if(ok.length) b.push('Approved as billed: ' + ok.length + ' line' + (ok.length > 1 ? 's' : '') + '.', '');
+  if(cut.length){ b.push('Adjusted to the agreed rate:'); cut.forEach(function(x){ b.push(ln(x)); }); b.push(''); }
+  if(no.length){ b.push('Not payable / need details:'); no.forEach(function(x){ b.push(ln(x)); }); b.push(''); }
+  if((d.penalty_items||[]).length){ b.push('Penalties deducted:'); d.penalty_items.forEach(function(x){ b.push('- ' + x.reason + ', ' + x.cg + (x.date ? ', ' + ivFmtD(x.date) : '') + ': AED ' + ivAED(x.amount)); }); b.push(''); }
+  b.push('Please share a revised invoice for AED ' + ivAED(d.approved) + '. For the lines marked "please share the Valeo order number", send the order numbers and we will review them again.', '', 'The detailed statement is attached.', '', 'Best regards,', 'Valeo Operations');
+  return {subject:'Valeo – ' + mon + ' statement – ' + d.homecare + ' – approved AED ' + ivAED(d.approved), body:b.join('\n')};
+}
+function ivFinalEmail(){
+  var d = ivFinalDoc(); if(!d) return; var m = ivFinalEmailText(d);
+  var box = document.getElementById('iv-email-modal');
+  if(!box){ box = document.createElement('div'); box.id = 'iv-email-modal'; box.className = 'tk-modal'; box.onclick = function(e){ if(e.target === box) box.classList.remove('show'); }; document.body.appendChild(box); }
+  box.innerHTML = '<div class="tk-modal-box" style="width:760px"><div style="font-size:14px;font-weight:700;margin-bottom:8px">✉ Email to ' + tkEsc(d.homecare) + '</div>'
+    + '<label class="qt-lbl">Subject</label><input id="iv-em-s" class="tk-inp" style="width:100%" value="' + tkEsc(m.subject) + '">'
+    + '<label class="qt-lbl" style="margin-top:8px">Message</label><textarea id="iv-em-b" class="tk-inp" style="width:100%;height:340px;font-size:12px;line-height:1.5">' + tkEsc(m.body) + '</textarea>'
+    + '<div style="font-size:11px;color:var(--text3);margin-top:6px">Attach the Excel or PDF from the Final statement before sending.</div>'
+    + '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px"><button class="tk-btn" onclick="navigator.clipboard&&navigator.clipboard.writeText(document.getElementById(\'iv-em-s\').value+\'\\n\\n\'+document.getElementById(\'iv-em-b\').value);tkToast&&tkToast(\'Copied\')">📋 Copy</button>'
+    + '<a class="tk-btn pri" style="text-decoration:none" href="mailto:?subject=' + encodeURIComponent(m.subject) + '&body=' + encodeURIComponent(m.body) + '">Open in mail app</a>'
+    + '<button class="tk-btn" onclick="document.getElementById(\'iv-email-modal\').classList.remove(\'show\')">Close</button></div></div>';
+  box.classList.add('show');
+}
 async function ivPost(){
   var M = ivHCModel(); if(!M || !M.rec) return;
   var v = ivAmt(document.getElementById('iv-approve').value);
@@ -25609,7 +25693,12 @@ async function ivPost(){
     for(var pi = 0; pi < penInc.length; pi++){ var px = penInc[pi], nt = (px.x.notes ? px.x.notes + ' · ' : '') + 'Deducted in ' + ivMonthLbl(M.p) + ' invoice';
       await _db.collection('valeo_penalties').doc(px.id).set({status:'paid', notes:nt, updated_at:now}, {merge:true}); px.x.status = 'paid'; px.x.notes = nt; }
     try{ if(penInc.length){ renderPenaltyKPIs(); renderPenaltyTable(); } }catch(e){}
-    var doc = {period:M.p, homecare:M.hc, approved:v, claimed:ivN(claimed), expected:ivN(M.exp), penalties:ivN(M.penDed), penalty_ids:penInc.map(function(x){ return x.id; }), lines:M.rec.lines.length, matched:cnt.good, check:cnt.warn, rejected:cnt.bad, missing:M.rec.missing.length, file:M.soa.src, at:now, by:by};
+    var items = M.rec.lines.map(function(o, i){ var our = ivOurIds(o);
+      return {n:i+1, their:[o.L.order, o.L.sub].filter(Boolean).join(' / '), our:our.carts.join(', '), subs:our.subs.slice(0, 40).join(', '), customer:o.L.name, date:o.L.date, staff:o.L.staff,
+        claimed:ivN(o.L.price), expected:o.exp == null ? null : ivN(o.exp), approved:ivN(o.fin||0), result:o.status, remark:ivRemark(o), sugg:o.sugg ? ivSuggTxt(o.sugg) : ''}; });
+    var pens = penInc.map(function(x){ return {date:x.x.date||'', cg:x.x.cg||'', reason:x.x.reason||'', amount:ivN(x.amt)}; });
+    var doc = {period:M.p, homecare:M.hc, approved:v, claimed:ivN(claimed), expected:ivN(M.exp), penalties:ivN(M.penDed), penalty_ids:penInc.map(function(x){ return x.id; }), lines:M.rec.lines.length,
+      items:items, penalty_items:pens, lines_total:ivN(M.rec.lines.reduce(function(t,o){ return t + (o.fin||0); }, 0)), matched:cnt.good, check:cnt.warn, rejected:cnt.bad, missing:M.rec.missing.length, file:M.soa.src, at:now, by:by};
     await _db.collection('valeo_invoice_recon').doc(M.p + '__' + tkNorm(M.hc)).set(doc);
     _iv.recon[M.p + '__' + tkNorm(M.hc)] = doc;
     if(typeof _pl !== 'undefined' && _pl.loaded){ _pl.loaded = false; }   // P&L reloads with the new figure
