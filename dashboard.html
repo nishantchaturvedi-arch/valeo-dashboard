@@ -25312,6 +25312,29 @@ function ivBestCG(name, ret, usedRet){
   });
   return bs > 0 ? best : null;
 }
+// our order numbers behind a matched line
+function ivOurIds(o){
+  var carts = [], subs = [];
+  (o.rows||[]).forEach(function(x){ if(x.cart && carts.indexOf(x.cart) < 0) carts.push(x.cart); if(x.child) subs.push(x.child); });
+  return {carts:carts, subs:subs};
+}
+// likely orders for a line we could not match: same customer name (or phone) within ±10 days
+function ivSuggest(L, hc){
+  var words = ivNameWords(L.name).filter(function(w){ return !/^(child|baby|mumzworld|mumz|mrs?|ms)$/.test(w); }), ph = ivPh(L.phone), carts = {};
+  if(!words.length && !ph) return [];
+  (window._lastRows||[]).forEach(function(r){
+    if(!isCountryRow(r) || _stKey(r) === 'temporder') return;
+    var nm = ivNameWords(r['User Name']), same = words.filter(function(w){ return nm.indexOf(w) >= 0; }).length, phOk = ph && ivPh(r['Phone Number']) === ph;
+    if(!phOk && (!same || (words.length > 1 && same < 2))) return;
+    var ds = ivSvc(r).slice(0,10); if(!ds) return;
+    var dd = L.date ? Math.abs(new Date(ds) - new Date(L.date)) / 864e5 : 0;
+    if(L.date && dd > 10) return;
+    var id = String(r['Cart_Order_ID']||'').trim(), sc = (phOk ? 30 : 0) + same * 10 - dd + (tkHCMatch(ivHC(r), hc) ? 5 : 0);
+    var c = carts[id]; if(!c || sc > c.sc) carts[id] = {id:id, sc:sc, d:ds, hc:ivHC(r) || 'no homecare', st:String(r['Order_Status']||'').toLowerCase(), name:String(r['User Name']||'').trim()};
+  });
+  return Object.values(carts).sort(function(a,b){ return b.sc - a.sc; }).slice(0, 3);
+}
+function ivSuggTxt(s){ return s.map(function(x){ return '#' + x.id + ' ' + x.name + ' (' + ivFmtD(x.d) + ', ' + x.hc + ', ' + x.st + ')'; }).join('; '); }
 // ── matching a homecare SOA line to our orders ───────────────────
 function ivMatchHC(hc, p, soa, rows, ret){
   var ix = ivIndex(), used = {}, out = [], usedRet = {};
@@ -25330,9 +25353,12 @@ function ivMatchHC(hc, p, soa, rows, ret){
     });
     if(!hit.length && ivPh(L.phone) && L.date){ hit = (ix.phone[ivPh(L.phone)]||[]).filter(function(r){ return ivSvc(r).slice(0,10) === L.date && tkHCMatch(ivHC(r), hc); }); if(hit.length) how = 'Phone + date'; }
     if(!hit.length && L.name && L.date){
-      var fn = ivFirst(L.name);
-      hit = rows.filter(function(o){ return o.date === L.date && fn && ivFirst(o.name) === fn; }).map(function(o){ return o.r; });
+      // any month for this homecare (SOAs often include a few days of the next month); exact date first, then ±1 day
+      var fn = ivFirst(L.name), near = function(d1, d2){ return Math.abs(new Date(d1) - new Date(d2)) <= 864e5; };
+      var pool = (window._lastRows||[]).filter(function(r){ return isCountryRow(r) && tkHCMatch(ivHC(r), hc) && _stKey(r) !== 'temporder' && fn && ivFirst(r['User Name']) === fn; });
+      hit = pool.filter(function(r){ return ivSvc(r).slice(0,10) === L.date; });
       if(hit.length) how = 'Name + date';
+      else { hit = pool.filter(function(r){ var d = ivSvc(r).slice(0,10); return d && near(d, L.date); }); if(hit.length){ how = 'Name + date ±1 day'; } }
     }
     var o = {L:L, how:how, rows:hit.map(calc), exp:0, ok:0, status:'', cls:'', notes:[]};
     if(!hit.length){
@@ -25340,7 +25366,7 @@ function ivMatchHC(hc, p, soa, rows, ret){
       var rt = (L.staff || L.name) && !L.order && !L.sub ? ivBestCG(L.staff || L.name, ret, usedRet) : null;
       if(rt){ usedRet[rt.cg] = 1; o.ret = rt; o.exp = rt.exp; o.how = 'Exclusive CG'; rt.claimed = (rt.claimed||0) + L.price; }
       else if(!L.price){ o.status = '✅ Nothing claimed'; o.cls = 'good'; o.ok = 0; o.exp = 0; o.notes.push('not on our roster this month'); out.push(o); return; }
-      else { o.status = '❌ Not in our orders'; o.cls = 'bad'; o.ok = 0; out.push(o); return; }
+      else { o.status = '❌ Not in our orders'; o.cls = 'bad'; o.ok = 0; o.sugg = ivSuggest(L, hc); out.push(o); return; }
     }
     if(o.ret){
       var rr = o.ret, theirs = [];
@@ -25502,9 +25528,12 @@ function ivRenderHC(){
     h += '<div class="tk-card"><div class="tk-card-h"><span>🔎 Homecare SOA vs our data — ' + E(M.soa.src) + ' · <span style="color:var(--duty)">' + cnt.good + ' matched</span> · <span style="color:var(--sick)">' + cnt.warn + ' to check</span> · <span style="color:var(--absent)">' + cnt.bad + ' not payable</span></span>'
       + '<span style="display:flex;gap:6px;align-items:center"><span style="font-size:11px;color:var(--text2);font-weight:400">Approve</span><input id="iv-approve" class="tk-inp" style="width:110px" value="' + Math.max(0, Math.round(okAmt - M.penDed)) + '">'
       + '<button class="tk-btn pri" onclick="ivPost()">✓ Approve &amp; post to P&amp;L</button></span></div>'
-      + '<div class="tk-scroll" style="max-height:480px"><table class="tk-tbl"><thead><tr><th>#</th><th>Their order / cust ID</th><th>Customer</th><th>Date</th><th>Their staff</th><th style="text-align:right">Claimed</th><th style="text-align:right">Expected</th><th>Matched by</th><th>Result</th><th>Notes</th></tr></thead><tbody>'
+      + '<div class="tk-scroll" style="max-height:480px"><table class="tk-tbl"><thead><tr><th>#</th><th>Their order / cust ID</th><th>Our order #</th><th>Customer</th><th>Date</th><th>Their staff</th><th style="text-align:right">Claimed</th><th style="text-align:right">Expected</th><th>Matched by</th><th>Result</th><th>Notes</th></tr></thead><tbody>'
       + R.lines.map(function(o, i){ var L = o.L;
-          return '<tr><td>' + (i+1) + '</td><td>' + E([L.order, L.sub].filter(Boolean).join(' / ') || '—') + '</td><td>' + E(L.name) + '</td><td>' + (L.date ? ivFmtD(L.date) : '') + '</td><td>' + E(L.staff) + '</td>'
+          var our = ivOurIds(o), ourH = our.carts.length ? '<span style="font-family:monospace">#' + our.carts.map(E).join(', #') + '</span>' + (our.subs.length ? '<div style="font-size:9px;color:var(--text3)" title="' + E(our.subs.join(', ')) + '">' + (our.subs.length <= 3 ? 'sub #' + our.subs.map(E).join(', #') : our.subs.length + ' service days') + '</div>' : '')
+            : o.ret ? '<span style="font-size:10px;color:var(--text3)">monthly fee</span>'
+            : (o.sugg && o.sugg.length ? '<div style="font-size:10px;color:var(--sick)">maybe:</div>' + o.sugg.map(function(x){ return '<div style="font-size:10px;font-family:monospace" title="' + E(x.name + ' · ' + x.d + ' · ' + x.hc + ' · ' + x.st) + '">#' + E(x.id) + ' <span style="font-family:inherit;color:var(--text3)">' + E(ivFmtD(x.d)) + ' · ' + E(x.st) + '</span></div>'; }).join('') : '—');
+          return '<tr><td>' + (i+1) + '</td><td>' + E([L.order, L.sub].filter(Boolean).join(' / ') || '—') + '</td><td>' + ourH + '</td><td>' + E(L.name) + '</td><td>' + (L.date ? ivFmtD(L.date) : '') + '</td><td>' + E(L.staff) + '</td>'
             + '<td style="text-align:right">' + ivAED(L.price) + '</td><td style="text-align:right">' + (o.exp == null ? '—' : ivAED(o.exp)) + '</td><td>' + E(o.how||'—') + '</td>'
             + '<td style="font-weight:600;' + IV_CLS[o.cls] + '">' + E(o.status) + '</td><td style="font-size:10px;color:var(--text2)">' + E(o.notes.concat(o.rows.length === 1 ? o.rows[0].flags.filter(function(f){ return !/Not marked|Upcoming/.test(f); }) : []).join(' · ')) + '</td></tr>';
         }).join('') + '</tbody></table></div></div>';
@@ -25606,8 +25635,8 @@ function ivDownloadHC(){
   ws['!cols'] = [10,10,22,11,9,34,34,12,20,10,30].map(function(w){ return {wch:w}; });
   XLSX.utils.book_append_sheet(wb, ws, 'SOA');
   if(M.rec){
-    var a = [['Their order','Their cust ID','Customer','Date','Their staff','Claimed','Expected','Matched by','Result','Notes']];
-    M.rec.lines.forEach(function(o){ a.push([o.L.order, o.L.sub, o.L.name, o.L.date, o.L.staff, o.L.price, o.exp == null ? '' : ivN(o.exp), o.how, o.status, o.notes.join('; ')]); });
+    var a = [['Their order','Their cust ID','Our order #','Our sub-orders','Possible matches (not found)','Customer','Date','Their staff','Claimed','Expected','Matched by','Result','Notes']];
+    M.rec.lines.forEach(function(o){ var our = ivOurIds(o); a.push([o.L.order, o.L.sub, our.carts.join(', '), our.subs.join(', '), o.sugg ? ivSuggTxt(o.sugg) : '', o.L.name, o.L.date, o.L.staff, o.L.price, o.exp == null ? '' : ivN(o.exp), o.how, o.status, o.notes.join('; ')]); });
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(a), 'Reconciliation');
     if(M.rec.missing.length){ var b = [['Order ID','Sub-order','Customer','Date','Caregiver','Expected']]; M.rec.missing.forEach(function(o){ b.push([o.cart, o.child, o.name, o.date, o.cg, o.exp]); }); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(b), 'Not on their SOA'); }
   }
