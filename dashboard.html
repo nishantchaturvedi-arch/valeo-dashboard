@@ -25312,6 +25312,17 @@ function ivBestCG(name, ret, usedRet){
   });
   return bs > 0 ? best : null;
 }
+// first names that are the same person despite spelling: Mariam / Maryam, Mohamed / Mohammed, Fatma / Fatima
+function ivNameKey(s){ return String(s||'').toLowerCase().replace(/[^a-z]/g,'').replace(/y/g,'i').replace(/(.)\1+/g,'$1'); }
+function ivNameEq(a, b){
+  if(!a || !b) return false; if(a === b) return true;
+  var x = ivNameKey(a), y = ivNameKey(b); if(x === y) return true;
+  if(x.length < 4 || y.length < 4 || Math.abs(x.length - y.length) > 1) return false;
+  var d = [], i, j;                                  // edit distance ≤ 1
+  for(i = 0; i <= x.length; i++){ d[i] = [i]; } for(j = 0; j <= y.length; j++) d[0][j] = j;
+  for(i = 1; i <= x.length; i++) for(j = 1; j <= y.length; j++) d[i][j] = Math.min(d[i-1][j] + 1, d[i][j-1] + 1, d[i-1][j-1] + (x[i-1] === y[j-1] ? 0 : 1));
+  return d[x.length][y.length] <= 1;
+}
 // our order numbers behind a matched line
 function ivOurIds(o){
   var carts = [], subs = [];
@@ -25355,12 +25366,28 @@ function ivMatchHC(hc, p, soa, rows, ret){
     if(!hit.length && L.name && L.date){
       // any month for this homecare (SOAs often include a few days of the next month); exact date first, then ±1 day
       var fn = ivFirst(L.name), near = function(d1, d2){ return Math.abs(new Date(d1) - new Date(d2)) <= 864e5; };
-      var pool = (window._lastRows||[]).filter(function(r){ return isCountryRow(r) && tkHCMatch(ivHC(r), hc) && _stKey(r) !== 'temporder' && fn && ivFirst(r['User Name']) === fn; });
+      var pool = (window._lastRows||[]).filter(function(r){ return isCountryRow(r) && tkHCMatch(ivHC(r), hc) && _stKey(r) !== 'temporder' && fn && ivNameEq(ivFirst(r['User Name']), fn); });
       hit = pool.filter(function(r){ return ivSvc(r).slice(0,10) === L.date; });
       if(hit.length) how = 'Name + date';
       else { hit = pool.filter(function(r){ var d = ivSvc(r).slice(0,10); return d && near(d, L.date); }); if(hit.length){ how = 'Name + date ±1 day'; } }
     }
-    var o = {L:L, how:how, rows:hit.map(calc), exp:0, ok:0, status:'', cls:'', notes:[]};
+    // SOAs often bill a whole package on one line, while we hold one sub-order per day: if the amount is closer to the
+    // package's days in this month than to the matched day(s), take the whole package
+    var spill = '';
+    if(hit.length){
+      var cartId = String(hit[0]['Cart_Order_ID']||'').trim();
+      var cartRows = (ix.cart[cartId]||[]).filter(function(r){ return _stKey(r) !== 'temporder' && tkHCMatch(ivHC(r), hc); });
+      var pick = cartRows.filter(function(r){ return ivSvc(r).slice(0,7) === p; });
+      if(!pick.length){ var hm = ivSvc(hit[0]).slice(0,7); pick = cartRows.filter(function(r){ return ivSvc(r).slice(0,7) === hm; }); }
+      if(pick.length > hit.length){
+        var ex = function(rs){ return rs.map(calc).reduce(function(t,x){ return t + ((x.kind === 'ok' || x.kind === 'open') && !x.ex ? (x.exp||0) : 0); }, 0); };
+        var eHit = ex(hit), ePkg = ex(pick);
+        if(Math.abs(L.price - ePkg) < Math.abs(L.price - eHit)){ hit = pick; how = (how ? how + ' · ' : '') + 'whole package (' + pick.length + ' days)';
+          var other = cartRows.filter(function(r){ return _stKey(r) !== 'cancelled' && ivSvc(r).slice(0,7) !== ivSvc(pick[0]).slice(0,7); });
+          if(other.length){ var ms = [...new Set(other.map(function(r){ return ivMonthLbl(ivSvc(r).slice(0,7)); }))]; spill = other.length + ' more day' + (other.length > 1 ? 's' : '') + ' of this package in ' + ms.join(', ') + ' — bill on that statement'; } }
+      }
+    }
+    var o = {L:L, how:how, rows:hit.map(calc), exp:0, ok:0, status:'', cls:'', notes:spill ? [spill] : [], spill:spill};
     if(!hit.length){
       // a monthly-fee line for an exclusive caregiver?
       var rt = (L.staff || L.name) && !L.order && !L.sub ? ivBestCG(L.staff || L.name, ret, usedRet) : null;
@@ -25395,10 +25422,14 @@ function ivMatchHC(hc, p, soa, rows, ret){
     else if(R.every(function(x){ return x.ex || x.kind === 'cancelled' || x.kind === 'leave'; })){ o.status = '⚠ Exclusive CG — paid in monthly fee'; o.cls = 'warn'; }
     else if(R.some(function(x){ return x.kind === 'upcoming'; })){ o.status = '⚠ Not served yet'; o.cls = 'warn'; }
     else if(noRate){ o.status = '🔍 No rate — check'; o.cls = 'warn'; o.ok = L.price; o.exp = null; }
-    else if(Math.abs(L.price - o.exp) <= Math.max(2, o.exp * 0.01)){ o.status = R.some(function(x){ return x.kind === 'open'; }) ? '⚠ Matched — not marked completed' : '✅ Matched'; o.cls = R.some(function(x){ return x.kind === 'open'; }) ? 'warn' : 'good'; o.ok = L.price; }
+    else if(Math.abs(L.price - o.exp) <= Math.max(2, o.exp * 0.01)){ o.status = R.some(function(x){ return x.kind === 'open'; }) ? '⚠ Matched — not marked completed' : '✅ Matched'; o.cls = R.some(function(x){ return x.kind === 'open'; }) ? 'warn' : 'good'; o.ok = Math.min(L.price, o.exp); }
     else { o.status = '⚠ Amount differs (' + (L.price > o.exp ? '+' : '−') + ivAED(Math.abs(L.price - o.exp)) + ')'; o.cls = 'warn'; o.ok = Math.min(L.price, o.exp); }
     if(o.cls === 'bad' || /Exclusive|Not served/.test(o.status)) o.ok = 0;
     if(!staffOk && o.cls === 'good'){ o.status = '⚠ Matched — different caregiver'; o.cls = 'warn'; }
+    // service in another month: belongs on that month's statement
+    var live = R.filter(function(x){ return x.kind !== 'cancelled'; });
+    if(live.length && live.every(function(x){ return x.date.slice(0,7) !== p; }) && o.cls !== 'bad'){
+      var om = live[0].date.slice(0,7); o.status = '⚠ Service in ' + ivMonthLbl(om) + ' — bill on that statement'; o.cls = 'warn'; o.ok = 0; o.otherMonth = om; }
     if(dupOf){ o.status = '❌ Duplicate — same booking as line ' + dupOf; o.cls = 'bad'; o.ok = 0; o.exp = 0; }
     out.push(o);
   });
@@ -25598,7 +25629,7 @@ function ivStmtTable(list, flags){
       + (flags ? '<td style="font-size:10px;color:var(--sick)">' + E(o.flags.join(' · ')) + '</td>' : '') + '</tr>'; }).join('') + '</tbody></table>';
 }
 // ── finalised statement ──────────────────────────────────────────
-function ivIncMiss(M){ return !!_iv.incMiss[M.p + '|' + tkNorm(M.hc)]; }
+function ivIncMiss(M){ return _iv.incMiss[M.p + '|' + tkNorm(M.hc)] !== false; }   // default: pay every completed booking of the month (our data)
 function ivSetIncMiss(on){ var M = ivHCModel(); if(!M) return; _iv.incMiss[M.p + '|' + tkNorm(M.hc)] = !!on; ivRender(); }
 function ivEditKey(M, i){ return M.p + '|' + tkNorm(M.hc) + '|' + (M.soa ? M.soa.src : '') + '|' + i; }
 function ivOkSet(i, v){ var M = ivHCModel(); if(!M) return; var n = ivAmt(v); var k = ivEditKey(M, i);
@@ -25614,6 +25645,7 @@ function ivRemark(o){
   if(/on .*leave|removed on the roster/i.test(s)) return 'Caregiver on leave / booking removed that day — not payable';
   if(/Exclusive/.test(s)) return 'Exclusive caregiver — covered by the monthly fee';
   if(/Not served/.test(s)) return 'Not served yet — bill next month';
+  if(o.spill && fin) return 'Paid AED ' + ivAED(fin) + ' for this month\'s ' + (o.rows||[]).length + ' day(s) at the agreed rate (billed ' + ivAED(L.price) + '); ' + o.spill;
   if(/differs/.test(s)) return fin < L.price ? 'Paid at the agreed rate AED ' + ivAED(fin) + ' (billed ' + ivAED(L.price) + ')' : 'Amount adjusted to AED ' + ivAED(fin);
   if(/different caregiver/.test(s)) return 'Paid — caregiver on our record differs, please confirm';
   if(/not marked completed/.test(s)) return 'Paid — please mark the booking completed';
