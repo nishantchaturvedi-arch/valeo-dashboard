@@ -25379,7 +25379,10 @@ function ivMatchHC(hc, p, soa, rows, ret){
       else { o.status = '⚠ Monthly fee differs (' + (L.price > o.exp ? '+' : '−') + ivAED(Math.abs(L.price - o.exp)) + ')'; o.cls = 'warn'; o.ok = Math.min(L.price, o.exp); }
       out.push(o); return;
     }
-    hit.forEach(function(r){ used[String(r['Child_Order_ID']||'')] = 1; });
+    // the same booking can be paid once: a later line for bookings already matched is a duplicate
+    var dupOf = null;
+    if(hit.length && hit.every(function(r){ return used[String(r['Child_Order_ID']||'')]; })) dupOf = used[String(hit[0]['Child_Order_ID']||'')];
+    hit.forEach(function(r){ var k = String(r['Child_Order_ID']||''); if(!used[k]) used[k] = out.length + 1; });
     var R = o.rows, other = R.filter(function(x){ return x.hc && !tkHCMatch(x.hc, hc); });
     o.exp = R.reduce(function(t,x){ return t + (x.billable || x.kind === 'open' ? (x.exp||0) : 0); }, 0);
     var noRate = R.some(function(x){ return x.exp == null && x.kind !== 'cancelled' && x.kind !== 'leave'; });
@@ -25396,6 +25399,7 @@ function ivMatchHC(hc, p, soa, rows, ret){
     else { o.status = '⚠ Amount differs (' + (L.price > o.exp ? '+' : '−') + ivAED(Math.abs(L.price - o.exp)) + ')'; o.cls = 'warn'; o.ok = Math.min(L.price, o.exp); }
     if(o.cls === 'bad' || /Exclusive|Not served/.test(o.status)) o.ok = 0;
     if(!staffOk && o.cls === 'good'){ o.status = '⚠ Matched — different caregiver'; o.cls = 'warn'; }
+    if(dupOf){ o.status = '❌ Duplicate — same booking as line ' + dupOf; o.cls = 'bad'; o.ok = 0; o.exp = 0; }
     out.push(o);
   });
   var missing = rows.filter(function(o){ return o.billable && !o.ex && !used[o.child]; });
